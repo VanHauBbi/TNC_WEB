@@ -1,0 +1,44 @@
+﻿@model WebBanHang.Models.Order
+
+<h5 class="detail-section-title">Chi tiết Đơn hàng #@Model.OrderID</h5>
+
+<dl class="dl-horizontal">
+    <dt>Khách hàng:</dt>
+    <dd class="fw-bold">@Model.Customer.CustomerName</dd>
+
+    <dt>Địa chỉ GH:</dt>
+    <dd>@Model.ShippingAddress</dd>
+
+    <dt>Ngày đặt:</dt>
+    <dd>@Model.OrderDate.ToString("dd/MM/yyyy HH:mm")</dd>
+
+    <dt>Tổng tiền ĐH:</dt>
+    <dd class="fw-bold text-danger">@Model.TotalAmount.ToString("N0") ₫</dd>
+</dl>
+
+<h5 class="detail-section-title mt-4">Danh sách Sản phẩm</h5>
+<table class="table table-bordered product-detail-table">
+    <thead class="table-light">
+        <tr>
+            <th>Sản phẩm</th>
+            <th class="text-center">SL</th>
+            <th class="text-end">Thành tiền</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model.OrderDetails != null)
+        {
+            foreach (var detail in Model.OrderDetails)
+            {
+                <tr>
+                    <td>
+                        <img src="@detail.Product.ProductImage" alt="@detail.Product.ProductName" style="width:40px;height:40px;" />
+                        @detail.Product.ProductName
+                    </td>
+                    <td class="text-center">@detail.Quantity</td>
+                    <td class="text-end fw-bold">@String.Format("{0:N0} ₫", detail.TotalPrice)</td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>

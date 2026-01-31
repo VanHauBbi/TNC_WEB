@@ -1,0 +1,76 @@
+﻿@model IEnumerable<WebBanHang.Models.Order>
+@{
+    ViewBag.Title = "Lịch sử mua hàng";
+    Layout = "~/Views/Shared/_LayoutDivMain.cshtml";
+}
+
+<style>
+    /* CSS cơ bản cho trang lịch sử */
+    .order-history-table th, .order-history-table td {
+        vertical-align: middle;
+    }
+
+    .order-status-pending {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+    /* Vàng nhạt */
+    .order-status-shipped {
+        background-color: #d1ecf1;
+        color: #0c5460;
+    }
+    /* Xanh nhạt */
+    .order-status-paid {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    /* Xanh lá nhạt */
+</style>
+
+<div class="container my-5">
+    <h2 class="mb-4">⏱️ Lịch Sử Mua Hàng</h2>
+    <p class="text-muted">Bạn có tổng cộng: <strong>@Model.Count() </strong> đơn hàng.</p>
+
+    <table class="table table-bordered table-hover order-history-table">
+        <thead class="table-primary">
+            <tr>
+                <th>Mã ĐH</th>
+                <th>Ngày đặt</th>
+                <th>Tổng tiền</th>
+                <th>Trạng thái TT</th>
+                <th>Phương thức GH</th>
+                <th>Chi tiết</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (!Model.Any())
+            {
+                <tr>
+                    <td colspan="6" class="text-center text-secondary">Bạn chưa có đơn hàng nào.</td>
+                </tr>
+            }
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>#@item.OrderID</td>
+                    <td>@item.OrderDate.ToString("dd/MM/yyyy")</td>
+                    <td class="fw-bold text-danger">@item.TotalAmount.ToString("N0") ₫</td>
+                    <td>
+                        @{
+                            string statusClass = (item.PaymentStatus == "Đã thanh toán") ? "badge bg-success" : "badge bg-warning text-dark";
+                        }
+                        <span class="@statusClass">@item.PaymentStatus</span>
+                    </td>
+                    <td>@item.ShippingMethod</td>
+                    <td>
+                        @Html.ActionLink("Xem Chi Tiết", "Details", "Orders", new { id = item.OrderID }, new { @class = "btn btn-sm btn-info text-white" })
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div class="mt-4">
+        @Html.ActionLink("← Tiếp tục mua sắm", "Index", "Home", null, new { @class = "btn btn-outline-primary" })
+    </div>
+</div>

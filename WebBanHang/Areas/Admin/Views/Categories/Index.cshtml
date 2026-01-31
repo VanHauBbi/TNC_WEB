@@ -1,0 +1,69 @@
+﻿@model IEnumerable<WebBanHang.Models.Category>
+
+@{
+    ViewBag.Title = "Danh mục Sản phẩm";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="card shadow-sm p-4">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div id="successMessage" class="alert alert-success alert-dismissible fade show">
+            <i class="fa-solid fa-check-circle me-2"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div id="errorMessage" class="alert alert-danger alert-dismissible fade show">
+            <i class="fa-solid fa-times-circle me-2"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="mb-3 d-flex justify-content-between align-items-center">
+        <p>
+            @Html.ActionLink("Thêm Danh Mục Mới", "Create", null, new { @class = "btn btn-primary" })
+        </p>
+        <p class="text-muted">Tổng số: <strong>@Model.Count() </strong> danh mục</p>
+    </div>
+
+    <table class="table table-bordered table-hover table-admin-data">
+        <thead class="table-dark">
+            <tr>
+                <th style="width: 10%;">ID</th>
+                <th style="width: 60%;">TÊN DANH MỤC</th>
+                <th style="width: 30%;" class="text-center">HÀNH ĐỘNG</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td class="text-center">@Html.DisplayFor(modelItem => item.CategoryID)</td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.CategoryName)
+                    </td>
+                    <td class="text-center">
+                        @Html.ActionLink("Cập nhật", "Edit", new { id = item.CategoryID }, new { @class = "btn btn-warning btn-sm me-2" })
+                        @Html.ActionLink("Xóa", "Delete", new { id = item.CategoryID }, new { @class = "btn btn-warning btn-sm me-2" })
+
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+</div>
+
+@section Scripts {
+    <script>
+        // ✅ Tự động ẩn thông báo sau 3 giây
+        $(document).ready(function () {
+            setTimeout(() => {
+                $("#successMessage, #errorMessage").fadeOut(800);
+            }, 3000);
+        });
+    </script>
+
+}

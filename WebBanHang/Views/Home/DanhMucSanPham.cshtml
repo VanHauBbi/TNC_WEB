@@ -1,0 +1,146 @@
+﻿@using PagedList.Mvc;
+@model PagedList.IPagedList<WebBanHang.Models.Product>
+@{
+    ViewBag.Title = ViewBag.CategoryName;
+    Layout = "~/Views/Shared/_LayoutDivMain.cshtml";
+
+    // Lấy các giá trị lọc hiện tại từ ViewBag
+    int categoryId = (int)ViewBag.CategoryId;
+    string currentPrice = ViewBag.CurrentPriceRange;
+    string currentSort = ViewBag.CurrentSortBy; // <-- Lấy SortBy
+}
+<link rel="stylesheet" href="~/Content/myStyle/danhmucsanpham.css" />
+<link href="~/Content/PagedList.css" rel="stylesheet" type="text/css" />
+
+<div class="container-fluid category-page-wrapper mt-3">
+
+    <h2 class="category-title mb-4">@ViewBag.CategoryName</h2>
+
+    <div class="row">
+
+        <div class="col-lg-3 col-md-4 mb-4">
+            <div class="filter-sidebar">
+                <h4 class="sidebar-title">Lọc sản phẩm</h4>
+
+                <div class="filter-group">
+                    <p class="filter-heading">Theo Khoảng Giá</p>
+                    <ul class="list-unstyled filter-options">
+                        <li class="@(string.IsNullOrEmpty(currentPrice) ? "active" : "")">
+                            <a href="@Url.Action("DanhMucSanPham", new { id = categoryId, priceRange = "", sortBy = currentSort })">Tất cả</a>
+                        </li>
+                        <li class="@(currentPrice == "duoi-5" ? "active" : "")">
+                            <a href="@Url.Action("DanhMucSanPham", new { id = categoryId, priceRange = "duoi-5", sortBy = currentSort })">Dưới 5 triệu</a>
+                        </li>
+                        <li class="@(currentPrice == "5-10" ? "active" : "")">
+                            <a href="@Url.Action("DanhMucSanPham", new { id = categoryId, priceRange = "5-10", sortBy = currentSort })">Từ 5 - 10 triệu</a>
+                        </li>
+                        <li class="@(currentPrice == "tren-10" ? "active" : "")">
+                            <a href="@Url.Action("DanhMucSanPham", new { id = categoryId, priceRange = "tren-10", sortBy = currentSort })">Trên 10 triệu</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-9 col-md-8">
+
+            <div class="sort-bar d-flex justify-content-end align-items-center mb-3 p-2 bg-light rounded">
+                <span class="text-muted me-2">Sắp xếp theo:</span>
+                <select class="form-select sort-select" id="sortSelect">
+                    <option value="default" @(string.IsNullOrEmpty(currentSort) ? "selected" : "")>Mới nhất</option>
+                    <option value="price-asc" @(currentSort == "price-asc" ? "selected" : "")>Giá: Thấp đến Cao</option>
+                    <option value="price-desc" @(currentSort == "price-desc" ? "selected" : "")>Giá: Cao đến Thấp</option>
+                    <option value="name-asc" @(currentSort == "name-asc" ? "selected" : "")>Tên: A-Z</option>
+                    <option value="name-desc" @(currentSort == "name-desc" ? "selected" : "")>Tên: Z-A</option>
+                </select>
+            </div>
+
+            <div class="row product-grid">
+                @foreach (var p in Model)
+                {
+                    <div class="col-xl-4 col-lg-6 col-md-12 col-sm-6 mb-4">
+                        <div class="card product-card h-100 shadow-sm">
+                            <a href="@Url.Action("ProductDetail", "Home", new { id = p.ProductID })" class="product-link text-center">
+                                <img src="@Url.Content(p.ProductImage)" class="card-img-top product-image-list" alt="@p.ProductName" />
+                            </a>
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="card-title product-name-list">
+                                    <a href="@Url.Action("ProductDetail", "Home", new { id = p.ProductID })">@p.ProductName</a>
+                                </h5>
+                                <p class="card-text product-price-list text-danger fw-bold mt-auto">
+                                    @String.Format("{0:N0} ₫", p.ProductPrice)
+                                </p>
+                                <button class="btn btn-sm btn-primary mt-2 add-to-cart-btn" data-product-id="@p.ProductID">Thêm vào giỏ</button>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                @if (!Model.Any())
+                {
+                    <div class="col-12">
+                        <div class="alert alert-warning text-center" role="alert">
+                            Không tìm thấy sản phẩm nào phù hợp với tiêu chí lọc.
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="d-flex justify-content-center mt-5">
+                @Html.PagedListPager(Model,
+                    page => Url.Action("DanhMucSanPham",
+                        new
+                             {
+                            id = categoryId,
+                            page,
+                            priceRange = currentPrice,
+                            sortBy = currentSort // <-- Thêm sortBy
+                        }),
+                    new PagedListRenderOptions
+                    {
+                        ContainerDivClasses = new[] { "pagination" },
+                        LiElementClasses = new[] { "page-item" }
+                    })
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+
+            // === THÊM MỚI: JAVASCRIPT CHO SẮP XẾP ===
+            $('#sortSelect').on('change', function () {
+                var selectedSort = $(this).val();
+
+                // Lấy URL hiện tại
+                var url = new URL(window.location.href);
+
+                // Đặt tham số 'sortBy'
+                url.searchParams.set('sortBy', selectedSort);
+
+                // Đặt lại trang về 1 khi sắp xếp
+                url.searchParams.set('page', '1');
+
+                // Tải lại trang với URL mới
+                window.location.href = url.href;
+            });
+
+            // Nút "Thêm vào giỏ"
+            $('.add-to-cart-btn').on('click', function () {
+                var productId = $(this).data('product-id');
+                if (typeof addToCart === 'function') {
+                    addToCart(productId, 1);
+                } else {
+                    console.error("Hàm addToCart() không tồn tại.");
+                }
+            });
+
+            // Sửa lỗi hiển thị Phân trang (cho thư viện PagedList cũ)
+            $('.pagination .page-item a').addClass('page-link');
+            $('.pagination .page-item span').addClass('page-link');
+        });
+    </script>
+}

@@ -1,0 +1,221 @@
+﻿@model WebBanHang.Models.ViewModel.HomeProductVM
+@using PagedList.Mvc
+<style></style>
+<link href="~/Content/myStyle/stylE.css" rel="stylesheet" />
+<head>
+    <title>
+        Stressmama
+    </title>
+    <style>
+        /*body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #fff;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            border-bottom: 1px solid #eaeaea;
+        }
+
+
+            .header img {
+                height: 50px;
+            }
+
+        .nav {
+            display: flex;
+            gap: 20px;
+        }
+
+            .nav a {
+                text-decoration: none;
+                color: #000;
+                font-weight: 500;
+            }
+
+        .search-cart {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+            .search-cart input {
+                padding: 5px 10px;
+                border: 1px solid #eaeaea;
+                border-radius: 5px;
+            }
+
+            .search-cart .cart {
+                position: relative;
+            }
+
+                .search-cart .cart i {
+                    font-size: 20px;
+                }
+
+                .search-cart .cart .badge {
+                    position: absolute;
+                    top: -5px;
+                    right: -10px;
+                    background-color: red;
+                    color: #fff;
+                    border-radius: 50%;
+                    padding: 2px 5px;
+                    font-size: 12px;
+                }
+
+        .banner {
+            position: relative;
+            text-align: center;
+            color: white;
+        }
+
+            .banner img {
+                width: 100%;
+                height: 70%;
+            }
+
+            .banner .text {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                font-size: 50px;
+                font-weight: 700;
+            }
+
+            .banner .prev, .banner .next {
+                position: absolute;
+                top: 50%;
+                transform: translateY(-50%);
+                background-color: rgba(0, 0, 0, 0.5);
+                color: white;
+                border: none;
+                padding: 10px;
+                font-size: 20px;
+                cursor: pointer;
+            }
+
+            .banner .prev {
+                left: 10px;
+            }
+
+            .banner .next {
+                right: 10px;
+            }
+
+        .content {
+            padding: 20px;
+        }
+
+            .content h2 {
+                font-size: 24px;
+                font-weight: 700;
+                margin-bottom: 20px;
+            }
+
+        .filters {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+            .filters select {
+                padding: 5px 10px;
+                border: 1px solid #eaeaea;
+                border-radius: 5px;
+            }
+
+        .products {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .product {
+            width: calc(25% - 20px);
+            border: 1px solid #eaeaea;
+            border-radius: 5px;
+            overflow: hidden;
+            text-align: center;
+        }
+
+            .product img {
+                width: 100%;
+                height: 60%;
+            }
+
+            .product .info {
+                padding: 10px;
+            }
+
+                .product .info h3 {
+                    font-size: 16px;
+                    font-weight: 500;
+                    margin: 10px 0;
+                }
+
+                .product .info .price {
+                    font-size: 14px;
+                    font-weight: 700;
+                    color: red;
+                }
+
+                .product .info .old-price {
+                    font-size: 12px;
+                    text-decoration: line-through;
+                    color: #999;
+                }*/
+    </style>
+</head>
+@if (Model.NewProducts != null && Model.NewProducts.Any())
+{
+    <section class="container-fluid ListProduct">
+        <h2>Sản phẩm mới</h2>
+        
+            <div class="feature-container">
+                @foreach (var product in Model.NewProducts)
+                {
+                    <div class="lproduct-item ">
+                        <div>
+                            <a href="@Url.Action("ProductDetail","Home",  new {id = product.ProductID})">
+                                <img src="@Html.DisplayFor(modelItem => product.ProductImage)" />
+                            </a>
+                        </div>
+                        <div>
+                            <div class="prodPrice">
+                                @Html.DisplayFor(modelItem => product.ProductPrice)
+                            </div>
+                            <div class="prodName">
+                                @Html.DisplayFor(modelItem => product.ProductName)
+                            </div>
+                            <p class="prodSale">
+                                Đã bán: &nbsp; @Html.DisplayFor(modelItem => product.OrderDetails.Count)
+                            </p>
+                        </div>
+                    </div>
+
+                }
+            </div>
+       
+
+    </section>
+
+
+    <div class="pagination-container">
+        @Html.PagedListPager(Model.Products, page => @Url.Action("Index", new { page, searchTerm = Model.SearchTerm }))
+    </div>
+
+}
+
+else
+{
+    <p>Không tìm được sản phẩm phù hợp</p>
+}
+

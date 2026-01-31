@@ -1,0 +1,156 @@
+﻿@model WebBanHang.Models.ViewModel.ProductSearchVM
+@using PagedList.Mvc
+
+@{
+    ViewBag.Title = "Quản lý Sản phẩm";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+<link href="~/Content/Admin/products_admin.css" rel="stylesheet" />
+
+<div class="card shadow-sm p-4 admin-search-page">
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div id="alertMessage" class="alert alert-danger alert-dismissible fade show">
+            ❌ @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div id="alertMessage" class="alert alert-success alert-dismissible fade show">
+            ✅ @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @using (Html.BeginForm("Index", "Products", FormMethod.Get, new { @class = "mb-4 border p-3 rounded bg-light admin-toolbar" }))
+    {
+        <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
+            <div class="d-flex">
+                <label class="me-3 mt-2 fw-bold text-muted">Tìm kiếm:</label>
+                @Html.TextBoxFor(m => m.searchTerm, new
+                {
+                    @class = "form-control me-2",
+                    placeholder = "Tên, mô tả sản phẩm...",
+                    style = "width: 250px;",
+                    Value = Model.searchTerm
+                })
+                <button type="submit" class="btn btn-primary">
+                    <i class="fa-solid fa-search"></i> Lọc
+                </button>
+            </div>
+        </div>
+
+        <div class="d-flex align-items-center justify-content-start">
+            <strong class="me-3">Khoảng giá:</strong>
+            @Html.TextBoxFor(m => m.MinPrice, new
+            {
+                @class = "form-control me-2",
+                placeholder = "Giá tối thiểu (VNĐ)",
+                type = "number",
+                style = "width: 120px;",
+                Value = Model.MinPrice
+            })
+
+            <span class="me-2 text-muted">đến</span>
+            @Html.TextBoxFor(m => m.MaxPrice, new
+            {
+                @class = "form-control me-3",
+                placeholder = "Giá tối đa (VNĐ)",
+                type = "number",
+                style = "width: 120px;",
+                Value = Model.MaxPrice
+            })
+            @Html.ActionLink("Xóa Bộ Lọc", "Index", "Products", null, new { @class = "btn btn-outline-secondary btn-sm ms-3" })
+
+            @Html.HiddenFor(m => m.sortOrder)
+        </div>
+        <hr class="my-4" />
+
+<div class="d-flex align-items-center mb-3 p-2 bg-light rounded order-container-admin">
+    <strong class="me-3 text-primary">Sắp xếp:</strong>
+
+    @{
+        var currentParams = new
+        {
+            searchTerm = Model.searchTerm,
+            minPrice = Model.MinPrice,
+            maxPrice = Model.MaxPrice,
+            page = Model.page
+        };
+    }
+
+    @Html.ActionLink("Tên (A-Z)", "Index", "Products", new { sortOrder = "name_asc", @currentParams }, new { @class = "btn btn-outline-dark btn-sm me-2" })
+    @Html.ActionLink("Tên (Z-A)", "Index", "Products", new { sortOrder = "name_desc", @currentParams }, new { @class = "btn btn-outline-dark btn-sm me-2" })
+    @Html.ActionLink("Giá thấp nhất", "Index", "Products", new { sortOrder = "price_asc", @currentParams }, new { @class = "btn btn-outline-dark btn-sm me-2" })
+    @Html.ActionLink("Giá cao nhất", "Index", "Products", new { sortOrder = "price_desc", @currentParams }, new { @class = "btn btn-outline-dark btn-sm" })
+</div>
+    }
+
+    
+    @Html.ActionLink("Thêm Sản Phẩm Mới", "Create", null, new { @class = "btn btn-success btn-lg" })
+
+
+    <h3 class="mt-4 mb-3">Danh sách sản phẩm</h3>
+    <p class="text-muted">Đang hiển thị <strong>@Model.products.TotalItemCount </strong> sản phẩm.</p>
+
+    @Html.Partial("PVListProduct", Model.products)
+
+
+<div class="pagination-container d-flex justify-content-center mt-4">
+    @if (Model != null && Model.products != null && Model.products.PageCount > 1)
+    {
+        @Html.PagedListPager(Model.products, page => Url.Action("Index", new
+        {
+            page,
+            sortOrder = Model.sortOrder,
+            searchTerm = Model.searchTerm,
+            minPrice = Model.MinPrice,
+            maxPrice = Model.MaxPrice
+            }), PagedListRenderOptions.ClassicPlusFirstAndLast)
+    }
+</div>
+</div>
+
+@section Scripts {
+    <script>
+        // Tự động ẩn thông báo
+        window.addEventListener("DOMContentLoaded", function () {
+            const alertBox = document.getElementById("alertMessage");
+            if (alertBox) {
+                // Sau 3 giây thì fade-out
+                setTimeout(() => {
+                    alertBox.classList.add("fade-out");
+                    // Sau khi hiệu ứng kết thúc (0.5s), xóa phần tử khỏi DOM
+                    setTimeout(() => {
+                        alertBox.remove();
+                    }, 500);
+                }, 3000);
+            }
+        });
+    </script>
+}
+
+<style>
+    /* CSS cho hiệu ứng thông báo (Giữ nguyên) */
+    .fade-in {
+        opacity: 0;
+        transform: translateY(-10px);
+        animation: fadeIn 0.5s forwards;
+    }
+
+    .fade-out {
+        opacity: 0;
+        transform: translateY(-10px);
+        transition: opacity 0.5s, transform 0.5s;
+    }
+
+    @@keyframes fadeIn {
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>

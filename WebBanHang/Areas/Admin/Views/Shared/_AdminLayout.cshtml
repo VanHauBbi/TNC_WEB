@@ -1,0 +1,102 @@
+﻿@{
+    // Lấy tên Controller hiện tại từ RouteData
+    string currentController = ViewContext.RouteData.Values["controller"].ToString();
+
+    // Hàm Helper để kiểm tra và trả về class 'active'
+    string GetActiveClass(string controllerName)
+    {
+        return controllerName.Equals(currentController, StringComparison.OrdinalIgnoreCase) ? "active" : "";
+    }
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quản trị - @ViewBag.Title</title>
+
+    <!-- Bootstrap CSS (Quan trọng) -->
+    <link href="~/Content/bootstrap.min.css" rel="stylesheet" />
+
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <!-- ADMIN CSS RIÊNG -->
+    <link href="~/Content/Admin/home_admin.css" rel="stylesheet" />
+
+    <!-- Các Styles khác -->
+    @Styles.Render("~/Content/css")
+    @Scripts.Render("~/bundles/modernizr")
+</head>
+<body>
+
+    <!-- SIDEBAR (MENU QUẢN TRỊ) -->
+    <div class="sidebar">
+        <div class="admin-logo-box">
+            <!-- Sử dụng logo của bạn, đã được làm trắng bằng CSS -->
+            <img src="~/TopIcon/logo-tnc.png" alt="Admin Logo" />
+        </div>
+
+        <ul class="sidebar-menu">
+            <li>
+                @* Dashboard (Controller Home trong Admin Area) *@
+                <a href="@Url.Action("Index", "Home")" class="@GetActiveClass("Home")">
+                    <i class="fa-solid fa-tachometer-alt"></i> Dashboard
+                </a>
+            </li>
+            <li>
+                <a href="@Url.Action("Index", "Products")" class="@GetActiveClass("Products")">
+                    <i class="fa-solid fa-box-open"></i> Quản lý Sản phẩm
+                </a>
+            </li>
+            <li>
+                <a href="@Url.Action("Index", "Categories")" class="@GetActiveClass("Categories")">
+                    <i class="fa-solid fa-sitemap"></i> Quản lý Danh mục
+                </a>
+            </li>
+            <li>
+                <a href="@Url.Action("Index", "Orders")" class="@GetActiveClass("Orders")">
+                    <i class="fa-solid fa-receipt"></i> Quản lý Đơn hàng
+                </a>
+            </li>
+            <li>
+                <a href="@Url.Action("Index", "Customers")" class="@GetActiveClass("Customers")">
+                    <i class="fa-solid fa-users"></i> Quản lý Khách hàng
+                </a>
+            </li>
+            <li>
+                <a href="@Url.Action("Logout", "Account", new { Area = "" })">
+                    <i class="fa-solid fa-sign-out-alt"></i> Đăng xuất
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- MAIN CONTENT AREA -->
+    <div class="main-content">
+
+        <div class="admin-header">
+            <h1 class="admin-title">@ViewBag.Title</h1>
+            <div class="admin-user-info">
+                <span class="text-secondary">Xin chào, @Session["UserName"]</span>
+            </div>
+        </div>
+
+        <div class="container-fluid">
+            <!-- NỘI DUNG VIEW CON ĐƯỢC RENDER Ở ĐÂY -->
+            @RenderBody()
+        </div>
+
+        <!-- FOOTER ADMIN CƠ BẢN -->
+        <div class="admin-footer-copyright">
+            <p>&copy; @DateTime.Now.Year - Khu vực Quản trị Hệ thống</p>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    @Scripts.Render("~/bundles/jquery")
+    @Scripts.Render("~/bundles/bootstrap")
+    @RenderSection("scripts", required: false)
+</body>
+</html>

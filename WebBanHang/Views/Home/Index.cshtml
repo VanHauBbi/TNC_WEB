@@ -1,0 +1,229 @@
+﻿@model WebBanHang.Models.ViewModel.HomeProductVM
+@{
+    ViewBag.Title = "Trang chủ - TNCStore";
+    Layout = "~/Views/Shared/_LayoutDivMain.cshtml";
+}
+
+<div class="container mt-4">
+
+    <div class="row mb-5">
+        <div class="col-12">
+            <div id="mainBannerCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="3000">
+
+                <div class="carousel-inner banner-carousel-inner">
+                    <div class="carousel-item active">
+                        <img src="~/image/banner-haloween-pc-1.jpg" class="d-block w-100 banner-img-fit" alt="Khuyến mãi Halloween PC 1">
+                    </div>
+
+                    <div class="carousel-item">
+                        <img src="~/image/banner-haloween-pc-2.jpg" class="d-block w-100 banner-img-fit" alt="Khuyến mãi Halloween PC 2">
+                    </div>
+
+                    <div class="carousel-item">
+                        <img src="~/image/banner-trang-chu-pc-hoan-tien-4-phan-tram-1.jpg" class="d-block w-100 banner-img-fit" alt="Bảo hành đổi mới 3 năm">
+                    </div>
+
+                    <div class="carousel-item">
+                        <img src="~/image/banner-mua-man-hinh-tang-tien-mat.jpg" class="d-block w-100 banner-img-fit" alt="Mua màn hình tặng tiền mặt">
+                    </div>
+                </div>
+
+                <button class="carousel-control-prev" type="button" data-bs-target="#mainBannerCarousel" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Previous</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#mainBannerCarousel" data-bs-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Next</span>
+                </button>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-3 justify-content-center thumbnail-indicators">
+
+        @{
+            // Tạo danh sách banner và đường dẫn cho thumbnail
+            var bannerThumbnails = new List<string>
+        {
+            "banner-haloween-pc-1.jpg",
+            "banner-haloween-pc-2.jpg",
+            "banner-trang-chu-pc-hoan-tien-4-phan-tram-1.jpg",
+            "banner-mua-man-hinh-tang-tien-mat.jpg",
+            
+        };
+            int thumbnailIndex = 0;
+        }
+
+        @foreach (var bannerName in bannerThumbnails)
+        {
+            <div class="col-3 col-md-3 col-lg-2 p-1">
+                <img src="~/image/@bannerName"
+                     class="img-fluid banner-thumbnail-item @(thumbnailIndex == 0 ? "active" : "")"
+                     data-bs-target="#mainBannerCarousel"
+                     data-bs-slide-to="@thumbnailIndex"
+                     alt="Thumbnail @(thumbnailIndex + 1)" />
+            </div>
+            thumbnailIndex++;
+        }
+    </div>
+
+    <div class="row text-center mb-5 quick-links">
+        <div class="col-md-3">
+            <a href="#" class="quick-link-item">
+                <i class="fas fa-desktop fa-2x text-primary mb-2"></i>
+                <p class="fw-bold">PC Gaming</p>
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a href="#" class="quick-link-item">
+                <i class="fas fa-laptop-code fa-2x text-success mb-2"></i>
+                <p class="fw-bold">Laptop Văn Phòng</p>
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a href="#" class="quick-link-item">
+                <i class="fas fa-cogs fa-2x text-warning mb-2"></i>
+                <p class="fw-bold">Linh Kiện</p>
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a href="#" class="quick-link-item">
+                <i class="fas fa-headphones-alt fa-2x text-info mb-2"></i>
+                <p class="fw-bold">Gaming Gear</p>
+            </a>
+        </div>
+    </div>
+
+    <hr class="my-4" />
+
+    <h3 class="mb-4 section-title text-uppercase">⭐ Sản phẩm nổi bật nhất <small class="text-muted fs-6">Được yêu thích</small></h3>
+    <div class="row" id="featured-products-container">
+        @{
+            // Số lượng sản phẩm ban đầu hiển thị
+            int featuredDisplayCount = 4;
+            // Tổng số sản phẩm (để dùng trong JS)
+            int featuredTotalCount = Model.FeaturedProducts.Count();
+            int featuredProductIndex = 0;
+        }
+
+        @foreach (var item in Model.FeaturedProducts)
+        {
+            // Thêm class 'd-none' cho các sản phẩm từ vị trí thứ 5 trở đi
+            string displayClass = (featuredProductIndex >= featuredDisplayCount) ? "d-none extra-featured-product" : "";
+
+            <div class="col-xl-3 col-lg-4 col-md-6 mb-4 @displayClass">
+                <div class="card product-card h-100">
+                    <a href="@Url.Action("ProductDetail", "Home", new { id = item.ProductID })" class="product-link">
+                        <img src="@item.ProductImage" class="card-img-top product-image" alt="@item.ProductName" />
+                    </a>
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title product-title">@item.ProductName</h5>
+                        <p class="card-text product-price text-danger fw-bold mt-auto">@item.ProductPrice.ToString("N0") ₫</p>
+                        <button class="btn btn-sm btn-primary mt-2 add-to-cart-btn" data-product-id="@item.ProductID">Thêm vào giỏ</button>
+                    </div>
+                </div>
+            </div>
+            featuredProductIndex++;
+        }
+    </div>
+
+    @if (featuredTotalCount > featuredDisplayCount)
+    {
+        <div class="text-center mb-5">
+            <button class="btn btn-outline-primary mt-3 px-5" id="toggleFeaturedProducts" data-target="#featured-products-container">Xem thêm</button>
+        </div>
+    }
+
+    <hr class="my-4" />
+
+    <h3 class="mb-4 section-title text-uppercase">🆕 Sản phẩm mới về <small class="text-muted fs-6">Vừa cập nhật</small></h3>
+    <div class="row" id="new-products-container">
+        @{
+            // Số lượng sản phẩm ban đầu hiển thị
+            int newDisplayCount = 4;
+            // Tổng số sản phẩm (để dùng trong JS)
+            int newTotalCount = Model.NewProducts.Count();
+            int newProductIndex = 0;
+        }
+
+        @foreach (var item in Model.NewProducts)
+        {
+            // Thêm class 'd-none' cho các sản phẩm từ vị trí thứ 5 trở đi
+            string displayClass = (newProductIndex >= newDisplayCount) ? "d-none extra-new-product" : "";
+
+            <div class="col-xl-3 col-lg-4 col-md-6 mb-4 @displayClass">
+                <div class="card product-card h-100">
+                    <a href="@Url.Action("ProductDetail", "Home", new { id = item.ProductID })" class="product-link">
+                        <img src="@item.ProductImage" class="card-img-top product-image" alt="@item.ProductName" />
+                    </a>
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title product-title">@item.ProductName</h5>
+                        <p class="card-text product-price text-danger fw-bold mt-auto">@item.ProductPrice.ToString("N0") ₫</p>
+                        <button class="btn btn-sm btn-primary mt-2 add-to-cart-btn" data-product-id="@item.ProductID">Thêm vào giỏ</button>
+                    </div>
+                </div>
+            </div>
+            newProductIndex++;
+        }
+    </div>
+
+    @if (newTotalCount > newDisplayCount)
+    {
+        <div class="text-center mb-5">
+            <button class="btn btn-outline-primary mt-3 px-5" id="toggleNewProducts" data-target="#new-products-container">Xem thêm</button>
+        </div>
+    }
+
+</div>
+
+@section Scripts {
+    <script>
+        // Hàm chung để xử lý chức năng "Xem thêm" / "Thu gọn"
+        function setupProductToggle(buttonId, productClass) {
+            const toggleBtn = document.getElementById(buttonId);
+            if (!toggleBtn) return; // Thoát nếu nút không tồn tại
+
+            const productContainers = document.querySelectorAll(productClass);
+            let showAll = false;
+
+            // Ẩn ban đầu nếu cần thiết (đã thêm class 'd-none' trong Razor)
+            // productContainers.forEach(p => p.style.display = 'none'); // Không cần vì đã dùng d-none
+
+            toggleBtn.addEventListener("click", function () {
+                showAll = !showAll;
+
+                productContainers.forEach(p => {
+                    // Dùng class Bootstrap d-none (display: none)
+                    if (showAll) {
+                        p.classList.remove('d-none');
+                        p.style.display = ''; // Đảm bảo hiển thị đúng (block/flex/etc)
+                    } else {
+                        p.classList.add('d-none');
+                    }
+                });
+
+                toggleBtn.textContent = showAll ? "Thu gọn" : "Xem thêm";
+            });
+        }
+
+        // Áp dụng hàm cho từng khối sản phẩm
+        // Sử dụng selector CSS class đã thêm vào Razor
+        setupProductToggle("toggleNewProducts", ".extra-new-product");
+        setupProductToggle("toggleFeaturedProducts", ".extra-featured-product");
+
+        // Xử lý nút "Thêm vào giỏ"
+        document.querySelectorAll(".add-to-cart-btn").forEach(button => {
+            button.addEventListener("click", function () {
+                const productId = this.getAttribute("data-product-id");
+                // Giả định hàm addToCart(productId, quantity) đã có trong _Layout
+                if (typeof addToCart === 'function') {
+                    addToCart(productId, 1); // Thêm 1 sản phẩm
+                } else {
+                    alert("Chức năng thêm vào giỏ hàng chưa được kích hoạt!");
+                }
+            });
+        });
+    </script>
+}

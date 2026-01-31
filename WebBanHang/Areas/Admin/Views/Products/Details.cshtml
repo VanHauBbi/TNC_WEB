@@ -1,0 +1,15 @@
+﻿@model WebBanHang.Models.Product
+
+@{
+    ViewBag.Title = "Chi tiết Sản phẩm";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+<link href="~/Content/Admin/products_admin.css" rel="stylesheet" />
+
+@Html.Partial("PVProdInfo", Model)
+
+<div class="form-group admin-action-buttons" style="margin-top: 20px; margin-left: 15px;">
+    @Html.ActionLink("Sửa", "Edit", new { id = Model.ProductID }, new { @class = "btn btn-warning" })
+    @Html.ActionLink("Quay lại danh sách", "Index", null, new { @class = "btn btn-secondary" })
+</div>

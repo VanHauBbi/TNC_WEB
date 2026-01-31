@@ -1,0 +1,97 @@
+﻿/* Màu sắc thương hiệu */
+:root {
+    --tnc-primary: #007bff; /* Thay bằng màu xanh/cam chủ đạo nếu có */
+    --tnc-orange: #ff6600;
+    --tnc-text: #212529;
+}
+
+/* Tiêu đề trang */
+.category-title {
+    font-weight: 700;
+    color: var(--tnc-text);
+    border-bottom: 2px solid #dee2e6;
+    padding-bottom: 10px;
+}
+
+/* Bộ lọc (Sidebar) */
+.filter-sidebar {
+    padding: 15px;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.sidebar-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: var(--tnc-orange);
+}
+
+.filter-heading {
+    font-weight: 700;
+    color: var(--tnc-text);
+    margin-bottom: 8px;
+    border-bottom: 1px dotted #ced4da;
+    padding-bottom: 5px;
+}
+
+.filter-options li a {
+    color: #6c757d;
+    text-decoration: none;
+    display: block;
+    padding: 3px 0;
+    transition: color 0.15s;
+}
+
+    .filter-options li a:hover {
+        color: var(--tnc-orange);
+        font-weight: 600;
+    }
+
+/* Thanh Sắp xếp */
+.sort-select {
+    width: auto;
+    font-size: 0.9rem;
+}
+
+/* Thẻ Sản phẩm (Product Card) */
+.product-card {
+    border-radius: 8px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+    .product-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15) !important;
+    }
+
+.product-image-list {
+    height: 200px;
+    object-fit: contain; /* Đảm bảo hình ảnh không bị cắt */
+    padding: 15px;
+}
+
+.product-name-list a {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--tnc-text);
+    text-decoration: none;
+    /* Giới hạn 2 dòng */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+    .product-name-list a:hover {
+        color: var(--tnc-orange);
+    }
+
+.product-price-list {
+    font-size: 1.15rem;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}

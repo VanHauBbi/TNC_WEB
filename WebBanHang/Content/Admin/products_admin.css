@@ -1,0 +1,178 @@
+﻿/* products_admin.css */
+
+:root {
+    --admin-primary: #007bff;
+    --admin-success: #28a745;
+    --admin-danger: #dc3545;
+    --admin-info-bg: #f9f9f9;
+}
+
+/* --- Tối ưu hóa Forms (Create/Edit) --- */
+.form-horizontal .form-group {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.form-horizontal .control-label {
+    flex: 0 0 150px; /* Cố định độ rộng nhãn */
+    text-align: right;
+    padding-right: 15px;
+    font-weight: 600;
+}
+
+.form-horizontal .col-md-10 {
+    flex: 1;
+    padding-left: 0;
+}
+
+.form-horizontal .form-control {
+    max-width: 100%;
+}
+
+.form-horizontal hr {
+    margin-top: 0;
+}
+
+/* --- Nút Action --- */
+.admin-action-buttons .btn {
+    padding: 8px 16px;
+    border-radius: 5px;
+    transition: all 0.2s;
+    margin-right: 8px;
+}
+
+.admin-action-buttons .btn-primary {
+    background-color: var(--admin-primary);
+    border-color: var(--admin-primary);
+}
+
+    .admin-action-buttons .btn-primary:hover {
+        background-color: #0056b3;
+        border-color: #0056b3;
+    }
+
+.admin-action-buttons .btn-warning {
+    background-color: #ffc107;
+}
+
+/* --- DETAILS (Thông tin sản phẩm) --- */
+.product-detail-container {
+    background-color: var(--admin-info-bg);
+    border-radius: 8px;
+    padding: 25px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.product-detail-info {
+    font-family: Arial, sans-serif;
+}
+
+    .product-detail-info dt {
+        font-weight: bold;
+        color: #343a40;
+        margin-bottom: 5px;
+        margin-top: 10px;
+        border-bottom: 1px dotted #ccc;
+        padding-bottom: 3px;
+    }
+
+    .product-detail-info dd {
+        margin: 0 0 15px 0;
+        font-size: 16px;
+        color: #6c757d;
+    }
+
+.product-image-large {
+    height: 280px;
+    max-width: 100%;
+    object-fit: contain;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* --- DELETE --- */
+.delete-warning {
+    color: var(--admin-danger);
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-top: 20px;
+}
+/* Thêm vào products_admin.css */
+
+/* Định dạng hình ảnh sản phẩm trong bảng */
+.product-thumb-admin {
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+/* Tận dụng lại style bảng đã định nghĩa trước đó */
+.table-admin-data {
+    font-size: 0.95rem;
+}
+
+    /* Đảm bảo nội dung căn giữa chiều dọc */
+    .table-admin-data tbody td {
+        vertical-align: middle;
+    }
+
+    /* Đảm bảo các cột action không bị float */
+    .table-admin-data td:last-child a,
+    .table-admin-data td:last-child button {
+        /* Đảm bảo khoảng cách giữa các nút */
+        margin: 2px;
+    }
+/* Thêm vào home_admin.css hoặc products_admin.css */
+
+/* --- PHÂN TRANG CHUẨN BOOTSTRAP --- */
+.pagination-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 25px;
+    margin-bottom: 10px;
+}
+
+.pagination {
+    display: inline-flex;
+    gap: 6px;
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+    .pagination li {
+        display: inline;
+    }
+
+        .pagination li a,
+        .pagination li span {
+            border: 1px solid #dee2e6;
+            padding: 6px 12px;
+            color: #007bff;
+            background-color: #fff;
+            border-radius: 4px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+            .pagination li a:hover {
+                background-color: #e9ecef;
+                border-color: #adb5bd;
+            }
+
+        .pagination li.active span {
+            background-color: #007bff;
+            color: #fff;
+            border-color: #007bff;
+            font-weight: 600;
+        }
+
+        .pagination li.disabled span {
+            color: #aaa;
+            background-color: #f8f9fa;
+            cursor: not-allowed;
+        }

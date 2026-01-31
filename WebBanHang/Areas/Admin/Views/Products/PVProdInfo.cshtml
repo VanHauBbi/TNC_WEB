@@ -1,0 +1,24 @@
+﻿@model WebBanHang.Models.Product
+
+<div class="product-detail-container">
+    <div class="row">
+        <div class="col-md-4 text-center">
+            <img src=" @Html.DisplayFor(model => model.ProductImage)" class="product-image-large" />
+        </div>
+        <div class="col-md-8">
+            <dl class="product-detail-info dl-horizontal">
+                <dt> Tên sản phẩm</dt>
+                <dd> @Html.DisplayFor(model => model.ProductName) </dd>
+
+                <dt> Danh mục </dt>
+                <dd> @Html.DisplayFor(model => model.Category.CategoryName) </dd>
+
+                <dt>Đơn giá </dt>
+                <dd class="fw-bold text-danger"> @Html.DisplayFor(model => model.ProductPrice) ₫ </dd>
+
+                <dt>Mô tả</dt>
+                <dd> @Html.DisplayFor(model => model.ProductDescription) </dd>
+            </dl>
+        </div>
+    </div>
+</div>

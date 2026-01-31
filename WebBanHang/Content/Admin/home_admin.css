@@ -1,0 +1,201 @@
+﻿/* home_admin.css */
+
+/* Định nghĩa màu sắc */
+:root {
+    --admin-primary: #007bff; /* Màu xanh chủ đạo */
+    --admin-secondary: #6c757d;
+    --admin-bg: #f8f9fa; /* Nền xám nhạt */
+    --admin-sidebar-bg: #343a40; /* Nền sidebar đen */
+    --admin-text-light: #f8f9fa;
+    --admin-link-hover: #ffc107; /* Vàng nổi bật */
+}
+
+body {
+    font-family: 'Open Sans', sans-serif;
+    background-color: var(--admin-bg);
+    margin: 0;
+    padding: 0;
+    display: flex;
+    min-height: 100vh; /* Chiếm hết chiều cao màn hình */
+}
+
+/* --- SIDEBAR (Thanh điều hướng cố định bên trái) --- */
+.sidebar {
+    width: 250px;
+    background-color: var(--admin-sidebar-bg);
+    color: var(--admin-text-light);
+    position: fixed; /* Cố định vị trí */
+    height: 100%;
+    padding: 20px;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+}
+
+.admin-logo-box {
+    text-align: center;
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #495057;
+}
+
+    .admin-logo-box img {
+        width: 150px;
+        filter: invert(1); /* Biến logo thành màu trắng cho nền tối */
+    }
+
+.sidebar-menu {
+    list-style: none;
+    padding: 0;
+}
+
+    .sidebar-menu a {
+        display: block;
+        color: var(--admin-text-light);
+        padding: 12px 15px;
+        text-decoration: none;
+        border-radius: 4px;
+        margin-bottom: 8px;
+        transition: background-color 0.2s, color 0.2s;
+        font-weight: 500;
+    }
+
+        .sidebar-menu a:hover,
+        .sidebar-menu a.active {
+            background-color: var(--admin-primary);
+            color: #fff;
+        }
+
+        .sidebar-menu a.active {
+            font-weight: 700;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+    .sidebar-menu i {
+        margin-right: 10px;
+    }
+
+
+/* --- MAIN CONTENT (Nội dung chính) --- */
+.main-content {
+    margin-left: 250px; /* Bằng với độ rộng sidebar */
+    flex-grow: 1;
+    padding: 20px 30px;
+    width: calc(100% - 250px);
+}
+
+.admin-header {
+    background: #fff;
+    padding: 15px 25px;
+    margin-bottom: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.admin-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--admin-primary);
+}
+
+/* Footer Admin cơ bản (Chỉ hiển thị dưới cùng của nội dung chính) */
+.admin-footer-copyright {
+    margin-top: 50px;
+    padding-top: 20px;
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--admin-secondary);
+    border-top: 1px solid #dee2e6;
+}
+/* Thêm vào home_admin.css */
+
+/* Style cho khối nội dung chính (Card) */
+.card {
+    border: none;
+    border-radius: 8px;
+    margin-bottom: 25px;
+}
+
+/* Tiêu đề nội dung */
+.admin-content-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #343a40; /* Màu chữ đậm */
+    border-bottom: 2px solid #dee2e6;
+    padding-bottom: 10px;
+}
+
+/* Bảng dữ liệu Admin */
+.table-admin-data {
+    font-size: 0.95rem;
+}
+
+    .table-admin-data thead.table-dark th {
+        /* Đảm bảo màu nền đậm và chữ trắng cho Admin */
+        background-color: var(--admin-sidebar-bg) !important;
+        color: var(--admin-text-light);
+        border-color: #495057;
+    }
+
+    .table-admin-data tbody tr:hover {
+        background-color: #e9ecef; /* Hiệu ứng hover nhẹ */
+    }
+/* Thêm vào home_admin.css */
+
+/* --- Bảng dữ liệu Đơn hàng --- */
+.table-admin-orders {
+    width: 100%;
+    font-size: 0.9rem; /* Font nhỏ gọn hơn cho bảng Admin */
+}
+
+    /* Căn chỉnh lại padding/margin cho form Xóa */
+    .table-admin-orders .action-col .d-inline {
+        margin-left: 5px;
+    }
+
+    .table-admin-orders .btn-sm {
+        padding: 4px 8px; /* Giảm padding nút */
+        font-size: 0.8rem;
+    }
+
+    .table-admin-orders thead th {
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+/* Thêm/Sửa trong file CSS Admin của bạn (ví dụ: order_admin.css) */
+
+/* Định nghĩa màu sắc chuẩn cho Trạng thái */
+:root {
+    --admin-success: #28a745; /* Hoạt động (Xanh lá) */
+    --admin-danger: #dc3545; /* Bị khóa (Đỏ) */
+    --admin-warning: #ffc107;
+}
+
+/* 1. Trạng thái (Index) - Cần đảm bảo badge nổi bật */
+.table-admin-orders .badge {
+    padding: 6px 10px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    border-radius: 50rem; /* Làm tròn badge */
+}
+
+/* --- Hoạt động (Active) --- */
+.table-admin-orders .bg-success {
+    background-color: var(--admin-success) !important;
+    color: white !important;
+}
+
+/* --- Bị Khóa (Inactive) --- */
+.table-admin-orders .bg-danger {
+    background-color: var(--admin-danger) !important;
+    color: white !important;
+}
+
+
+/* 2. Trạng thái trong Trang Edit/Detail */
+.form-group .badge.fs-5 {
+    /* Đảm bảo badge lớn hơn và màu sắc mạnh */
+    padding: 10px 15px;
+    font-size: 1.1rem !important;
+}

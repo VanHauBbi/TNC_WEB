@@ -1,0 +1,43 @@
+﻿@model WebBanHang.Models.Customer
+
+@{
+    ViewBag.Title = "Chi tiết Khách hàng";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+<link href="~/Content/Admin/order_admin.css" rel="stylesheet" />
+
+<h2 class="admin-content-title">CHI TIẾT KHÁCH HÀNG: @Model.CustomerName</h2>
+
+<div class="order-detail-card shadow-sm">
+    <dl class="dl-horizontal">
+        <dt>Mã Khách hàng:</dt>
+        <dd>@Model.CustomerID</dd>
+
+        <dt>Tên đăng nhập:</dt>
+        <dd class="fw-bold">@Model.Username</dd>
+
+        <dt>Email:</dt>
+        <dd>@Model.CustomerEmail</dd>
+
+        <dt>Điện thoại:</dt>
+        <dd>@Model.CustomerPhone</dd>
+
+        <dt>Địa chỉ:</dt>
+        <dd>@Model.CustomerAddress</dd>
+
+        <dt>Trạng thái Tài khoản:</dt>
+        <dd>
+            @{
+                string statusClass = (Model.IsActive == true) ? "bg-success" : "bg-danger";
+                string statusText = (Model.IsActive == true) ? "Đang hoạt động" : "BỊ KHÓA";
+            }
+            <span class="badge @statusClass">@statusText</span>
+        </dd>
+    </dl>
+</div>
+
+<div class="mt-4">
+    @Html.ActionLink("Khóa / Mở Khóa", "Edit", new { id = Model.CustomerID }, new { @class = "btn btn-warning" })
+    @Html.ActionLink("Quay lại danh sách", "Index", null, new { @class = "btn btn-secondary ms-2" })
+</div>

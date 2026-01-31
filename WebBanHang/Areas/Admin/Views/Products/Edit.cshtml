@@ -1,0 +1,36 @@
+﻿@model WebBanHang.Models.Product
+
+@{
+    // Thiết lập tiêu đề động
+    ViewBag.Title = Model.ProductID == 0 ? "Thêm Sản Phẩm Mới" : "Cập nhật Sản phẩm";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+@* KHẮC PHỤC LỖI ĐƯỜNG DẪN CSS *@
+<link href="@Url.Content("~/Content/Admin/products_admin.css")" rel="stylesheet" />
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+    <div class="form-horizontal card p-4 shadow-sm">
+        <hr />
+        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+
+        @* Giữ hidden field cho Edit *@
+        @Html.HiddenFor(model => model.ProductID)
+
+        @Html.Partial("PVCreateEditProduct", Model)
+
+        <div class="form-group admin-action-buttons">
+            <div style="margin-left: 150px; padding-top: 10px;">
+                <input type="submit" value="Lưu" class="btn btn-primary" />
+                @Html.ActionLink("Quay lại danh sách", "Index", null, new { @class = "btn btn-secondary" })
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    @* Đảm bảo liên kết đúng thư viện Validation *@
+    @Scripts.Render("~/bundles/jqueryval")
+}

@@ -1,0 +1,130 @@
+﻿/* home.css */
+
+.section-title {
+    color: #000;
+    border-left: 5px solid #dc3545; /* Màu đỏ nổi bật */
+    padding-left: 15px;
+    font-weight: 700;
+}
+
+/* Cải tiến giao diện thẻ sản phẩm */
+.product-card {
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* Shadow mạnh hơn, đẹp hơn */
+    transition: transform 0.3s, box-shadow 0.3s;
+    border: 1px solid #e9ecef;
+}
+
+    .product-card:hover {
+        transform: translateY(-5px); /* Hiệu ứng nổi lên */
+        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.15);
+    }
+
+.product-image {
+    height: 220px; /* Tăng chiều cao ảnh một chút */
+    object-fit: contain; /* Giữ tỷ lệ, không bị cắt */
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    padding: 10px; /* Tạo khoảng trống cho ảnh */
+    background-color: #fff;
+}
+
+.product-title {
+    font-size: 1rem;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* Giới hạn 2 dòng cho tiêu đề */
+    -webkit-box-orient: vertical;
+    min-height: 48px; /* Giúp các card có cùng chiều cao tiêu đề */
+}
+
+.product-price {
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+}
+
+/* Style cho Quick Links */
+.quick-link-item {
+    display: block;
+    text-decoration: none;
+    color: #495057;
+    padding: 15px;
+    border-radius: 8px;
+    transition: background-color 0.2s, transform 0.2s;
+}
+
+    .quick-link-item:hover {
+        background-color: #f8f9fa;
+        transform: translateY(-3px);
+        color: #0d6efd; /* Đổi màu chữ khi hover */
+    }
+
+/* Style cho Banner Placeholde */
+.main-banner-placeholder {
+    height: 300px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: #f1f1f1 !important;
+}
+.banner-carousel-inner {
+    border-radius: 8px; /* Bo góc cho slider */
+    overflow: hidden; /* Đảm bảo ảnh không tràn ra ngoài góc bo */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.banner-img-fit {
+    height: 400px; /* Chiều cao cố định cho tất cả banner */
+    object-fit: cover; /* Đảm bảo ảnh lấp đầy khung hình (có thể cắt) */
+    /* Nếu bạn muốn ảnh hiển thị toàn bộ không bị cắt, dùng object-fit: contain và thay đổi background của carousel-inner */
+}
+
+/* Tùy chỉnh cho màn hình nhỏ hơn */
+@media (max-width: 768px) {
+    .banner-img-fit {
+        height: 200px; /* Giảm chiều cao trên điện thoại */
+    }
+}
+/* --- Cập nhật/Thêm vào CSS của bạn (ví dụ: home.css) --- */
+
+/* Cố định chiều cao ảnh */
+.product-image-search {
+    height: 180px; /* Cố định chiều cao ảnh để các card đồng đều */
+    object-fit: contain;
+    padding: 10px;
+}
+
+/* Cố định chiều cao tiêu đề (Quan trọng nhất) */
+.product-title-fixed {
+    font-size: 1rem;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* Chỉ hiển thị 2 dòng */
+    -webkit-box-orient: vertical;
+    min-height: 48px; /* Đảm bảo chiều cao cố định cho khối tên (2 lines) */
+    margin-bottom: 0.5rem;
+}
+
+/* Cải thiện style tổng thể của card */
+.product-card {
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: transform 0.3s, box-shadow 0.3s;
+    border: 1px solid #e9ecef;
+}
+
+    .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.15);
+    }
+
+.product-price-fixed {
+    font-size: 1.15rem;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem !important;
+}

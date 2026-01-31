@@ -1,0 +1,33 @@
+﻿@model WebBanHang.Models.Order
+
+@{
+    ViewBag.Title = "Xác nhận Xóa Đơn hàng";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+<link href="~/Content/Admin/order_admin.css" rel="stylesheet" />
+
+<h2 class="admin-content-title">XÁC NHẬN XÓA ĐƠN HÀNG</h2>
+
+<div class="delete-confirm-box shadow-sm">
+    <h3 class="text-danger">Bạn có chắc chắn muốn xóa đơn hàng #@Model.OrderID này?</h3>
+    <p class="lead text-muted">Việc xóa đơn hàng sẽ loại bỏ tất cả các chi tiết liên quan khỏi hệ thống.</p>
+
+    <div class="order-detail-card mt-4">
+        <dl class="dl-horizontal text-start">
+            <dt>Khách hàng:</dt>
+            <dd class="fw-bold">@Model.Customer?.CustomerName</dd>
+            <dt>Ngày đặt:</dt>
+            <dd>@Model.OrderDate.ToString("dd/MM/yyyy")</dd>
+            <dt>Tổng tiền:</dt>
+            <dd class="fw-bold text-danger">@Model.TotalAmount.ToString("N0") ₫</dd>
+        </dl>
+    </div>
+
+    @using (Html.BeginForm("Delete", "Orders", new { id = Model.OrderID }, FormMethod.Post, new { @class = "mt-4" }))
+    {
+        @Html.AntiForgeryToken()
+        <button type="submit" class="btn btn-danger btn-lg">Xác nhận Xóa</button>
+        <a href="@Url.Action("Index", "Orders")" class="btn btn-secondary btn-lg ms-3">Hủy bỏ</a>
+    }
+</div>

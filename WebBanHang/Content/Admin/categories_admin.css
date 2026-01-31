@@ -1,0 +1,70 @@
+﻿/* categories_admin.css */
+
+:root {
+    --admin-primary: #007bff;
+    --admin-secondary: #6c757d;
+    --admin-danger: #dc3545;
+    --admin-success: #28a745;
+    --admin-info-bg: #f8f9fa;
+}
+
+/* --- Tiêu đề nội dung --- */
+.admin-content-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #343a40;
+    border-bottom: 2px solid #dee2e6;
+    padding-bottom: 10px;
+    margin-bottom: 25px;
+}
+
+/* --- Forms (Create/Edit) --- */
+.category-form-container {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+    .category-form-container .form-group {
+        display: flex;
+        align-items: baseline; /* Căn chỉnh nhãn */
+        margin-bottom: 15px;
+    }
+
+    .category-form-container .control-label {
+        flex: 0 0 150px; /* Cố định độ rộng nhãn */
+        text-align: right;
+        padding-right: 15px;
+        font-weight: 600;
+    }
+
+    .category-form-container .col-md-10 {
+        flex: 1;
+    }
+
+/* --- Details / Delete --- */
+.category-details-container {
+    background-color: var(--admin-info-bg);
+    border-left: 4px solid var(--admin-primary);
+    padding: 20px;
+    border-radius: 4px;
+}
+
+    .category-details-container dt {
+        font-weight: 700;
+        color: var(--admin-secondary);
+        margin-top: 10px;
+    }
+
+.delete-confirmation-box {
+    margin-top: 20px;
+    padding: 20px;
+    border: 1px solid var(--admin-danger);
+    background-color: #fff8f8;
+    border-radius: 8px;
+}
+
+    .delete-confirmation-box h3 {
+        color: var(--admin-danger);
+    }

@@ -1,0 +1,70 @@
+﻿/* order_admin.css */
+
+:root {
+    --admin-primary: #007bff;
+    --admin-danger: #dc3545;
+    --admin-warning: #ffc107;
+    --admin-sidebar-bg: #343a40;
+}
+
+/* --- Bảng Đơn hàng (Index) --- */
+.table-admin-orders {
+    font-size: 0.9rem;
+}
+
+    .table-admin-orders thead th {
+        background-color: var(--admin-sidebar-bg) !important;
+        color: white;
+        font-weight: 600;
+    }
+
+    .table-admin-orders tbody td {
+        vertical-align: middle;
+    }
+
+/* Badge Trạng thái */
+.badge.bg-secondary {
+    background-color: var(--admin-secondary) !important;
+}
+
+.badge.bg-success {
+    background-color: var(--admin-success) !important;
+}
+
+.badge.bg-warning {
+    background-color: var(--admin-warning) !important;
+}
+
+/* --- Chi tiết Đơn hàng (Details) --- */
+.order-detail-card {
+    border-left: 4px solid var(--admin-primary);
+    padding: 20px;
+    margin-bottom: 30px;
+    background-color: #fff;
+    border-radius: 6px;
+}
+
+.detail-section-title {
+    color: var(--admin-primary);
+    font-size: 1.2rem;
+    margin-top: 15px;
+    padding-bottom: 5px;
+    border-bottom: 1px dashed #dee2e6;
+}
+
+.product-detail-table img {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    border: 1px solid #eee;
+    border-radius: 4px;
+}
+
+/* --- Delete --- */
+.delete-confirm-box {
+    padding: 30px;
+    border: 2px solid var(--admin-danger);
+    background-color: #fffcfc;
+    border-radius: 8px;
+    text-align: center;
+}

@@ -1,0 +1,86 @@
+﻿
+/* Reset mặc định */
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
+
+/* Header */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #333;
+    padding: 10px 20px;
+}
+
+    .header a {
+        text-decoration: none;
+        color: white;
+        padding: 8px 12px;
+        font-size: 14px;
+    }
+
+        .header a:hover {
+            background-color: #575757;
+            border-radius: 4px;
+        }
+
+    .header img {
+        height: 40px;
+    }
+
+.menu {
+    display: flex;
+    gap: 20px;
+}
+
+/* Main Content */
+.container {
+    padding: 20px;
+    min-height: 60vh; /* Đảm bảo nội dung không làm bể layout */
+}
+
+/* Footer */
+.footer {
+    background-color: #000;
+    color: #fff;
+    text-align: center;
+    padding: 20px 0;
+    box-sizing: border-box;
+}
+
+    .footer p, .footer a {
+        margin: 5px 0;
+        color: #fff;
+        font-size: 14px;
+        text-decoration: none;
+    }
+
+.footer-links {
+    margin: 10px 0;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+    .footer-links a {
+        margin: 0 10px;
+    }
+
+.social-icons {
+    margin: 10px 0;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+    .social-icons a {
+        color: #fff;
+        font-size: 18px;
+        text-decoration: none;
+    }
+
+        .social-icons a:hover {
+            color: #f39c12; /* Màu khi hover vào icon */
+        }

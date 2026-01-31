@@ -1,0 +1,349 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width" />
+    <meta name="description" content="TNCStore" />
+    <meta name="keywords" content="TNC, TNCStore, TNCStoreGaming" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+
+    <link href="~/Content/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <link rel="stylesheet" href="~/Content/myStyle/header.css" />
+    <link rel="stylesheet" href="~/Content/myStyle/footer.css" />
+    <link rel="stylesheet" href="~/Content/myStyle/home.css" />
+
+    <title>@ViewBag.Title</title>
+    <style>
+    </style>
+</head>
+<body>
+    <header class="site-header new-design">
+        <div class="header-top-bar">
+            <div class="container header-main">
+                <div class="logo">
+                    <a href="@Url.Action("Index", "Home")">
+                        <img src="~/TopIcon/logo-tnc.png" alt="TNCStore Logo" />
+                    </a>
+                </div>
+
+                <form class="search-box new-style" action="@Url.Action("ProductSearch", "Home")" method="get">
+
+                    <input type="text"
+                           placeholder="Tìm kiếm sản phẩm..."
+                           name="query"
+                           id="searchInput"
+                           required maxlength="100" />
+
+                    <button type="submit">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </button>
+                </form>
+
+                <div class="user-section">
+                    <div class="account dropdown">
+                        <i class="fa-regular fa-user"></i>
+                        <span>Tài khoản</span>
+                        <div class="dropdown-menu">
+                            @if (Session["UserName"] == null)
+                            {
+                                <a href="@Url.Action("Login", "Account")">Đăng nhập</a>
+                                <a href="@Url.Action("Register", "Account")">Đăng ký</a>
+                            }
+                            else
+                            {
+                                <span class="welcome-message">Xin chào, @Session["UserName"]</span>
+                                <a href="@Url.Action("PurchaseHistory", "Account")">Lịch sử mua hàng</a>
+                                <a href="@Url.Action("Logout", "Account")">Đăng xuất</a>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="cart" id="cartIcon">
+                        <i class="fa-solid fa-cart-shopping"></i>
+                        <span class="cart-count" id="cart-count">
+                            @(((Session["Cart"] as List<WebBanHang.Models.ViewModel.CartItem>)?.Count) ?? 0)
+                        </span>
+                        <span class="cart-label">Giỏ hàng</span>
+
+                        <div class="cart-dropdown" id="cart-dropdown" style="display:none;">
+                            <button class="close-button-cart" id="close-cart-btn" type="button">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                            <div class="cart-items" id="cart-items">
+                                <p>Không có sản phẩm nào trong giỏ hàng.</p>
+                            </div>
+                            <div class="cart-summary">
+                                <span>Tổng tiền: <strong id="cart-total">0₫</strong></span>
+                                <div class="cart-actions">
+                                    <button class="checkout-button" id="checkout-btn">Thanh Toán</button>
+                                    <button class="view-cart-button" id="view-cart-btn">Xem Giỏ Hàng</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <nav class="main-nav">
+            <div class="container nav-content">
+                <ul class="custom-list">
+                    <li class="nav-item-highlight product-category">
+                        <div class="category-header-text">
+                            <b><i class="fa-solid fa-bars"></i> DANH MỤC SẢN PHẨM</b>
+                        </div>
+                        <div class="dropdown-content">
+                            @Html.Action("_HeaderCategory", "Home")
+                        </div>
+                    </li>
+                    <li><a href="#">Xây Dựng Cấu Hình PC</a></li>
+                    <li><a href="#">PC Gaming</a></li>
+                    <li><a href="#">Màn Hình Gaming</a></li>
+                    <li><a href="#">PC Đồ Đại Học 2024 <span class="fire-emoji">🔥</span></a></li>
+                    <li><a href="#">Laptop Sinh Viên</a></li>
+                    <li><a href="#">PS5 Slim</a></li>
+                    <li><a href="#">Steam Deck</a></li>
+                    <li class="nav-item-sale"><a href="#"><i class="fa-solid fa-tag"></i> Khuyến Mãi <span class="badge">SALE</span></a></li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <div class="content-wrapper container">
+        @RenderBody()
+    </div>
+
+    <footer class="footer">
+        <div class="footer-top">
+            <div class="footer-social">
+                <h2>Theo dõi chúng tôi tại</h2>
+                <div class="icons">
+                    <a href="https://www.facebook.com/tncstore/" target="_blank"><img src="~/BottomIcon/facebook-brands-solid.svg" alt="Facebook" /></a>
+                    <a href="https://www.instagram.com/tncstore_vn/" target="_blank"><img src="~/BottomIcon/square-instagram-brands-solid.svg" alt="Instagram" /></a>
+                    <a href="https://www.youtube.com/channel/UCvLGkK-wBBaoXwV71Tgx08Q" target="_blank"><img src="~/BottomIcon/youtube-brands-solid.svg" alt="YouTube" /></a>
+                    <a href="https://shopee.vn/tncofficialstore" target="_blank"><img src="~/BottomIcon/shopee.svg" alt="Shopee" /></a>
+                </div>
+            </div>
+
+            <div class="footer-subscribe">
+                <h2>Đăng ký email để nhận tin khuyến mãi</h2>
+                <div class="subscribe-box">
+                    <input type="text" placeholder="Nhập email của bạn" />
+                    <button>Đăng ký</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-columns">
+            <div>
+                <h3>Danh Mục Sản Phẩm</h3>
+                <p>PC Gaming</p>
+                <p>Laptop Gaming</p>
+                <p>VGA NVidia Rtx 4070</p>
+                <p>Ps5 Rẻ nhất Việt Nam</p>
+                <p>VGA NVidia Rtx 4060</p>
+            </div>
+            <div>
+                <h3>Thông Tin Chung</h3>
+                <p>Giới Thiệu</p>
+                <p>Tuyển Dụng</p>
+                <p>Ý Kiến Khách Hàng</p>
+                <p>Liên Hệ Hợp Tác</p>
+            </div>
+            <div>
+                <h3>Chính Sách</h3>
+                <p>Quy Định Chung</p>
+                <p>Chính Sách Vận Chuyển</p>
+                <p>Chính Sách Bảo Hành</p>
+                <p>Chính Sách Đổi, Trả Hàng</p>
+            </div>
+            <div>
+                <h3>Thông Tin Hữu Ích</h3>
+                <p>Build PC là TNC</p>
+                <p>Hướng dẫn Build PC TNC</p>
+                <p>Tips Build PC TNC nhiều Khuyến Mại</p>
+                <p>Chính Sách Build PC TNC Cho Doanh Nghiệp</p>
+            </div>
+        </div>
+
+        <div class="footer-company">
+            <div class="map">
+                <iframe src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d59596.92270727487!2d105.84709124340816!3d21.000345415297396!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3135ac70cf94287f%3A0x7362ea6005b5ac6e!2sTNC%20Store!5e0!3m2!1sen!2sus!4v1727513070287!5m2!1sen!2sus"
+                        width="400"
+                        height="200"
+                        style="border:0;"
+                        allowfullscreen=""
+                        loading="lazy">
+                </iframe>
+            </div>
+
+            <div class="company-info">
+                <h3>Công ty TNHH Thương mại & Tin học HauBee</h3>
+                <p>Showroom: 925 Âu Cơ, TP HCM</p>
+                <p>Tel: (086) 5954.924</p>
+                <p>Trung tâm bảo hành: 925 Âu Cơ, TP HCM</p>
+                <p>Trụ sở: 925/19 Âu Cơ, Tân Sơn Nhì, Tân Phú, TPHCM</p>
+            </div>
+        </div>
+
+        <div class="footer-payment">
+            <h3>Hình thức thanh toán</h3>
+            <div class="payment-icons">
+                <img src="~/BottomIcon/visa.svg" alt="Visa" />
+                <img src="~/BottomIcon/mastercard-3.svg" alt="MasterCard" />
+                <img src="~/BottomIcon/money-bill-1-solid.svg" />
+                <img src="~/BottomIcon/tiền mặt.png" alt="Cash" />
+            </div>
+        </div>
+    </footer>
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div id="tempMessage" class="toast-popup alert alert-danger" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i> @TempData["ErrorMessage"]
+        </div>
+    }
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    // ✅ Kiểm tra đăng nhập từ session
+    var isLoggedIn = '@(Session["UserName"] != null ? "true" : "false")';
+
+    // ✅ Bật / tắt dropdown giỏ hàng
+    function toggleCart() {
+        if (isLoggedIn === "false") {
+            alert("⚠️ Vui lòng đăng nhập để xem giỏ hàng!");
+            window.location.href = '@Url.Action("Login", "Account")';
+            return;
+        }
+        $('#cart-dropdown').toggle();
+
+        if ($('#cart-dropdown').is(':visible')) {
+            MiniCart();
+        }
+    }
+
+    // 🛑 KHẮC PHỤC LỖI SỰ KIỆN LAN TRUYỀN (PROPAGATION FIXES)
+
+    // 1. Chỉ click vào icon giỏ hàng mới MỞ/ĐÓNG Mini Cart
+    $(document).on('click', '#cartIcon', function (e) {
+        // Ngăn sự kiện click lan truyền ra ngoài body/window (nếu có sự kiện đóng Mini Cart ở body/window)
+        e.stopPropagation();
+        toggleCart();
+    });
+
+    // 2. Xử lý click cho nút "X" (Close button)
+    $(document).on('click', '#close-cart-btn', function (e) {
+        e.preventDefault();
+        e.stopPropagation(); // RẤT QUAN TRỌNG: Ngăn sự kiện click lan truyền ra #cartIcon
+        $('#cart-dropdown').hide();
+    });
+
+    // 3. Đảm bảo Mini Cart không đóng khi click vào NỘI DUNG của nó
+    $(document).on('click', '#cart-dropdown', function (e) {
+        e.stopPropagation();
+    });
+
+    // 4. Xử lý click cho các nút chức năng bên trong Mini Cart
+    $(document).on('click', '#view-cart-btn, #checkout-btn', function (e) {
+        e.stopPropagation(); // Đảm bảo Mini Cart không đóng khi bấm Thanh Toán/Xem Giỏ Hàng
+    });
+
+
+    // ✅ Nút "Xem giỏ hàng"
+    $(document).on('click', '#view-cart-btn', function () {
+        if (isLoggedIn === "false") {
+            window.location.href = '@Url.Action("Login", "Account")';
+        } else {
+            window.location.href = '@Url.Action("Index", "Cart")';
+        }
+    });
+
+    // ✅ Nút "Thanh Toán"
+    $(document).on('click', '#checkout-btn', function () {
+        if (isLoggedIn === "false") {
+            window.location.href = '@Url.Action("Login", "Account")';
+        } else {
+            window.location.href = '@Url.Action("Checkout", "Orders")';
+        }
+    });
+
+    // ✅ Hàm gọi API thêm sản phẩm vào giỏ hàng (Giữ nguyên)
+    function addToCart(productId, quantity) {
+        $.ajax({
+            url: '@Url.Action("AddToCart", "Cart")',
+            type: 'POST',
+            data: { id: productId, quantity: quantity },
+            success: function (res) {
+                if (res.success) {
+                    $('#cart-count').text(res.cartCount);
+                    $('#cart-total').text(res.cartTotal);
+                    MiniCart();
+                    alert(res.message);
+                } else if (res.redirectUrl) {
+                    window.location.href = res.redirectUrl;
+                } else {
+                    alert(res.message);
+                }
+            },
+            error: function () {
+                alert("❌ Không thể thêm sản phẩm vào giỏ hàng.");
+            }
+        });
+    }
+
+    // ✅ Cập nhật mini cart (danh sách + tổng) (Giữ nguyên)
+    function MiniCart() {
+        if (isLoggedIn === "true") {
+            $.ajax({
+                url: '@Url.Action("GetMiniCart", "Cart")',
+                type: 'GET',
+                success: function (data) {
+                    $('#cart-items').html(data.html);
+                    $('#cart-total').text(data.total);
+                    $('#cart-count').text(data.count);
+                },
+                error: function() {
+                     $('#cart-items').html('<p>Không thể tải giỏ hàng.</p>');
+                }
+            });
+        }
+    }
+
+    // ✅ Khi trang load, cập nhật số lượng giỏ hàng và tải MiniCart lần đầu (Giữ nguyên)
+    $(document).ready(function () {
+        $.ajax({
+            url: '@Url.Action("GetCartCount", "Cart")',
+            type: 'GET',
+            success: function (data) {
+                $('#cart-count').text(data.count);
+            }
+        });
+        MiniCart();
+    });
+
+        $(document).ready(function () {
+            const messageBox = $('#tempMessage');
+            if (messageBox.length) {
+                // Hiển thị popup
+                messageBox.fadeIn(400);
+
+                // Ẩn popup sau 6 giây
+                setTimeout(function () {
+                    messageBox.fadeOut(800);
+                }, 6000);
+            }
+        });
+
+    </script>
+    <script src="~/Scripts/jquery.validate.min.js"></script>
+    <script src="~/Scripts/jquery.validate.unobtrusive.min.js"></script>
+
+    @RenderSection("Scripts", required: false)
+
+</body>
+</html>

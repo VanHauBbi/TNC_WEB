@@ -1,0 +1,97 @@
+﻿@model IEnumerable<WebBanHang.Models.Order>
+
+@{
+    ViewBag.Title = "Đơn hàng";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+<link href="~/Content/Admin/order_admin.css" rel="stylesheet" />
+
+<div class="card shadow-sm p-4">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div id="successMessage" class="alert alert-success alert-dismissible fade show">
+            <i class="fa-solid fa-check-circle me-2"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div id="errorMessage" class="alert alert-danger alert-dismissible fade show">
+            <i class="fa-solid fa-times-circle me-2"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <p class="text-muted mb-3">Tổng cộng: <strong>@Model.Count()</strong> đơn hàng</p>
+
+    <table class="table table-bordered table-striped table-admin-orders">
+        <thead class="table-dark">
+            <tr>
+                <th style="width: 8%;">Mã ĐH</th>
+                <th style="width: 18%;">Khách hàng</th>
+                <th style="width: 12%;">Ngày đặt</th>
+                <th style="width: 12%;" class="text-end">Tổng tiền</th>
+                <th style="width: 12%;" class="text-center">Trạng thái TT</th>
+                <th style="width: 12%;" class="text-center">Trạng thái Duyệt</th>
+                <th style="width: 16%;" class="text-center">Vận chuyển</th>
+                <th style="width: 10%;" class="text-center">Hành động</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var order in Model)
+            {
+                <tr>
+                    <td>#@order.OrderID</td>
+                    <td>@order.Customer.CustomerName</td>
+                    <td>@order.OrderDate.ToString("dd/MM/yyyy")</td>
+                    <td class="text-end fw-bold text-danger">@order.TotalAmount.ToString("N0") ₫</td>
+
+                    <td class="text-center">
+                        @{
+                            string ttStatusClass = (order.PaymentStatus == "Đã thanh toán" || order.PaymentStatus == "Paid") ? "bg-success" : "bg-warning text-dark";
+                        }
+                        <span class="badge @ttStatusClass">@order.PaymentStatus</span>
+                    </td>
+
+                    @* BỔ SUNG CỘT TRẠNG THÁI DUYỆT (OrderStatus) *@
+                    <td class="text-center">
+                        @{
+                            string orderStatus = order.OrderStatus ?? "Chưa xử lý";
+                            string duyệtStatusClass;
+                            if (orderStatus == "Đã duyệt") { duyệtStatusClass = "bg-success"; }
+                            else if (orderStatus == "Đã hủy") { duyệtStatusClass = "bg-danger"; }
+                            else { duyệtStatusClass = "bg-info text-dark"; } // Chờ duyệt
+                        }
+                        <span class="badge @duyệtStatusClass">@order.OrderStatus</span>
+                    </td>
+
+                    <td class="text-center">
+                        <span class="badge bg-secondary">@order.ShippingMethod</span>
+                    </td>
+
+                    <td class="text-center action-col">
+                        <a href="@Url.Action("Details", "Orders", new { id = order.OrderID })" class="btn btn-info btn-sm" title="Chi tiết">
+                            <i class="fa-solid fa-eye"></i>
+                        </a>
+                        @* Nút Xử lý/Duyệt *@
+                        <a href="@Url.Action("Process", "Orders", new { id = order.OrderID })" class="btn btn-warning btn-sm" title="Duyệt đơn">
+                            <i class="fa-solid fa-sync-alt"></i> Xử lý
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+    <script>
+        // ✅ Tự động ẩn thông báo sau 3 giây (Đã sửa để dùng jQuery)
+        $(document).ready(function () {
+            setTimeout(() => {
+                $("#successMessage, #errorMessage").fadeOut(800);
+            }, 3000);
+        });
+    </script>
+}

@@ -1,0 +1,12 @@
+﻿@model IEnumerable<WebBanHang.Models.Category>
+
+<div class="dropdown-content">
+    @foreach (var item in Model)
+    {
+        <div class="dropdown-content_tach">
+            <a href="@Url.Action("DanhMucSanPham", "Home", new { id = item.CategoryID })">
+                @item.CategoryName
+            </a><br />
+        </div>
+    }
+</div>

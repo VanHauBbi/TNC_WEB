@@ -1,0 +1,134 @@
+﻿@model WebBanHang.Models.Order
+
+@{
+    Layout = "~/Views/Shared/_LayoutDivMain.cshtml";
+    ViewBag.Title = "Chi tiết đơn hàng " + Model.OrderID;
+}
+
+<style>
+    .order-summary-card {
+        border-left: 5px solid #007bff; /* Màu xanh nổi bật */
+    }
+
+    .summary-info dt {
+        /* Độ rộng cố định cho nhãn (ví dụ: "Phương thức thanh toán:") */
+        font-weight: 600;
+        color: #495057;
+        width: 180px; /* Đặt độ rộng cố định */
+        float: left; /* Dùng float để căn chỉnh nhãn sang trái */
+        clear: left; /* Đảm bảo mỗi dt nằm trên một dòng mới */
+        text-align: left; /* Căn lề trái cho nhãn */
+        margin-right: 10px;
+        padding-right: 0;
+    }
+
+    .summary-info dd {
+        /* Đảm bảo giá trị hiển thị ngay sau nhãn */
+        margin-left: 190px; /* Lề trái lớn hơn độ rộng của dt + margin */
+        margin-bottom: 5px; /* Giảm khoảng cách giữa các dòng */
+        text-align: left; /* Căn lề trái cho giá trị */
+    }
+
+    /* Tùy chỉnh bổ sung cho thẻ dl-horizontal của Bootstrap */
+    .dl-horizontal {
+        /* Đảm bảo không bị overflow */
+        overflow: hidden;
+    }
+
+    /* Định dạng cho badge Trạng thái thanh toán */
+    .status-badge {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-weight: 700;
+        font-size: 0.85rem;
+        display: inline-block;
+    }
+
+    .dl-horizontal dd {
+        margin-left: 180px; /* Đảm bảo căn chỉnh các giá trị */
+    }
+
+    .product-img-thumb {
+        width: 50px;
+        height: 50px;
+        object-fit: contain;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        margin-right: 10px;
+    }
+</style>
+
+<div class="container my-5">
+    <h2 class="mb-5 text-primary">📜 Chi Tiết Đơn Hàng <span class="fw-bold">#@Model.OrderID</span></h2>
+
+    <div class="card p-4 shadow-sm order-summary-card">
+        <h4 class="card-title mb-4 border-bottom pb-2">Thông tin giao dịch</h4>
+
+        <dl class="dl-horizontal summary-info">
+            <dt>Khách hàng:</dt>
+            <dd class="fw-bold">@Html.DisplayFor(model => model.Customer.CustomerName)</dd>
+
+            <dt>Ngày đặt hàng:</dt>
+            <dd>@Html.DisplayFor(model => model.OrderDate)</dd>
+
+            <dt>Trạng thái TT:</dt>
+            <dd>
+                <span class="badge @(Model.PaymentStatus == "Đã thanh toán" ? "bg-success" : "bg-warning text-dark")">
+                    @Html.DisplayFor(model => model.PaymentStatus)
+                </span>
+            </dd>
+
+            <hr />
+
+            <dt>Địa chỉ giao hàng:</dt>
+            <dd class="fw-medium">@Html.DisplayFor(model => model.ShippingAddress)</dd>
+
+            <dt>Phương thức vận chuyển:</dt>
+            <dd>@Html.DisplayFor(model => model.ShippingMethod)</dd>
+
+            <dt>Phương thức thanh toán:</dt>
+            <dd>@Html.DisplayFor(model => model.PaymentMethod)</dd>
+        </dl>
+    </div>
+
+    <h3 class="mt-5 mb-3">Sản phẩm đã đặt (@Model.OrderDetails.Count() món)</h3>
+    <table class="table table-bordered table-striped align-middle">
+        <thead class="table-light">
+            <tr>
+                <th style="width: 10%;">Ảnh</th>
+                <th style="width: 45%;">Tên sản phẩm</th>
+                <th style="width: 15%; text-align: right;">Đơn giá</th>
+                <th style="width: 10%; text-align: center;">SL</th>
+                <th style="width: 20%; text-align: right;">Thành tiền</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.OrderDetails != null)
+            {
+                foreach (var detail in Model.OrderDetails)
+                {
+                    <tr>
+                        <td class="text-center">
+                            <img src="@detail.Product.ProductImage" alt="@detail.Product.ProductName" class="product-img-thumb" />
+                        </td>
+                        <td>@detail.Product.ProductName</td>
+                        <td class="text-end">@String.Format("{0:N0} ₫", detail.UnitPrice)</td>
+                        <td class="text-center">@detail.Quantity</td>
+                        <td class="fw-bold text-end text-danger">@String.Format("{0:N0} ₫", detail.TotalPrice)</td>
+                    </tr>
+                }
+            }
+        </tbody>
+        <tfoot class="table-group-divider">
+            <tr>
+                <td colspan="4" class="text-end fw-bold">TỔNG THANH TOÁN CUỐI CÙNG:</td>
+                <td class="text-end fw-bold text-danger fs-5">@String.Format("{0:N0} ₫", Model.TotalAmount)</td>
+            </tr>
+        </tfoot>
+    </table>
+
+    <p class="mt-4 action-links">
+        @Html.ActionLink("LỊCH SỬ MUA HÀNG", "PurchaseHistory", "Account", null, new { @class = "btn btn-primary btn-lg me-3" })
+        @Html.ActionLink("← VỀ TRANG CHỦ", "Index", "Home", null, new { @class = "btn btn-outline-secondary" })
+    </p>
+</div>

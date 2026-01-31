@@ -1,0 +1,144 @@
+﻿@model WebBanHang.Models.ViewModel.RegisterVM
+@{
+    ViewBag.Title = "Đăng ký";
+    Layout = null; // Trang độc lập
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewBag.Title - TNCStore</title>
+
+    <link href="~/Content/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <link href="~/Content/myStyle/Login-Register.css" rel="stylesheet" />
+
+    <style>
+        /* CSS Vị trí Popup: Đặt lại ở đây để đảm bảo hiển thị đúng khi Layout=null */
+        .toast-popup {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1050;
+            min-width: 300px;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
+            display: none;
+        }
+
+            .toast-popup.alert-danger {
+                background-color: #f8d7da; /* Đỏ nhạt */
+                color: #721c24;
+                border-color: #f5c6cb;
+            }
+
+            .toast-popup.alert-success {
+                background-color: #d4edda; /* Xanh lá nhạt */
+                color: #155724;
+                border-color: #c3e6cb;
+            }
+    </style>
+</head>
+<body>
+
+    <div class="auth-page">
+        <div class="auth-container">
+            <h2>Đăng ký tài khoản</h2>
+
+            @using (Html.BeginForm("Register", "Account", FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+
+                <div class="form-group">
+                    @Html.LabelFor(m => m.CustomerName)
+                    @Html.EditorFor(m => m.CustomerName, new { htmlAttributes = new { @class = "form-control", placeholder = "Họ và Tên" } })
+                    @Html.ValidationMessageFor(m => m.CustomerName, "", new { @class = "text-danger" })
+                </div>
+
+                <div class="form-group">
+                    @Html.LabelFor(m => m.CustomerPhone)
+                    @Html.EditorFor(m => m.CustomerPhone, new { htmlAttributes = new { @class = "form-control", placeholder = "Số điện thoại" } })
+                    @Html.ValidationMessageFor(m => m.CustomerPhone, "", new { @class = "text-danger" })
+                </div>
+
+                <div class="form-group">
+                    @Html.LabelFor(m => m.CustomerEmail)
+                    @Html.EditorFor(m => m.CustomerEmail, new { htmlAttributes = new { @class = "form-control", placeholder = "Địa chỉ Email" } })
+                    @Html.ValidationMessageFor(m => m.CustomerEmail, "", new { @class = "text-danger" })
+                </div>
+
+                <div class="form-group">
+                    @Html.LabelFor(m => m.CustomerAddress)
+                    @Html.EditorFor(m => m.CustomerAddress, new { htmlAttributes = new { @class = "form-control", placeholder = "Địa chỉ nhận hàng" } })
+                    @Html.ValidationMessageFor(m => m.CustomerAddress, "", new { @class = "text-danger" })
+                </div>
+
+                <div class="form-group">
+                    @Html.LabelFor(m => m.Username)
+                    @Html.EditorFor(m => m.Username, new { htmlAttributes = new { @class = "form-control", placeholder = "Tên đăng nhập" } })
+                    @Html.ValidationMessageFor(m => m.Username, "", new { @class = "text-danger" })
+                </div>
+
+                <div class="form-group">
+                    @Html.LabelFor(m => m.Password)
+                    @Html.EditorFor(m => m.Password, new { htmlAttributes = new { @class = "form-control", placeholder = "Mật khẩu" } })
+                    @Html.ValidationMessageFor(m => m.Password, "", new { @class = "text-danger" })
+                </div>
+
+                <div class="form-group">
+                    @Html.LabelFor(m => m.ConfirmPassword)
+                    @Html.EditorFor(m => m.ConfirmPassword, new { htmlAttributes = new { @class = "form-control", placeholder = "Xác nhận mật khẩu" } })
+                    @Html.ValidationMessageFor(m => m.ConfirmPassword, "", new { @class = "text-danger" })
+                </div>
+
+                <button type="submit" class="btn-submit">Đăng ký</button>
+                <p class="auth-switch">Đã có tài khoản? <a href="@Url.Action("Login","Account")">Đăng nhập</a></p>
+            }
+        </div>
+    </div>
+
+    @* KHỐI POPUP HIỂN THỊ THÔNG BÁO (Lỗi trùng lặp Email/Phone/Username hoặc Thành công) *@
+    @if (TempData["SuccessMessage"] != null || TempData["ErrorMessage"] != null)
+    {
+        <div id="tempMessage" class="toast-popup alert @(TempData["SuccessMessage"] != null ? "alert-success" : "alert-danger")" role="alert">
+            <i class="fas @(TempData["SuccessMessage"] != null ? "fa-check-circle" : "fa-exclamation-triangle") me-2"></i>
+            @(TempData["SuccessMessage"] ?? TempData["ErrorMessage"])
+        </div>
+    }
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+    // Logic JS để hiển thị Popup (Toast)
+    $(document).ready(function () {
+        const messageBox = $('#tempMessage');
+
+        if (messageBox.length) {
+
+            // 1. Hiển thị Div
+            messageBox.css('display', 'block');
+
+            // 2. Kích hoạt hiệu ứng fade-in
+            setTimeout(function () {
+                messageBox.css('opacity', '1');
+            }, 10);
+
+            // 3. Ẩn popup sau 6 giây
+            setTimeout(function () {
+                messageBox.css('opacity', '0');
+
+                // Sau khi fade out (0.8s), ẩn hẳn khỏi DOM
+                setTimeout(function () {
+                    messageBox.css('display', 'none');
+                }, 800);
+            }, 6000);
+        }
+    });
+    </script>
+
+</body>
+</html>

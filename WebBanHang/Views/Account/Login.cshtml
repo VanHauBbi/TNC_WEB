@@ -1,0 +1,136 @@
+﻿@model WebBanHang.Models.ViewModel.LoginVM
+@{
+    ViewBag.Title = "Đăng nhập";
+    Layout = null; // Trang độc lập, không sử dụng Layout chung
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewBag.Title - TNCStore</title>
+
+    <link href="~/Content/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <link href="~/Content/myStyle/Login-Register.css" rel="stylesheet" />
+
+    <style>
+        /* CSS Vị trí Popup: Đặt lại ở đây để đảm bảo hiển thị đúng khi Layout=null */
+        .toast-popup {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1050;
+            min-width: 300px;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
+            display: none;
+        }
+
+            .toast-popup.alert-danger {
+                background-color: #f8d7da; /* Đỏ nhạt */
+                color: #721c24;
+                border-color: #f5c6cb;
+            }
+
+            .toast-popup.alert-success {
+                background-color: #d4edda; /* Xanh lá nhạt */
+                color: #155724;
+                border-color: #c3e6cb;
+            }
+    </style>
+</head>
+<body>
+
+    <div class="auth-page">
+        <div class="auth-container">
+            <h2>Đăng nhập</h2>
+
+            @using (Html.BeginForm("Login", "Account", FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+
+
+                <div class="form-group">
+                    @Html.LabelFor(m => m.UserName)
+                    @Html.TextBoxFor(m => m.UserName, new { @class = "form-control" })
+                    @Html.ValidationMessageFor(m => m.UserName, "", new { @class = "text-danger" })
+                </div>
+
+                <div class="form-group">
+                    @Html.LabelFor(m => m.Password)
+                    @Html.PasswordFor(m => m.Password, new { @class = "form-control"})
+                    @Html.ValidationMessageFor(m => m.Password, "", new { @class = "text-danger" })
+                </div>
+
+                <div class="form-group remember">
+                    <label>
+                        @Html.CheckBoxFor(m => m.RememberMe) Ghi nhớ đăng nhập
+                    </label>
+                </div>
+
+                <button type="submit" class="btn-submit">Đăng nhập</button>
+
+                <div class="auth-options">
+                    <a href="@Url.Action("Register", "Account")">Đăng ký</a>
+                    <a href="@Url.Action("ForgotPassword", "Account")">Quên mật khẩu?</a>
+                </div>
+            }
+        </div>
+    </div>
+
+    @* KHỐI POPUP HIỂN THỊ THÔNG BÁO THÀNH CÔNG (Sau khi đăng ký) *@
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div id="tempSuccessMessage" class="toast-popup alert alert-success" role="alert">
+            <i class="fas fa-check-circle me-2"></i> @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @* KHỐI POPUP HIỂN THỊ LỖI CONTROLLER (Bị khóa hoặc Sai chung) *@
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div id="tempErrorMessage" class="toast-popup alert alert-danger" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i> @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        // Logic JS để hiển thị Popup (Toast)
+        $(document).ready(function () {
+
+            // Gộp cả hai loại thông báo để chúng cùng được xử lý
+            const successMessageBox = $('#tempSuccessMessage');
+            const errorMessageBox = $('#tempErrorMessage');
+            const messageBoxes = successMessageBox.add(errorMessageBox);
+
+            if (messageBoxes.length) {
+
+                // Hiển thị Div
+                messageBoxes.css('display', 'block');
+
+                // Kích hoạt hiệu ứng fade-in (opacity 0 -> 1)
+                setTimeout(function () {
+                    messageBoxes.css('opacity', '1');
+                }, 10);
+
+                // Ẩn popup sau 6 giây
+                setTimeout(function () {
+                    messageBoxes.css('opacity', '0');
+
+                    // Sau khi fade out (0.8s), ẩn hẳn khỏi DOM
+                    setTimeout(function () {
+                        messageBoxes.css('display', 'none');
+                    }, 800);
+                }, 6000);
+            }
+        });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,208 @@
+﻿@model WebBanHang.Models.ViewModel.CheckoutVM
+@{
+    ViewBag.Title = "Đặt hàng";
+    Layout = "~/Views/Shared/_LayoutDivMain.cshtml";
+}
+
+<link rel="stylesheet" href="~/Content/myStyle/checkout.css" />
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    // Hàm cho phép chỉnh sửa địa chỉ giao hàng - (Giữ lại)
+    function enableAddressEdit() {
+        document.getElementById("shippingAddress").removeAttribute("readonly");
+        document.getElementById("shippingAddress").focus();
+        document.querySelector('.btn-edit-address').style.display = 'none';
+        document.querySelector('.address-edit-hint').style.display = 'block';
+    }
+    // Khai báo phí vận chuyển
+    const SHIPPING_FEES = {
+        'Giao hàng nhanh': 30000,
+        'Giao hàng tiết kiệm': 15000
+    };
+    // LẤY GIÁ TRỊ SỐ SẠCH TỪ RAZOR (Sử dụng String.Format("{0:0}") để loại bỏ dấu phân cách)
+    // ----------------------------------------------------
+    const initialTotalAmount = parseFloat('@String.Format("{0:0}", Model.TotalAmount)');
+    // ----------------------------------------------------
+    function formatCurrency(amount) {
+        // Hàm định dạng tiền tệ
+        return amount.toLocaleString('vi-VN', { style: 'currency', currency: 'VND', minimumFractionDigits: 0 });
+    }
+    // Hàm chính để cập nhật phí vận chuyển và tổng tiền
+    function updateOrderSummary() {
+        // 1. Lấy phương thức vận chuyển đã chọn
+        const selectedMethod = $('input[name="ShippingMethod"]:checked').val();
+        let shippingFee = 0;
+
+        if (selectedMethod && SHIPPING_FEES[selectedMethod]) {
+            shippingFee = SHIPPING_FEES[selectedMethod];
+        }
+
+        // 2. Cập nhật phí vận chuyển hiển thị (id="shippingFeeDisplay")
+        if (shippingFee > 0) {
+            $('#shippingFeeDisplay').text(formatCurrency(shippingFee));
+        } else {
+            $('#shippingFeeDisplay').text('Miễn phí');
+        }
+
+        // 3. Tính Tổng thanh toán cuối cùng
+        const finalTotal = initialTotalAmount + shippingFee;
+
+        // 4. Cập nhật tổng tiền hiển thị (id="finalTotalDisplay")
+        $('#finalTotalDisplay').text(formatCurrency(finalTotal));
+
+        // 5. Cập nhật giá trị HIDDEN TotalAmount (Gửi lên Server)
+        $('#TotalAmount').val(finalTotal);
+    }
+
+    // Hàm đảm bảo dữ liệu được binding
+    function updateShippingAddress() {
+        // Gọi updateOrderSummary lần cuối để đảm bảo giá trị TotalAmount gửi lên Server là chính xác
+        updateOrderSummary();
+        return true;
+    }
+
+
+    $(document).ready(function () {
+
+        // =======================================================
+        // 1. ĐẶT MẶC ĐỊNH & VƯỢT QUA VALIDATION [REQUIRED]
+        // =======================================================
+
+        // a. Phương thức giao hàng (Chọn "Giao hàng nhanh" mặc định nếu chưa chọn)
+        if (!$('input[name="ShippingMethod"]:checked').length) {
+            $('#ship-fast').prop('checked', true);
+        }
+
+        // b. Phương thức thanh toán (Chọn "Tiền mặt" mặc định nếu chưa chọn)
+        if (!$('input[name="PaymentMethod"]:checked').length) {
+            $('#pay-cash').prop('checked', true);
+        }
+
+        // 2. ĐĂNG KÝ SỰ KIỆN & TÍNH TOÁN BAN ĐẦU
+
+        // Lắng nghe sự kiện 'change' cho tất cả radio ShippingMethod
+        $('input[name="ShippingMethod"]').on('change', updateOrderSummary);
+
+        // Chạy lần đầu tiên để tính toán và hiển thị phí ship mặc định (30.000 VNĐ)
+        updateOrderSummary();
+    });
+</script>
+
+<div class="checkout-page-container container">
+    <h2 class="page-title text-center">💳 ĐẶT HÀNG</h2>
+
+    @using (Html.BeginForm("Checkout", "Orders", FormMethod.Post, new { @class = "checkout-form", role = "form", onsubmit = "return updateShippingAddress();" }))
+    {
+        @Html.AntiForgeryToken()
+
+        <div class="row">
+            <div class="col-md-7 checkout-left-col">
+
+                <div class="checkout-section shipping-section">
+                    <h3 class="section-title">1. Địa chỉ và Vận chuyển</h3>
+
+                    <div class="form-group-custom">
+                        @Html.LabelFor(m => m.ShippingAddress, new { @class = "control-label" })
+                        <div class="input-group">
+                            @Html.TextBoxFor(m => m.ShippingAddress, new
+                            {
+                                @class = "form-control custom-input",
+                                @id = "shippingAddress",
+                                @placeholder = "Vui lòng nhập địa chỉ nhận hàng chi tiết...", // Thêm placeholder
+                                @Value = Model.ShippingAddress ?? ""
+                            })
+                            <button type="button" class="btn btn-edit-address" onclick="enableAddressEdit()" style="display:none;">
+                                <i class="fa-solid fa-pen-to-square"></i> Chỉnh sửa
+                            </button>
+                        </div>
+                        @Html.ValidationMessageFor(m => m.ShippingAddress, null, new { @class = "text-danger" })
+                    </div>
+
+                    <div class="shipping-options-group">
+                        <h4 class="option-group-title">Phương thức giao hàng</h4>
+                        <div class="radio-option">
+                            @Html.RadioButtonFor(m => m.ShippingMethod, "Giao hàng nhanh", new { @id = "ship-fast" })
+                            <label for="ship-fast">Giao hàng nhanh (2-3 ngày, Phí: 30.000 VNĐ)</label>
+                        </div>
+                        <div class="radio-option">
+                            @Html.RadioButtonFor(m => m.ShippingMethod, "Giao hàng tiết kiệm", new { @id = "ship-slow" })
+                            <label for="ship-slow">Giao hàng tiết kiệm (4-7 ngày, Phí: 15.000 VNĐ)</label>
+                        </div>
+                        @Html.ValidationMessageFor(m => m.ShippingMethod, null, new { @class = "text-danger" })
+                    </div>
+
+                    <div class="payment-options-group">
+                        <h4 class="option-group-title">Phương thức thanh toán</h4>
+                        <div class="radio-option">
+                            @Html.RadioButtonFor(m => m.PaymentMethod, "Tiền mặt", new { @id = "pay-cash" })
+                            <label for="pay-cash">Thanh toán khi nhận hàng (COD)</label>
+                        </div>
+                        <div class="radio-option">
+                            @Html.RadioButtonFor(m => m.PaymentMethod, "Paypal", new { @id = "pay-paypal" })
+                            <label for="pay-paypal">Thanh toán qua PayPal</label>
+                        </div>
+                        <div class="radio-option">
+                            @Html.RadioButtonFor(m => m.PaymentMethod, "Mua trước trả sau", new { @id = "pay-later" })
+                            <label for="pay-later">Mua trước trả sau (Trả góp 0%)</label>
+                        </div>
+                        @Html.ValidationMessageFor(m => m.PaymentMethod, null, new { @class = "text-danger" })
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-5 checkout-right-col">
+
+                <div class="summary-box-checkout">
+                    <h3 class="section-title">2. Thông tin đơn hàng</h3>
+                    <div class="order-item-list">
+                        <table class="order-summary-table">
+                            <thead>
+                                <tr>
+                                    <th class="product-col">Sản phẩm</th>
+                                    <th class="qty-col">SL</th>
+                                    <th class="price-col">Thành tiền</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.CartItems)
+                                {
+                                    <tr class="order-item-row">
+                                        <td>
+                                            <img src="@item.ProductImage" alt="@item.ProductName" class="item-thumb" />
+                                            <span class="item-name-summary">@item.ProductName</span>
+                                        </td>
+                                        <td class="item-qty-summary">@item.Quantity</td>
+                                        <td class="price-text">@item.TotalPrice.ToString("N0") VNĐ</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="total-calculation-area">
+                        <div class="calc-row">
+                            <span>Tạm tính (@Model.CartItems.Count() sản phẩm):</span>
+                            <span class="price-value">@Model.TotalAmount.ToString("N0") VNĐ</span>
+                        </div>
+                        <div class="calc-row">
+                            <span>Phí vận chuyển:</span>
+                            <span class="price-value shipping-fee" id="shippingFeeDisplay">Miễn phí</span>
+                        </div>
+
+                        <div class="calc-row final-total-row">
+                            <strong>Tổng thanh toán:</strong>
+                            <strong class="total-price-final" id="finalTotalDisplay">@Model.TotalAmount.ToString("N0") VNĐ</strong>
+
+                            @Html.HiddenFor(m => m.TotalAmount, new { @id = "TotalAmount" })
+                        </div>
+                    </div>
+
+                    <div class="place-order-action">
+                        <input type="submit" value="HOÀN TẤT ĐẶT HÀNG" class="btn-place-order" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>

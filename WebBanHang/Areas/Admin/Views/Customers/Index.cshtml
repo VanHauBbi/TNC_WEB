@@ -1,0 +1,86 @@
+﻿@model IEnumerable<WebBanHang.Models.Customer>
+
+@{
+    ViewBag.Title = "Quản lý Khách hàng";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+<link href="~/Content/Admin/order_admin.css" rel="stylesheet" />
+@* Tái sử dụng CSS Admin chung *@
+
+<div class="card shadow-sm p-4">
+    <h2 class="mb-4 admin-content-title">Danh sách Khách hàng</h2>
+
+    @* ... (Khối thông báo TempData) ... *@
+
+    <p class="text-muted mb-3">Tổng cộng: <strong>@Model.Count()</strong> khách hàng</p>
+
+    <table class="table table-bordered table-striped table-admin-orders">
+        <thead class="table-dark">
+            <tr>
+                <th style="width: 5%;">ID</th>
+                <th style="width: 25%;">Tên khách hàng</th>
+                <th style="width: 20%;">Email</th>
+                <th style="width: 20%;">Địa chỉ</th>
+                <th style="width: 15%;" class="text-center">Trạng thái (Active)</th>
+                <th style="width: 15%;" class="text-center">Hành động</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.CustomerID</td>
+                    <td>@item.CustomerName</td>
+                    <td>@item.CustomerEmail</td>
+                    <td>@item.CustomerAddress</td>
+                    <td class="text-center">
+                        @{
+                            string statusClass = (item.IsActive == true) ? "bg-success" : "bg-danger";
+                            string statusText = (item.IsActive == true) ? "Hoạt động" : "Bị khóa";
+                        }
+                        <span class="badge @statusClass">@statusText</span>
+                    </td>
+                    <td class="text-center">
+                        <a href="@Url.Action("Details", new { id = item.CustomerID })" class="btn btn-info btn-sm" title="Chi tiết">
+                            <i class="fa-solid fa-eye"></i>
+                        </a>
+                        <a href="@Url.Action("Edit", new { id = item.CustomerID })" class="btn btn-warning btn-sm ms-1" title="Khóa/Mở khóa">
+                            <i class="fa-solid fa-lock"></i>
+                        </a>
+
+                        @* FORM XÓA NGAY LẬP TỨC *@
+                        @*@using (Html.BeginForm("Delete", "Customers", new { id = item.CustomerID }, FormMethod.Post, new { @class = "d-inline ms-1" }))
+                        {
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-danger btn-sm" title="Xóa Vĩnh Viễn"
+                                    onclick="return confirm('CẢNH BÁO: Xác nhận XÓA VĨNH VIỄN khách hàng @item.CustomerName và toàn bộ dữ liệu liên quan không?');">
+                                <i class="fa-solid fa-user-times"></i>
+                            </button>
+                        }*@
+
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+    <script>
+        // Tự động ẩn thông báo
+        window.addEventListener("DOMContentLoaded", function () {
+            const alertBox = document.getElementById("alertMessage");
+            if (alertBox) {
+                // Sau 3 giây thì fade-out
+                setTimeout(() => {
+                    alertBox.classList.add("fade-out");
+                    // Sau khi hiệu ứng kết thúc (0.5s), xóa phần tử khỏi DOM
+                    setTimeout(() => {
+                        alertBox.remove();
+                    }, 500);
+                }, 3000);
+            }
+        });
+    </script>
+}

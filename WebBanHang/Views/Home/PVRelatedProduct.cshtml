@@ -1,0 +1,75 @@
+﻿@model WebBanHang.Models.ViewModel.ProductDetailsVM
+@using PagedList.Mvc
+
+@*<link href="~/Content/myStyle/CustomerHome.css" rel="stylesheet" />*@
+
+<!-- Hiển thị chi tiết sản phẩm -->
+<div class="container-fluid pro">
+    <div class="row">
+        <!-- Khối bên trái (Ảnh sản phẩm) -->
+        <div class="col-md-3 pro-section">
+            <img src="@Model.product.ProductImage" alt="Product Image" />
+        </div>
+
+        <!-- Khối giữa (Thông tin chi tiết sản phẩm) -->
+        <div class="col-md-5 pro-section">
+            <h4><strong>@Html.DisplayFor(model => model.product.ProductName)</strong></h4>
+            <p class="pro-sale">Đã bán: @Model.product.OrderDetails.Count</p>
+            <p class="pro-price">@Model.product.ProductPrice.ToString("C")</p>
+            <p>Danh mục: @Model.product.Category.CategoryName</p>
+            <hr />
+            <h5><strong>Mô tả</strong></h5>
+            <p>@Model.product.ProductDescription</p>
+            <hr />
+        </div>
+
+        <!-- Khối bên phải (Giỏ hàng và các thông tin liên quan) -->
+        <div class="col-md-3 pro-section">
+            <div class="form-group">
+                @using (Html.BeginForm("ProductDetail", "Home", FormMethod.Get))
+                {
+                    <h4><strong>Số lượng</strong></h4>
+                    <p>
+                        @Html.TextBoxFor(model => model.quantity, new
+                        {
+                            @class = "form-control",
+                            @type = "number",
+                            @min = 1
+                        })
+                    </p>
+                    <h4><strong>Tạm tính</strong></h4>
+                    <p>@Model.estimatedValue.ToString("C")</p>
+                    <p>
+                        @Html.ActionLink("Thêm vào giỏ hàng", "AddToCart", "Cart", new { id = Model.product.ProductID, quantity = Model.quantity }, new { @class = "btn btn-info" })
+                    </p>
+                    <hr />
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hiển thị sản phẩm tương tự -->
+@if (Model.RelatedProducts != null && Model.RelatedProducts.Any())
+{
+    <section class="container-fluid listProduct">
+        <h4 style="font-weight:bold">Sản phẩm tương tự</h4>
+        <ul class="list-container">
+            @foreach (var product in Model.RelatedProducts)
+            {
+                <li class="lproduct-item">
+                    <div>
+                        <a href="@Url.Action("ProductDetail", "Home", new { id = product.ProductID })">
+                            <img src="@product.ProductImage" alt="@product.ProductName" />
+                        </a>
+                    </div>
+                    <div>
+                        <h5>@Html.DisplayFor(modelItem => product.ProductName)</h5>
+                        <p class="prodSale">@Html.DisplayFor(modelItem => product.ProductPrice)</p>
+                    </div>
+                </li>
+            }
+        </ul>
+    </section>
+}
+

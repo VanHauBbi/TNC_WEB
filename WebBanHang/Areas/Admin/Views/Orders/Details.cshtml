@@ -1,0 +1,75 @@
+﻿@model WebBanHang.Models.Order
+
+@{
+    ViewBag.Title = "Chi tiết Đơn hàng " + Model.OrderID;
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+<link href="~/Content/Admin/order_admin.css" rel="stylesheet" />
+
+<div class="order-detail-card shadow-sm">
+    <h4 class="detail-section-title">Thông tin Giao dịch</h4>
+    <dl class="dl-horizontal">
+        <dt>Khách hàng:</dt>
+        <dd class="fw-bold">@Model.Customer.CustomerName</dd>
+
+        <dt>Địa chỉ:</dt>
+        <dd>@Model.ShippingAddress</dd>
+
+        <dt>Ngày đặt:</dt>
+        <dd>@Model.OrderDate.ToString("dd/MM/yyyy HH:mm")</dd>
+
+        <dt>Trạng thái TT:</dt>
+        <dd>
+            @{
+                string statusClass = (Model.PaymentStatus == "Đã thanh toán" || Model.PaymentStatus == "Paid") ? "bg-success" : "bg-warning text-dark";
+            }
+            <span class="badge @statusClass">@Model.PaymentStatus</span>
+        </dd>
+
+        <dt>Phương thức GH:</dt>
+        <dd>@Model.ShippingMethod</dd>
+
+        <dt>Phương thức TT:</dt>
+        <dd>@Model.PaymentMethod</dd>
+    </dl>
+</div>
+
+<h4 class="detail-section-title">Sản phẩm đã đặt</h4>
+<table class="table table-bordered product-detail-table">
+    <thead class="table-light">
+        <tr>
+            <th>Ảnh</th>
+            <th>Sản phẩm</th>
+            <th class="text-end">Đơn giá</th>
+            <th class="text-center">SL</th>
+            <th class="text-end">Thành tiền</th>
+        </tr>
+    </thead>
+    <tbody>
+        @* Cần đảm bảo Controller OrdersController.Details có .Include("OrderDetails.Product") *@
+        @if (Model.OrderDetails != null)
+        {
+            foreach (var detail in Model.OrderDetails)
+            {
+                <tr>
+                    <td><img src="@detail.Product.ProductImage" alt="@detail.Product.ProductName" /></td>
+                    <td>@detail.Product.ProductName</td>
+                    <td class="text-end">@detail.UnitPrice.ToString("N0") ₫</td>
+                    <td class="text-center">@detail.Quantity</td>
+                    <td class="text-end fw-bold text-danger">@String.Format("{0:N0} ₫", detail.TotalPrice)</td>
+                </tr>
+            }
+        }
+    </tbody>
+    <tfoot>
+        <tr class="table-secondary">
+            <td colspan="4" class="text-end fw-bold">TỔNG THANH TOÁN:</td>
+            <td class="text-end fw-bold text-danger fs-5">@Model.TotalAmount.ToString("N0") ₫</td>
+        </tr>
+    </tfoot>
+</table>
+
+<div class="mt-4">
+    <a href="@Url.Action("Index", "Orders")" class="btn btn-secondary ms-2">Quay lại danh sách</a>
+</div>

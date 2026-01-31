@@ -1,0 +1,42 @@
+﻿@model WebBanHang.Models.Category
+
+@{
+    ViewBag.Title = "Xóa Danh Mục";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+<link href="~/Content/Admin/categories_admin.css" rel="stylesheet" />
+
+<div class="delete-confirmation-box">
+    <h3>Xác nhận xóa danh mục: @Model.CategoryName</h3>
+
+    @if (ViewBag.ConfirmDeleteMessage != null)
+    {
+        <div class="alert alert-danger mt-3">
+            <strong>⚠️ @ViewBag.ConfirmDeleteMessage</strong>
+        </div>
+
+        using (Html.BeginForm("Delete", "Categories", new { id = Model.CategoryID }, FormMethod.Post))
+        {
+            @Html.AntiForgeryToken()
+
+            <div class="mt-4">
+                <button type="submit" class="btn btn-danger btn-lg">Xác nhận Xóa</button>
+                <a href="@Url.Action("Index", "Categories")" class="btn btn-secondary btn-lg ms-3">Hủy bỏ</a>
+            </div>
+        }
+    }
+    else
+    {
+        <p class="lead">Bạn có chắc chắn muốn xóa danh mục này? Thao tác không thể hoàn tác.</p>
+
+        using (Html.BeginForm("Delete", "Categories", new { id = Model.CategoryID }, FormMethod.Post))
+        {
+            @Html.AntiForgeryToken()
+            <div class="mt-4">
+                <button type="submit" class="btn btn-danger btn-lg">Xác nhận Xóa</button>
+                <a href="@Url.Action("Index", "Categories")" class="btn btn-secondary btn-lg ms-3">Hủy bỏ</a>
+            </div>
+        }
+    }
+</div>

@@ -1,0 +1,26 @@
+﻿@model WebBanHang.Models.Category
+
+@{
+    ViewBag.Title = "Cập nhật Danh Mục";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+<link href="~/Content/Admin/categories_admin.css" rel="stylesheet" />
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+
+    <div class="form-horizontal category-form-container">
+        <h4 class="mb-3">Thông tin Danh mục</h4>
+        <hr />
+        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+        @Html.HiddenFor(model => model.CategoryID)
+
+        @Html.Partial("PVCreateEditCategory", Model)
+    </div>
+}
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+}

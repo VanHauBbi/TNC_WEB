@@ -1,0 +1,23 @@
+﻿@model WebBanHang.Models.Product
+
+@{
+    ViewBag.Title = "Xóa Sản phẩm";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+<link href="~/Content/Admin/products_admin.css" rel="stylesheet" />
+
+<h2 class="admin-content-title">XÓA SẢN PHẨM</h2>
+<h4 class="delete-warning">⚠️ Bạn thực sự muốn xóa sản phẩm này? Thao tác không thể hoàn tác!</h4>
+
+@* PVProdInfo hiển thị thông tin để xác nhận *@
+@Html.Partial("PVProdInfo", Model)
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+    <div class="form-group admin-action-buttons" style="margin-top: 20px; margin-left: 15px;">
+        <input type="submit" value="Xác nhận Xóa" class="btn btn-danger" />
+        @Html.ActionLink("Hủy bỏ & Quay lại", "Index", null, new { @class = "btn btn-secondary" })
+    </div>
+}

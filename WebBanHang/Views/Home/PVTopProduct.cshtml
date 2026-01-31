@@ -1,0 +1,97 @@
+﻿@using PagedList.Mvc
+@model WebBanHang.Models.ViewModel.ProductDetailsVM
+
+@* Vui lòng đảm bảo tệp productdetail.css đã chứa các style cho .top-products-grid và .product-card *@
+
+@if (Model.TopProduct != null && Model.TopProduct.Any())
+{
+    @* --- KHỐI GRID SẢN PHẨM --- *@
+    <div class="top-products-grid">
+
+        @foreach (var product in Model.TopProduct)
+        {
+            <div class="product-card">
+                @* Đảm bảo liên kết đúng đến trang chi tiết (sử dụng ProductDetail trong Home Controller) *@
+                <a href="@Url.Action("ProductDetail", "Home", new { id = product.ProductID })" class="product-card-link">
+                    <img src="@product.ProductImage" alt="@product.ProductName" class="product-card-image" />
+                </a>
+
+                <div class="product-card-info">
+                    <h5 class="product-card-name">
+                        <a href="@Url.Action("ProductDetail", "Home", new { id = product.ProductID })" title="@product.ProductName">
+                            @product.ProductName
+                        </a>
+                    </h5>
+
+                    <p class="product-card-price">
+                        @product.ProductPrice.ToString("N0") VNĐ
+                    </p>
+
+                    @* Thêm nút "Thêm vào giỏ hàng" nhanh cho từng card *@
+                    <button type="button"
+                            class="btn-card-add-to-cart"
+                            data-product-id="@product.ProductID"
+                            onclick="addToCartFromCard(@product.ProductID)">
+                        <i class="fa-solid fa-cart-plus"></i> Thêm vào giỏ
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+
+    @* --- PHẦN PHÂN TRANG (PAGINATION) --- *@
+<div class="pagination-container">
+    @Html.PagedListPager(Model.TopProduct, page => Url.Action("ProductDetail", "Home", new
+    {
+        id = Model.product.ProductID,
+        quantity = Model.quantity,
+        page
+    }),
+        new PagedListRenderOptions
+        {
+            // 1. Cấu hình cơ bản của Bootstrap
+            UlElementClasses = new[] { "pagination", "justify-content-center" },
+            LiElementClasses = new[] { "page-item" },
+
+            // 2. Sử dụng biểu tượng Font Awesome để làm nút nhỏ gọn
+            LinkToFirstPageFormat = "<i class='fas fa-angle-double-left'></i>",
+            LinkToPreviousPageFormat = "<i class='fas fa-angle-left'></i>",
+            LinkToNextPageFormat = "<i class='fas fa-angle-right'></i>",
+            LinkToLastPageFormat = "<i class='fas fa-angle-double-right'></i>",
+
+            Display = PagedListDisplayMode.IfNeeded
+        })
+</div>
+
+    @* Script cho nút Thêm vào giỏ hàng nhanh của Card (cần đặt ở cuối trang hoặc trong @section Scripts của view chính) *@
+    @* Nếu bạn đặt Partial View này trong @section Scripts, hãy bỏ thẻ <script> ở đây.
+        Tuy nhiên, để đơn giản, tôi giữ lại hàm này để đảm bảo nút card hoạt động. *@
+    <script>
+        // Hàm này dùng để gửi AJAX yêu cầu thêm sản phẩm vào giỏ từ card nhanh
+        function addToCartFromCard(productId) {
+            if (typeof jQuery == 'undefined') {
+                console.error("jQuery is not loaded! Cannot use AJAX.");
+                return;
+            }
+
+            $.ajax({
+                url: '@Url.Action("AddToCart", "Cart")', // Giả sử CartController/AddToCart
+                type: 'POST',
+                data: { id: productId, quantity: 1 },
+                success: function (response) {
+                    if (response.success) {
+                        alert("✅ Đã thêm sản phẩm vào giỏ!");
+                        if (typeof MiniCart === "function") {
+                            MiniCart(); // Cập nhật Mini Cart
+                        }
+                    } else {
+                        alert(response.message || "❌ Lỗi khi thêm sản phẩm.");
+                    }
+                },
+                error: function () {
+                    alert("⚠️ Lỗi hệ thống! Không thể thêm sản phẩm.");
+                }
+            });
+        }
+    </script>
+}

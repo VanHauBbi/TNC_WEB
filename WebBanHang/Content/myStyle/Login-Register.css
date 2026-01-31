@@ -1,0 +1,110 @@
+﻿/* Toàn trang */
+body {
+    background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+    font-family: 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0;
+}
+
+/* Bao quanh form */
+.auth-page {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+}
+
+/* Hộp đăng nhập / đăng ký */
+.auth-container {
+    background: #fff;
+    padding: 1rem 1.5rem;
+    border-radius: 18px;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+    width: 100%;
+    max-width: 360px; /* giảm từ 400px xuống 360px */
+}
+
+    /* Tiêu đề */
+    .auth-container h2 {
+        text-align: center;
+        margin-bottom: 1.2rem;
+        color: #1976d2;
+        font-weight: 600;
+        font-size: 1.3rem;
+    }
+
+/* Các trường nhập */
+.form-group {
+    margin-bottom: 0.6rem;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.65rem;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    font-size: 0.95rem;
+}
+
+    .form-control:focus {
+        border-color: #1976d2;
+        box-shadow: 0 0 4px rgba(25, 118, 210, 0.3);
+        outline: none;
+    }
+
+/* Nút bấm */
+.btn-submit {
+    background-color: #1976d2;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 0.6rem;
+    width: 100%;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+    .btn-submit:hover {
+        background-color: #1565c0;
+    }
+
+/* Liên kết đăng nhập / đăng ký */
+.auth-options,
+.auth-switch {
+    text-align: center;
+    margin-top: 0.8rem;
+    font-size: 0.9rem;
+}
+
+    .auth-options a,
+    .auth-switch a {
+        color: #1976d2;
+        text-decoration: none;
+    }
+
+        .auth-options a:hover,
+        .auth-switch a:hover {
+            text-decoration: underline;
+        }
+
+/* Ghi nhớ đăng nhập */
+.remember {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Responsive: co lại nhẹ trên mobile */
+@media (max-width: 480px) {
+    .auth-container {
+        max-width: 300px;
+        padding: 1.2rem 1.5rem;
+    }
+}

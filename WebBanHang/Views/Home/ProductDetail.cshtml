@@ -1,0 +1,203 @@
+﻿@using WebBanHang.Models.ViewModel
+@model ProductDetailsVM
+
+@{
+    ViewBag.Title = Model.product.ProductName;
+    Layout = "~/Views/Shared/_LayoutDivMain.cshtml";
+}
+
+<link rel="stylesheet" href="~/Content/myStyle/productdetail.css" />
+@* Thêm thư viện Font Awesome *@
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+
+<div class="product-detail-page container">
+
+    @* --- KHỐI CHÍNH: ẢNH (7/12) VÀ THÔNG TIN (5/12) --- *@
+    <div class="row product-main-info">
+
+        @* === CỘT TRÁI: ẢNH SẢN PHẨM (Col-md-7) === *@
+        <div class="col-md-7 product-gallery-col">
+            <div class="main-image-wrapper">
+                <img src="@Model.product.ProductImage" alt="@Model.product.ProductName" class="main-product-image" />
+            </div>
+            @* Thêm thumbnail gallery nếu có nhiều ảnh *@
+        </div>
+
+        @* === CỘT PHẢI: THÔNG TIN SẢN PHẨM VÀ TƯƠNG TÁC (Col-md-5) === *@
+        <div class="col-md-5 product-summary-col">
+            <h1 class="product-name">@Html.DisplayFor(model => model.product.ProductName)</h1>
+
+            @* Meta Data: Category & Sold Count *@
+            <div class="product-meta">
+                <span class="category-name">Danh mục: <a href="#"><strong>@Model.product.Category.CategoryName</strong></a></span>
+                <span class="separator-dot"></span>
+                <span class="sold-count"><i class="fa-solid fa-fire"></i> Đã bán: **@Model.product.OrderDetails.Count** sản phẩm</span>
+            </div>
+
+            @* Price Section *@
+            <div class="price-section">
+                <p class="current-price">@Model.product.ProductPrice.ToString("N0") VNĐ</p>
+            </div>
+
+            <hr class="section-divider" />
+
+            @* Cart Interaction Form *@
+            @using (Html.BeginForm("AddToCart", "Cart", FormMethod.Post, new { @id = "addToCartForm", @class = "cart-interaction-form" }))
+            {
+                <input type="hidden" name="id" value="@Model.product.ProductID" />
+
+                @* Quantity Control *@
+                <div class="form-group-qty">
+                    <label for="quantity-input" class="qty-label">Số lượng:</label>
+                    <div class="quantity-control-wrapper">
+                        <button type="button" class="btn-qty-control minus-btn"><i class="fa-solid fa-minus"></i></button>
+                        @Html.TextBoxFor(model => model.quantity, new
+                        {
+                            @class = "form-control quantity-input",
+                            @id = "quantity-input",
+                            @type = "number",
+                            @min = 1,
+                            @name = "quantity",
+                            @value = 1 // Giá trị mặc định là 1
+                        })
+                        <button type="button" class="btn-qty-control plus-btn"><i class="fa-solid fa-plus"></i></button>
+                    </div>
+                </div>
+
+                @* Estimated Price *@
+                <div class="price-summary-row">
+                    <span class="summary-label">Tạm tính:</span>
+                    <span class="calculated-price" id="estimatedPrice">
+                        @Model.product.ProductPrice.ToString("N0") VNĐ
+                    </span>
+                </div>
+
+                @* Action Buttons *@
+                <div class="action-buttons-group">
+                    <button type="submit" id="addToCartBtn" class="btn-add-to-cart">
+                        <i class="fa-solid fa-cart-shopping"></i> THÊM VÀO GIỎ HÀNG
+                    </button>
+                    <button type="button" class="btn-buy-now">
+                        <i class="fa-solid fa-bolt"></i> MUA NGAY
+                    </button>
+                </div>
+            }
+
+            <hr class="section-divider" />
+
+            @* Product Description - Mobile/Tablet Only *@
+            <div class="product-description-block d-block d-md-none">
+                <h4 class="description-heading">Mô tả sản phẩm</h4>
+                <div class="description-content">
+                    <p>@Html.Raw(Model.product.ProductDescription)</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    @* --- PHẦN CHI TIẾT DÀI (CHỈ DESKTOP) --- *@
+    <div class="product-details-full row">
+        <div class="col-12">
+            <div class="product-description-block d-none d-md-block">
+                <h4 class="description-heading"><i class="fa-solid fa-file-lines"></i> MÔ TẢ CHI TIẾT SẢN PHẨM</h4>
+                <div class="description-content">
+                    <p>@Html.Raw(Model.product.ProductDescription)</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* --- SẢN PHẨM LIÊN QUAN (Partial View) --- *@
+    <div class="related-products-section">
+        <h3 class="related-products-title"><i class="fa-solid fa-box-open"></i> SẢN PHẨM CÓ THỂ BẠN QUAN TÂM</h3>
+        @* Tên Partial View bạn đang sử dụng *@
+        @Html.Partial("PVTopProduct", Model)
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        // Lấy giá trị gốc (Đã được định dạng C)
+        const originalPriceText = '@Model.product.ProductPrice.ToString("N0")';
+        // Chuyển đổi về số để tính toán
+        // Loại bỏ dấu phân cách hàng nghìn (dấu chấm)
+        const originalPrice = parseFloat(originalPriceText.replace(/\./g, '').replace(/,/g, ''));
+
+        // Hàm định dạng tiền tệ VNĐ
+        function formatVND(amount) {
+            return amount.toLocaleString('vi-VN') + ' VNĐ';
+        }
+
+        $(document).ready(function () {
+            const $qtyInput = $('#quantity-input');
+            const $estimatedPrice = $('#estimatedPrice');
+
+            // Cập nhật giá Tạm tính dựa trên số lượng
+            function updatePrice() {
+                let quantity = parseInt($qtyInput.val()) || 1;
+                if (quantity < 1) {
+                    quantity = 1;
+                    $qtyInput.val(1);
+                }
+                const newPrice = originalPrice * quantity;
+                $estimatedPrice.text(formatVND(newPrice));
+            }
+
+            // Lắng nghe sự kiện thay đổi số lượng
+            $qtyInput.on('change keyup', updatePrice);
+
+            // Xử lý nút giảm số lượng
+            $('.minus-btn').click(function() {
+                let currentQty = parseInt($qtyInput.val());
+                if (currentQty > 1) {
+                    $qtyInput.val(currentQty - 1).trigger('change');
+                }
+            });
+
+            // Xử lý nút tăng số lượng
+            $('.plus-btn').click(function() {
+                let currentQty = parseInt($qtyInput.val());
+                $qtyInput.val(currentQty + 1).trigger('change');
+            });
+
+            // Xử lý sự kiện submit form (Thêm vào giỏ hàng qua AJAX)
+            $('#addToCartForm').submit(function (e) {
+                e.preventDefault();
+
+                var $form = $(this);
+                var url = $form.attr('action') || '@Url.Action("AddToCart", "Cart")';
+                var data = {
+                    id: @Model.product.ProductID,
+                    quantity: parseInt($('#quantity-input').val()) || 1
+                };
+
+                $.ajax({
+                    url: url,
+                    type: 'POST',
+                    data: data,
+                    success: function (response) {
+                        if (response.success) {
+                            alert("✅ " + response.message);
+                            if (typeof MiniCart === "function") {
+                                MiniCart();
+                            } else {
+                                console.warn("MiniCart function not found. Please ensure it's defined in your _Layout.");
+                            }
+                        } else if (response.redirectUrl) {
+                            alert("⚠️ Vui lòng đăng nhập để sử dụng giỏ hàng!");
+                            window.location.href = response.redirectUrl;
+                        } else {
+                            alert(response.message || "❌ Có lỗi xảy ra khi thêm sản phẩm!");
+                        }
+                    },
+                    error: function () {
+                        alert("⚠️ Lỗi hệ thống! Không thể thêm sản phẩm vào giỏ hàng.");
+                    }
+                });
+            });
+        });
+    </script>
+}
