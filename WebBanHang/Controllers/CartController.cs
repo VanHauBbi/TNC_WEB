@@ -129,7 +129,7 @@ namespace WebBanHang.Controllers
         [HttpGet]
         public JsonResult GetCartCount()
         {
-            var cart = Session["Cart"] as Cart;
+            var cart = Session["Cart"] as WebBanHang.Models.ViewModel.Cart;
             int count = cart?.Items.Sum(i => i.Quantity) ?? 0;
             return Json(new { count = count }, JsonRequestBehavior.AllowGet);
         }
@@ -137,7 +137,7 @@ namespace WebBanHang.Controllers
         [HttpGet]
         public ActionResult GetMiniCart()
         {
-            var cart = Session["Cart"] as Cart;
+            var cart = Session["Cart"] as WebBanHang.Models.ViewModel.Cart;
             if (cart == null || !cart.Items.Any())
             {
                 return Json(new
@@ -179,7 +179,7 @@ namespace WebBanHang.Controllers
             }
 
             // 2. LƯU GIỎ HÀNG HIỆN TẠI VÀO SESSION TẠM THỜI (BuyNowTempCart)
-            var currentCart = Session["Cart"] as Cart;
+            var currentCart = Session["Cart"] as WebBanHang.Models.ViewModel.Cart;
             if (currentCart != null && currentCart.Items.Any())
             {
                 // Lưu giỏ hàng cũ sang Session BuyNowTemp
@@ -194,7 +194,7 @@ namespace WebBanHang.Controllers
                 return RedirectToAction("Index", "Home");
             }
 
-            var buyNowCart = new Cart();
+            var buyNowCart = new WebBanHang.Models.ViewModel.Cart();
 
             // SỬ DỤNG PHƯƠNG THỨC ADDITEM VỚI ĐỦ 6 THAM SỐ
             // (Đây là phương thức đã được xác định qua AddToCart)

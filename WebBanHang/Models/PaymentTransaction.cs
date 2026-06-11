@@ -12,17 +12,16 @@ namespace WebBanHang.Models
     using System;
     using System.Collections.Generic;
     
-    public partial class OrderDetail
+    public partial class PaymentTransaction
     {
-        public int ID { get; set; }
-        public int ProductID { get; set; }
+        public int TransactionID { get; set; }
         public int OrderID { get; set; }
-        public int Quantity { get; set; }
-        public decimal UnitPrice { get; set; }
-        public decimal DiscountAmount { get; set; }
-        public Nullable<decimal> TotalPrice { get; set; }
+        public string PaymentGateway { get; set; }
+        public string GatewayTransactionNo { get; set; }
+        public decimal Amount { get; set; }
+        public string ResponseCode { get; set; }
+        public System.DateTime TransactionDate { get; set; }
     
         public virtual Order Order { get; set; }
-        public virtual Product Product { get; set; }
     }
 }

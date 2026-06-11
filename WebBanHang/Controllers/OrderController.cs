@@ -47,7 +47,7 @@ namespace WebBanHang.Controllers
         // GET: Orders/Checkout
         public ActionResult Checkout()
         {
-            var cart = Session["Cart"] as Cart; // ✅ Đúng kiểu
+            var cart = Session["Cart"] as WebBanHang.Models.ViewModel.Cart; // ✅ Đúng kiểu
 
             if (cart == null || !cart.Items.Any())
             {
@@ -75,7 +75,7 @@ namespace WebBanHang.Controllers
                 return View(model);
             }
 
-            var cart = Session["Cart"] as Cart; // ✅ Đúng kiểu
+            var cart = Session["Cart"] as WebBanHang.Models.ViewModel.Cart; // ✅ Đúng kiểu
             if (cart == null || !cart.Items.Any())
             {
                 ModelState.AddModelError("", "Giỏ hàng của bạn đang trống!");
@@ -111,7 +111,7 @@ namespace WebBanHang.Controllers
             db.SaveChanges();
 
             // 1. Lấy giỏ hàng gốc (nếu có)
-            var tempCart = Session["BuyNowTempCart"] as Cart;
+            var tempCart = Session["BuyNowTempCart"] as WebBanHang.Models.ViewModel.Cart;
 
             if (tempCart != null)
             {

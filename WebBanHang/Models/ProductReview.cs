@@ -12,17 +12,16 @@ namespace WebBanHang.Models
     using System;
     using System.Collections.Generic;
     
-    public partial class OrderDetail
+    public partial class ProductReview
     {
-        public int ID { get; set; }
+        public int ReviewID { get; set; }
         public int ProductID { get; set; }
-        public int OrderID { get; set; }
-        public int Quantity { get; set; }
-        public decimal UnitPrice { get; set; }
-        public decimal DiscountAmount { get; set; }
-        public Nullable<decimal> TotalPrice { get; set; }
+        public int CustomerID { get; set; }
+        public int RatingValue { get; set; }
+        public string Comment { get; set; }
+        public System.DateTime CreatedAt { get; set; }
     
-        public virtual Order Order { get; set; }
+        public virtual Customer Customer { get; set; }
         public virtual Product Product { get; set; }
     }
 }

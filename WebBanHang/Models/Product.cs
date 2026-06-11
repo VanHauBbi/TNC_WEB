@@ -17,7 +17,12 @@ namespace WebBanHang.Models
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2214:DoNotCallOverridableMethodsInConstructors")]
         public Product()
         {
+            this.CartItems = new HashSet<CartItem>();
             this.OrderDetails = new HashSet<OrderDetail>();
+            this.ProductPriceHistories = new HashSet<ProductPriceHistory>();
+            this.ProductReviews = new HashSet<ProductReview>();
+            this.ProductVariants = new HashSet<ProductVariant>();
+            this.Coupons = new HashSet<Coupon>();
         }
     
         public int ProductID { get; set; }
@@ -26,9 +31,20 @@ namespace WebBanHang.Models
         public string ProductDescription { get; set; }
         public decimal ProductPrice { get; set; }
         public string ProductImage { get; set; }
+        public int StockQuantity { get; set; }
     
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        public virtual ICollection<CartItem> CartItems { get; set; }
         public virtual Category Category { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<OrderDetail> OrderDetails { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        public virtual ICollection<ProductPriceHistory> ProductPriceHistories { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        public virtual ICollection<ProductReview> ProductReviews { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        public virtual ICollection<ProductVariant> ProductVariants { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        public virtual ICollection<Coupon> Coupons { get; set; }
     }
 }

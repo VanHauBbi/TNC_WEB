@@ -12,30 +12,25 @@ namespace WebBanHang.Models
     using System;
     using System.Collections.Generic;
     
-    public partial class Customer
+    public partial class Coupon
     {
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2214:DoNotCallOverridableMethodsInConstructors")]
-        public Customer()
+        public Coupon()
         {
-            this.Carts = new HashSet<Cart>();
             this.Orders = new HashSet<Order>();
-            this.ProductReviews = new HashSet<ProductReview>();
+            this.Products = new HashSet<Product>();
         }
     
-        public int CustomerID { get; set; }
-        public string CustomerName { get; set; }
-        public string CustomerPhone { get; set; }
-        public string CustomerEmail { get; set; }
-        public string CustomerAddress { get; set; }
-        public string Username { get; set; }
-        public bool IsActive { get; set; }
+        public int CouponID { get; set; }
+        public string Code { get; set; }
+        public Nullable<decimal> DiscountPercentage { get; set; }
+        public Nullable<decimal> MaxDiscountAmount { get; set; }
+        public System.DateTime ExpiryDate { get; set; }
+        public int UsageLimit { get; set; }
     
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
-        public virtual ICollection<Cart> Carts { get; set; }
-        public virtual User User { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<Order> Orders { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
-        public virtual ICollection<ProductReview> ProductReviews { get; set; }
+        public virtual ICollection<Product> Products { get; set; }
     }
 }

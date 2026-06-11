@@ -4,13 +4,50 @@
   <edmx:Runtime>
     <!-- SSDL content -->
     <edmx:StorageModels>
-    <Schema Namespace="MyStoreModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+      <Schema Namespace="MyStoreModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+        <EntityType Name="Cart">
+          <Key>
+            <PropertyRef Name="CartID" />
+          </Key>
+          <Property Name="CartID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="CustomerID" Type="int" Nullable="false" />
+          <Property Name="CreatedAt" Type="datetime" Nullable="false" />
+          <Property Name="UpdatedAt" Type="datetime" />
+        </EntityType>
+        <EntityType Name="CartItem">
+          <Key>
+            <PropertyRef Name="CartItemID" />
+          </Key>
+          <Property Name="CartItemID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="CartID" Type="int" Nullable="false" />
+          <Property Name="ProductID" Type="int" Nullable="false" />
+          <Property Name="Quantity" Type="int" Nullable="false" />
+        </EntityType>
         <EntityType Name="Category">
           <Key>
             <PropertyRef Name="CategoryID" />
           </Key>
           <Property Name="CategoryID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
           <Property Name="CategoryName" Type="nvarchar(max)" Nullable="false" />
+        </EntityType>
+        <EntityType Name="Coupon">
+          <Key>
+            <PropertyRef Name="CouponID" />
+          </Key>
+          <Property Name="CouponID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Code" Type="nvarchar" MaxLength="50" Nullable="false" />
+          <Property Name="DiscountPercentage" Type="decimal" Precision="5" Scale="2" />
+          <Property Name="MaxDiscountAmount" Type="decimal" Precision="18" Scale="3" />
+          <Property Name="ExpiryDate" Type="datetime" Nullable="false" />
+          <Property Name="UsageLimit" Type="int" Nullable="false" />
+        </EntityType>
+        <EntityType Name="CouponProduct">
+          <Key>
+            <PropertyRef Name="CouponID" />
+            <PropertyRef Name="ProductID" />
+          </Key>
+          <Property Name="CouponID" Type="int" Nullable="false" />
+          <Property Name="ProductID" Type="int" Nullable="false" />
         </EntityType>
         <EntityType Name="Customer">
           <Key>
@@ -30,9 +67,11 @@
           </Key>
           <Property Name="OrderID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
           <Property Name="CustomerID" Type="int" Nullable="false" />
+          <Property Name="CouponID" Type="int" />
           <Property Name="OrderDate" Type="date" Nullable="false" />
           <Property Name="TotalAmount" Type="decimal" Precision="18" Scale="3" Nullable="false" />
-          <Property Name="PaymentStatus" Type="nvarchar(max)" />
+          <Property Name="DiscountAmount" Type="decimal" Precision="18" Scale="3" Nullable="false" />
+          <Property Name="PaymentStatus" Type="nvarchar" MaxLength="50" />
           <Property Name="ShippingAddress" Type="nvarchar(max)" Nullable="false" />
           <Property Name="ShippingMethod" Type="nvarchar" MaxLength="50" />
           <Property Name="PaymentMethod" Type="nvarchar" MaxLength="50" />
@@ -47,7 +86,20 @@
           <Property Name="OrderID" Type="int" Nullable="false" />
           <Property Name="Quantity" Type="int" Nullable="false" />
           <Property Name="UnitPrice" Type="decimal" Precision="18" Scale="3" Nullable="false" />
+          <Property Name="DiscountAmount" Type="decimal" Precision="18" Scale="3" Nullable="false" />
           <Property Name="TotalPrice" Type="decimal" Precision="29" Scale="3" StoreGeneratedPattern="Computed" />
+        </EntityType>
+        <EntityType Name="PaymentTransaction">
+          <Key>
+            <PropertyRef Name="TransactionID" />
+          </Key>
+          <Property Name="TransactionID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="OrderID" Type="int" Nullable="false" />
+          <Property Name="PaymentGateway" Type="nvarchar" MaxLength="50" Nullable="false" />
+          <Property Name="GatewayTransactionNo" Type="nvarchar" MaxLength="100" />
+          <Property Name="Amount" Type="decimal" Precision="18" Scale="3" Nullable="false" />
+          <Property Name="ResponseCode" Type="nvarchar" MaxLength="50" />
+          <Property Name="TransactionDate" Type="datetime" Nullable="false" />
         </EntityType>
         <EntityType Name="Product">
           <Key>
@@ -59,16 +111,39 @@
           <Property Name="ProductDescription" Type="nvarchar(max)" Nullable="false" />
           <Property Name="ProductPrice" Type="money" Nullable="false" />
           <Property Name="ProductImage" Type="nvarchar(max)" />
+          <Property Name="StockQuantity" Type="int" Nullable="false" />
         </EntityType>
-        <EntityType Name="sysdiagrams">
+        <EntityType Name="ProductPriceHistory">
           <Key>
-            <PropertyRef Name="diagram_id" />
+            <PropertyRef Name="PriceHistoryID" />
           </Key>
-          <Property Name="name" Type="nvarchar" MaxLength="128" Nullable="false" />
-          <Property Name="principal_id" Type="int" Nullable="false" />
-          <Property Name="diagram_id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
-          <Property Name="version" Type="int" />
-          <Property Name="definition" Type="varbinary(max)" />
+          <Property Name="PriceHistoryID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="ProductID" Type="int" Nullable="false" />
+          <Property Name="OldPrice" Type="money" Nullable="false" />
+          <Property Name="NewPrice" Type="money" Nullable="false" />
+          <Property Name="ChangeDate" Type="datetime" Nullable="false" />
+        </EntityType>
+        <EntityType Name="ProductReview">
+          <Key>
+            <PropertyRef Name="ReviewID" />
+          </Key>
+          <Property Name="ReviewID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="ProductID" Type="int" Nullable="false" />
+          <Property Name="CustomerID" Type="int" Nullable="false" />
+          <Property Name="RatingValue" Type="int" Nullable="false" />
+          <Property Name="Comment" Type="nvarchar(max)" />
+          <Property Name="CreatedAt" Type="datetime" Nullable="false" />
+        </EntityType>
+        <EntityType Name="ProductVariant">
+          <Key>
+            <PropertyRef Name="VariantID" />
+          </Key>
+          <Property Name="VariantID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="ProductID" Type="int" Nullable="false" />
+          <Property Name="SKU" Type="nvarchar" MaxLength="100" Nullable="false" />
+          <Property Name="VariantAttributes" Type="nvarchar" MaxLength="255" Nullable="false" />
+          <Property Name="VariantPrice" Type="money" Nullable="false" />
+          <Property Name="StockQuantity" Type="int" Nullable="false" />
         </EntityType>
         <EntityType Name="User">
           <Key>
@@ -80,55 +155,73 @@
           <Property Name="ResetPasswordToken" Type="nvarchar" MaxLength="200" />
           <Property Name="ResetTokenExpiry" Type="datetime" />
         </EntityType>
-        <Association Name="FK__Order__CustomerI__412EB0B6">
+        <Association Name="FK_Cart_Customer">
           <End Role="Customer" Type="Self.Customer" Multiplicity="1" />
-          <End Role="Order" Type="Self.Order" Multiplicity="*" />
+          <End Role="Cart" Type="Self.Cart" Multiplicity="*" />
           <ReferentialConstraint>
             <Principal Role="Customer">
               <PropertyRef Name="CustomerID" />
             </Principal>
-            <Dependent Role="Order">
+            <Dependent Role="Cart">
               <PropertyRef Name="CustomerID" />
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="FK__OrderDeta__Order__44FF419A">
-          <End Role="Order" Type="Self.Order" Multiplicity="1" />
-          <End Role="OrderDetail" Type="Self.OrderDetail" Multiplicity="*" />
+        <Association Name="FK_CartItem_Cart">
+          <End Role="Cart" Type="Self.Cart" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="CartItem" Type="Self.CartItem" Multiplicity="*" />
           <ReferentialConstraint>
-            <Principal Role="Order">
-              <PropertyRef Name="OrderID" />
+            <Principal Role="Cart">
+              <PropertyRef Name="CartID" />
             </Principal>
-            <Dependent Role="OrderDetail">
-              <PropertyRef Name="OrderID" />
+            <Dependent Role="CartItem">
+              <PropertyRef Name="CartID" />
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="FK__OrderDeta__Produ__440B1D61">
+        <Association Name="FK_CartItem_Product">
           <End Role="Product" Type="Self.Product" Multiplicity="1" />
-          <End Role="OrderDetail" Type="Self.OrderDetail" Multiplicity="*" />
+          <End Role="CartItem" Type="Self.CartItem" Multiplicity="*" />
           <ReferentialConstraint>
             <Principal Role="Product">
               <PropertyRef Name="ProductID" />
             </Principal>
-            <Dependent Role="OrderDetail">
+            <Dependent Role="CartItem">
               <PropertyRef Name="ProductID" />
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="FK_Pro_Category">
-          <End Role="Category" Type="Self.Category" Multiplicity="1" />
-          <End Role="Product" Type="Self.Product" Multiplicity="*" />
+        <Association Name="FK_CouponProduct_Coupon">
+          <End Role="Coupon" Type="Self.Coupon" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="CouponProduct" Type="Self.CouponProduct" Multiplicity="*" />
           <ReferentialConstraint>
-            <Principal Role="Category">
-              <PropertyRef Name="CategoryID" />
+            <Principal Role="Coupon">
+              <PropertyRef Name="CouponID" />
             </Principal>
-            <Dependent Role="Product">
-              <PropertyRef Name="CategoryID" />
+            <Dependent Role="CouponProduct">
+              <PropertyRef Name="CouponID" />
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="FK_User_Customer">
+        <Association Name="FK_CouponProduct_Product">
+          <End Role="Product" Type="Self.Product" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="CouponProduct" Type="Self.CouponProduct" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Product">
+              <PropertyRef Name="ProductID" />
+            </Principal>
+            <Dependent Role="CouponProduct">
+              <PropertyRef Name="ProductID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Customer_User">
           <End Role="User" Type="Self.User" Multiplicity="1" />
           <End Role="Customer" Type="Self.Customer" Multiplicity="*" />
           <ReferentialConstraint>
@@ -140,46 +233,263 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
+        <Association Name="FK_Order_Coupon">
+          <End Role="Coupon" Type="Self.Coupon" Multiplicity="0..1" />
+          <End Role="Order" Type="Self.Order" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Coupon">
+              <PropertyRef Name="CouponID" />
+            </Principal>
+            <Dependent Role="Order">
+              <PropertyRef Name="CouponID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Order_Customer">
+          <End Role="Customer" Type="Self.Customer" Multiplicity="1" />
+          <End Role="Order" Type="Self.Order" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Customer">
+              <PropertyRef Name="CustomerID" />
+            </Principal>
+            <Dependent Role="Order">
+              <PropertyRef Name="CustomerID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_OrderDetail_Order">
+          <End Role="Order" Type="Self.Order" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="OrderDetail" Type="Self.OrderDetail" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Order">
+              <PropertyRef Name="OrderID" />
+            </Principal>
+            <Dependent Role="OrderDetail">
+              <PropertyRef Name="OrderID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_OrderDetail_Product">
+          <End Role="Product" Type="Self.Product" Multiplicity="1" />
+          <End Role="OrderDetail" Type="Self.OrderDetail" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Product">
+              <PropertyRef Name="ProductID" />
+            </Principal>
+            <Dependent Role="OrderDetail">
+              <PropertyRef Name="ProductID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_PaymentTransaction_Order">
+          <End Role="Order" Type="Self.Order" Multiplicity="1" />
+          <End Role="PaymentTransaction" Type="Self.PaymentTransaction" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Order">
+              <PropertyRef Name="OrderID" />
+            </Principal>
+            <Dependent Role="PaymentTransaction">
+              <PropertyRef Name="OrderID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_PriceHistory_Product">
+          <End Role="Product" Type="Self.Product" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="ProductPriceHistory" Type="Self.ProductPriceHistory" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Product">
+              <PropertyRef Name="ProductID" />
+            </Principal>
+            <Dependent Role="ProductPriceHistory">
+              <PropertyRef Name="ProductID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Product_Category">
+          <End Role="Category" Type="Self.Category" Multiplicity="1" />
+          <End Role="Product" Type="Self.Product" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Category">
+              <PropertyRef Name="CategoryID" />
+            </Principal>
+            <Dependent Role="Product">
+              <PropertyRef Name="CategoryID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_ProductReview_Customer">
+          <End Role="Customer" Type="Self.Customer" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="ProductReview" Type="Self.ProductReview" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Customer">
+              <PropertyRef Name="CustomerID" />
+            </Principal>
+            <Dependent Role="ProductReview">
+              <PropertyRef Name="CustomerID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_ProductReview_Product">
+          <End Role="Product" Type="Self.Product" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="ProductReview" Type="Self.ProductReview" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Product">
+              <PropertyRef Name="ProductID" />
+            </Principal>
+            <Dependent Role="ProductReview">
+              <PropertyRef Name="ProductID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_ProductVariant_Product">
+          <End Role="Product" Type="Self.Product" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="ProductVariant" Type="Self.ProductVariant" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Product">
+              <PropertyRef Name="ProductID" />
+            </Principal>
+            <Dependent Role="ProductVariant">
+              <PropertyRef Name="ProductID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
         <EntityContainer Name="MyStoreModelStoreContainer">
+          <EntitySet Name="Cart" EntityType="Self.Cart" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="CartItem" EntityType="Self.CartItem" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Category" EntityType="Self.Category" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="Coupon" EntityType="Self.Coupon" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="CouponProduct" EntityType="Self.CouponProduct" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Customer" EntityType="Self.Customer" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Order" EntityType="Self.Order" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="OrderDetail" EntityType="Self.OrderDetail" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="PaymentTransaction" EntityType="Self.PaymentTransaction" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Product" EntityType="Self.Product" Schema="dbo" store:Type="Tables" />
-          <EntitySet Name="sysdiagrams" EntityType="Self.sysdiagrams" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="ProductPriceHistory" EntityType="Self.ProductPriceHistory" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="ProductReview" EntityType="Self.ProductReview" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="ProductVariant" EntityType="Self.ProductVariant" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="User" EntityType="Self.User" Schema="dbo" store:Type="Tables" />
-          <AssociationSet Name="FK__Order__CustomerI__412EB0B6" Association="Self.FK__Order__CustomerI__412EB0B6">
+          <AssociationSet Name="FK_Cart_Customer" Association="Self.FK_Cart_Customer">
             <End Role="Customer" EntitySet="Customer" />
-            <End Role="Order" EntitySet="Order" />
+            <End Role="Cart" EntitySet="Cart" />
           </AssociationSet>
-          <AssociationSet Name="FK__OrderDeta__Order__44FF419A" Association="Self.FK__OrderDeta__Order__44FF419A">
-            <End Role="Order" EntitySet="Order" />
-            <End Role="OrderDetail" EntitySet="OrderDetail" />
+          <AssociationSet Name="FK_CartItem_Cart" Association="Self.FK_CartItem_Cart">
+            <End Role="Cart" EntitySet="Cart" />
+            <End Role="CartItem" EntitySet="CartItem" />
           </AssociationSet>
-          <AssociationSet Name="FK__OrderDeta__Produ__440B1D61" Association="Self.FK__OrderDeta__Produ__440B1D61">
+          <AssociationSet Name="FK_CartItem_Product" Association="Self.FK_CartItem_Product">
             <End Role="Product" EntitySet="Product" />
-            <End Role="OrderDetail" EntitySet="OrderDetail" />
+            <End Role="CartItem" EntitySet="CartItem" />
           </AssociationSet>
-          <AssociationSet Name="FK_Pro_Category" Association="Self.FK_Pro_Category">
-            <End Role="Category" EntitySet="Category" />
+          <AssociationSet Name="FK_CouponProduct_Coupon" Association="Self.FK_CouponProduct_Coupon">
+            <End Role="Coupon" EntitySet="Coupon" />
+            <End Role="CouponProduct" EntitySet="CouponProduct" />
+          </AssociationSet>
+          <AssociationSet Name="FK_CouponProduct_Product" Association="Self.FK_CouponProduct_Product">
             <End Role="Product" EntitySet="Product" />
+            <End Role="CouponProduct" EntitySet="CouponProduct" />
           </AssociationSet>
-          <AssociationSet Name="FK_User_Customer" Association="Self.FK_User_Customer">
+          <AssociationSet Name="FK_Customer_User" Association="Self.FK_Customer_User">
             <End Role="User" EntitySet="User" />
             <End Role="Customer" EntitySet="Customer" />
           </AssociationSet>
+          <AssociationSet Name="FK_Order_Coupon" Association="Self.FK_Order_Coupon">
+            <End Role="Coupon" EntitySet="Coupon" />
+            <End Role="Order" EntitySet="Order" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Order_Customer" Association="Self.FK_Order_Customer">
+            <End Role="Customer" EntitySet="Customer" />
+            <End Role="Order" EntitySet="Order" />
+          </AssociationSet>
+          <AssociationSet Name="FK_OrderDetail_Order" Association="Self.FK_OrderDetail_Order">
+            <End Role="Order" EntitySet="Order" />
+            <End Role="OrderDetail" EntitySet="OrderDetail" />
+          </AssociationSet>
+          <AssociationSet Name="FK_OrderDetail_Product" Association="Self.FK_OrderDetail_Product">
+            <End Role="Product" EntitySet="Product" />
+            <End Role="OrderDetail" EntitySet="OrderDetail" />
+          </AssociationSet>
+          <AssociationSet Name="FK_PaymentTransaction_Order" Association="Self.FK_PaymentTransaction_Order">
+            <End Role="Order" EntitySet="Order" />
+            <End Role="PaymentTransaction" EntitySet="PaymentTransaction" />
+          </AssociationSet>
+          <AssociationSet Name="FK_PriceHistory_Product" Association="Self.FK_PriceHistory_Product">
+            <End Role="Product" EntitySet="Product" />
+            <End Role="ProductPriceHistory" EntitySet="ProductPriceHistory" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Product_Category" Association="Self.FK_Product_Category">
+            <End Role="Category" EntitySet="Category" />
+            <End Role="Product" EntitySet="Product" />
+          </AssociationSet>
+          <AssociationSet Name="FK_ProductReview_Customer" Association="Self.FK_ProductReview_Customer">
+            <End Role="Customer" EntitySet="Customer" />
+            <End Role="ProductReview" EntitySet="ProductReview" />
+          </AssociationSet>
+          <AssociationSet Name="FK_ProductReview_Product" Association="Self.FK_ProductReview_Product">
+            <End Role="Product" EntitySet="Product" />
+            <End Role="ProductReview" EntitySet="ProductReview" />
+          </AssociationSet>
+          <AssociationSet Name="FK_ProductVariant_Product" Association="Self.FK_ProductVariant_Product">
+            <End Role="Product" EntitySet="Product" />
+            <End Role="ProductVariant" EntitySet="ProductVariant" />
+          </AssociationSet>
         </EntityContainer>
-      </Schema></edmx:StorageModels>
+      </Schema>
+    </edmx:StorageModels>
     <!-- CSDL content -->
     <edmx:ConceptualModels>
       <Schema Namespace="MyStoreModel" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
+        <EntityType Name="Cart">
+          <Key>
+            <PropertyRef Name="CartID" />
+          </Key>
+          <Property Name="CartID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="CustomerID" Type="Int32" Nullable="false" />
+          <Property Name="CreatedAt" Type="DateTime" Nullable="false" Precision="3" />
+          <Property Name="UpdatedAt" Type="DateTime" Precision="3" />
+          <NavigationProperty Name="Customer" Relationship="Self.FK_Cart_Customer" FromRole="Cart" ToRole="Customer" />
+          <NavigationProperty Name="CartItems" Relationship="Self.FK_CartItem_Cart" FromRole="Cart" ToRole="CartItem" />
+        </EntityType>
+        <EntityType Name="CartItem">
+          <Key>
+            <PropertyRef Name="CartItemID" />
+          </Key>
+          <Property Name="CartItemID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="CartID" Type="Int32" Nullable="false" />
+          <Property Name="ProductID" Type="Int32" Nullable="false" />
+          <Property Name="Quantity" Type="Int32" Nullable="false" />
+          <NavigationProperty Name="Cart" Relationship="Self.FK_CartItem_Cart" FromRole="CartItem" ToRole="Cart" />
+          <NavigationProperty Name="Product" Relationship="Self.FK_CartItem_Product" FromRole="CartItem" ToRole="Product" />
+        </EntityType>
         <EntityType Name="Category">
           <Key>
             <PropertyRef Name="CategoryID" />
           </Key>
           <Property Name="CategoryID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
           <Property Name="CategoryName" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" Nullable="false" />
-          <NavigationProperty Name="Products" Relationship="Self.FK_Pro_Category" FromRole="Category" ToRole="Product" />
+          <NavigationProperty Name="Products" Relationship="Self.FK_Product_Category" FromRole="Category" ToRole="Product" />
+        </EntityType>
+        <EntityType Name="Coupon">
+          <Key>
+            <PropertyRef Name="CouponID" />
+          </Key>
+          <Property Name="CouponID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="Code" Type="String" MaxLength="50" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="DiscountPercentage" Type="Decimal" Precision="5" Scale="2" />
+          <Property Name="MaxDiscountAmount" Type="Decimal" Precision="18" Scale="3" />
+          <Property Name="ExpiryDate" Type="DateTime" Nullable="false" Precision="3" />
+          <Property Name="UsageLimit" Type="Int32" Nullable="false" />
+          <NavigationProperty Name="Orders" Relationship="Self.FK_Order_Coupon" FromRole="Coupon" ToRole="Order" />
+          <NavigationProperty Name="Products" Relationship="Self.CouponProduct" FromRole="Coupon" ToRole="Product" />
         </EntityType>
         <EntityType Name="Customer">
           <Key>
@@ -191,9 +501,11 @@
           <Property Name="CustomerEmail" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
           <Property Name="CustomerAddress" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
           <Property Name="Username" Type="String" MaxLength="255" FixedLength="false" Unicode="true" Nullable="false" />
-          <NavigationProperty Name="Orders" Relationship="Self.FK__Order__CustomerI__4BAC3F29" FromRole="Customer" ToRole="Order" />
-          <NavigationProperty Name="User" Relationship="Self.FK_User_Customer" FromRole="Customer" ToRole="User" />
           <Property Name="IsActive" Type="Boolean" Nullable="false" />
+          <NavigationProperty Name="Carts" Relationship="Self.FK_Cart_Customer" FromRole="Customer" ToRole="Cart" />
+          <NavigationProperty Name="User" Relationship="Self.FK_Customer_User" FromRole="Customer" ToRole="User" />
+          <NavigationProperty Name="Orders" Relationship="Self.FK_Order_Customer" FromRole="Customer" ToRole="Order" />
+          <NavigationProperty Name="ProductReviews" Relationship="Self.FK_ProductReview_Customer" FromRole="Customer" ToRole="ProductReview" />
         </EntityType>
         <EntityType Name="Order">
           <Key>
@@ -201,15 +513,19 @@
           </Key>
           <Property Name="OrderID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
           <Property Name="CustomerID" Type="Int32" Nullable="false" />
+          <Property Name="CouponID" Type="Int32" />
           <Property Name="OrderDate" Type="DateTime" Nullable="false" Precision="0" />
           <Property Name="TotalAmount" Type="Decimal" Precision="18" Scale="3" Nullable="false" />
-          <Property Name="PaymentStatus" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
-          <NavigationProperty Name="Customer" Relationship="Self.FK__Order__CustomerI__4BAC3F29" FromRole="Order" ToRole="Customer" />
-          <NavigationProperty Name="OrderDetails" Relationship="Self.FK__OrderDeta__Order__4F7CD00D" FromRole="Order" ToRole="OrderDetail" />
-          <Property Name="ShippingAddress" Type="String" Nullable="false" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="DiscountAmount" Type="Decimal" Precision="18" Scale="3" Nullable="false" />
+          <Property Name="PaymentStatus" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="ShippingAddress" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" Nullable="false" />
           <Property Name="ShippingMethod" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
           <Property Name="PaymentMethod" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
           <Property Name="OrderStatus" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <NavigationProperty Name="Coupon" Relationship="Self.FK_Order_Coupon" FromRole="Order" ToRole="Coupon" />
+          <NavigationProperty Name="Customer" Relationship="Self.FK_Order_Customer" FromRole="Order" ToRole="Customer" />
+          <NavigationProperty Name="OrderDetails" Relationship="Self.FK_OrderDetail_Order" FromRole="Order" ToRole="OrderDetail" />
+          <NavigationProperty Name="PaymentTransactions" Relationship="Self.FK_PaymentTransaction_Order" FromRole="Order" ToRole="PaymentTransaction" />
         </EntityType>
         <EntityType Name="OrderDetail">
           <Key>
@@ -220,9 +536,23 @@
           <Property Name="OrderID" Type="Int32" Nullable="false" />
           <Property Name="Quantity" Type="Int32" Nullable="false" />
           <Property Name="UnitPrice" Type="Decimal" Precision="18" Scale="3" Nullable="false" />
-          <Property Name="TotalPrice" Type="Decimal" Precision="29" Scale="3" />
-          <NavigationProperty Name="Order" Relationship="Self.FK__OrderDeta__Order__4F7CD00D" FromRole="OrderDetail" ToRole="Order" />
-          <NavigationProperty Name="Product" Relationship="Self.FK__OrderDeta__Produ__4E88ABD4" FromRole="OrderDetail" ToRole="Product" />
+          <Property Name="DiscountAmount" Type="Decimal" Precision="18" Scale="3" Nullable="false" />
+          <Property Name="TotalPrice" Type="Decimal" Precision="29" Scale="3" annotation:StoreGeneratedPattern="Computed" />
+          <NavigationProperty Name="Order" Relationship="Self.FK_OrderDetail_Order" FromRole="OrderDetail" ToRole="Order" />
+          <NavigationProperty Name="Product" Relationship="Self.FK_OrderDetail_Product" FromRole="OrderDetail" ToRole="Product" />
+        </EntityType>
+        <EntityType Name="PaymentTransaction">
+          <Key>
+            <PropertyRef Name="TransactionID" />
+          </Key>
+          <Property Name="TransactionID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="OrderID" Type="Int32" Nullable="false" />
+          <Property Name="PaymentGateway" Type="String" MaxLength="50" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="GatewayTransactionNo" Type="String" MaxLength="100" FixedLength="false" Unicode="true" />
+          <Property Name="Amount" Type="Decimal" Precision="18" Scale="3" Nullable="false" />
+          <Property Name="ResponseCode" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="TransactionDate" Type="DateTime" Nullable="false" Precision="3" />
+          <NavigationProperty Name="Order" Relationship="Self.FK_PaymentTransaction_Order" FromRole="PaymentTransaction" ToRole="Order" />
         </EntityType>
         <EntityType Name="Product">
           <Key>
@@ -234,18 +564,50 @@
           <Property Name="ProductDescription" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" Nullable="false" />
           <Property Name="ProductPrice" Type="Decimal" Precision="19" Scale="4" Nullable="false" />
           <Property Name="ProductImage" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
-          <NavigationProperty Name="Category" Relationship="Self.FK_Pro_Category" FromRole="Product" ToRole="Category" />
-          <NavigationProperty Name="OrderDetails" Relationship="Self.FK__OrderDeta__Produ__4E88ABD4" FromRole="Product" ToRole="OrderDetail" />
+          <Property Name="StockQuantity" Type="Int32" Nullable="false" />
+          <NavigationProperty Name="CartItems" Relationship="Self.FK_CartItem_Product" FromRole="Product" ToRole="CartItem" />
+          <NavigationProperty Name="Category" Relationship="Self.FK_Product_Category" FromRole="Product" ToRole="Category" />
+          <NavigationProperty Name="OrderDetails" Relationship="Self.FK_OrderDetail_Product" FromRole="Product" ToRole="OrderDetail" />
+          <NavigationProperty Name="ProductPriceHistories" Relationship="Self.FK_PriceHistory_Product" FromRole="Product" ToRole="ProductPriceHistory" />
+          <NavigationProperty Name="ProductReviews" Relationship="Self.FK_ProductReview_Product" FromRole="Product" ToRole="ProductReview" />
+          <NavigationProperty Name="ProductVariants" Relationship="Self.FK_ProductVariant_Product" FromRole="Product" ToRole="ProductVariant" />
+          <NavigationProperty Name="Coupons" Relationship="Self.CouponProduct" FromRole="Product" ToRole="Coupon" />
         </EntityType>
-        <EntityType Name="sysdiagram">
+        <EntityType Name="ProductPriceHistory">
           <Key>
-            <PropertyRef Name="diagram_id" />
+            <PropertyRef Name="PriceHistoryID" />
           </Key>
-          <Property Name="name" Type="String" MaxLength="128" FixedLength="false" Unicode="true" Nullable="false" />
-          <Property Name="principal_id" Type="Int32" Nullable="false" />
-          <Property Name="diagram_id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
-          <Property Name="version" Type="Int32" />
-          <Property Name="definition" Type="Binary" MaxLength="Max" FixedLength="false" />
+          <Property Name="PriceHistoryID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="ProductID" Type="Int32" Nullable="false" />
+          <Property Name="OldPrice" Type="Decimal" Precision="19" Scale="4" Nullable="false" />
+          <Property Name="NewPrice" Type="Decimal" Precision="19" Scale="4" Nullable="false" />
+          <Property Name="ChangeDate" Type="DateTime" Nullable="false" Precision="3" />
+          <NavigationProperty Name="Product" Relationship="Self.FK_PriceHistory_Product" FromRole="ProductPriceHistory" ToRole="Product" />
+        </EntityType>
+        <EntityType Name="ProductReview">
+          <Key>
+            <PropertyRef Name="ReviewID" />
+          </Key>
+          <Property Name="ReviewID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="ProductID" Type="Int32" Nullable="false" />
+          <Property Name="CustomerID" Type="Int32" Nullable="false" />
+          <Property Name="RatingValue" Type="Int32" Nullable="false" />
+          <Property Name="Comment" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="CreatedAt" Type="DateTime" Nullable="false" Precision="3" />
+          <NavigationProperty Name="Customer" Relationship="Self.FK_ProductReview_Customer" FromRole="ProductReview" ToRole="Customer" />
+          <NavigationProperty Name="Product" Relationship="Self.FK_ProductReview_Product" FromRole="ProductReview" ToRole="Product" />
+        </EntityType>
+        <EntityType Name="ProductVariant">
+          <Key>
+            <PropertyRef Name="VariantID" />
+          </Key>
+          <Property Name="VariantID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="ProductID" Type="Int32" Nullable="false" />
+          <Property Name="SKU" Type="String" MaxLength="100" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="VariantAttributes" Type="String" MaxLength="255" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="VariantPrice" Type="Decimal" Precision="19" Scale="4" Nullable="false" />
+          <Property Name="StockQuantity" Type="Int32" Nullable="false" />
+          <NavigationProperty Name="Product" Relationship="Self.FK_ProductVariant_Product" FromRole="ProductVariant" ToRole="Product" />
         </EntityType>
         <EntityType Name="User">
           <Key>
@@ -254,11 +616,49 @@
           <Property Name="Username" Type="String" MaxLength="255" FixedLength="false" Unicode="true" Nullable="false" />
           <Property Name="Password" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" Nullable="false" />
           <Property Name="UserRole" Type="String" MaxLength="1" FixedLength="true" Unicode="true" Nullable="false" />
-          <NavigationProperty Name="Customers" Relationship="Self.FK_User_Customer" FromRole="User" ToRole="Customer" />
           <Property Name="ResetPasswordToken" Type="String" MaxLength="200" FixedLength="false" Unicode="true" />
           <Property Name="ResetTokenExpiry" Type="DateTime" Precision="3" />
+          <NavigationProperty Name="Customers" Relationship="Self.FK_Customer_User" FromRole="User" ToRole="Customer" />
         </EntityType>
-        <Association Name="FK_Pro_Category">
+        <Association Name="FK_Cart_Customer">
+          <End Role="Customer" Type="Self.Customer" Multiplicity="1" />
+          <End Role="Cart" Type="Self.Cart" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Customer">
+              <PropertyRef Name="CustomerID" />
+            </Principal>
+            <Dependent Role="Cart">
+              <PropertyRef Name="CustomerID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_CartItem_Cart">
+          <End Role="Cart" Type="Self.Cart" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="CartItem" Type="Self.CartItem" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Cart">
+              <PropertyRef Name="CartID" />
+            </Principal>
+            <Dependent Role="CartItem">
+              <PropertyRef Name="CartID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_CartItem_Product">
+          <End Role="Product" Type="Self.Product" Multiplicity="1" />
+          <End Role="CartItem" Type="Self.CartItem" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Product">
+              <PropertyRef Name="ProductID" />
+            </Principal>
+            <Dependent Role="CartItem">
+              <PropertyRef Name="ProductID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Product_Category">
           <End Role="Category" Type="Self.Category" Multiplicity="1" />
           <End Role="Product" Type="Self.Product" Multiplicity="*" />
           <ReferentialConstraint>
@@ -270,19 +670,19 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="FK__Order__CustomerI__4BAC3F29">
-          <End Role="Customer" Type="Self.Customer" Multiplicity="1" />
+        <Association Name="FK_Order_Coupon">
+          <End Role="Coupon" Type="Self.Coupon" Multiplicity="0..1" />
           <End Role="Order" Type="Self.Order" Multiplicity="*" />
           <ReferentialConstraint>
-            <Principal Role="Customer">
-              <PropertyRef Name="CustomerID" />
+            <Principal Role="Coupon">
+              <PropertyRef Name="CouponID" />
             </Principal>
             <Dependent Role="Order">
-              <PropertyRef Name="CustomerID" />
+              <PropertyRef Name="CouponID" />
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="FK_User_Customer">
+        <Association Name="FK_Customer_User">
           <End Role="User" Type="Self.User" Multiplicity="1" />
           <End Role="Customer" Type="Self.Customer" Multiplicity="*" />
           <ReferentialConstraint>
@@ -294,8 +694,36 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="FK__OrderDeta__Order__4F7CD00D">
-          <End Role="Order" Type="Self.Order" Multiplicity="1" />
+        <Association Name="FK_Order_Customer">
+          <End Role="Customer" Type="Self.Customer" Multiplicity="1" />
+          <End Role="Order" Type="Self.Order" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Customer">
+              <PropertyRef Name="CustomerID" />
+            </Principal>
+            <Dependent Role="Order">
+              <PropertyRef Name="CustomerID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_ProductReview_Customer">
+          <End Role="Customer" Type="Self.Customer" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="ProductReview" Type="Self.ProductReview" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Customer">
+              <PropertyRef Name="CustomerID" />
+            </Principal>
+            <Dependent Role="ProductReview">
+              <PropertyRef Name="CustomerID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_OrderDetail_Order">
+          <End Role="Order" Type="Self.Order" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
           <End Role="OrderDetail" Type="Self.OrderDetail" Multiplicity="*" />
           <ReferentialConstraint>
             <Principal Role="Order">
@@ -306,7 +734,19 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="FK__OrderDeta__Produ__4E88ABD4">
+        <Association Name="FK_PaymentTransaction_Order">
+          <End Role="Order" Type="Self.Order" Multiplicity="1" />
+          <End Role="PaymentTransaction" Type="Self.PaymentTransaction" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Order">
+              <PropertyRef Name="OrderID" />
+            </Principal>
+            <Dependent Role="PaymentTransaction">
+              <PropertyRef Name="OrderID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_OrderDetail_Product">
           <End Role="Product" Type="Self.Product" Multiplicity="1" />
           <End Role="OrderDetail" Type="Self.OrderDetail" Multiplicity="*" />
           <ReferentialConstraint>
@@ -318,33 +758,125 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
+        <Association Name="FK_PriceHistory_Product">
+          <End Role="Product" Type="Self.Product" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="ProductPriceHistory" Type="Self.ProductPriceHistory" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Product">
+              <PropertyRef Name="ProductID" />
+            </Principal>
+            <Dependent Role="ProductPriceHistory">
+              <PropertyRef Name="ProductID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_ProductReview_Product">
+          <End Role="Product" Type="Self.Product" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="ProductReview" Type="Self.ProductReview" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Product">
+              <PropertyRef Name="ProductID" />
+            </Principal>
+            <Dependent Role="ProductReview">
+              <PropertyRef Name="ProductID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_ProductVariant_Product">
+          <End Role="Product" Type="Self.Product" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="ProductVariant" Type="Self.ProductVariant" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Product">
+              <PropertyRef Name="ProductID" />
+            </Principal>
+            <Dependent Role="ProductVariant">
+              <PropertyRef Name="ProductID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="CouponProduct">
+          <End Role="Coupon" Type="Self.Coupon" Multiplicity="*" />
+          <End Role="Product" Type="Self.Product" Multiplicity="*" />
+        </Association>
         <EntityContainer Name="MyStoreEntities" annotation:LazyLoadingEnabled="true">
+          <EntitySet Name="Carts" EntityType="Self.Cart" />
+          <EntitySet Name="CartItems" EntityType="Self.CartItem" />
           <EntitySet Name="Categories" EntityType="Self.Category" />
+          <EntitySet Name="Coupons" EntityType="Self.Coupon" />
           <EntitySet Name="Customers" EntityType="Self.Customer" />
           <EntitySet Name="Orders" EntityType="Self.Order" />
           <EntitySet Name="OrderDetails" EntityType="Self.OrderDetail" />
+          <EntitySet Name="PaymentTransactions" EntityType="Self.PaymentTransaction" />
           <EntitySet Name="Products" EntityType="Self.Product" />
-          <EntitySet Name="sysdiagrams" EntityType="Self.sysdiagram" />
+          <EntitySet Name="ProductPriceHistories" EntityType="Self.ProductPriceHistory" />
+          <EntitySet Name="ProductReviews" EntityType="Self.ProductReview" />
+          <EntitySet Name="ProductVariants" EntityType="Self.ProductVariant" />
           <EntitySet Name="Users" EntityType="Self.User" />
-          <AssociationSet Name="FK_Pro_Category" Association="Self.FK_Pro_Category">
+          <AssociationSet Name="FK_Cart_Customer" Association="Self.FK_Cart_Customer">
+            <End Role="Customer" EntitySet="Customers" />
+            <End Role="Cart" EntitySet="Carts" />
+          </AssociationSet>
+          <AssociationSet Name="FK_CartItem_Cart" Association="Self.FK_CartItem_Cart">
+            <End Role="Cart" EntitySet="Carts" />
+            <End Role="CartItem" EntitySet="CartItems" />
+          </AssociationSet>
+          <AssociationSet Name="FK_CartItem_Product" Association="Self.FK_CartItem_Product">
+            <End Role="Product" EntitySet="Products" />
+            <End Role="CartItem" EntitySet="CartItems" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Product_Category" Association="Self.FK_Product_Category">
             <End Role="Category" EntitySet="Categories" />
             <End Role="Product" EntitySet="Products" />
           </AssociationSet>
-          <AssociationSet Name="FK__Order__CustomerI__4BAC3F29" Association="Self.FK__Order__CustomerI__4BAC3F29">
-            <End Role="Customer" EntitySet="Customers" />
+          <AssociationSet Name="FK_Order_Coupon" Association="Self.FK_Order_Coupon">
+            <End Role="Coupon" EntitySet="Coupons" />
             <End Role="Order" EntitySet="Orders" />
           </AssociationSet>
-          <AssociationSet Name="FK_User_Customer" Association="Self.FK_User_Customer">
+          <AssociationSet Name="FK_Customer_User" Association="Self.FK_Customer_User">
             <End Role="User" EntitySet="Users" />
             <End Role="Customer" EntitySet="Customers" />
           </AssociationSet>
-          <AssociationSet Name="FK__OrderDeta__Order__4F7CD00D" Association="Self.FK__OrderDeta__Order__4F7CD00D">
+          <AssociationSet Name="FK_Order_Customer" Association="Self.FK_Order_Customer">
+            <End Role="Customer" EntitySet="Customers" />
+            <End Role="Order" EntitySet="Orders" />
+          </AssociationSet>
+          <AssociationSet Name="FK_ProductReview_Customer" Association="Self.FK_ProductReview_Customer">
+            <End Role="Customer" EntitySet="Customers" />
+            <End Role="ProductReview" EntitySet="ProductReviews" />
+          </AssociationSet>
+          <AssociationSet Name="FK_OrderDetail_Order" Association="Self.FK_OrderDetail_Order">
             <End Role="Order" EntitySet="Orders" />
             <End Role="OrderDetail" EntitySet="OrderDetails" />
           </AssociationSet>
-          <AssociationSet Name="FK__OrderDeta__Produ__4E88ABD4" Association="Self.FK__OrderDeta__Produ__4E88ABD4">
+          <AssociationSet Name="FK_PaymentTransaction_Order" Association="Self.FK_PaymentTransaction_Order">
+            <End Role="Order" EntitySet="Orders" />
+            <End Role="PaymentTransaction" EntitySet="PaymentTransactions" />
+          </AssociationSet>
+          <AssociationSet Name="FK_OrderDetail_Product" Association="Self.FK_OrderDetail_Product">
             <End Role="Product" EntitySet="Products" />
             <End Role="OrderDetail" EntitySet="OrderDetails" />
+          </AssociationSet>
+          <AssociationSet Name="FK_PriceHistory_Product" Association="Self.FK_PriceHistory_Product">
+            <End Role="Product" EntitySet="Products" />
+            <End Role="ProductPriceHistory" EntitySet="ProductPriceHistories" />
+          </AssociationSet>
+          <AssociationSet Name="FK_ProductReview_Product" Association="Self.FK_ProductReview_Product">
+            <End Role="Product" EntitySet="Products" />
+            <End Role="ProductReview" EntitySet="ProductReviews" />
+          </AssociationSet>
+          <AssociationSet Name="FK_ProductVariant_Product" Association="Self.FK_ProductVariant_Product">
+            <End Role="Product" EntitySet="Products" />
+            <End Role="ProductVariant" EntitySet="ProductVariants" />
+          </AssociationSet>
+          <AssociationSet Name="CouponProduct" Association="Self.CouponProduct">
+            <End Role="Coupon" EntitySet="Coupons" />
+            <End Role="Product" EntitySet="Products" />
           </AssociationSet>
         </EntityContainer>
       </Schema>
@@ -353,6 +885,26 @@
     <edmx:Mappings>
       <Mapping Space="C-S" xmlns="http://schemas.microsoft.com/ado/2009/11/mapping/cs">
         <EntityContainerMapping StorageEntityContainer="MyStoreModelStoreContainer" CdmEntityContainer="MyStoreEntities">
+          <EntitySetMapping Name="Carts">
+            <EntityTypeMapping TypeName="MyStoreModel.Cart">
+              <MappingFragment StoreEntitySet="Cart">
+                <ScalarProperty Name="CartID" ColumnName="CartID" />
+                <ScalarProperty Name="CustomerID" ColumnName="CustomerID" />
+                <ScalarProperty Name="CreatedAt" ColumnName="CreatedAt" />
+                <ScalarProperty Name="UpdatedAt" ColumnName="UpdatedAt" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="CartItems">
+            <EntityTypeMapping TypeName="MyStoreModel.CartItem">
+              <MappingFragment StoreEntitySet="CartItem">
+                <ScalarProperty Name="CartItemID" ColumnName="CartItemID" />
+                <ScalarProperty Name="CartID" ColumnName="CartID" />
+                <ScalarProperty Name="ProductID" ColumnName="ProductID" />
+                <ScalarProperty Name="Quantity" ColumnName="Quantity" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
           <EntitySetMapping Name="Categories">
             <EntityTypeMapping TypeName="MyStoreModel.Category">
               <MappingFragment StoreEntitySet="Category">
@@ -361,31 +913,45 @@
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
+          <EntitySetMapping Name="Coupons">
+            <EntityTypeMapping TypeName="MyStoreModel.Coupon">
+              <MappingFragment StoreEntitySet="Coupon">
+                <ScalarProperty Name="CouponID" ColumnName="CouponID" />
+                <ScalarProperty Name="Code" ColumnName="Code" />
+                <ScalarProperty Name="DiscountPercentage" ColumnName="DiscountPercentage" />
+                <ScalarProperty Name="MaxDiscountAmount" ColumnName="MaxDiscountAmount" />
+                <ScalarProperty Name="ExpiryDate" ColumnName="ExpiryDate" />
+                <ScalarProperty Name="UsageLimit" ColumnName="UsageLimit" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
           <EntitySetMapping Name="Customers">
             <EntityTypeMapping TypeName="MyStoreModel.Customer">
               <MappingFragment StoreEntitySet="Customer">
-                <ScalarProperty Name="IsActive" ColumnName="IsActive" />
                 <ScalarProperty Name="CustomerID" ColumnName="CustomerID" />
                 <ScalarProperty Name="CustomerName" ColumnName="CustomerName" />
                 <ScalarProperty Name="CustomerPhone" ColumnName="CustomerPhone" />
                 <ScalarProperty Name="CustomerEmail" ColumnName="CustomerEmail" />
                 <ScalarProperty Name="CustomerAddress" ColumnName="CustomerAddress" />
                 <ScalarProperty Name="Username" ColumnName="Username" />
+                <ScalarProperty Name="IsActive" ColumnName="IsActive" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
           <EntitySetMapping Name="Orders">
             <EntityTypeMapping TypeName="MyStoreModel.Order">
               <MappingFragment StoreEntitySet="Order">
-                <ScalarProperty Name="OrderStatus" ColumnName="OrderStatus" />
-                <ScalarProperty Name="PaymentMethod" ColumnName="PaymentMethod" />
-                <ScalarProperty Name="ShippingMethod" ColumnName="ShippingMethod" />
-                <ScalarProperty Name="ShippingAddress" ColumnName="ShippingAddress" />
                 <ScalarProperty Name="OrderID" ColumnName="OrderID" />
                 <ScalarProperty Name="CustomerID" ColumnName="CustomerID" />
+                <ScalarProperty Name="CouponID" ColumnName="CouponID" />
                 <ScalarProperty Name="OrderDate" ColumnName="OrderDate" />
                 <ScalarProperty Name="TotalAmount" ColumnName="TotalAmount" />
+                <ScalarProperty Name="DiscountAmount" ColumnName="DiscountAmount" />
                 <ScalarProperty Name="PaymentStatus" ColumnName="PaymentStatus" />
+                <ScalarProperty Name="ShippingAddress" ColumnName="ShippingAddress" />
+                <ScalarProperty Name="ShippingMethod" ColumnName="ShippingMethod" />
+                <ScalarProperty Name="PaymentMethod" ColumnName="PaymentMethod" />
+                <ScalarProperty Name="OrderStatus" ColumnName="OrderStatus" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
@@ -397,7 +963,21 @@
                 <ScalarProperty Name="OrderID" ColumnName="OrderID" />
                 <ScalarProperty Name="Quantity" ColumnName="Quantity" />
                 <ScalarProperty Name="UnitPrice" ColumnName="UnitPrice" />
+                <ScalarProperty Name="DiscountAmount" ColumnName="DiscountAmount" />
                 <ScalarProperty Name="TotalPrice" ColumnName="TotalPrice" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="PaymentTransactions">
+            <EntityTypeMapping TypeName="MyStoreModel.PaymentTransaction">
+              <MappingFragment StoreEntitySet="PaymentTransaction">
+                <ScalarProperty Name="TransactionID" ColumnName="TransactionID" />
+                <ScalarProperty Name="OrderID" ColumnName="OrderID" />
+                <ScalarProperty Name="PaymentGateway" ColumnName="PaymentGateway" />
+                <ScalarProperty Name="GatewayTransactionNo" ColumnName="GatewayTransactionNo" />
+                <ScalarProperty Name="Amount" ColumnName="Amount" />
+                <ScalarProperty Name="ResponseCode" ColumnName="ResponseCode" />
+                <ScalarProperty Name="TransactionDate" ColumnName="TransactionDate" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
@@ -410,31 +990,64 @@
                 <ScalarProperty Name="ProductDescription" ColumnName="ProductDescription" />
                 <ScalarProperty Name="ProductPrice" ColumnName="ProductPrice" />
                 <ScalarProperty Name="ProductImage" ColumnName="ProductImage" />
+                <ScalarProperty Name="StockQuantity" ColumnName="StockQuantity" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
-          <EntitySetMapping Name="sysdiagrams">
-            <EntityTypeMapping TypeName="MyStoreModel.sysdiagram">
-              <MappingFragment StoreEntitySet="sysdiagrams">
-                <ScalarProperty Name="name" ColumnName="name" />
-                <ScalarProperty Name="principal_id" ColumnName="principal_id" />
-                <ScalarProperty Name="diagram_id" ColumnName="diagram_id" />
-                <ScalarProperty Name="version" ColumnName="version" />
-                <ScalarProperty Name="definition" ColumnName="definition" />
+          <EntitySetMapping Name="ProductPriceHistories">
+            <EntityTypeMapping TypeName="MyStoreModel.ProductPriceHistory">
+              <MappingFragment StoreEntitySet="ProductPriceHistory">
+                <ScalarProperty Name="PriceHistoryID" ColumnName="PriceHistoryID" />
+                <ScalarProperty Name="ProductID" ColumnName="ProductID" />
+                <ScalarProperty Name="OldPrice" ColumnName="OldPrice" />
+                <ScalarProperty Name="NewPrice" ColumnName="NewPrice" />
+                <ScalarProperty Name="ChangeDate" ColumnName="ChangeDate" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="ProductReviews">
+            <EntityTypeMapping TypeName="MyStoreModel.ProductReview">
+              <MappingFragment StoreEntitySet="ProductReview">
+                <ScalarProperty Name="ReviewID" ColumnName="ReviewID" />
+                <ScalarProperty Name="ProductID" ColumnName="ProductID" />
+                <ScalarProperty Name="CustomerID" ColumnName="CustomerID" />
+                <ScalarProperty Name="RatingValue" ColumnName="RatingValue" />
+                <ScalarProperty Name="Comment" ColumnName="Comment" />
+                <ScalarProperty Name="CreatedAt" ColumnName="CreatedAt" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="ProductVariants">
+            <EntityTypeMapping TypeName="MyStoreModel.ProductVariant">
+              <MappingFragment StoreEntitySet="ProductVariant">
+                <ScalarProperty Name="VariantID" ColumnName="VariantID" />
+                <ScalarProperty Name="ProductID" ColumnName="ProductID" />
+                <ScalarProperty Name="SKU" ColumnName="SKU" />
+                <ScalarProperty Name="VariantAttributes" ColumnName="VariantAttributes" />
+                <ScalarProperty Name="VariantPrice" ColumnName="VariantPrice" />
+                <ScalarProperty Name="StockQuantity" ColumnName="StockQuantity" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
           <EntitySetMapping Name="Users">
             <EntityTypeMapping TypeName="MyStoreModel.User">
               <MappingFragment StoreEntitySet="User">
-                <ScalarProperty Name="ResetTokenExpiry" ColumnName="ResetTokenExpiry" />
-                <ScalarProperty Name="ResetPasswordToken" ColumnName="ResetPasswordToken" />
                 <ScalarProperty Name="Username" ColumnName="Username" />
                 <ScalarProperty Name="Password" ColumnName="Password" />
                 <ScalarProperty Name="UserRole" ColumnName="UserRole" />
+                <ScalarProperty Name="ResetPasswordToken" ColumnName="ResetPasswordToken" />
+                <ScalarProperty Name="ResetTokenExpiry" ColumnName="ResetTokenExpiry" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
+          <AssociationSetMapping Name="CouponProduct" TypeName="MyStoreModel.CouponProduct" StoreEntitySet="CouponProduct">
+            <EndProperty Name="Coupon">
+              <ScalarProperty Name="CouponID" ColumnName="CouponID" />
+            </EndProperty>
+            <EndProperty Name="Product">
+              <ScalarProperty Name="ProductID" ColumnName="ProductID" />
+            </EndProperty>
+          </AssociationSetMapping>
         </EntityContainerMapping>
       </Mapping>
     </edmx:Mappings>

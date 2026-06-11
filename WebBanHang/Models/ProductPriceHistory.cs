@@ -12,12 +12,14 @@ namespace WebBanHang.Models
     using System;
     using System.Collections.Generic;
     
-    public partial class sysdiagram
+    public partial class ProductPriceHistory
     {
-        public string name { get; set; }
-        public int principal_id { get; set; }
-        public int diagram_id { get; set; }
-        public Nullable<int> version { get; set; }
-        public byte[] definition { get; set; }
+        public int PriceHistoryID { get; set; }
+        public int ProductID { get; set; }
+        public decimal OldPrice { get; set; }
+        public decimal NewPrice { get; set; }
+        public System.DateTime ChangeDate { get; set; }
+    
+        public virtual Product Product { get; set; }
     }
 }
