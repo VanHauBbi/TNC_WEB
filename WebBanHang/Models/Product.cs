@@ -32,6 +32,7 @@ namespace WebBanHang.Models
         public decimal ProductPrice { get; set; }
         public string ProductImage { get; set; }
         public int StockQuantity { get; set; }
+        public decimal ImportPrice { get; set; }
     
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<CartItem> CartItems { get; set; }

@@ -1,0 +1,69 @@
+﻿@model WebBanHang.Models.Coupon
+
+@{
+    ViewBag.Title = "Xóa Mã Giảm Giá";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+<div class="alert alert-danger shadow-sm">
+    <h4 class="alert-heading"><i class="fa-solid fa-triangle-exclamation"></i> Cảnh báo!</h4>
+    <p class="mb-0">Bạn có chắc chắn muốn xóa Mã Khuyến Mãi <strong>@Model.CouponName</strong> (Mã: <strong>@Model.Code</strong>) không? Thao tác này sẽ xóa toàn bộ dữ liệu liên kết và không thể hoàn tác.</p>
+</div>
+
+<div class="card shadow-sm p-4 mb-4 border-danger">
+    <div class="row">
+        <div class="col-md-6 border-end pr-4">
+            <h4 class="text-primary mb-3">Thông tin chung</h4>
+            <dl class="row">
+                <dt class="col-sm-4 text-muted">Tên Mã Khuyến Mãi:</dt>
+                <dd class="col-sm-8 fw-bold">@Model.CouponName</dd>
+
+                <dt class="col-sm-4 text-muted">Mã Xác Thực:</dt>
+                <dd class="col-sm-8 fw-bold text-primary">@Model.Code</dd>
+
+                <dt class="col-sm-4 text-muted">Mức giảm (%):</dt>
+                <dd class="col-sm-8 text-danger fw-bold">
+                    @(Model.DiscountPercentage.HasValue ? Model.DiscountPercentage.Value.ToString("0.##") + "%" : "Không áp dụng")
+                </dd>
+
+                <dt class="col-sm-4 text-muted">Giảm tối đa:</dt>
+                <dd class="col-sm-8 text-success fw-bold">
+                    @(Model.MaxDiscountAmount.HasValue ? Model.MaxDiscountAmount.Value.ToString("N0") + " ₫" : "Không giới hạn")
+                </dd>
+
+                <dt class="col-sm-4 text-muted">Ngày hết hạn:</dt>
+                <dd class="col-sm-8">@Model.ExpiryDate.ToString("dd/MM/yyyy HH:mm")</dd>
+
+                <dt class="col-sm-4 text-muted">Số lượt dùng:</dt>
+                <dd class="col-sm-8">@Model.UsageLimit lượt</dd>
+            </dl>
+        </div>
+
+        <div class="col-md-6 pl-4">
+            <h4 class="text-success mb-3">Sản phẩm áp dụng</h4>
+            @if (Model.Products != null && Model.Products.Any())
+            {
+                <ul class="list-unstyled">
+                    @foreach (var product in Model.Products)
+                    {
+                        <li><i class="fa-solid fa-caret-right text-muted me-2"></i> @product.ProductName</li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <span class="text-muted">Áp dụng cho toàn bộ đơn hàng.</span>
+            }
+        </div>
+    </div>
+</div>
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+    <div class="form-actions no-color">
+        <button type="submit" class="btn btn-danger">
+            <i class="fa-solid fa-trash-can"></i> Xác nhận Xóa
+        </button>
+        @Html.ActionLink("Hủy bỏ & Quay lại", "Index", null, new { @class = "btn btn-secondary ms-2" })
+    </div>
+}

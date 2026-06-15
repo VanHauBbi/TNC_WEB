@@ -1,0 +1,247 @@
+﻿@model WebBanHang.Models.Coupon
+
+@{
+    ViewBag.Title = "Thêm Mã Giảm Giá";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+
+    <div class="form-horizontal card p-4 shadow-sm">
+        @Html.ValidationSummary(true, "", new { @class = "alert alert-danger" })
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="control-label fw-bold mb-2">Tên Mã Khuyến Mãi</label>
+                @Html.EditorFor(model => model.CouponName, new { htmlAttributes = new { @class = "form-control", placeholder = "VD: Chào hè rực rỡ 2026" } })
+                @Html.ValidationMessageFor(model => model.CouponName, "", new { @class = "text-danger" })
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label class="control-label fw-bold mb-2">Mã Xác Thực (Code)</label>
+                <div class="input-group">
+                    @Html.EditorFor(model => model.Code, new { htmlAttributes = new { @class = "form-control", @id = "couponCodeInput", @readonly = "readonly", @style = "text-transform:uppercase; background-color: #e9ecef;", placeholder = "Nhấn nút để sinh mã" } })
+                    <button class="btn btn-outline-secondary" type="button" id="btnGenerateCode">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Tạo tự động
+                    </button>
+                </div>
+                @Html.ValidationMessageFor(model => model.Code, "", new { @class = "text-danger" })
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label class="control-label fw-bold mb-2">Số lượt sử dụng (Usage Limit)</label>
+                @Html.EditorFor(model => model.UsageLimit, new { htmlAttributes = new { @class = "form-control", type = "number", min = "1", Value = "1" } })
+                @Html.ValidationMessageFor(model => model.UsageLimit, "", new { @class = "text-danger" })
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label class="control-label fw-bold mb-2">Phần trăm giảm (%)</label>
+                @Html.EditorFor(model => model.DiscountPercentage, new { htmlAttributes = new { @class = "form-control", type = "number", min = "0", max = "100", step = "0.01", placeholder = "VD: 10" } })
+                @Html.ValidationMessageFor(model => model.DiscountPercentage, "", new { @class = "text-danger" })
+                <small class="text-muted">Để trống nếu muốn giảm thẳng tiền mặt.</small>
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <label class="control-label fw-bold mb-2">Tiền giảm tối đa (VNĐ)</label>
+                @Html.EditorFor(model => model.MaxDiscountAmount, new { htmlAttributes = new { @class = "form-control", type = "number", min = "0", placeholder = "VD: 50000" } })
+                @Html.ValidationMessageFor(model => model.MaxDiscountAmount, "", new { @class = "text-danger" })
+                <small class="text-muted">Giới hạn số tiền giảm (dùng với %)</small>
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <label class="control-label fw-bold mb-2">Ngày, giờ hết hạn</label>
+                @* Sử dụng type="datetime-local" để hỗ trợ chọn cả giờ và ngày *@
+                @Html.EditorFor(model => model.ExpiryDate, new { htmlAttributes = new { @class = "form-control", type = "datetime-local", required = "required" } })
+                @Html.ValidationMessageFor(model => model.ExpiryDate, "", new { @class = "text-danger" })
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-12 mb-3">
+                    <label class="control-label fw-bold mb-2 text-primary">Quy trình chọn Sản phẩm Khuyến mãi</label>
+                    <small class="text-muted d-block mb-2"><i class="fa-solid fa-circle-info"></i> Nếu không chọn sản phẩm nào, hệ thống mặc định áp dụng mã cho toàn bộ hóa đơn.</small>
+
+                    <div class="border p-3 rounded bg-light">
+                        <div class="row">
+                            <div class="col-md-4 border-end">
+                                <label class="fw-bold mb-2">Bước 1: Chọn Danh mục</label>
+                                @Html.DropDownList("CategoryFilter", (SelectList)ViewBag.Categories, "-- Chọn danh mục --", new { @class = "form-control", id = "categoryFilter" })
+                            </div>
+
+                            <div class="col-md-4 border-end">
+                                <label class="fw-bold mb-2">Bước 2: Chọn Sản phẩm</label>
+                                <div id="productCheckboxContainer" style="height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; background: #fff; border-radius: 5px;">
+                                    <em class="text-muted">Vui lòng chọn danh mục trước...</em>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="fw-bold mb-2 text-success">Bước 3: Xem lại kết quả</label>
+                                <div id="selectedSummaryContainer" style="height: 200px; overflow-y: auto; border: 1px solid #28a745; padding: 10px; background: #f8fff9; border-radius: 5px;">
+                                    <em class="text-muted" id="emptySummaryMsg">Chưa có sản phẩm nào...</em>
+                                    <ul id="selectedProductList" class="list-unstyled mb-0"></ul>
+                                </div>
+                                <div id="hiddenInputsContainer"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group mt-4">
+            <button type="submit" class="btn btn-success"><i class="fa-solid fa-floppy-disk"></i> Lưu Mã Giảm Giá</button>
+            @Html.ActionLink("Quay lại danh sách", "Index", null, new { @class = "btn btn-secondary ms-2" })
+        </div>
+    </div>
+}
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+    <script>
+        // Khởi tạo mảng lưu trữ trạng thái cục bộ (trống vì là trang Thêm mới)
+        var selectedProducts = [];
+
+        $(document).ready(function () {
+            // Hàm sinh mã ngẫu nhiên
+            function generateRandomCode() {
+                var length = 8;
+                var charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+                var result = "TNC-";
+                for (var i = 0, n = charset.length; i < length; ++i) {
+                    result += charset.charAt(Math.floor(Math.random() * n));
+                }
+                $("#couponCodeInput").val(result);
+            }
+
+            // Gán sự kiện click cho nút tạo mã
+            $("#btnGenerateCode").click(function () {
+                generateRandomCode();
+            });
+
+            // Tự động sinh mã nếu ô dữ liệu đang trống
+            if ($("#couponCodeInput").val() === "") {
+                generateRandomCode();
+            }
+
+            // SỰ KIỆN: Đổi danh mục
+            $("#categoryFilter").change(function () {
+                var categoryId = $(this).val();
+                var container = $("#productCheckboxContainer");
+
+                container.empty();
+
+                if (categoryId === "") {
+                    container.html('<em class="text-muted">Vui lòng chọn danh mục trước...</em>');
+                    return;
+                }
+
+                // Thực thi AJAX truy xuất dữ liệu
+                $.ajax({
+                    url: '/Admin/Coupons/GetProductsByCategory',
+                    type: 'GET',
+                    data: { categoryId: categoryId },
+                    success: function (data) {
+                        if (data.length === 0) {
+                            container.html('<em class="text-muted">Không có sản phẩm trong danh mục này.</em>');
+                            return;
+                        }
+
+                        // Khởi tạo Checkbox cho từng sản phẩm
+                        for (var i = 0; i < data.length; i++) {
+                            var product = data[i];
+                            var isChecked = false;
+
+                            // Kiểm tra đối chiếu với mảng đã lưu
+                            for (var j = 0; j < selectedProducts.length; j++) {
+                                if (selectedProducts[j].id == product.ProductID) {
+                                    isChecked = true;
+                                    break;
+                                }
+                            }
+
+                            var checkHtml = '<div class="form-check">' +
+                                '<input class="form-check-input product-checkbox" type="checkbox" value="' + product.ProductID + '" data-name="' + product.ProductName + '" id="chk_' + product.ProductID + '" ' + (isChecked ? 'checked' : '') + '>' +
+                                '<label class="form-check-label" for="chk_' + product.ProductID + '">' + product.ProductName + '</label>' +
+                                '</div>';
+                            container.append(checkHtml);
+                        }
+                    },
+                    error: function () {
+                        alert("Đã xảy ra lỗi khi tải danh sách sản phẩm.");
+                    }
+                });
+            });
+
+            // SỰ KIỆN: Đánh dấu/Bỏ đánh dấu Checkbox ở Bước 2
+            $(document).on("change", ".product-checkbox", function () {
+                var id = $(this).val();
+                var name = $(this).attr("data-name");
+                var isChecked = $(this).is(":checked");
+
+                if (isChecked) {
+                    selectedProducts.push({ id: id, name: name });
+                } else {
+                    for (var i = 0; i < selectedProducts.length; i++) {
+                        if (selectedProducts[i].id == id) {
+                            selectedProducts.splice(i, 1);
+                            break;
+                        }
+                    }
+                }
+                updateSummaryUI();
+            });
+
+            // SỰ KIỆN: Click nút Xóa trực tiếp ở Bước 3
+            $(document).on("click", ".remove-product-btn", function () {
+                var idToRemove = $(this).attr("data-id");
+
+                // 1. Xóa khỏi mảng lưu trữ
+                for (var i = 0; i < selectedProducts.length; i++) {
+                    if (selectedProducts[i].id == idToRemove) {
+                        selectedProducts.splice(i, 1);
+                        break;
+                    }
+                }
+
+                // 2. Bỏ đánh dấu ở Bước 2
+                $("#chk_" + idToRemove).prop("checked", false);
+
+                // 3. Cập nhật lại giao diện
+                updateSummaryUI();
+            });
+        });
+
+        // HÀM: Cập nhật Giao diện hiển thị và Tham số ẩn
+        function updateSummaryUI() {
+            var listContainer = $("#selectedProductList");
+            var hiddenContainer = $("#hiddenInputsContainer");
+            var emptyMsg = $("#emptySummaryMsg");
+
+            listContainer.empty();
+            hiddenContainer.empty();
+
+            if (selectedProducts.length === 0) {
+                emptyMsg.show();
+            } else {
+                emptyMsg.hide();
+
+                for (var i = 0; i < selectedProducts.length; i++) {
+                    var item = selectedProducts[i];
+
+                    // Kết xuất hiển thị kèm nút Xóa
+                    var liHtml = '<li class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom">' +
+                        '<span class="text-success"><i class="fa-solid fa-check-circle me-1"></i>' + item.name + '</span>' +
+                        '<button type="button" class="btn btn-sm btn-outline-danger remove-product-btn" data-id="' + item.id + '" title="Bỏ chọn sản phẩm này"><i class="fa-solid fa-xmark"></i></button>' +
+                        '</li>';
+                    listContainer.append(liHtml);
+
+                    // Kết xuất trường ẩn
+                    hiddenContainer.append('<input type="hidden" name="selectedProducts" value="' + item.id + '" />');
+                }
+            }
+        }
+    </script>
+}

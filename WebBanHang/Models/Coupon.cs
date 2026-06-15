@@ -27,6 +27,7 @@ namespace WebBanHang.Models
         public Nullable<decimal> MaxDiscountAmount { get; set; }
         public System.DateTime ExpiryDate { get; set; }
         public int UsageLimit { get; set; }
+        public string CouponName { get; set; }
     
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<Order> Orders { get; set; }

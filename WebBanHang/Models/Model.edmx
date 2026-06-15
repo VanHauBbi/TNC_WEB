@@ -4,7 +4,7 @@
   <edmx:Runtime>
     <!-- SSDL content -->
     <edmx:StorageModels>
-      <Schema Namespace="MyStoreModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+    <Schema Namespace="MyStoreModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
         <EntityType Name="Cart">
           <Key>
             <PropertyRef Name="CartID" />
@@ -35,6 +35,7 @@
             <PropertyRef Name="CouponID" />
           </Key>
           <Property Name="CouponID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="CouponName" Type="nvarchar" MaxLength="255" Nullable="false" />
           <Property Name="Code" Type="nvarchar" MaxLength="50" Nullable="false" />
           <Property Name="DiscountPercentage" Type="decimal" Precision="5" Scale="2" />
           <Property Name="MaxDiscountAmount" Type="decimal" Precision="18" Scale="3" />
@@ -86,6 +87,7 @@
           <Property Name="OrderID" Type="int" Nullable="false" />
           <Property Name="Quantity" Type="int" Nullable="false" />
           <Property Name="UnitPrice" Type="decimal" Precision="18" Scale="3" Nullable="false" />
+          <Property Name="ImportPrice" Type="decimal" Precision="18" Scale="3" Nullable="false" />
           <Property Name="DiscountAmount" Type="decimal" Precision="18" Scale="3" Nullable="false" />
           <Property Name="TotalPrice" Type="decimal" Precision="29" Scale="3" StoreGeneratedPattern="Computed" />
         </EntityType>
@@ -110,6 +112,7 @@
           <Property Name="ProductName" Type="nvarchar(max)" Nullable="false" />
           <Property Name="ProductDescription" Type="nvarchar(max)" Nullable="false" />
           <Property Name="ProductPrice" Type="money" Nullable="false" />
+          <Property Name="ImportPrice" Type="money" Nullable="false" />
           <Property Name="ProductImage" Type="nvarchar(max)" />
           <Property Name="StockQuantity" Type="int" Nullable="false" />
         </EntityType>
@@ -443,8 +446,7 @@
             <End Role="ProductVariant" EntitySet="ProductVariant" />
           </AssociationSet>
         </EntityContainer>
-      </Schema>
-    </edmx:StorageModels>
+      </Schema></edmx:StorageModels>
     <!-- CSDL content -->
     <edmx:ConceptualModels>
       <Schema Namespace="MyStoreModel" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
@@ -490,6 +492,7 @@
           <Property Name="UsageLimit" Type="Int32" Nullable="false" />
           <NavigationProperty Name="Orders" Relationship="Self.FK_Order_Coupon" FromRole="Coupon" ToRole="Order" />
           <NavigationProperty Name="Products" Relationship="Self.CouponProduct" FromRole="Coupon" ToRole="Product" />
+          <Property Name="CouponName" Type="String" Nullable="false" MaxLength="255" FixedLength="false" Unicode="true" />
         </EntityType>
         <EntityType Name="Customer">
           <Key>
@@ -540,6 +543,7 @@
           <Property Name="TotalPrice" Type="Decimal" Precision="29" Scale="3" annotation:StoreGeneratedPattern="Computed" />
           <NavigationProperty Name="Order" Relationship="Self.FK_OrderDetail_Order" FromRole="OrderDetail" ToRole="Order" />
           <NavigationProperty Name="Product" Relationship="Self.FK_OrderDetail_Product" FromRole="OrderDetail" ToRole="Product" />
+          <Property Name="ImportPrice" Type="Decimal" Nullable="false" Precision="18" Scale="3" />
         </EntityType>
         <EntityType Name="PaymentTransaction">
           <Key>
@@ -572,6 +576,7 @@
           <NavigationProperty Name="ProductReviews" Relationship="Self.FK_ProductReview_Product" FromRole="Product" ToRole="ProductReview" />
           <NavigationProperty Name="ProductVariants" Relationship="Self.FK_ProductVariant_Product" FromRole="Product" ToRole="ProductVariant" />
           <NavigationProperty Name="Coupons" Relationship="Self.CouponProduct" FromRole="Product" ToRole="Coupon" />
+          <Property Name="ImportPrice" Type="Decimal" Nullable="false" Precision="19" Scale="4" />
         </EntityType>
         <EntityType Name="ProductPriceHistory">
           <Key>
@@ -916,6 +921,7 @@
           <EntitySetMapping Name="Coupons">
             <EntityTypeMapping TypeName="MyStoreModel.Coupon">
               <MappingFragment StoreEntitySet="Coupon">
+                <ScalarProperty Name="CouponName" ColumnName="CouponName" />
                 <ScalarProperty Name="CouponID" ColumnName="CouponID" />
                 <ScalarProperty Name="Code" ColumnName="Code" />
                 <ScalarProperty Name="DiscountPercentage" ColumnName="DiscountPercentage" />
@@ -958,6 +964,7 @@
           <EntitySetMapping Name="OrderDetails">
             <EntityTypeMapping TypeName="MyStoreModel.OrderDetail">
               <MappingFragment StoreEntitySet="OrderDetail">
+                <ScalarProperty Name="ImportPrice" ColumnName="ImportPrice" />
                 <ScalarProperty Name="ID" ColumnName="ID" />
                 <ScalarProperty Name="ProductID" ColumnName="ProductID" />
                 <ScalarProperty Name="OrderID" ColumnName="OrderID" />
@@ -984,6 +991,7 @@
           <EntitySetMapping Name="Products">
             <EntityTypeMapping TypeName="MyStoreModel.Product">
               <MappingFragment StoreEntitySet="Product">
+                <ScalarProperty Name="ImportPrice" ColumnName="ImportPrice" />
                 <ScalarProperty Name="ProductID" ColumnName="ProductID" />
                 <ScalarProperty Name="CategoryID" ColumnName="CategoryID" />
                 <ScalarProperty Name="ProductName" ColumnName="ProductName" />

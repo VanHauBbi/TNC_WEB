@@ -21,6 +21,7 @@ namespace WebBanHang.Models
         public decimal UnitPrice { get; set; }
         public decimal DiscountAmount { get; set; }
         public Nullable<decimal> TotalPrice { get; set; }
+        public decimal ImportPrice { get; set; }
     
         public virtual Order Order { get; set; }
         public virtual Product Product { get; set; }

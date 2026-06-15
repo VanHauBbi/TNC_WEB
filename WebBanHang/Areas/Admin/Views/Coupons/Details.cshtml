@@ -1,0 +1,84 @@
+﻿@model WebBanHang.Models.Coupon
+
+@{
+    ViewBag.Title = "Chi tiết Mã Giảm Giá";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+<div class="card shadow-sm p-4 mt-3">
+    <div class="row">
+        <div class="col-md-6 border-end pr-4">
+            <h4 class="text-primary mb-3"><i class="fa-solid fa-ticket"></i> Thông tin chung</h4>
+            <dl class="row">
+                <dt class="col-sm-4 text-muted">Tên Mã Khuyến Mãi:</dt>
+                <dd class="col-sm-8 fw-bold text-dark" style="font-size: 1.1em;">@Model.CouponName</dd>
+
+                <dt class="col-sm-4 text-muted">Mã Xác Thực:</dt>
+                <dd class="col-sm-8 fw-bold text-primary" style="font-size: 1.2em; letter-spacing: 1px;">@Model.Code</dd>
+
+                <dt class="col-sm-4 text-muted">Mức giảm (%):</dt>
+                <dd class="col-sm-8 fw-bold text-danger">
+                    @(Model.DiscountPercentage.HasValue ? Model.DiscountPercentage.Value.ToString("0.##") + "%" : "Không áp dụng")
+                </dd>
+
+                <dt class="col-sm-4 text-muted">Giảm tối đa:</dt>
+                <dd class="col-sm-8 fw-bold text-success">
+                    @(Model.MaxDiscountAmount.HasValue ? Model.MaxDiscountAmount.Value.ToString("N0") + " ₫" : "Không giới hạn")
+                </dd>
+
+                <dt class="col-sm-4 text-muted">Ngày hết hạn:</dt>
+                <dd class="col-sm-8">
+                    @Model.ExpiryDate.ToString("dd/MM/yyyy HH:mm")
+                    @if (Model.ExpiryDate <= DateTime.Now)
+                    {
+                        <span class="badge bg-danger ms-2">Đã hết hạn</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-success ms-2">Còn hạn</span>
+                    }
+                </dd>
+
+                <dt class="col-sm-4 text-muted">Số lượt dùng:</dt>
+                <dd class="col-sm-8">
+                    <span style="font-weight: 500;">@Model.UsageLimit lượt</span>
+                    @if (Model.UsageLimit <= 0)
+                    {
+                        <span class="badge bg-warning text-dark ms-2">Đã hết lượt</span>
+                    }
+                </dd>
+            </dl>
+        </div>
+
+        <div class="col-md-6 pl-4">
+            <h4 class="text-success mb-3"><i class="fa-solid fa-box-open"></i> Sản phẩm áp dụng</h4>
+
+            @if (Model.Products != null && Model.Products.Any())
+            {
+                <div style="max-height: 200px; overflow-y: auto; border: 1px solid #e0e0e0; border-radius: 5px; padding: 10px; background-color: #f9f9f9;">
+                    <ul class="list-unstyled mb-0">
+                        @foreach (var product in Model.Products)
+                        {
+                            <li class="mb-2 pb-2 border-bottom">
+                                <i class="fa-solid fa-check text-success me-2"></i>
+                                <strong>@product.ProductName</strong>
+                                <br />
+                                <small class="text-muted ms-4">Giá: @product.ProductPrice.ToString("N0") ₫</small>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-info">
+                    <i class="fa-solid fa-circle-info"></i> Mã giảm giá này được <strong>áp dụng cho toàn bộ đơn hàng</strong> (không giới hạn sản phẩm cụ thể).
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="mt-4 pt-3 border-top">
+        @Html.ActionLink("Chỉnh sửa", "Edit", new { id = Model.CouponID }, new { @class = "btn btn-warning" })
+        @Html.ActionLink("Quay lại danh sách", "Index", null, new { @class = "btn btn-secondary ms-2" })
+    </div>
+</div>

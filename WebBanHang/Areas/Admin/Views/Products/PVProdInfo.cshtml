@@ -3,21 +3,36 @@
 <div class="product-detail-container">
     <div class="row">
         <div class="col-md-4 text-center">
-            <img src=" @Html.DisplayFor(model => model.ProductImage)" class="product-image-large" />
+            <img src="@Html.DisplayFor(model => model.ProductImage)" class="product-image-large" />
         </div>
         <div class="col-md-8">
             <dl class="product-detail-info dl-horizontal">
-                <dt> Tên sản phẩm</dt>
-                <dd> @Html.DisplayFor(model => model.ProductName) </dd>
+                <dt>Tên sản phẩm</dt>
+                <dd>@Html.DisplayFor(model => model.ProductName)</dd>
 
-                <dt> Danh mục </dt>
-                <dd> @Html.DisplayFor(model => model.Category.CategoryName) </dd>
+                <dt>Danh mục</dt>
+                <dd>@Html.DisplayFor(model => model.Category.CategoryName)</dd>
 
-                <dt>Đơn giá </dt>
-                <dd class="fw-bold text-danger"> @Html.DisplayFor(model => model.ProductPrice) ₫ </dd>
+                <dt>Giá bán (Đơn giá)</dt>
+                <dd class="fw-bold text-danger">@Html.DisplayFor(model => model.ProductPrice) ₫</dd>
+
+                <dt>Giá nhập kho</dt>
+                <dd class="fw-bold text-success">@Html.DisplayFor(model => model.ImportPrice) ₫</dd>
+
+                <dt>Số lượng tồn kho</dt>
+                <dd>
+                    @if (Model.StockQuantity > 0)
+                    {
+                        <span class="badge bg-success" style="font-size: 0.9em;">@Model.StockQuantity</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-danger" style="font-size: 0.9em;">Hết hàng</span>
+                    }
+                </dd>
 
                 <dt>Mô tả</dt>
-                <dd> @Html.DisplayFor(model => model.ProductDescription) </dd>
+                <dd>@Html.DisplayFor(model => model.ProductDescription)</dd>
             </dl>
         </div>
     </div>

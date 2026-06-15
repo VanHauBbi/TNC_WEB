@@ -1,0 +1,87 @@
+﻿@model IEnumerable<WebBanHang.Models.Coupon>
+
+@{
+    ViewBag.Title = "Quản lý Mã Giảm Giá";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+<div class="card shadow-sm p-4 admin-search-page mt-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        @Html.ActionLink("+ Thêm Mã Mới", "Create", null, new { @class = "btn btn-success" })
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            ✅ @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <table class="table table-bordered table-hover mt-3">
+        <thead class="table-dark">
+            <tr>
+                <th style="width: 20%;" class="text-center">Tên Mã Khuyến Mãi</th>
+                <th style="width: 15%;" class="text-center">Mã Xác Thực</th>
+                <th style="width: 10%;" class="text-center">Mức giảm</th>
+                <th style="width: 12%;" class="text-center">Giảm tối đa</th>
+                <th style="width: 13%;" class="text-center">Ngày hết hạn</th>
+                <th style="width: 8%; " class="text-center">Lượt</th>
+                <th style="width: 10%;" class="text-center">Trạng thái</th>
+                <th style="width: 12%;" class="text-center">Hành động</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td class="text-center fw-bold text-danger">
+                        <strong class="text-dark">@item.CouponName</strong>
+                    </td>
+                    <td class="text-center fw-bold text-danger">
+                        <span class="text-primary" style="font-size: 1.1em; letter-spacing: 1px; font-weight: 500;">@item.Code</span>
+                    </td>
+                    <td class="text-center fw-bold text-danger">
+                        @(item.DiscountPercentage.HasValue ? item.DiscountPercentage.Value.ToString("0.##") + "%" : "-")
+                    </td>
+                    <td class="text-center text-muted">
+                        @(item.MaxDiscountAmount.HasValue ? item.MaxDiscountAmount.Value.ToString("N0") + " ₫" : "-")
+                    </td>
+                    <td class="text-center">
+                        @item.ExpiryDate.ToString("dd/MM/yyyy HH:mm")
+                    </td>
+                    <td class="text-center">
+                        <span style="font-weight: 500;">@item.UsageLimit</span>
+                    </td>
+                    <td class="text-center">
+                        @if (item.ExpiryDate <= DateTime.Now)
+                        {
+                            <span class="badge bg-danger">Đã hết hạn</span>
+                        }
+                        else if (item.UsageLimit <= 0)
+                        {
+                            <span class="badge bg-warning text-dark">Hết lượt</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-success">Đang hoạt động</span>
+                        }
+                    </td>
+                    <td class="text-center">
+                        <div class="btn-group-vertical w-100" role="group">
+                            @Html.ActionLink("Sửa", "Edit", new { id = item.CouponID }, new { @class = "btn btn-warning btn-sm mb-1" })
+                            @Html.ActionLink("Chi tiết", "Details", new { id = item.CouponID }, new { @class = "btn btn-info btn-sm mb-1" })
+                            @Html.ActionLink("Xóa", "Delete", new { id = item.CouponID }, new { @class = "btn btn-danger btn-sm" })
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-warning text-center mt-3">
+            Hiện tại chưa có mã giảm giá nào trong hệ thống.
+        </div>
+    }
+</div>
