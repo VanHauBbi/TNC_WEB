@@ -274,3 +274,20 @@
         transform: scale(1);
     }
 }
+/* --- BỔ SUNG CSS MỚI --- */
+
+/* Style cho Checkbox chọn sản phẩm */
+.item-select-checkbox {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    margin-right: 15px;
+    accent-color: #e74c3c; /* Chuyển màu checkbox sang đỏ cho hợp tone */
+}
+
+/* Định dạng cho hộp Tóm tắt trượt theo màn hình */
+.cart-summary-box {
+    position: sticky;
+    top: 20px;
+    border: 1px solid #3498db; /* Thêm viền xanh tạo điểm nhấn */
+}

@@ -7,88 +7,6 @@
 <link rel="stylesheet" href="~/Content/myStyle/checkout.css" />
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script>
-    // Hàm cho phép chỉnh sửa địa chỉ giao hàng - (Giữ lại)
-    function enableAddressEdit() {
-        document.getElementById("shippingAddress").removeAttribute("readonly");
-        document.getElementById("shippingAddress").focus();
-        document.querySelector('.btn-edit-address').style.display = 'none';
-        document.querySelector('.address-edit-hint').style.display = 'block';
-    }
-    // Khai báo phí vận chuyển
-    const SHIPPING_FEES = {
-        'Giao hàng nhanh': 30000,
-        'Giao hàng tiết kiệm': 15000
-    };
-    // LẤY GIÁ TRỊ SỐ SẠCH TỪ RAZOR (Sử dụng String.Format("{0:0}") để loại bỏ dấu phân cách)
-    // ----------------------------------------------------
-    const initialTotalAmount = parseFloat('@String.Format("{0:0}", Model.TotalAmount)');
-    // ----------------------------------------------------
-    function formatCurrency(amount) {
-        // Hàm định dạng tiền tệ
-        return amount.toLocaleString('vi-VN', { style: 'currency', currency: 'VND', minimumFractionDigits: 0 });
-    }
-    // Hàm chính để cập nhật phí vận chuyển và tổng tiền
-    function updateOrderSummary() {
-        // 1. Lấy phương thức vận chuyển đã chọn
-        const selectedMethod = $('input[name="ShippingMethod"]:checked').val();
-        let shippingFee = 0;
-
-        if (selectedMethod && SHIPPING_FEES[selectedMethod]) {
-            shippingFee = SHIPPING_FEES[selectedMethod];
-        }
-
-        // 2. Cập nhật phí vận chuyển hiển thị (id="shippingFeeDisplay")
-        if (shippingFee > 0) {
-            $('#shippingFeeDisplay').text(formatCurrency(shippingFee));
-        } else {
-            $('#shippingFeeDisplay').text('Miễn phí');
-        }
-
-        // 3. Tính Tổng thanh toán cuối cùng
-        const finalTotal = initialTotalAmount + shippingFee;
-
-        // 4. Cập nhật tổng tiền hiển thị (id="finalTotalDisplay")
-        $('#finalTotalDisplay').text(formatCurrency(finalTotal));
-
-        // 5. Cập nhật giá trị HIDDEN TotalAmount (Gửi lên Server)
-        $('#TotalAmount').val(finalTotal);
-    }
-
-    // Hàm đảm bảo dữ liệu được binding
-    function updateShippingAddress() {
-        // Gọi updateOrderSummary lần cuối để đảm bảo giá trị TotalAmount gửi lên Server là chính xác
-        updateOrderSummary();
-        return true;
-    }
-
-
-    $(document).ready(function () {
-
-        // =======================================================
-        // 1. ĐẶT MẶC ĐỊNH & VƯỢT QUA VALIDATION [REQUIRED]
-        // =======================================================
-
-        // a. Phương thức giao hàng (Chọn "Giao hàng nhanh" mặc định nếu chưa chọn)
-        if (!$('input[name="ShippingMethod"]:checked').length) {
-            $('#ship-fast').prop('checked', true);
-        }
-
-        // b. Phương thức thanh toán (Chọn "Tiền mặt" mặc định nếu chưa chọn)
-        if (!$('input[name="PaymentMethod"]:checked').length) {
-            $('#pay-cash').prop('checked', true);
-        }
-
-        // 2. ĐĂNG KÝ SỰ KIỆN & TÍNH TOÁN BAN ĐẦU
-
-        // Lắng nghe sự kiện 'change' cho tất cả radio ShippingMethod
-        $('input[name="ShippingMethod"]').on('change', updateOrderSummary);
-
-        // Chạy lần đầu tiên để tính toán và hiển thị phí ship mặc định (30.000 VNĐ)
-        updateOrderSummary();
-    });
-</script>
-
 <div class="checkout-page-container container">
     <h2 class="page-title text-center">💳 ĐẶT HÀNG</h2>
 
@@ -165,35 +83,77 @@
                                 </tr>
                             </thead>
                             <tbody>
+                                @{
+                                    decimal totalOriginalAmount = 0; // Tính tổng nguyên giá
+                                }
                                 @foreach (var item in Model.CartItems)
                                 {
+                                    totalOriginalAmount += (item.OriginalPrice * item.Quantity);
                                     <tr class="order-item-row">
                                         <td>
                                             <img src="@item.ProductImage" alt="@item.ProductName" class="item-thumb" />
                                             <span class="item-name-summary">@item.ProductName</span>
                                         </td>
                                         <td class="item-qty-summary">@item.Quantity</td>
-                                        <td class="price-text">@item.TotalPrice.ToString("N0") VNĐ</td>
+                                        <td class="price-text">
+                                            @if (item.OriginalPrice > item.UnitPrice)
+                                            {
+                                                <div class="text-muted text-decoration-line-through" style="font-size: 0.85em;">@((item.OriginalPrice * item.Quantity).ToString("N0")) ₫</div>
+                                            }
+                                            <div class="text-danger fw-bold">@item.TotalPrice.ToString("N0") VNĐ</div>
+                                        </td>
                                     </tr>
                                 }
                             </tbody>
                         </table>
+                        <div class="voucher-section mt-3 mb-3 p-3 bg-white border border-info rounded shadow-sm">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <label class="fw-bold mb-1"><i class="fa-solid fa-ticket text-primary"></i> TNC Voucher</label>
+                                    <div id="selectedVoucherDisplay" class="text-muted small">Chưa chọn mã nào</div>
+                                </div>
+                                <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#voucherModal">
+                                    Thay đổi
+                                </button>
+                            </div>
+                            <div id="voucherMessage" class="mt-2 small" style="display:none;"></div>
+
+                            @Html.HiddenFor(m => m.AppliedVoucherCode, new { @id = "AppliedVoucherCode" })
+                            <input type="hidden" name="VoucherDiscount" id="VoucherDiscount" value="0" />
+                        </div>
                     </div>
 
                     <div class="total-calculation-area">
+                        @{
+                            decimal totalProductDiscount = totalOriginalAmount - Model.TotalAmount;
+                        }
+
                         <div class="calc-row">
-                            <span>Tạm tính (@Model.CartItems.Count() sản phẩm):</span>
-                            <span class="price-value">@Model.TotalAmount.ToString("N0") VNĐ</span>
+                            <span>Tạm tính (@Model.CartItems.Sum(i => i.Quantity) sản phẩm):</span>
+                            <span class="price-value">@totalOriginalAmount.ToString("N0") VNĐ</span>
                         </div>
+
+                        @if (totalProductDiscount > 0)
+                        {
+                            <div class="calc-row text-success">
+                                <span>Giảm giá sản phẩm:</span>
+                                <span class="price-value fw-bold">-@totalProductDiscount.ToString("N0") VNĐ</span>
+                            </div>
+                        }
+
                         <div class="calc-row">
                             <span>Phí vận chuyển:</span>
                             <span class="price-value shipping-fee" id="shippingFeeDisplay">Miễn phí</span>
                         </div>
 
-                        <div class="calc-row final-total-row">
-                            <strong>Tổng thanh toán:</strong>
-                            <strong class="total-price-final" id="finalTotalDisplay">@Model.TotalAmount.ToString("N0") VNĐ</strong>
+                        <div class="calc-row text-danger" id="voucherRow" style="display: none;">
+                            <span>Giảm giá Voucher:</span>
+                            <span class="price-value fw-bold" id="voucherDiscountDisplay">-0 VNĐ</span>
+                        </div>
 
+                        <div class="calc-row final-total-row mt-3 border-top pt-3">
+                            <strong>Tổng thanh toán:</strong>
+                            <strong class="total-price-final text-danger fs-4" id="finalTotalDisplay">@Model.TotalAmount.ToString("N0") VNĐ</strong>
                             @Html.HiddenFor(m => m.TotalAmount, new { @id = "TotalAmount" })
                         </div>
                     </div>
@@ -206,3 +166,179 @@
         </div>
     }
 </div>
+<div class="modal fade" id="voucherModal" tabindex="-1" aria-labelledby="voucherModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title text-primary fw-bold" id="voucherModalLabel"><i class="fa-solid fa-tags"></i> Chọn TNC Voucher</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body bg-light">
+                @if (Model.AvailableCoupons != null && Model.AvailableCoupons.Any())
+                {
+                    foreach (var coupon in Model.AvailableCoupons)
+                    {
+                        bool isValid = coupon.ExpiryDate > DateTime.Now && coupon.UsageLimit > 0;
+                        string cardClass = isValid ? "border-primary bg-white shadow-sm" : "border-secondary bg-light opacity-75";
+                        string btnClass = isValid ? "btn-primary" : "btn-secondary disabled";
+                        string discountText = coupon.DiscountPercentage.HasValue ? $"Giảm {coupon.DiscountPercentage.Value.ToString("0")} %" : $"Giảm {coupon.MaxDiscountAmount?.ToString("N0")} ₫";
+
+                        <div class="card mb-3 @cardClass">
+                            <div class="row g-0">
+                                <div class="col-4 bg-primary text-white d-flex align-items-center justify-content-center flex-column p-2 rounded-start" style="@(!isValid ? "background-color: #6c757d !important;" : "")">
+                                    <i class="fa-solid fa-gift fs-3 mb-1"></i>
+                                    <span class="text-center fw-bold lh-sm" style="font-size:0.9em;">@discountText</span>
+                                </div>
+                                <div class="col-8">
+                                    <div class="card-body p-2 d-flex flex-column justify-content-between h-100">
+                                        <div>
+                                            <h6 class="card-title mb-1 fw-bold">@coupon.CouponName</h6>
+                                            <p class="card-text text-muted mb-0" style="font-size:0.8em;">Mã: <strong>@coupon.Code</strong></p>
+                                            <p class="card-text text-muted mb-0" style="font-size:0.8em;">HSD: @coupon.ExpiryDate.ToString("dd/MM/yyyy")</p>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center mt-2">
+                                            @if (!isValid)
+                                            {
+                                                <span class="text-danger" style="font-size:0.75em;">Đã hết hạn/lượt</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-success" style="font-size:0.75em;">Còn @coupon.UsageLimit lượt</span>
+                                            }
+                                            <button type="button" class="btn btn-sm @btnClass select-voucher-btn" data-code="@coupon.Code">Dùng ngay</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="text-center text-muted py-4">Hiện tại không có mã khuyến mãi nào khả dụng.</div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Mở khóa ô nhập địa chỉ
+        function enableAddressEdit() {
+            document.getElementById("shippingAddress").removeAttribute("readonly");
+            document.getElementById("shippingAddress").focus();
+            document.querySelector('.btn-edit-address').style.display = 'none';
+            document.querySelector('.address-edit-hint').style.display = 'block';
+        }
+
+        const SHIPPING_FEES = {
+            'Giao hàng nhanh': 30000,
+            'Giao hàng tiết kiệm': 15000
+        };
+
+        // Lấy tổng tiền cơ bản từ Server
+        const initialTotalAmount = parseFloat('@String.Format("{0:0}", Model.TotalAmount)');
+
+        // Biến lưu trữ tiền giảm giá từ Voucher
+        let currentVoucherDiscount = 0;
+
+        // Định dạng tiền tệ VNĐ
+        function formatCurrency(amount) {
+            return amount.toLocaleString('vi-VN', { style: 'currency', currency: 'VND', minimumFractionDigits: 0 });
+        }
+
+        // Cập nhật phí vận chuyển, voucher và tổng tiền cuối cùng
+        function updateOrderSummary() {
+            const selectedMethod = $('input[name="ShippingMethod"]:checked').val();
+            let shippingFee = 0;
+
+            if (selectedMethod && SHIPPING_FEES[selectedMethod]) {
+                shippingFee = SHIPPING_FEES[selectedMethod];
+            }
+
+            if (shippingFee > 0) {
+                $('#shippingFeeDisplay').text(formatCurrency(shippingFee));
+            } else {
+                $('#shippingFeeDisplay').text('Miễn phí');
+            }
+
+            // Tính tổng thanh toán (Tạm tính + Phí vận chuyển - Giảm giá Voucher)
+            let finalTotal = initialTotalAmount + shippingFee - currentVoucherDiscount;
+            if (finalTotal < 0) finalTotal = 0; // Tránh tổng tiền bị âm
+
+            // Gán dữ liệu hiển thị và dữ liệu ngầm để Submit
+            $('#finalTotalDisplay').text(formatCurrency(finalTotal));
+            $('#TotalAmount').val(finalTotal);
+        }``
+
+        // Cập nhật dữ liệu lần cuối trước khi Submit Form
+        function updateShippingAddress() {
+            updateOrderSummary();
+            return true;
+        }
+
+        $(document).ready(function () {
+            // Thiết lập mặc định phương thức vận chuyển và thanh toán
+            if (!$('input[name="ShippingMethod"]:checked').length) {
+                $('#ship-fast').prop('checked', true);
+            }
+            if (!$('input[name="PaymentMethod"]:checked').length) {
+                $('#pay-cash').prop('checked', true);
+            }
+
+            // Cập nhật tổng tiền khi đổi phương thức giao hàng
+            $('input[name="ShippingMethod"]').on('change', updateOrderSummary);
+            updateOrderSummary(); // Chạy lần đầu khi tải trang
+
+            // Xử lý áp dụng Voucher qua AJAX
+            // SỰ KIỆN: Chọn Voucher từ Modal
+            $(".select-voucher-btn").click(function () {
+                if ($(this).hasClass("disabled")) return;
+
+                var code = $(this).attr("data-code");
+                var msgBox = $("#voucherMessage");
+
+                // Đóng Modal (Yêu cầu Bootstrap 5 JS)
+                var myModalEl = document.getElementById('voucherModal');
+                var modal = bootstrap.Modal.getInstance(myModalEl);
+                if(modal) modal.hide();
+
+                // Gửi AJAX kiểm tra
+                $.ajax({
+                    url: '@Url.Action("ApplyCoupon", "Cart")',
+                    type: 'POST',
+                    data: { couponCode: code },
+                    success: function (res) {
+                        if (res.success) {
+                            msgBox.removeClass("text-danger").addClass("text-success").text("✅ Áp dụng mã " + code + " thành công!").show();
+                            $("#selectedVoucherDisplay").html('<span class="fw-bold text-success">' + code + '</span>');
+
+                            currentVoucherDiscount = res.discountAmount;
+                            $("#AppliedVoucherCode").val(code);
+                            $("#VoucherDiscount").val(res.discountAmount);
+
+                            $("#voucherDiscountDisplay").text("-" + formatCurrency(res.discountAmount));
+                            $("#voucherRow").slideDown();
+
+                            updateOrderSummary();
+                        } else {
+                            msgBox.removeClass("text-success").addClass("text-danger").text("❌ " + res.message).show();
+                            $("#selectedVoucherDisplay").html('<span class="text-danger">Mã không hợp lệ</span>');
+
+                            currentVoucherDiscount = 0;
+                            $("#AppliedVoucherCode").val("");
+                            $("#VoucherDiscount").val(0);
+                            $("#voucherRow").slideUp();
+
+                            updateOrderSummary();
+                        }
+                    },
+                    error: function () {
+                        alert("Lỗi kết nối khi kiểm tra mã voucher. Vui lòng thử lại!");
+                    }
+                });
+            });
+        });
+    </script>
+}

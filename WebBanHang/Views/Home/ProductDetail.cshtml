@@ -1,4 +1,5 @@
-﻿@using WebBanHang.Models.ViewModel
+﻿@using WebBanHang.Utilities
+@using WebBanHang.Models.ViewModel
 @model ProductDetailsVM
 
 @{
@@ -25,76 +26,98 @@
         </div>
 
         @* === CỘT PHẢI: THÔNG TIN SẢN PHẨM VÀ TƯƠNG TÁC (Col-md-5) === *@
-        <div class="col-md-5 product-summary-col">
-            <h1 class="product-name">@Html.DisplayFor(model => model.product.ProductName)</h1>
+    <div class="col-md-5 product-summary-col">
+        <h1 class="product-name">@Html.DisplayFor(model => model.product.ProductName)</h1>
 
-            @* Meta Data: Category & Sold Count *@
-            <div class="product-meta">
-                <span class="category-name">Danh mục: <a href="#"><strong>@Model.product.Category.CategoryName</strong></a></span>
-                <span class="separator-dot"></span>
-                <span class="sold-count"><i class="fa-solid fa-fire"></i> Đã bán: **@Model.product.OrderDetails.Count** sản phẩm</span>
-            </div>
+        @* Meta Data: Category & Sold Count *@
+        <div class="product-meta">
+            <span class="category-name">Danh mục: <a href="#"><strong>@Model.product.Category.CategoryName</strong></a></span>
+            <span class="separator-dot"></span>
+            <span class="sold-count"><i class="fa-solid fa-fire"></i> Đã bán: **@Model.product.OrderDetails.Count** sản phẩm</span>
+        </div>
 
-            @* Price Section *@
-            <div class="price-section">
-                <p class="current-price">@Model.product.ProductPrice.ToString("N0") VNĐ</p>
-            </div>
+        @* Price Section *@
+        @{
+            decimal discountPercent;
+            decimal discountedPrice = PriceHelper.GetDiscountedPrice(Model.product, out discountPercent);
+            bool isDiscounted = discountedPrice < Model.product.ProductPrice;
+        }
 
-            <hr class="section-divider" />
-
-            @* Cart Interaction Form *@
-            @using (Html.BeginForm("AddToCart", "Cart", FormMethod.Post, new { @id = "addToCartForm", @class = "cart-interaction-form" }))
+        @* Price Section *@
+        <div class="price-section mb-3 p-3 bg-light rounded border border-warning border-opacity-25">
+            @if (isDiscounted)
             {
-                <input type="hidden" name="id" value="@Model.product.ProductID" />
-
-                @* Quantity Control *@
-                <div class="form-group-qty">
-                    <label for="quantity-input" class="qty-label">Số lượng:</label>
-                    <div class="quantity-control-wrapper">
-                        <button type="button" class="btn-qty-control minus-btn"><i class="fa-solid fa-minus"></i></button>
-                        @Html.TextBoxFor(model => model.quantity, new
-                        {
-                            @class = "form-control quantity-input",
-                            @id = "quantity-input",
-                            @type = "number",
-                            @min = 1,
-                            @name = "quantity",
-                            @value = 1 // Giá trị mặc định là 1
-                        })
-                        <button type="button" class="btn-qty-control plus-btn"><i class="fa-solid fa-plus"></i></button>
-                    </div>
+                <div class="d-flex align-items-center mb-1">
+                    <span class="text-muted text-decoration-line-through me-2 fs-5">@Model.product.ProductPrice.ToString("N0") VNĐ</span>
+                    <span class="badge bg-warning text-danger fw-bold fs-6 px-2 py-1"><i class="fa-solid fa-bolt"></i> Giảm @discountPercent.ToString("0")%</span>
                 </div>
-
-                @* Estimated Price *@
-                <div class="price-summary-row">
-                    <span class="summary-label">Tạm tính:</span>
-                    <span class="calculated-price" id="estimatedPrice">
-                        @Model.product.ProductPrice.ToString("N0") VNĐ
-                    </span>
-                </div>
-
-                @* Action Buttons *@
-                <div class="action-buttons-group">
-                    <button type="submit" id="addToCartBtn" class="btn-add-to-cart">
-                        <i class="fa-solid fa-cart-shopping"></i> THÊM VÀO GIỎ HÀNG
-                    </button>
-                    <button type="button" class="btn-buy-now">
-                        <i class="fa-solid fa-bolt"></i> MUA NGAY
-                    </button>
+                <div class="current-price text-danger fw-bold" style="font-size: 2.2rem;">
+                    @discountedPrice.ToString("N0") <span class="fs-4">VNĐ</span>
                 </div>
             }
+            else
+            {
+                <div class="current-price text-danger fw-bold" style="font-size: 2.2rem;">
+                    @Model.product.ProductPrice.ToString("N0") <span class="fs-4">VNĐ</span>
+                </div>
+            }
+        </div>
 
-            <hr class="section-divider" />
+        <hr class="section-divider" />
 
-            @* Product Description - Mobile/Tablet Only *@
-            <div class="product-description-block d-block d-md-none">
-                <h4 class="description-heading">Mô tả sản phẩm</h4>
-                <div class="description-content">
-                    <p>@Html.Raw(Model.product.ProductDescription)</p>
+        @* Cart Interaction Form *@
+        @using (Html.BeginForm("AddToCart", "Cart", FormMethod.Post, new { @id = "addToCartForm", @class = "cart-interaction-form" }))
+        {
+            <input type="hidden" name="id" value="@Model.product.ProductID" />
+
+            @* Quantity Control *@
+            <div class="form-group-qty">
+                <label for="quantity-input" class="qty-label">Số lượng:</label>
+                <div class="quantity-control-wrapper">
+                    <button type="button" class="btn-qty-control minus-btn"><i class="fa-solid fa-minus"></i></button>
+                    @Html.TextBoxFor(model => model.quantity, new
+                    {
+                        @class = "form-control quantity-input",
+                        @id = "quantity-input",
+                        @type = "number",
+                        @min = 1,
+                        @name = "quantity",
+                        @value = 1 // Giá trị mặc định là 1
+                    })
+                    <button type="button" class="btn-qty-control plus-btn"><i class="fa-solid fa-plus"></i></button>
                 </div>
             </div>
 
+            @* Estimated Price *@
+            <div class="price-summary-row">
+                <span class="summary-label">Tạm tính:</span>
+                <span class="calculated-price" id="estimatedPrice">
+                    @Model.product.ProductPrice.ToString("N0") VNĐ
+                </span>
+            </div>
+
+            @* Action Buttons *@
+            <div class="action-buttons-group">
+                <button type="submit" id="addToCartBtn" class="btn-add-to-cart">
+                    <i class="fa-solid fa-cart-shopping"></i> THÊM VÀO GIỎ HÀNG
+                </button>
+                <button type="button" class="btn-buy-now">
+                    <i class="fa-solid fa-bolt"></i> MUA NGAY
+                </button>
+            </div>
+        }
+
+        <hr class="section-divider" />
+
+        @* Product Description - Mobile/Tablet Only *@
+        <div class="product-description-block d-block d-md-none">
+            <h4 class="description-heading">Mô tả sản phẩm</h4>
+            <div class="description-content">
+                <p>@Html.Raw(Model.product.ProductDescription)</p>
+            </div>
         </div>
+
+    </div>
     </div>
 
     @* --- PHẦN CHI TIẾT DÀI (CHỈ DESKTOP) --- *@
@@ -121,8 +144,7 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         // Lấy giá trị gốc (Đã được định dạng C)
-        const originalPriceText = '@Model.product.ProductPrice.ToString("N0")';
-        // Chuyển đổi về số để tính toán
+        const originalPriceText = '@discountedPrice.ToString("N0")';        // Chuyển đổi về số để tính toán
         // Loại bỏ dấu phân cách hàng nghìn (dấu chấm)
         const originalPrice = parseFloat(originalPriceText.replace(/\./g, '').replace(/,/g, ''));
 
