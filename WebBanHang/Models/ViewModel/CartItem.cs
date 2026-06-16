@@ -11,6 +11,9 @@
         public string ProductImage { get; set; }
         public int StockQuantity { get; set; }
 
+        public int ActiveCouponID { get; set; }
+        public int ActiveCouponLimit { get; set; }
+
         public int DiscountableQuantity { get; set; }
 
         public decimal TotalPrice
