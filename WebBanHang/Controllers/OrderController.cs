@@ -55,15 +55,39 @@ namespace WebBanHang.Controllers
                 return RedirectToAction("Index", "Cart");
             }
 
+            using (var tempDb = new WebBanHang.Models.MyStoreEntities())
+            {
+                foreach (var item in cart.Items)
+                {
+                    var product = tempDb.Products.Include("Coupons").SingleOrDefault(p => p.ProductID == item.ProductID);
+                    if (product != null)
+                    {
+                        if (item.OriginalPrice > item.UnitPrice)
+                        {
+                            var activeCoupon = product.Coupons
+                                .Where(c => c.ExpiryDate > DateTime.Now && c.UsageLimit > 0)
+                                .OrderByDescending(c => c.DiscountPercentage ?? (c.MaxDiscountAmount ?? 0))
+                                .FirstOrDefault();
+
+                            item.DiscountableQuantity = activeCoupon != null ? activeCoupon.UsageLimit : 0;
+                        }
+                        else
+                        {
+                            item.DiscountableQuantity = item.Quantity;
+                        }
+                    }
+                }
+            }
+
             var model = new CheckoutVM
             {
                 CartItems = cart.Items.ToList(),
                 TotalAmount = cart.TotalValue(),
                 OrderDate = DateTime.Now,
                 PaymentStatus = "Chưa thanh toán",
-                // Nạp toàn bộ danh sách Coupon để hiển thị lên Modal
-                AvailableCoupons = db.Coupons.Where(c => !c.Products.Any()).OrderByDescending(c => c.CouponID).ToList(),
+                AvailableCoupons = db.Coupons.Where(c => !c.Products.Any()).OrderByDescending(c => c.CouponID).ToList()
             };
+
             return View(model);
         }
 
@@ -118,30 +142,22 @@ namespace WebBanHang.Controllers
                     db.Orders.Add(order);
                     db.SaveChanges();
 
-                    // 2. LƯU CHI TIẾT, TRỪ TỒN KHO & TRỪ VOUCHER SẢN PHẨM CỤ THỂ
+                    decimal actualTotalOrderAmount = 0; // Biến tính tổng tiền thực tế chống F12 Hack
+
+                    // 2. TÁCH DÒNG CHI TIẾT & TRỪ VOUCHER ĐA LƯỢNG
                     foreach (var item in cart.Items)
                     {
-                        var detail = new OrderDetail
-                        {
-                            OrderID = order.OrderID,
-                            ProductID = item.ProductID,
-                            Quantity = item.Quantity,
-                            UnitPrice = item.UnitPrice
-                        };
-                        db.OrderDetails.Add(detail);
-
-                        // Include(Coupons) để lấy danh sách mã của sản phẩm này
                         var productInDb = db.Products.Include(p => p.Coupons).SingleOrDefault(p => p.ProductID == item.ProductID);
                         if (productInDb != null)
                         {
-                            // Trừ tồn kho
-                            productInDb.StockQuantity -= item.Quantity;
+                            productInDb.StockQuantity -= item.Quantity; // Trừ tồn kho
                             if (productInDb.StockQuantity < 0) productInDb.StockQuantity = 0;
 
-                            // Nếu Giá mua < Giá gốc, chắc chắn sản phẩm này đã được áp dụng Voucher cục bộ!
-                            if (item.UnitPrice < item.OriginalPrice)
+                            int applicableQty = 0;
+                            int remainingQty = item.Quantity;
+
+                            if (item.OriginalPrice > item.UnitPrice)
                             {
-                                // Tìm mã cục bộ tốt nhất đang còn hạn/lượt để trừ đi 1 lượt
                                 var appliedCoupon = productInDb.Coupons
                                     .Where(c => c.ExpiryDate > DateTime.Now && c.UsageLimit > 0)
                                     .OrderByDescending(c => c.DiscountPercentage ?? (c.MaxDiscountAmount ?? 0))
@@ -149,22 +165,57 @@ namespace WebBanHang.Controllers
 
                                 if (appliedCoupon != null)
                                 {
-                                    appliedCoupon.UsageLimit -= 1;
+                                    // Chốt số lượng hợp lệ và số dư thừa
+                                    applicableQty = Math.Min(item.Quantity, appliedCoupon.UsageLimit);
+                                    remainingQty = item.Quantity - applicableQty;
+
+                                    // TRỪ ĐÚNG SỐ LƯỢT ĐÃ TIÊU HAO CỦA VOUCHER
+                                    appliedCoupon.UsageLimit -= applicableQty;
                                 }
+                            }
+
+                            // DÒNG 1: Nhóm sản phẩm được áp giá giảm (Nếu có)
+                            if (applicableQty > 0)
+                            {
+                                db.OrderDetails.Add(new OrderDetail
+                                {
+                                    OrderID = order.OrderID,
+                                    ProductID = item.ProductID,
+                                    Quantity = applicableQty,
+                                    UnitPrice = item.UnitPrice
+                                });
+                                actualTotalOrderAmount += (applicableQty * item.UnitPrice);
+                            }
+
+                            // DÒNG 2: Nhóm sản phẩm bị đẩy về giá gốc do vượt giới hạn voucher (Nếu có)
+                            if (remainingQty > 0)
+                            {
+                                db.OrderDetails.Add(new OrderDetail
+                                {
+                                    OrderID = order.OrderID,
+                                    ProductID = item.ProductID,
+                                    Quantity = remainingQty,
+                                    UnitPrice = item.OriginalPrice
+                                });
+                                actualTotalOrderAmount += (remainingQty * item.OriginalPrice);
                             }
                         }
                     }
 
-                    // 3. TRỪ VOUCHER TOÀN ĐƠN (Nếu khách có nhập ở Modal)
+                    // 3. Xử lý Voucher TOÀN ĐƠN và Cập nhật lại tổng tiền Hóa đơn
                     if (!string.IsNullOrEmpty(model.AppliedVoucherCode))
                     {
                         var globalCoupon = db.Coupons.SingleOrDefault(c => c.Code == model.AppliedVoucherCode);
                         if (globalCoupon != null && globalCoupon.UsageLimit > 0)
                         {
                             globalCoupon.UsageLimit -= 1;
+                            // (Trừ tiền voucher toàn đơn vào biến actualTotalOrderAmount ở đây nếu bạn lưu số discount vào Session)
+                            actualTotalOrderAmount -= Convert.ToDecimal(Session["VoucherDiscount"] ?? 0);
                         }
                     }
 
+                    // Chốt tổng tiền an toàn 100% vào DB
+                    order.TotalAmount = actualTotalOrderAmount;
                     db.SaveChanges();
                     transaction.Commit();
 
