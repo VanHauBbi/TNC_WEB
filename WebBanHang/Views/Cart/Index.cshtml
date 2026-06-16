@@ -44,9 +44,12 @@
                                         <span class="text-muted text-decoration-line-through me-2" style="font-size: 0.85em;">@item.OriginalPrice.ToString("N0") VNĐ</span>
                                         <span class="text-danger fw-bold">@item.UnitPrice.ToString("N0") VNĐ</span>
                                     </div>
+
                                     <div class="price-original" style="display: none;">
                                         <span class="text-danger fw-bold">@item.OriginalPrice.ToString("N0") VNĐ</span>
                                     </div>
+
+                                    <div class="price-mixed" style="display: none;"></div>
                                 </div>
 
                                 <div class="small text-muted mb-2">
@@ -191,16 +194,31 @@
                     remainingQty = qty;
                 }
 
-                // CẬP NHẬT VỊ TRÍ SỐ 1: Bật/Tắt giá bị gạch chéo
+                // CẬP NHẬT VỊ TRÍ SỐ 1: Phân loại 3 trạng thái hiển thị
                 var priceDiscountedDiv = row.querySelector('.price-discounted');
                 var priceOriginalDiv = row.querySelector('.price-original');
+                var priceMixedDiv = row.querySelector('.price-mixed');
 
-                if (applicableQty > 0) {
+                if (applicableQty === qty && applicableQty > 0) {
+                    // Trạng thái 1: Toàn bộ số lượng đều có Voucher
                     priceDiscountedDiv.style.display = 'block';
                     priceOriginalDiv.style.display = 'none';
-                } else {
+                    priceMixedDiv.style.display = 'none';
+                } else if (applicableQty === 0) {
+                    // Trạng thái 2: Hết Voucher hoặc không được chọn
                     priceDiscountedDiv.style.display = 'none';
                     priceOriginalDiv.style.display = 'block';
+                    priceMixedDiv.style.display = 'none';
+                } else {
+                    // Trạng thái 3: Mixed (Có máy được giảm, có máy bị đẩy về giá gốc)
+                    priceDiscountedDiv.style.display = 'none';
+                    priceOriginalDiv.style.display = 'none';
+                    priceMixedDiv.style.display = 'block';
+
+                    // In chi tiết để khách hàng hiểu chính xác tại sao có mức giá ở Vị trí số 2
+                    priceMixedDiv.innerHTML =
+                        '<div class="text-danger fw-bold" style="font-size: 0.95em;">' + applicableQty + 'x ' + unitPrice.toLocaleString('vi-VN') + ' đ <span class="badge bg-success ms-1" style="font-size:0.7em;">Áp mã</span></div>' +
+                        '<div class="text-muted mt-1" style="font-size: 0.85em;">' + remainingQty + 'x ' + originalPrice.toLocaleString('vi-VN') + ' đ <span style="font-size:0.9em;">(Vượt giới hạn voucher)</span></div>';
                 }
 
                 // CẬP NHẬT VỊ TRÍ SỐ 2: Thành tiền thực tế của dòng sản phẩm
