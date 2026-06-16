@@ -5,6 +5,8 @@ using System.Web;
 using System.Web.Mvc;
 using WebBanHang.Models.ViewModel;
 using WebBanHang.Models;
+using System.Data.Entity;
+using WebBanHang.Utilities;
 
 namespace WebBanHang.Controllers
 
@@ -22,7 +24,7 @@ namespace WebBanHang.Controllers
             var cart = GetCartService().GetCart();
             return View(cart);
         }
-        //thêm sp vào giỏ hàng
+        // THÊM SẢN PHẨM VÀO GIỎ HÀNG
         [HttpPost]
         public ActionResult AddToCart(int id, int quantity)
         {
@@ -37,17 +39,24 @@ namespace WebBanHang.Controllers
                     });
                 }
 
-                var product = db.Products.Find(id);
+                // SỬA ĐỔI: Dùng Include() để nạp dữ liệu Coupons
+                var product = db.Products.Include(p => p.Coupons).SingleOrDefault(p => p.ProductID == id);
+
                 if (product == null)
                     return Json(new { success = false, message = "Sản phẩm không tồn tại." });
 
+                // TÍNH TOÁN GIÁ ĐỘNG: Lấy giá đã giảm (nếu có)
+                decimal discountPercent;
+                decimal finalUnitPrice = PriceHelper.GetDiscountedPrice(product, out discountPercent);
+
                 var cartService = GetCartService();
-                var cart = cartService.GetCart(); // ✅ luôn lấy từ CartService (đúng kiểu Cart)
+                var cart = cartService.GetCart();
 
+                // Truyền finalUnitPrice làm UnitPrice, và product.ProductPrice làm OriginalPrice
                 cart.AddItem(product.ProductID, product.ProductImage, product.ProductName,
-                    product.ProductPrice, quantity, product.Category?.CategoryName);
+                    finalUnitPrice, product.ProductPrice, quantity, product.Category?.CategoryName);
 
-                Session["Cart"] = cart; // ✅ lưu lại đối tượng Cart (không phải List<CartItem>)
+                Session["Cart"] = cart;
 
                 var total = cart.Items.Sum(x => x.TotalPrice);
                 var count = cart.Items.Sum(x => x.Quantity);
@@ -155,7 +164,11 @@ namespace WebBanHang.Controllers
                         <img src='{i.ProductImage}' alt='ảnh' style='width:40px;height:40px;border-radius:5px;margin-right:8px;' />
                         <div>
                             <span style='display:block;font-weight:500;'>{i.ProductName}</span>
-                            <span style='color:#666;font-size:13px;'>{i.Quantity} × {i.UnitPrice:N0} VNĐ</span>
+                            <span style='color:#666;font-size:13px;'>
+                                {i.Quantity} × 
+                                {(i.OriginalPrice > i.UnitPrice ? $"<del style='color:#999;'>{i.OriginalPrice:N0}</del> " : "")}
+                                <strong style='color:#dc3545;'>{i.UnitPrice:N0} VNĐ</strong>
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -169,43 +182,142 @@ namespace WebBanHang.Controllers
                 count = cart.Items.Sum(x => x.Quantity)
             }, JsonRequestBehavior.AllowGet);
         }
+
+        // MUA NGAY
         public ActionResult BuyNow(int id)
         {
-            // 1. Kiểm tra đăng nhập (Giữ nguyên)
             if (Session["CustomerID"] == null)
             {
                 TempData["Message"] = "Vui lòng đăng nhập để sử dụng chức năng Mua ngay.";
                 return RedirectToAction("Login", "Account");
             }
 
-            // 2. LƯU GIỎ HÀNG HIỆN TẠI VÀO SESSION TẠM THỜI (BuyNowTempCart)
             var currentCart = Session["Cart"] as WebBanHang.Models.ViewModel.Cart;
             if (currentCart != null && currentCart.Items.Any())
             {
-                // Lưu giỏ hàng cũ sang Session BuyNowTemp
                 Session["BuyNowTempCart"] = currentCart;
             }
 
-            // 3. TẠO GIỎ HÀNG MỚI (chỉ chứa 1 sản phẩm)
-            var product = db.Products.Find(id);
+            // SỬA ĐỔI: Dùng Include() để nạp dữ liệu Coupons
+            var product = db.Products.Include(p => p.Coupons).SingleOrDefault(p => p.ProductID == id);
+
             if (product == null)
             {
                 TempData["Error"] = "Sản phẩm không tồn tại.";
                 return RedirectToAction("Index", "Home");
             }
 
+            // TÍNH TOÁN GIÁ ĐỘNG: Lấy giá đã giảm (nếu có)
+            decimal discountPercent;
+            decimal finalUnitPrice = PriceHelper.GetDiscountedPrice(product, out discountPercent);
+
             var buyNowCart = new WebBanHang.Models.ViewModel.Cart();
 
-            // SỬ DỤNG PHƯƠNG THỨC ADDITEM VỚI ĐỦ 6 THAM SỐ
-            // (Đây là phương thức đã được xác định qua AddToCart)
+            // Truyền finalUnitPrice làm UnitPrice, và product.ProductPrice làm OriginalPrice
             buyNowCart.AddItem(product.ProductID, product.ProductImage, product.ProductName,
-                                product.ProductPrice, 1, product.Category?.CategoryName); // Quantity là 1
+                                finalUnitPrice, product.ProductPrice, 1, product.Category?.CategoryName);
 
-            // 4. THAY THẾ Session["Cart"] BẰNG GIỎ HÀNG MUA NGAY (Tạm thời)
             Session["Cart"] = buyNowCart;
 
-            // 5. Chuyển hướng thẳng đến trang Thanh toán
             return RedirectToAction("Checkout", "Orders");
+        }
+
+        [HttpPost]
+        public JsonResult ApplyCoupon(string couponCode)
+        {
+            if (string.IsNullOrEmpty(couponCode))
+            {
+                return Json(new { success = false, message = "Vui lòng nhập mã giảm giá." });
+            }
+
+            try
+            {
+                var coupon = db.Coupons.Include(c => c.Products)
+                                       .FirstOrDefault(c => c.Code == couponCode.Trim().ToUpper());
+
+                if (coupon == null)
+                    return Json(new { success = false, message = "Mã giảm giá không tồn tại." });
+
+                if (coupon.ExpiryDate <= DateTime.Now)
+                    return Json(new { success = false, message = "Mã giảm giá này đã hết hạn sử dụng." });
+
+                if (coupon.UsageLimit <= 0)
+                    return Json(new { success = false, message = "Mã giảm giá này đã hết lượt sử dụng." });
+
+                // SỬA TẠI ĐÂY: Chặn ngay nếu đây là mã Sản phẩm cụ thể
+                if (coupon.Products != null && coupon.Products.Any())
+                {
+                    return Json(new
+                    {
+                        success = false,
+                        message = "Mã này là ưu đãi riêng cho sản phẩm và đã được trừ thẳng vào giá bán. Vui lòng chọn mã giảm giá toàn đơn!"
+                    });
+                }
+
+                var cart = Session["Cart"] as WebBanHang.Models.ViewModel.Cart;
+                if (cart == null || !cart.Items.Any())
+                    return Json(new { success = false, message = "Giỏ hàng trống, không thể áp dụng mã." });
+
+                decimal totalDiscount = 0;
+                decimal cartTotal = cart.TotalValue();
+
+                // DO ĐÃ CHẶN MÃ CỤC BỘ Ở TRÊN, LOGIC DƯỚI ĐÂY CHỈ DÀNH CHO MÃ TOÀN ĐƠN
+                if (coupon.DiscountPercentage.HasValue && coupon.DiscountPercentage.Value > 0)
+                {
+                    totalDiscount = cartTotal * (coupon.DiscountPercentage.Value / 100m);
+                }
+
+                // Khống chế mức giảm tối đa
+                if (coupon.MaxDiscountAmount.HasValue && coupon.MaxDiscountAmount.Value > 0)
+                {
+                    if (totalDiscount == 0 || totalDiscount > coupon.MaxDiscountAmount.Value)
+                    {
+                        totalDiscount = coupon.MaxDiscountAmount.Value;
+                    }
+                }
+
+                return Json(new
+                {
+                    success = true,
+                    message = "Áp dụng mã giảm giá toàn đơn thành công!",
+                    discountAmount = totalDiscount
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Lỗi xử lý: " + ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public ActionResult ProceedToCheckout(List<int> selectedIds)
+        {
+            var currentCart = Session["Cart"] as WebBanHang.Models.ViewModel.Cart;
+
+            if (currentCart == null || !currentCart.Items.Any() || selectedIds == null || selectedIds.Count == 0)
+            {
+                return Json(new { success = false, message = "Vui lòng chọn ít nhất 1 sản phẩm để thanh toán." });
+            }
+
+            // Lưu trữ giỏ hàng tổng vào Session tạm để khôi phục sau khi đặt hàng
+            Session["BuyNowTempCart"] = currentCart;
+
+            // Khởi tạo giỏ hàng mới chỉ chứa các sản phẩm được chọn
+            var checkoutCart = new WebBanHang.Models.ViewModel.Cart();
+
+            foreach (var id in selectedIds)
+            {
+                var item = currentCart.Items.FirstOrDefault(i => i.ProductID == id);
+                if (item != null)
+                {
+                    checkoutCart.AddItem(item.ProductID, item.ProductImage, item.ProductName, item.UnitPrice, item.OriginalPrice, item.Quantity, "");
+                }
+            }
+
+            // Ghi đè giỏ hàng hiện tại bằng giỏ hàng thanh toán
+            Session["Cart"] = checkoutCart;
+
+            return Json(new { success = true, redirectUrl = Url.Action("Checkout", "Orders") });
         }
     }
 }

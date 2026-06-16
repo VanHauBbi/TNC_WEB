@@ -10,9 +10,10 @@ namespace WebBanHang.Models.ViewModel
     {
         private List<CartItem> items = new List<CartItem>();
         public IEnumerable<CartItem> Items => items;
+
         //Thêm vào giỏ
         public void AddItem(int productId, string productImage, string productName,
-            decimal unitPrice, int quantity, string category)
+            decimal unitPrice, decimal originalPrice, int quantity, string category)
         {
             var existingItem = items.FirstOrDefault(i => i.ProductID == productId);
             if (existingItem == null)
@@ -23,6 +24,7 @@ namespace WebBanHang.Models.ViewModel
                     ProductImage = productImage,
                     ProductName = productName,
                     UnitPrice = unitPrice,
+                    OriginalPrice = originalPrice,
                     Quantity = quantity
                 });
             }

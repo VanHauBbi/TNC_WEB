@@ -17,7 +17,6 @@
                 <i class="fa-solid fa-cart-shopping empty-icon"></i>
                 <h3 class="empty-title">Giỏ hàng của bạn đang trống!</h3>
                 <p class="empty-message">Dường như bạn chưa thêm sản phẩm nào vào giỏ. Hãy trở lại trang chủ để khám phá các ưu đãi và lấp đầy giỏ hàng nhé.</p>
-
                 @Html.ActionLink("TIẾP TỤC MUA SẮM", "Index", "Home", null, new { @class = "btn-continue-shopping large-btn" })
             </div>
         </div>
@@ -33,11 +32,23 @@
                 @foreach (var item in Model.Items)
                 {
                     <div class="cart-item-card">
+                        <input type="checkbox" class="item-select-checkbox" value="@item.ProductID" data-price="@item.UnitPrice" checked onchange="calculateCartTotal()" />
+
                         <div class="cart-item-left">
                             <img src="@item.ProductImage" alt="@item.ProductName" class="cart-product-img" />
                             <div class="cart-item-info">
                                 <h5 class="cart-item-name">@item.ProductName</h5>
-                                <p class="cart-item-price">@item.UnitPrice.ToString("N0") VNĐ</p>
+                                @if (item.OriginalPrice > item.UnitPrice)
+                                {
+                                    <div class="cart-item-price mb-2">
+                                        <span class="text-muted text-decoration-line-through me-2" style="font-size: 0.85em;">@item.OriginalPrice.ToString("N0") ₫</span>
+                                        <span class="text-danger fw-bold">@item.UnitPrice.ToString("N0") ₫</span>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="cart-item-price mb-2 text-danger fw-bold">@item.UnitPrice.ToString("N0") ₫</div>
+                                }
 
                                 <div class="quantity-control-custom">
                                     <button type="button" class="btn-qty-control minus-btn"
@@ -66,13 +77,13 @@
             <div class="cart-summary-box">
                 <h4 class="summary-title">Tóm tắt đơn hàng</h4>
                 <div class="summary-details">
-                    <p><span>Tổng sản phẩm:</span> <span>@Model.Items.Count()</span></p>
-                    <p><span>Tổng giá trị:</span> <span>@Model.TotalValue().ToString("N0") VNĐ</span></p>
-                    <p><span>Phí vận chuyển:</span> <span>Miễn phí</span></p>
+                    <p><span>Sản phẩm chọn:</span> <span id="summary-total-items" style="font-weight: 700;">0</span></p>
                     <div class="summary-divider"></div>
-                    <p class="summary-total"><strong>Tổng cộng:</strong> <strong>@Model.TotalValue().ToString("N0") VNĐ</strong></p>
+                    <p class="summary-total"><strong>Tạm tính:</strong> <strong id="summary-total-value">0 VNĐ</strong></p>
                 </div>
-                @Html.ActionLink("TIẾN HÀNH THANH TOÁN", "Checkout", "Orders", null, new { @class = "btn-checkout-final" })
+                <button type="button" class="btn-checkout-final w-100" style="border: none; cursor: pointer; font-size: 1.1em; width: 100%; margin-top: 15px;" onclick="proceedToCheckout()">
+                    TIẾN HÀNH THANH TOÁN
+                </button>
             </div>
         </div>
     }
@@ -80,35 +91,78 @@
 
 @section Scripts {
     <script>
-        // Hàm cập nhật số lượng
+        // Cập nhật số lượng
         function cartUpdateQuantity(id, newQuantity) {
             if (newQuantity < 1) return;
-
             const form = document.createElement('form');
             form.method = 'post';
             form.action = '@Url.Action("UpdateQuantity", "Cart")';
 
-            const idInput = document.createElement('input');
-            idInput.type = 'hidden';
-            idInput.name = 'id';
-            idInput.value = id;
-            form.appendChild(idInput);
+            const idInput = document.createElement('input'); idInput.type = 'hidden'; idInput.name = 'id'; idInput.value = id;
+            const qtyInput = document.createElement('input'); qtyInput.type = 'hidden'; qtyInput.name = 'quantity'; qtyInput.value = newQuantity;
 
-            const quantityInput = document.createElement('input');
-            quantityInput.type = 'hidden';
-            quantityInput.name = 'quantity';
-            quantityInput.value = newQuantity;
-            form.appendChild(quantityInput);
-
-            document.body.appendChild(form);
-            form.submit();
+            form.appendChild(idInput); form.appendChild(qtyInput);
+            document.body.appendChild(form); form.submit();
         }
 
-        // Hàm xóa sản phẩm (Sử dụng URL)
+        // Xóa sản phẩm
         function cartRemoveItem(id) {
             if (confirm("Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?")) {
                 window.location.href = '@Url.Action("RemoveFromCart", "Cart")' + '?id=' + id;
             }
         }
+
+        // TÍNH TOÁN ĐỘNG TỔNG TIỀN DỰA TRÊN SẢN PHẨM ĐƯỢC CHỌN
+        function calculateCartTotal() {
+            var checkboxes = document.getElementsByClassName('item-select-checkbox');
+            var totalItems = 0;
+            var totalValue = 0;
+
+            for (var i = 0; i < checkboxes.length; i++) {
+                if (checkboxes[i].checked) {
+                    var row = checkboxes[i].closest('.cart-item-card');
+                    var price = parseFloat(checkboxes[i].getAttribute('data-price'));
+                    var qty = parseInt(row.querySelector('.quantity-box-custom').value);
+
+                    totalItems += qty;
+                    totalValue += (price * qty);
+                }
+            }
+
+            document.getElementById('summary-total-items').innerText = totalItems;
+            document.getElementById('summary-total-value').innerText = totalValue.toLocaleString('vi-VN') + ' VNĐ';
+        }
+
+        // XỬ LÝ THANH TOÁN SẢN PHẨM ĐƯỢC CHỌN
+        function proceedToCheckout() {
+            var checkboxes = document.getElementsByClassName('item-select-checkbox');
+            var selectedIds = [];
+
+            for (var i = 0; i < checkboxes.length; i++) {
+                if (checkboxes[i].checked) {
+                    selectedIds.push(parseInt(checkboxes[i].value));
+                }
+            }
+
+            if (selectedIds.length === 0) {
+                alert("Vui lòng chọn ít nhất 1 sản phẩm để thanh toán.");
+                return;
+            }
+
+            $.ajax({
+                url: '@Url.Action("ProceedToCheckout", "Cart")',
+                type: 'POST',
+                data: { selectedIds: selectedIds },
+                success: function(res) {
+                    if (res.success) window.location.href = res.redirectUrl;
+                    else alert(res.message);
+                },
+                error: function() { alert("Lỗi kết nối. Vui lòng thử lại."); }
+            });
+        }
+
+        $(document).ready(function() {
+            calculateCartTotal(); // Khởi chạy tính toán lần đầu
+        });
     </script>
 }

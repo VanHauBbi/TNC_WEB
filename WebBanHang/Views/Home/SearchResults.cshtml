@@ -1,4 +1,5 @@
-﻿@model List<WebBanHang.Models.Product>
+﻿@using WebBanHang.Utilities
+@model List<WebBanHang.Models.Product>
 @{
     ViewBag.Title = "Kết quả tìm kiếm";
     Layout = "~/Views/Shared/_LayoutDivMain.cshtml";
@@ -26,9 +27,24 @@
                                 @p.ProductName
                             </h5>
 
-                            <p class="card-text product-price-fixed text-danger fw-bold mt-auto">
-                                @p.ProductPrice.ToString("N0") ₫
-                            </p>
+                            @{
+                                decimal discountPercent;
+                                decimal discountedPrice = PriceHelper.GetDiscountedPrice(p, out discountPercent);
+                                bool isDiscounted = discountedPrice < p.ProductPrice;
+                            }
+                            <div class="card-text mt-auto mb-2">
+                                @if (isDiscounted)
+                                {
+                                    <span class="text-muted text-decoration-line-through me-1" style="font-size:0.85em;">@p.ProductPrice.ToString("N0") ₫</span>
+                                    <span class="badge bg-warning text-danger px-1" style="font-size:0.75em;">-@discountPercent.ToString("0")%</span>
+                                    <br />
+                                    <span class="text-danger fw-bold" style="font-size:1.15em;">@discountedPrice.ToString("N0") ₫</span>
+                                }
+                                else
+                                {
+                                    <span class="text-danger fw-bold" style="font-size:1.15em;">@p.ProductPrice.ToString("N0") ₫</span>
+                                }
+                            </div>
 
                             <div class="action-buttons mt-2 d-flex justify-content-between">
                                 <button class="btn btn-primary btn-sm flex-grow-1 me-1 add-to-cart-btn"

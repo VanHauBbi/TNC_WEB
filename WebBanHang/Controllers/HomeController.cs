@@ -17,8 +17,8 @@ namespace WebBanHang.Controllers
         public ActionResult Index(string searchTerm, int? page)
         {
             var model = new HomeProductVM();
-            var products = db.Products.AsQueryable();
-
+            var products = db.Products.Include(p => p.Coupons).AsQueryable();
+            
             if (!string.IsNullOrEmpty(searchTerm))
             {
                 model.SearchTerm = searchTerm;
@@ -70,9 +70,10 @@ namespace WebBanHang.Controllers
             // 1. @Model.product.Category.CategoryName
             // 2. @Model.product.OrderDetails.Count
             Product product = db.Products
-                                .Include(p => p.Category)
-                                .Include(p => p.OrderDetails)
-                                .SingleOrDefault(p => p.ProductID == id);
+                            .Include(p => p.Category)
+                            .Include(p => p.OrderDetails)
+                            .Include(p => p.Coupons)
+                            .SingleOrDefault(p => p.ProductID == id);
 
             if (product == null)
             {
@@ -148,7 +149,8 @@ namespace WebBanHang.Controllers
             // ProductDT03, DT04: Tìm kiếm (case-insensitive) trên nhiều trường
             // Giống hệt logic ở action Index của bạn để nhất quán
             var searchResults = db.Products
-                .Include(p => p.Category) // Cần Include để truy vấn Category.CategoryName
+                .Include(p => p.Category)
+                .Include(p => p.Coupons)
                 .Where(p =>
                     p.ProductName.ToLower().Contains(searchQuery) ||
                     p.ProductDescription.ToLower().Contains(searchQuery) ||
@@ -184,7 +186,7 @@ namespace WebBanHang.Controllers
             }
 
             // 1. Lấy sản phẩm
-            var products = db.Products.Where(p => p.CategoryID == id.Value).AsQueryable();
+            var products = db.Products.Include(p => p.Coupons).Where(p => p.CategoryID == id.Value).AsQueryable();
 
             // 2. Lọc theo Khoảng giá (logic cũ giữ nguyên)
             switch (priceRange)

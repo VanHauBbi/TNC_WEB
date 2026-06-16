@@ -3,13 +3,15 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Web;
+using WebBanHang.Models; // Bổ sung tham chiếu tới thư mục Models
+
 namespace WebBanHang.Models.ViewModel
 {
-    //Lưu thông tin trang checkout
     public class CheckoutVM
     {
         public List<CartItem> CartItems { get; set; }
         public int CustomerID { get; set; }
+
         [Display(Name = "Ngày đặt hàng")]
         public System.DateTime OrderDate { get; set; }
 
@@ -32,8 +34,10 @@ namespace WebBanHang.Models.ViewModel
         [Required(ErrorMessage = "Vui lòng nhập địa chỉ giao hàng")]
         public string ShippingAddress { get; set; }
 
-
         public string Username { get; set; }
         public List<OrderDetail> OrderDetails { get; set; }
+
+        public List<Coupon> AvailableCoupons { get; set; }
+        public string AppliedVoucherCode { get; set; }
     }
 }
