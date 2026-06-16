@@ -32,60 +32,39 @@
                 @foreach (var item in Model.Items)
                 {
                     <div class="cart-item-card">
-                        <input type="checkbox" class="item-select-checkbox"
-                               value="@item.ProductID"
-                               data-original-price="@item.OriginalPrice"
-                               data-unit-price="@item.UnitPrice"
-                               data-coupon-id="@item.ActiveCouponID"
-                               data-coupon-limit="@item.ActiveCouponLimit"
-                               checked onchange="calculateCartTotal()" />
+                        <input type="checkbox" class="item-select-checkbox" value="@item.ProductID" data-original-price="@item.OriginalPrice" data-unit-price="@item.UnitPrice" data-coupon-id="@item.ActiveCouponID" data-coupon-limit="@item.ActiveCouponLimit" checked onchange="calculateCartTotal()" />
 
                         <div class="cart-item-left">
                             <img src="@item.ProductImage" alt="@item.ProductName" class="cart-product-img" />
                             <div class="cart-item-info">
                                 <h5 class="cart-item-name">@item.ProductName</h5>
 
-                                @if (item.OriginalPrice > item.UnitPrice)
-                                {
-                                    <div class="cart-item-price mb-2">
-                                        <span class="text-muted text-decoration-line-through me-2" style="font-size: 0.85em;">@item.OriginalPrice.ToString("N0") ₫</span>
-                                        <span class="text-danger fw-bold">@item.UnitPrice.ToString("N0") ₫</span>
+                                <div class="cart-item-price mb-2">
+                                    <div class="price-discounted" style="display: none;">
+                                        <span class="text-muted text-decoration-line-through me-2" style="font-size: 0.85em;">@item.OriginalPrice.ToString("N0") VNĐ</span>
+                                        <span class="text-danger fw-bold">@item.UnitPrice.ToString("N0") VNĐ</span>
                                     </div>
-                                }
-                                else
-                                {
-                                    <div class="cart-item-price mb-2 text-danger fw-bold">@item.UnitPrice.ToString("N0") ₫</div>
-                                }
+                                    <div class="price-original" style="display: none;">
+                                        <span class="text-danger fw-bold">@item.OriginalPrice.ToString("N0") VNĐ</span>
+                                    </div>
+                                </div>
 
-                                @* HIỂN THỊ TỒN KHO *@
                                 <div class="small text-muted mb-2">
                                     <i class="fa-solid fa-warehouse"></i> Còn lại:
                                     @if (item.StockQuantity > 0)
-                                    {
-                                        <span class="badge bg-success text-white fw-bold">@item.StockQuantity</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge bg-danger text-white fw-bold">Hết hàng</span>
-                                    }
+                                    {<span class="badge bg-success text-white fw-bold">@item.StockQuantity</span> }
+                                else
+                                { <span class="badge bg-danger text-white fw-bold">Hết hàng</span>}
                                 </div>
-
-                                @* CẢNH BÁO KHI CHỌN QUÁ TỒN KHO *@
-                                @if (item.Quantity > item.StockQuantity)
-                                {
-                                    <div class="alert alert-danger p-2 small mb-2" style="font-size: 12px; border-radius: 4px;">
-                                        <i class="fa-solid fa-triangle-exclamation"></i> Vượt quá tồn kho thực tế! (Tối đa: @item.StockQuantity)
-                                    </div>
-                                }
 
                                 <div class="quantity-control-custom">
                                     <button type="button" class="btn-qty-control minus-btn"
-                                            onclick="cartUpdateQuantity(@item.ProductID, @item.Quantity - 1, @item.StockQuantity)">
+                                            onclick="cartUpdateQuantity(@item.ProductID, -1, @item.StockQuantity, this)">
                                         <i class="fa-solid fa-minus"></i>
                                     </button>
                                     <input type="number" value="@item.Quantity" min="1" max="@item.StockQuantity" readonly class="quantity-box-custom" />
                                     <button type="button" class="btn-qty-control plus-btn"
-                                            onclick="cartUpdateQuantity(@item.ProductID, @item.Quantity + 1, @item.StockQuantity)">
+                                            onclick="cartUpdateQuantity(@item.ProductID, 1, @item.StockQuantity, this)">
                                         <i class="fa-solid fa-plus"></i>
                                     </button>
                                 </div>
@@ -93,7 +72,7 @@
                         </div>
 
                         <div class="cart-item-right">
-                            <p class="item-total">@item.TotalPrice.ToString("N0") VNĐ</p>
+                            <p class="item-total fw-bold text-danger mb-2">@item.TotalPrice.ToString("N0") VNĐ</p>
                             <button type="button" class="btn-remove-item" onclick="cartRemoveItem(@item.ProductID)">
                                 <i class="fa-solid fa-trash-can"></i>
                             </button>
@@ -141,22 +120,28 @@
 @section Scripts {
     <script>
         // Cập nhật số lượng có kiểm tra tồn kho bằng JS
-        function cartUpdateQuantity(id, newQuantity, stockLimit) {
+        function cartUpdateQuantity(id, change, stockLimit, btnElement) {
+            var row = btnElement.closest('.cart-item-card');
+            var inputBox = row.querySelector('.quantity-box-custom');
+            var currentQty = parseInt(inputBox.value);
+            var newQuantity = currentQty + change; // Xác định số lượng tăng (+) hoặc giảm (-)
+
             if (newQuantity < 1) return;
             if (newQuantity > stockLimit) {
-                alert("⚠️ Không thể tăng thêm số lượng! Hiện tại kho chỉ còn " + stockLimit + " sản phẩm.");
+                alert("⚠️ Không thể tăng thêm số lượng! Kho chỉ còn " + stockLimit + " sản phẩm.");
                 return;
             }
 
-            const form = document.createElement('form');
-            form.method = 'post';
-            form.action = '@Url.Action("UpdateQuantity", "Cart")';
-
-            const idInput = document.createElement('input'); idInput.type = 'hidden'; idInput.name = 'id'; idInput.value = id;
-            const qtyInput = document.createElement('input'); qtyInput.type = 'hidden'; qtyInput.name = 'quantity'; qtyInput.value = newQuantity;
-
-            form.appendChild(idInput); form.appendChild(qtyInput);
-            document.body.appendChild(form); form.submit();
+            // Gửi dữ liệu ngầm lên Server bằng AJAX (Không reload trang)
+            $.post('@Url.Action("UpdateQuantity", "Cart")', { id: id, quantity: newQuantity })
+             .done(function() {
+                 // Khi Server lưu thành công, chỉ cập nhật ô input và tính lại UI
+                 inputBox.value = newQuantity;
+                 calculateCartTotal();
+             })
+             .fail(function() {
+                 alert("Lỗi kết nối. Vui lòng thử lại!");
+             });
         }
 
         function cartRemoveItem(id) {
@@ -170,49 +155,61 @@
             var totalItems = 0;
             var subtotalValue = 0;
             var actualTotalValue = 0;
-
-            // KHỞI TẠO SỔ NHÁP Ở CLIENT (JS Memory Tracker)
             var couponTracker = {};
 
             for (var i = 0; i < checkboxes.length; i++) {
-                if (checkboxes[i].checked) {
-                    var row = checkboxes[i].closest('.cart-item-card');
-                    var originalPrice = parseFloat(checkboxes[i].getAttribute('data-original-price'));
-                    var unitPrice = parseFloat(checkboxes[i].getAttribute('data-unit-price'));
-                    var couponId = parseInt(checkboxes[i].getAttribute('data-coupon-id'));
-                    var couponLimit = parseInt(checkboxes[i].getAttribute('data-coupon-limit'));
-                    var qty = parseInt(row.querySelector('.quantity-box-custom').value);
+                var row = checkboxes[i].closest('.cart-item-card');
+                var originalPrice = parseFloat(checkboxes[i].getAttribute('data-original-price'));
+                var unitPrice = parseFloat(checkboxes[i].getAttribute('data-unit-price'));
+                var couponId = parseInt(checkboxes[i].getAttribute('data-coupon-id'));
+                var couponLimit = parseInt(checkboxes[i].getAttribute('data-coupon-limit'));
+                var qty = parseInt(row.querySelector('.quantity-box-custom').value); // Lấy số lượng mới nhất
 
+                var applicableQty = 0;
+                var remainingQty = qty;
+
+                // CHỈ TÍNH TOÁN KHI Ô CHECKBOX ĐƯỢC TÍCH VÀO
+                if (checkboxes[i].checked) {
                     totalItems += qty;
                     subtotalValue += (qty * originalPrice);
 
-                    var applicableQty = 0;
-                    var remainingQty = qty;
-
-                    // Nếu sản phẩm có mã giảm giá (ID > 0)
                     if (couponId > 0 && originalPrice > unitPrice) {
-                        // Nạp số lượng giới hạn vào sổ nháp nếu chưa có
                         if (typeof couponTracker[couponId] === 'undefined') {
                             couponTracker[couponId] = couponLimit;
                         }
 
                         var availableLimit = couponTracker[couponId];
                         if (availableLimit > 0) {
-                            // Cấp lượt voucher và trừ ngay vào sổ nháp JS
                             applicableQty = Math.min(qty, availableLimit);
                             remainingQty = qty - applicableQty;
                             couponTracker[couponId] -= applicableQty;
                         }
                     }
-
-                    // Tính tổng tiền dựa trên số lượng được giảm và số lượng giá gốc
                     actualTotalValue += (applicableQty * unitPrice) + (remainingQty * originalPrice);
+                } else {
+                    // Nếu không tích chọn, mặc định hiển thị giá gốc
+                    remainingQty = qty;
                 }
+
+                // CẬP NHẬT VỊ TRÍ SỐ 1: Bật/Tắt giá bị gạch chéo
+                var priceDiscountedDiv = row.querySelector('.price-discounted');
+                var priceOriginalDiv = row.querySelector('.price-original');
+
+                if (applicableQty > 0) {
+                    priceDiscountedDiv.style.display = 'block';
+                    priceOriginalDiv.style.display = 'none';
+                } else {
+                    priceDiscountedDiv.style.display = 'none';
+                    priceOriginalDiv.style.display = 'block';
+                }
+
+                // CẬP NHẬT VỊ TRÍ SỐ 2: Thành tiền thực tế của dòng sản phẩm
+                var rowTotal = (applicableQty * unitPrice) + (remainingQty * originalPrice);
+                row.querySelector('.item-total').innerText = rowTotal.toLocaleString('vi-VN') + ' VNĐ';
             }
 
+            // Cập nhật Bảng Tóm Tắt Đơn Hàng
             var totalDiscount = subtotalValue - actualTotalValue;
-
-            // Cập nhật giao diện
             document.getElementById('summary-total-items').innerText = totalItems;
             document.getElementById('summary-subtotal-value').innerText = subtotalValue.toLocaleString('vi-VN') + ' VNĐ';
             document.getElementById('summary-total-value').innerText = actualTotalValue.toLocaleString('vi-VN') + ' VNĐ';
