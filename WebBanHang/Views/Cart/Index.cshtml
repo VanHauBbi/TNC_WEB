@@ -38,6 +38,7 @@
                             <img src="@item.ProductImage" alt="@item.ProductName" class="cart-product-img" />
                             <div class="cart-item-info">
                                 <h5 class="cart-item-name">@item.ProductName</h5>
+
                                 @if (item.OriginalPrice > item.UnitPrice)
                                 {
                                     <div class="cart-item-price mb-2">
@@ -50,14 +51,35 @@
                                     <div class="cart-item-price mb-2 text-danger fw-bold">@item.UnitPrice.ToString("N0") ₫</div>
                                 }
 
+                                @* HIỂN THỊ TỒN KHO *@
+                                <div class="small text-muted mb-2">
+                                    <i class="fa-solid fa-warehouse"></i> Còn lại:
+                                    @if (item.StockQuantity > 0)
+                                    {
+                                        <span class="badge bg-success text-white fw-bold">@item.StockQuantity</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger text-white fw-bold">Hết hàng</span>
+                                    }
+                                </div>
+
+                                @* CẢNH BÁO KHI CHỌN QUÁ TỒN KHO *@
+                                @if (item.Quantity > item.StockQuantity)
+                                {
+                                    <div class="alert alert-danger p-2 small mb-2" style="font-size: 12px; border-radius: 4px;">
+                                        <i class="fa-solid fa-triangle-exclamation"></i> Vượt quá tồn kho thực tế! (Tối đa: @item.StockQuantity)
+                                    </div>
+                                }
+
                                 <div class="quantity-control-custom">
                                     <button type="button" class="btn-qty-control minus-btn"
-                                            onclick="cartUpdateQuantity(@item.ProductID, @item.Quantity - 1)">
+                                            onclick="cartUpdateQuantity(@item.ProductID, @item.Quantity - 1, @item.StockQuantity)">
                                         <i class="fa-solid fa-minus"></i>
                                     </button>
-                                    <input type="number" value="@item.Quantity" min="1" readonly class="quantity-box-custom" />
+                                    <input type="number" value="@item.Quantity" min="1" max="@item.StockQuantity" readonly class="quantity-box-custom" />
                                     <button type="button" class="btn-qty-control plus-btn"
-                                            onclick="cartUpdateQuantity(@item.ProductID, @item.Quantity + 1)">
+                                            onclick="cartUpdateQuantity(@item.ProductID, @item.Quantity + 1, @item.StockQuantity)">
                                         <i class="fa-solid fa-plus"></i>
                                     </button>
                                 </div>
@@ -81,9 +103,23 @@
                     <div class="summary-divider"></div>
                     <p class="summary-total"><strong>Tạm tính:</strong> <strong id="summary-total-value">0 VNĐ</strong></p>
                 </div>
-                <button type="button" class="btn-checkout-final w-100" style="border: none; cursor: pointer; font-size: 1.1em; width: 100%; margin-top: 15px;" onclick="proceedToCheckout()">
-                    TIẾN HÀNH THANH TOÁN
-                </button>
+
+                @{
+                    bool hasInvalidQuantity = Model.Items.Any(i => i.Quantity > i.StockQuantity);
+                }
+
+                @if (hasInvalidQuantity)
+                {
+                    <button class="btn-checkout-final w-100 mt-3" disabled style="background-color: #6c757d; cursor: not-allowed; border: none;">
+                        GIẢM SỐ LƯỢNG ĐỂ THANH TOÁN
+                    </button>
+                }
+                else
+                {
+                    <button type="button" class="btn-checkout-final w-100 mt-3" style="border: none; cursor: pointer;" onclick="proceedToCheckout()">
+                        TIẾN HÀNH THANH TOÁN
+                    </button>
+                }
             </div>
         </div>
     }
@@ -91,9 +127,14 @@
 
 @section Scripts {
     <script>
-        // Cập nhật số lượng
-        function cartUpdateQuantity(id, newQuantity) {
+        // Cập nhật số lượng có kiểm tra tồn kho bằng JS
+        function cartUpdateQuantity(id, newQuantity, stockLimit) {
             if (newQuantity < 1) return;
+            if (newQuantity > stockLimit) {
+                alert("⚠️ Không thể tăng thêm số lượng! Hiện tại kho chỉ còn " + stockLimit + " sản phẩm.");
+                return;
+            }
+
             const form = document.createElement('form');
             form.method = 'post';
             form.action = '@Url.Action("UpdateQuantity", "Cart")';
@@ -105,14 +146,12 @@
             document.body.appendChild(form); form.submit();
         }
 
-        // Xóa sản phẩm
         function cartRemoveItem(id) {
             if (confirm("Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?")) {
                 window.location.href = '@Url.Action("RemoveFromCart", "Cart")' + '?id=' + id;
             }
         }
 
-        // TÍNH TOÁN ĐỘNG TỔNG TIỀN DỰA TRÊN SẢN PHẨM ĐƯỢC CHỌN
         function calculateCartTotal() {
             var checkboxes = document.getElementsByClassName('item-select-checkbox');
             var totalItems = 0;
@@ -133,7 +172,6 @@
             document.getElementById('summary-total-value').innerText = totalValue.toLocaleString('vi-VN') + ' VNĐ';
         }
 
-        // XỬ LÝ THANH TOÁN SẢN PHẨM ĐƯỢC CHỌN
         function proceedToCheckout() {
             var checkboxes = document.getElementsByClassName('item-select-checkbox');
             var selectedIds = [];
@@ -162,7 +200,7 @@
         }
 
         $(document).ready(function() {
-            calculateCartTotal(); // Khởi chạy tính toán lần đầu
+            calculateCartTotal();
         });
     </script>
 }
