@@ -21,25 +21,17 @@ namespace WebBanHang.Controllers
         public ActionResult Index()
         {
             var cart = Session["Cart"] as WebBanHang.Models.ViewModel.Cart;
-            if (cart == null)
-            {
-                cart = new WebBanHang.Models.ViewModel.Cart();
-            }
+            if (cart == null) cart = new WebBanHang.Models.ViewModel.Cart();
 
             using (var tempDb = new WebBanHang.Models.MyStoreEntities())
             {
-                // KHỞI TẠO SỔ NHÁP ĐỂ CHỐNG TRỪ DƯ VOUCHER TRONG GIỎ HÀNG
-                var couponTracker = new Dictionary<int, int>();
-
                 foreach (var item in cart.Items)
                 {
                     var product = tempDb.Products.Include("Coupons").SingleOrDefault(p => p.ProductID == item.ProductID);
                     if (product != null)
                     {
-                        // 1. Cập nhật tồn kho (Giữ nguyên logic cũ của bạn)
                         item.StockQuantity = product.StockQuantity;
 
-                        // 2. Cập nhật giới hạn Voucher (Logic Sổ nháp giống hệt bên Checkout)
                         if (item.OriginalPrice > item.UnitPrice)
                         {
                             var activeCoupon = product.Coupons
@@ -49,37 +41,14 @@ namespace WebBanHang.Controllers
 
                             if (activeCoupon != null)
                             {
-                                if (!couponTracker.ContainsKey(activeCoupon.CouponID))
-                                {
-                                    couponTracker[activeCoupon.CouponID] = activeCoupon.UsageLimit;
-                                }
-
-                                int availableLimit = couponTracker[activeCoupon.CouponID];
-
-                                if (availableLimit > 0)
-                                {
-                                    int appliedQty = Math.Min(item.Quantity, availableLimit);
-                                    item.DiscountableQuantity = appliedQty;
-                                    couponTracker[activeCoupon.CouponID] -= appliedQty;
-                                }
-                                else
-                                {
-                                    item.DiscountableQuantity = 0; // Hết lượt, đẩy về giá gốc
-                                }
+                                // CHỈ NẠP DỮ LIỆU ĐỂ TRUYỀN RA VIEW
+                                item.ActiveCouponID = activeCoupon.CouponID;
+                                item.ActiveCouponLimit = activeCoupon.UsageLimit;
                             }
-                            else
-                            {
-                                item.DiscountableQuantity = 0;
-                            }
-                        }
-                        else
-                        {
-                            item.DiscountableQuantity = item.Quantity;
                         }
                     }
                 }
             }
-
             return View(cart);
         }
         // THÊM SẢN PHẨM VÀO GIỎ HÀNG
