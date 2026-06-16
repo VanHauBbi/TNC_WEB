@@ -1,0 +1,106 @@
+﻿@model IEnumerable<WebBanHang.Models.ViewModel.PriceHistoryViewModel>
+
+@{
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="card shadow mb-4" style="border-radius: 10px; border: none; margin-top: 20px;">
+    <div class="card-header py-3 bg-white d-flex justify-content-between align-items-center">
+        <h5 class="m-0 font-weight-bold text-primary">
+            <i class="fa-solid fa-clock-rotate-left"></i> Nhật ký biến động giá toàn hệ thống
+        </h5>
+    </div>
+    <div class="card-body">
+
+        <form method="get" action="@Url.Action("Index", "PriceHistory")" class="row g-3 mb-4 align-items-end bg-light p-3 rounded" style="margin: 0 1px 20px 1px; border: 1px solid #e3e6f0;">
+            <div class="col-md-3">
+                <label class="form-label small font-weight-bold text-secondary">Từ ngày</label>
+                <input type="date" name="fromDate" class="form-control form-control-sm" value="@ViewBag.CurrentFromDate" />
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label small font-weight-bold text-secondary">Đến ngày</label>
+                <input type="date" name="toDate" class="form-control form-control-sm" value="@ViewBag.CurrentToDate" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label small font-weight-bold text-secondary">Danh mục sản phẩm</label>
+                <select name="categoryID" class="form-select form-select-sm form-control form-control-sm">
+                    <option value="">-- Tất cả danh mục --</option>
+                    @foreach (var cat in ViewBag.Categories)
+                    {
+                        <option value="@cat.CategoryID" @(ViewBag.CurrentCategoryID == cat.CategoryID ? "selected" : "")>
+                            @cat.CategoryName
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-primary btn-sm w-100 me-1">
+                    <i class="fa-solid fa-magnifying-glass"></i> Lọc
+                </button>
+                <a href="@Url.Action("Index", "PriceHistory")" class="btn btn-secondary btn-sm w-100">
+                    <i class="fa-solid fa-rotate-left"></i> Reset
+                </a>
+            </div>
+        </form>
+
+        @if (Model == null || !Model.Any())
+        {
+            <div class="alert alert-warning text-center shadow-sm" style="border-radius: 5px; color: #856404; bg-color: #fff3cd; border-color: #ffeeba;">
+                <i class="fa-solid fa-triangle-exclamation"></i> Không tìm thấy lịch sử biến động giá nào phù hợp với bộ lọc.
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle" width="100%" cellspacing="0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="text-center" style="width: 8%">Mã SP</th>
+                            <th class="text-center" style="color: #28a745 !important;">Tên sản phẩm</th>
+                            <th class="text-center" style="width: 15%; color: #ffc107 !important;">Giá cũ</th>
+                            <th class="text-center" style="width: 15%; color: #ffc107 !important;">Giá mới</th>
+                            <th class="text-center" style="width: 18%">Mức chênh lệch</th>
+                            <th class="text-center" style="width: 20%">Thời gian thực hiện</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            var chenhLech = item.NewPrice - item.OldPrice;
+                            <tr>
+                                <td class="text-center font-weight-bold text-secondary">#@item.ProductID</td>
+                                <td>
+                                    <span class="font-weight-bold text-dark">@item.ProductName</span>
+                                </td>
+                                <td class="text-center text-muted">@string.Format("{0:N0}", item.OldPrice)đ</td>
+                                <td class="text-center text-muted">@string.Format("{0:N0}", item.NewPrice)đ</td>
+
+                                <td class="text-center font-weight-bold @(chenhLech > 0 ? "text-success" : (chenhLech < 0 ? "text-danger" : "text-secondary"))">
+                                    @if (chenhLech > 0)
+                                    {
+                                        <span><i class="fa-solid fa-arrow-trend-up"></i> +@string.Format("{0:N0}", chenhLech)đ</span>
+                                    }
+                                    else if (chenhLech < 0)
+                                    {
+                                        <span><i class="fa-solid fa-arrow-trend-down"></i> @string.Format("{0:N0}", chenhLech)đ</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Không đổi</span>
+                                    }
+                                </td>
+                                <td class="text-center text-secondary small">
+                                    @item.ChangeDate.ToString("dd/MM/yyyy - HH:mm:ss")
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
