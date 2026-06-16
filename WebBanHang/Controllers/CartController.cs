@@ -18,10 +18,23 @@ namespace WebBanHang.Controllers
         {
             return new CartService(Session);
         }
-        //Hiển thị giỏ hàng k gom nhóm theo dm
         public ActionResult Index()
         {
             var cart = GetCartService().GetCart();
+
+            // Lấy tồn kho thực tế từ DB gán vào thuộc tính StockQuantity của CartItem
+            using (var dbContext = new WebBanHang.Models.MyStoreEntities())
+            {
+                foreach (var item in cart.Items)
+                {
+                    var product = dbContext.Products.Find(item.ProductID);
+                    if (product != null)
+                    {
+                        item.StockQuantity = product.StockQuantity;
+                    }
+                }
+            }
+
             return View(cart);
         }
         // THÊM SẢN PHẨM VÀO GIỎ HÀNG

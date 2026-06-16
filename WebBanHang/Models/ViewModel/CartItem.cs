@@ -14,6 +14,7 @@ namespace WebBanHang.Models.ViewModel
         public decimal UnitPrice { get; set; }
         public decimal OriginalPrice { get; set; }
         public string ProductImage { get; set; }
+        public int StockQuantity { get; set; }
         public decimal TotalPrice
         {
             get { return Quantity * UnitPrice; }

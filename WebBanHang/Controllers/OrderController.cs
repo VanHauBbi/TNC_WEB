@@ -76,24 +76,35 @@ namespace WebBanHang.Controllers
             if (cart == null || !cart.Items.Any())
             {
                 ModelState.AddModelError("", "Giỏ hàng của bạn đang trống!");
-                model.AvailableCoupons = db.Coupons.ToList(); // Load lại để tránh lỗi View
+                model.AvailableCoupons = db.Coupons.Where(c => !c.Products.Any()).ToList();
                 return View(model);
+            }
+
+            // 1. CHỐT CHẶN BACKEND: KIỂM TRA TỒN KHO TRƯỚC KHI TẠO ĐƠN
+            foreach (var item in cart.Items)
+            {
+                var checkStock = db.Products.Find(item.ProductID);
+                if (checkStock == null || item.Quantity > checkStock.StockQuantity)
+                {
+                    ModelState.AddModelError("", $"Sản phẩm '{item.ProductName}' chỉ còn {checkStock?.StockQuantity ?? 0} cái trong kho. Vui lòng quay lại giỏ hàng để giảm số lượng.");
+                    model.AvailableCoupons = db.Coupons.Where(c => !c.Products.Any()).ToList();
+                    return View(model);
+                }
             }
 
             if (!ModelState.IsValid)
             {
-                model.AvailableCoupons = db.Coupons.ToList();
+                model.AvailableCoupons = db.Coupons.Where(c => !c.Products.Any()).ToList();
                 return View(model);
             }
 
             int customerId = (int)Session["CustomerID"];
 
-            // KHỞI TẠO DATABASE TRANSACTION ĐỂ BẢO VỆ DỮ LIỆU
             using (var transaction = db.Database.BeginTransaction())
             {
                 try
                 {
-                    // 1. Lưu hóa đơn
+                    // Lưu hóa đơn
                     var order = new Order
                     {
                         CustomerID = customerId,
@@ -105,9 +116,9 @@ namespace WebBanHang.Controllers
                         TotalAmount = model.TotalAmount
                     };
                     db.Orders.Add(order);
-                    db.SaveChanges(); // Lưu lần 1 để lấy OrderID
+                    db.SaveChanges();
 
-                    // 2. Lưu chi tiết & Trừ Tồn Kho Sản Phẩm
+                    // 2. LƯU CHI TIẾT, TRỪ TỒN KHO & TRỪ VOUCHER SẢN PHẨM CỤ THỂ
                     foreach (var item in cart.Items)
                     {
                         var detail = new OrderDetail
@@ -119,40 +130,49 @@ namespace WebBanHang.Controllers
                         };
                         db.OrderDetails.Add(detail);
 
-                        // Trừ số lượng tồn kho
-                        var productInDb = db.Products.Find(item.ProductID);
+                        // Include(Coupons) để lấy danh sách mã của sản phẩm này
+                        var productInDb = db.Products.Include(p => p.Coupons).SingleOrDefault(p => p.ProductID == item.ProductID);
                         if (productInDb != null)
                         {
+                            // Trừ tồn kho
                             productInDb.StockQuantity -= item.Quantity;
                             if (productInDb.StockQuantity < 0) productInDb.StockQuantity = 0;
+
+                            // Nếu Giá mua < Giá gốc, chắc chắn sản phẩm này đã được áp dụng Voucher cục bộ!
+                            if (item.UnitPrice < item.OriginalPrice)
+                            {
+                                // Tìm mã cục bộ tốt nhất đang còn hạn/lượt để trừ đi 1 lượt
+                                var appliedCoupon = productInDb.Coupons
+                                    .Where(c => c.ExpiryDate > DateTime.Now && c.UsageLimit > 0)
+                                    .OrderByDescending(c => c.DiscountPercentage ?? (c.MaxDiscountAmount ?? 0))
+                                    .FirstOrDefault();
+
+                                if (appliedCoupon != null)
+                                {
+                                    appliedCoupon.UsageLimit -= 1;
+                                }
+                            }
                         }
                     }
 
-                    // 3. Trừ Lượt Sử Dụng Voucher (Nếu có)
+                    // 3. TRỪ VOUCHER TOÀN ĐƠN (Nếu khách có nhập ở Modal)
                     if (!string.IsNullOrEmpty(model.AppliedVoucherCode))
                     {
-                        var coupon = db.Coupons.SingleOrDefault(c => c.Code == model.AppliedVoucherCode);
-                        if (coupon != null && coupon.UsageLimit > 0)
+                        var globalCoupon = db.Coupons.SingleOrDefault(c => c.Code == model.AppliedVoucherCode);
+                        if (globalCoupon != null && globalCoupon.UsageLimit > 0)
                         {
-                            coupon.UsageLimit -= 1;
+                            globalCoupon.UsageLimit -= 1;
                         }
                     }
 
-                    // Lưu toàn bộ thay đổi và chốt Transaction
                     db.SaveChanges();
                     transaction.Commit();
 
-                    // XỬ LÝ DỌN DẸP SESSION GIỎ HÀNG (ĐÃ FIX LỖI)
+                    // Xóa giỏ hàng sau khi mua thành công
                     var tempCart = Session["BuyNowTempCart"] as WebBanHang.Models.ViewModel.Cart;
                     if (tempCart != null)
                     {
-                        // Xóa các sản phẩm vừa thanh toán thành công khỏi giỏ hàng gốc
-                        foreach (var boughtItem in cart.Items)
-                        {
-                            tempCart.RemoveItem(boughtItem.ProductID);
-                        }
-
-                        // Khôi phục giỏ hàng gốc (lúc này chỉ còn lại các sản phẩm chưa mua)
+                        foreach (var boughtItem in cart.Items) { tempCart.RemoveItem(boughtItem.ProductID); }
                         Session["Cart"] = tempCart;
                         Session.Remove("BuyNowTempCart");
                     }
@@ -165,9 +185,8 @@ namespace WebBanHang.Controllers
                 }
                 catch (Exception ex)
                 {
-                    // NẾU CÓ LỖI (Ví dụ: đứt mạng, lỗi SQL), TẤT CẢ SẼ ĐƯỢC HOÀN TÁC!
                     transaction.Rollback();
-                    ModelState.AddModelError("", "Đã xảy ra lỗi khi lưu đơn hàng. Vui lòng thử lại!");
+                    ModelState.AddModelError("", "Đã xảy ra lỗi hệ thống khi lưu đơn hàng. Vui lòng thử lại!");
                     model.AvailableCoupons = db.Coupons.Where(c => !c.Products.Any()).ToList();
                     return View(model);
                 }
