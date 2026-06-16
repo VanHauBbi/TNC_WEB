@@ -32,7 +32,12 @@
                 @foreach (var item in Model.Items)
                 {
                     <div class="cart-item-card">
-                        <input type="checkbox" class="item-select-checkbox" value="@item.ProductID" data-price="@item.UnitPrice" checked onchange="calculateCartTotal()" />
+                        <input type="checkbox" class="item-select-checkbox"
+                               value="@item.ProductID"
+                               data-original-price="@item.OriginalPrice"
+                               data-unit-price="@item.UnitPrice"
+                               data-discountable-qty="@item.DiscountableQuantity"
+                               checked onchange="calculateCartTotal()" />
 
                         <div class="cart-item-left">
                             <img src="@item.ProductImage" alt="@item.ProductName" class="cart-product-img" />
@@ -100,8 +105,15 @@
                 <h4 class="summary-title">Tóm tắt đơn hàng</h4>
                 <div class="summary-details">
                     <p><span>Sản phẩm chọn:</span> <span id="summary-total-items" style="font-weight: 700;">0</span></p>
+                    <p><span>Tạm tính:</span> <span id="summary-subtotal-value">0 VNĐ</span></p>
+
+                    <p id="summary-discount-row" class="text-success" style="display: none; justify-content: space-between;">
+                        <span>Giảm giá sản phẩm:</span>
+                        <span id="summary-discount-value" class="fw-bold">-0 VNĐ</span>
+                    </p>
+
                     <div class="summary-divider"></div>
-                    <p class="summary-total"><strong>Tạm tính:</strong> <strong id="summary-total-value">0 VNĐ</strong></p>
+                    <p class="summary-total"><strong>Tổng thanh toán:</strong> <strong id="summary-total-value">0 VNĐ</strong></p>
                 </div>
 
                 @{
@@ -155,21 +167,46 @@
         function calculateCartTotal() {
             var checkboxes = document.getElementsByClassName('item-select-checkbox');
             var totalItems = 0;
-            var totalValue = 0;
+            var subtotalValue = 0; // Tổng tiền tính theo giá gốc
+            var actualTotalValue = 0; // Tổng tiền thực tế sau khi áp dụng luật giới hạn
 
             for (var i = 0; i < checkboxes.length; i++) {
                 if (checkboxes[i].checked) {
                     var row = checkboxes[i].closest('.cart-item-card');
-                    var price = parseFloat(checkboxes[i].getAttribute('data-price'));
+                    var originalPrice = parseFloat(checkboxes[i].getAttribute('data-original-price'));
+                    var unitPrice = parseFloat(checkboxes[i].getAttribute('data-unit-price'));
+                    var discountableQty = parseInt(checkboxes[i].getAttribute('data-discountable-qty'));
                     var qty = parseInt(row.querySelector('.quantity-box-custom').value);
 
                     totalItems += qty;
-                    totalValue += (price * qty);
+
+                    // THUẬT TOÁN TÁCH DÒNG (Min-Bounding) TẠI CLIENT
+                    var applicableQty = Math.min(qty, discountableQty);
+                    var remainingQty = qty - applicableQty;
+
+                    // Cộng dồn tổng nguyên giá
+                    subtotalValue += (qty * originalPrice);
+
+                    // Cộng dồn tổng thực tế (Sản phẩm có slot voucher * giá giảm + Sản phẩm hết slot * giá gốc)
+                    actualTotalValue += (applicableQty * unitPrice) + (remainingQty * originalPrice);
                 }
             }
 
+            var totalDiscount = subtotalValue - actualTotalValue;
+
+            // In dữ liệu ra màn hình
             document.getElementById('summary-total-items').innerText = totalItems;
-            document.getElementById('summary-total-value').innerText = totalValue.toLocaleString('vi-VN') + ' VNĐ';
+            document.getElementById('summary-subtotal-value').innerText = subtotalValue.toLocaleString('vi-VN') + ' VNĐ';
+            document.getElementById('summary-total-value').innerText = actualTotalValue.toLocaleString('vi-VN') + ' VNĐ';
+
+            // Ẩn/Hiện dòng Giảm giá
+            var discountRow = document.getElementById('summary-discount-row');
+            if (totalDiscount > 0) {
+                document.getElementById('summary-discount-value').innerText = '-' + totalDiscount.toLocaleString('vi-VN') + ' VNĐ';
+                discountRow.style.display = 'flex'; // Dùng flex để giữ 2 thẻ span nằm ở 2 bên trái/phải
+            } else {
+                discountRow.style.display = 'none';
+            }
         }
 
         function proceedToCheckout() {
