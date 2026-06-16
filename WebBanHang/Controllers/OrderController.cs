@@ -57,6 +57,9 @@ namespace WebBanHang.Controllers
 
             using (var tempDb = new WebBanHang.Models.MyStoreEntities())
             {
+                // BỘ ĐỆM THEO DÕI VOUCHER (Memory Tracker) ĐỂ CHỐNG TRỪ DƯ LƯỢT
+                var couponTracker = new Dictionary<int, int>();
+
                 foreach (var item in cart.Items)
                 {
                     var product = tempDb.Products.Include("Coupons").SingleOrDefault(p => p.ProductID == item.ProductID);
@@ -65,11 +68,39 @@ namespace WebBanHang.Controllers
                         if (item.OriginalPrice > item.UnitPrice)
                         {
                             var activeCoupon = product.Coupons
-                                .Where(c => c.ExpiryDate > DateTime.Now && c.UsageLimit > 0)
+                                .Where(c => c.ExpiryDate > DateTime.Now)
                                 .OrderByDescending(c => c.DiscountPercentage ?? (c.MaxDiscountAmount ?? 0))
                                 .FirstOrDefault();
 
-                            item.DiscountableQuantity = activeCoupon != null ? activeCoupon.UsageLimit : 0;
+                            if (activeCoupon != null)
+                            {
+                                // 1. Nếu mã này chưa có trong sổ nháp, chép số lượt thực tế từ DB vào
+                                if (!couponTracker.ContainsKey(activeCoupon.CouponID))
+                                {
+                                    couponTracker[activeCoupon.CouponID] = activeCoupon.UsageLimit;
+                                }
+
+                                // 2. Lấy số lượt còn lại từ Sổ nháp (thay vì DB)
+                                int availableLimit = couponTracker[activeCoupon.CouponID];
+
+                                if (availableLimit > 0)
+                                {
+                                    // 3. Tính số lượng được giảm và Ghi đè lại sổ nháp
+                                    int appliedQty = Math.Min(item.Quantity, availableLimit);
+                                    item.DiscountableQuantity = appliedQty;
+
+                                    // Trừ đi số lượt vừa nháp để sản phẩm sau không xài lố
+                                    couponTracker[activeCoupon.CouponID] -= appliedQty;
+                                }
+                                else
+                                {
+                                    item.DiscountableQuantity = 0; // Sổ nháp báo đã hết lượt
+                                }
+                            }
+                            else
+                            {
+                                item.DiscountableQuantity = 0;
+                            }
                         }
                         else
                         {
@@ -82,7 +113,7 @@ namespace WebBanHang.Controllers
             var model = new CheckoutVM
             {
                 CartItems = cart.Items.ToList(),
-                TotalAmount = cart.TotalValue(),
+                TotalAmount = cart.TotalValue(), // Lúc này TotalValue sẽ tính chính xác dựa trên sổ nháp
                 OrderDate = DateTime.Now,
                 PaymentStatus = "Chưa thanh toán",
                 AvailableCoupons = db.Coupons.Where(c => !c.Products.Any()).OrderByDescending(c => c.CouponID).ToList()
