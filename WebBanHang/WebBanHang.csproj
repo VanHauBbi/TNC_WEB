@@ -204,6 +204,7 @@
     <Compile Include="Models\User.cs">
       <DependentUpon>Model.tt</DependentUpon>
     </Compile>
+    <Compile Include="Models\ViewModel\AdminDashboardVM.cs" />
     <Compile Include="Models\ViewModel\Cart.cs" />
     <Compile Include="Models\ViewModel\CartItem.cs" />
     <Compile Include="Models\ViewModel\CartService.cs" />
@@ -223,6 +224,7 @@
     <Content Include="BottomIcon\mastercard-3.svg" />
     <Content Include="BottomIcon\tiền mặt.png" />
     <Content Include="Content\Admin\categories_admin.css" />
+    <Content Include="Content\Admin\dashboard.css" />
     <Content Include="Content\Admin\home_admin.css" />
     <Content Include="Content\Admin\order_admin.css" />
     <Content Include="Content\Admin\products_admin.css" />
@@ -251,6 +253,7 @@
     <Content Include="Content\myStyle\footer.css" />
     <Content Include="Content\myStyle\header.css" />
     <Content Include="Content\myStyle\productdetail.css" />
+    <Content Include="Content\myStyle\purchasehistory.css" />
     <Content Include="Content\PagedList.css" />
     <Content Include="favicon.ico" />
     <Content Include="Global.asax" />

@@ -1,0 +1,20 @@
+﻿/* ~/Content/myStyle/purchasehistory.css */
+.order-history-table th, .order-history-table td {
+    vertical-align: middle;
+}
+
+/* Trạng thái đơn hàng (Màu nền pastel) */
+.order-status-pending {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.order-status-shipped {
+    background-color: #d1ecf1;
+    color: #0c5460;
+}
+
+.order-status-paid {
+    background-color: #d4edda;
+    color: #155724;
+}

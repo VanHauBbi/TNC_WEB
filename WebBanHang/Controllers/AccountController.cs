@@ -392,23 +392,27 @@ namespace _23DH110809_MyStore.Controllers
             return Json(new { isLogin = Session["UserName"] != null }, JsonRequestBehavior.AllowGet);
         }
 
+        // GET: Account/PurchaseHistory
         public ActionResult PurchaseHistory()
         {
+            // Kiểm tra đăng nhập
             if (Session["CustomerID"] == null)
             {
-                TempData["Message"] = "Vui lòng đăng nhập để xem lịch sử mua hàng.";
-                return RedirectToAction("Login");
+                return RedirectToAction("Login", "Account");
             }
 
             int customerId = (int)Session["CustomerID"];
 
-            var orders = db.Orders
-                           .Include(o => o.OrderDetails)
-                           .Where(o => o.CustomerID == customerId)
-                           .OrderByDescending(o => o.OrderDate)
-                           .ToList();
+            using (var db = new WebBanHang.Models.MyStoreEntities())
+            {
+                // Lấy danh sách đơn hàng của người dùng hiện tại, sắp xếp mới nhất lên đầu
+                var orders = db.Orders
+                               .Where(o => o.CustomerID == customerId)
+                               .OrderByDescending(o => o.OrderDate)
+                               .ToList();
 
-            return View(orders);
+                return View(orders);
+            }
         }
 
         protected override void Dispose(bool disposing)
