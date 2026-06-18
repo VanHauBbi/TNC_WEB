@@ -680,52 +680,124 @@ header {
     --tnc-blue: #00448f; /* Giữ lại màu xanh nếu cần */
 }
 
-/* Danh mục sản phẩm (Dropdown) */
+/* ========================================= */
+/* === MEGA MENU NÂNG CẤP (DROPDOWN) === */
+/* ========================================= */
 .product-category {
     position: relative;
 }
 
-/* 1. Tiêu đề "DANH MỤC SẢN PHẨM" trên thanh Nav */
+/* 1. Nút "DANH MỤC SẢN PHẨM" */
 .nav-item-highlight {
-    background: var(--tnc-orange); /* Nền Cam nổi bật */
-    padding: 12px 15px !important;
-    margin-left: -15px; /* Giữ nguyên lề để canh thẳng */
-    transition: background 0.2s;
+    background: var(--tnc-orange, #e44d26) !important;
+    padding: 12px 20px !important;
+    margin-left: -15px;
+    border-radius: 6px 6px 0 0;
+    transition: background 0.3s;
 }
 
     .nav-item-highlight:hover {
-        background: #e65c00; /* Tối hơn khi hover */
+        background: #cc421f !important;
     }
 
 .product-category .category-header-text {
-    /* Khối tiêu đề không click */
-    color: #fff; /* Chữ trắng */
-    display: block;
-    cursor: default; /* Con trỏ mặc định */
-    /* Không dùng font-weight: bold ở đây, dùng thẻ <b> trong HTML */
+    color: #fff;
+    cursor: pointer;
+    font-weight: 700;
 }
 
-/* 2. Khối Dropdown-Content (Danh sách sổ xuống) */
+/* 2. Khung Mega Menu (Sổ xuống) */
 .product-category .dropdown-content {
-    /* Vị trí và trạng thái ẩn/hiện */
     display: none;
     position: absolute;
     top: 100%;
     left: 0;
-    /* Thiết kế mới */
-    background-color: #ffffff; /* Nền trắng */
-    min-width: 280px;
-    border: 1px solid #dee2e6;
-    border-top: none;
-    border-bottom-left-radius: 5px;
-    border-bottom-right-radius: 5px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    background-color: #ffffff;
+    min-width: 650px; /* Mở rộng chiều ngang cho Mega Menu */
+    border: 1px solid #eee;
+    border-top: 3px solid var(--tnc-orange, #e44d26);
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
     z-index: 1000;
-    padding: 0; /* Loại bỏ padding ngoài để kiểm soát từng item */
+    padding: 20px;
+    /* Hiệu ứng trượt mượt mà */
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
+/* Hiện Menu khi Hover */
 .product-category:hover .dropdown-content {
-    display: block; /* Hiện khi hover */
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* 3. Bố cục Flexbox chia Mega Menu làm 2 phần */
+.mega-menu-wrapper {
+    display: flex;
+    gap: 20px;
+}
+
+/* Phần Danh mục: Dùng CSS Grid chia làm 2 cột */
+.mega-menu-grid {
+    flex: 2;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    align-content: start;
+}
+
+/* Từng Item Danh mục */
+.mega-menu-item {
+    color: #343a40 !important;
+    padding: 10px 12px !important;
+    border-radius: 6px;
+    text-decoration: none;
+    display: flex !important;
+    align-items: center;
+    font-weight: 600 !important;
+    font-size: 0.95rem;
+    transition: background-color 0.2s, color 0.2s, transform 0.2s;
+}
+
+    .mega-menu-item i {
+        color: #0056b3;
+        width: 20px;
+        transition: transform 0.2s;
+    }
+
+    .mega-menu-item:hover {
+        background-color: #f3f7ff;
+        color: #0056b3 !important;
+        transform: translateX(5px); /* Trượt nhẹ sang phải khi hover */
+    }
+
+        .mega-menu-item:hover i {
+            transform: scale(1.2);
+        }
+
+/* 4. Khối Banner Quảng cáo trong Menu */
+.mega-menu-promo {
+    flex: 1;
+    border-left: 1px dashed #ddd;
+    padding-left: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.promo-img {
+    width: 100%;
+    transition: transform 0.3s ease;
+}
+
+.mega-menu-promo:hover .promo-img {
+    transform: scale(1.05); /* Phóng to nhẹ banner */
+}
+
+.pulse-badge {
+    animation: pulse 1.5s infinite;
 }
 
 /* 3. Style cho CÁC MỤC CON bên trong danh sách (dùng cho @Html.Action("_HeaderCategory")) */

@@ -128,3 +128,82 @@
     margin-top: 0.5rem;
     margin-bottom: 0.5rem !important;
 }
+/* Quick Links */
+.quick-link-box {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid #f0f0f0;
+}
+
+    .quick-link-box:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+        border-color: #0d6efd;
+    }
+
+.icon-circle {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Product Cards Modern */
+.product-card-modern {
+    border-radius: 12px !important;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+    .product-card-modern:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important;
+    }
+
+.product-img-wrapper img {
+    height: 220px;
+    object-fit: contain;
+    transition: transform 0.5s ease;
+}
+
+.product-card-modern:hover .product-img-wrapper img {
+    transform: scale(1.08);
+}
+
+.product-title-modern {
+    font-size: 0.95rem;
+    line-height: 1.4;
+    height: 2.8em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+    .product-title-modern:hover {
+        color: #0d6efd !important;
+    }
+
+.btn-cart-modern {
+    border-radius: 8px;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+    .btn-cart-modern:hover {
+        color: #fff !important;
+    }
+
+.btn-hover-scale {
+    transition: transform 0.2s;
+    border-radius: 20px;
+}
+
+    .btn-hover-scale:hover {
+        transform: scale(1.05);
+        background-color: #f8f9fa;
+    }
+html {
+    scroll-behavior: smooth;
+}
