@@ -15,7 +15,7 @@ namespace WebBanHang.Areas.Admin.Controllers
         public ActionResult Index()
         {
             var orders = db.Orders
-                        .Include("Customer") 
+                        .Include("Customer")
                         .ToList();
             return View(orders);
         }
@@ -42,9 +42,8 @@ namespace WebBanHang.Areas.Admin.Controllers
             {
                 try
                 {
-                    // 1. Tìm đơn hàng
                     var order = db.Orders
-                                  .Include(o => o.OrderDetails) // RẤT QUAN TRỌNG: Include OrderDetails
+                                  .Include(o => o.OrderDetails)
                                   .SingleOrDefault(o => o.OrderID == id);
 
                     if (order == null)
@@ -53,21 +52,17 @@ namespace WebBanHang.Areas.Admin.Controllers
                         return RedirectToAction("Index");
                     }
 
-                    // 2. XÓA TẤT CẢ CHI TIẾT ĐƠN HÀNG TRƯỚC (Giải quyết ràng buộc FK)
-                    // Lấy danh sách chi tiết và xóa từng cái một
                     db.OrderDetails.RemoveRange(order.OrderDetails);
-
-                    // 3. XÓA ĐƠN HÀNG CHÍNH
                     db.Orders.Remove(order);
 
                     db.SaveChanges();
-                    transaction.Commit(); // Hoàn tất giao dịch
+                    transaction.Commit();
 
                     TempData["SuccessMessage"] = $"✅ Đã xóa hoàn toàn đơn hàng #{id} khỏi hệ thống.";
                 }
                 catch (Exception ex)
                 {
-                    transaction.Rollback(); // Hoàn lại nếu có lỗi
+                    transaction.Rollback();
                     TempData["ErrorMessage"] = "❌ Lỗi xóa: Không thể xóa đơn hàng. Lỗi chi tiết: " + ex.Message;
                 }
             }
@@ -75,52 +70,92 @@ namespace WebBanHang.Areas.Admin.Controllers
             return RedirectToAction("Index");
         }
 
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-                db.Dispose();
-            base.Dispose(disposing);
-        }
-
+        // GET: Admin/Orders/Process/5
         public ActionResult Process(int? id)
         {
             if (id == null)
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
-            Order order = db.Orders.Include(o => o.Customer).SingleOrDefault(o => o.OrderID == id);
+            var order = db.Orders.Include(o => o.Customer).SingleOrDefault(o => o.OrderID == id);
             if (order == null)
             {
                 return HttpNotFound();
             }
             return View(order);
         }
+
+        // POST: Admin/Orders/Process/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Process(int id, string actionType) // actionType là "Approve" hoặc "Cancel"
+        public ActionResult Process(int id, string actionType)
         {
-            Order order = db.Orders.Find(id);
+            Order order = db.Orders.Include(o => o.OrderDetails).SingleOrDefault(o => o.OrderID == id);
+            if (order == null) return HttpNotFound();
 
-            if (order == null)
+            using (var transaction = db.Database.BeginTransaction())
             {
-                return HttpNotFound();
+                try
+                {
+                    if (actionType == "Approve")
+                    {
+                        order.OrderStatus = "Đã duyệt";
+                        TempData["SuccessMessage"] = $"Đơn hàng #{id} đã được DUYỆT. Hãy chuẩn bị hàng!";
+                    }
+                    else if (actionType == "Ship")
+                    {
+                        order.OrderStatus = "Đang giao";
+                        TempData["SuccessMessage"] = $"Đơn hàng #{id} đã được chuyển cho đơn vị vận chuyển.";
+                    }
+                    else if (actionType == "Complete")
+                    {
+                        order.OrderStatus = "Đã giao";
+                        // Tự động ghi nhận thanh toán nếu là phương thức Tiền mặt (COD)
+                        if (order.PaymentMethod == "Tiền mặt")
+                        {
+                            order.PaymentStatus = "Đã thanh toán";
+                        }
+                        TempData["SuccessMessage"] = $"Đơn hàng #{id} đã GIAO THÀNH CÔNG và ghi nhận doanh thu.";
+                    }
+                    else if (actionType == "MarkPaid")
+                    {
+                        order.PaymentStatus = "Đã thanh toán";
+                        TempData["SuccessMessage"] = $"Đã cập nhật trạng thái THANH TOÁN cho đơn hàng #{id}.";
+                    }
+                    else if (actionType == "Cancel")
+                    {
+                        if (order.OrderStatus != "Đã hủy")
+                        {
+                            order.OrderStatus = "Đã hủy";
+                            // Hoàn trả tồn kho
+                            foreach (var detail in order.OrderDetails)
+                            {
+                                var product = db.Products.Find(detail.ProductID);
+                                if (product != null) product.StockQuantity += detail.Quantity;
+                            }
+                            TempData["SuccessMessage"] = $"Đơn hàng #{id} đã bị HỦY. Đã tự động hoàn trả tồn kho.";
+                        }
+                    }
+
+                    db.Entry(order).State = EntityState.Modified;
+                    db.SaveChanges();
+                    transaction.Commit();
+                }
+                catch (Exception ex)
+                {
+                    transaction.Rollback();
+                    TempData["ErrorMessage"] = "Lỗi xử lý: " + ex.Message;
+                }
             }
 
-            if (actionType == "Approve")
-            {
-                order.OrderStatus = "Đã duyệt";
-                TempData["SuccessMessage"] = $"Đơn hàng #{id} đã được DUYỆT thành công!";
-            }
-            else if (actionType == "Cancel")
-            {
-                order.OrderStatus = "Đã hủy";
-                // Cần thêm logic gửi email thông báo cho khách hàng
-                TempData["SuccessMessage"] = $"Đơn hàng #{id} đã bị HỦY.";
-            }
+            return RedirectToAction("Process", new { id = order.OrderID }); // Load lại trang hiện tại thay vì văng ra Index
+        }
 
-            db.Entry(order).State = EntityState.Modified;
-            db.SaveChanges();
-            return RedirectToAction("Index");
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+                db.Dispose();
+            base.Dispose(disposing);
         }
     }
 }

@@ -1,75 +1,137 @@
 ﻿@model WebBanHang.Models.Order
 
 @{
-    ViewBag.Title = "Chi tiết Đơn hàng " + Model.OrderID;
+    ViewBag.Title = "Chi tiết Đơn hàng #" + Model.OrderID;
     Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
 }
 
-<link href="~/Content/Admin/order_admin.css" rel="stylesheet" />
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card shadow-sm mb-4 border-0">
+            <div class="card-header bg-white border-bottom pb-0">
+                <h5 class="fw-bold text-primary"><i class="fa-solid fa-file-invoice"></i> Thông tin Giao dịch #@Model.OrderID</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-sm-4">
+                        <p class="mb-1 text-muted small">Khách hàng</p>
+                        <h6 class="fw-bold">@Model.Customer.CustomerName</h6>
+                        <p class="mb-0 small"><i class="fa-solid fa-phone"></i> @Model.Customer.CustomerPhone</p>
+                    </div>
+                    <div class="col-sm-4">
+                        <p class="mb-1 text-muted small">Ngày đặt hàng</p>
+                        <h6 class="fw-bold">@Model.OrderDate.ToString("dd/MM/yyyy HH:mm")</h6>
+                        <p class="mb-0 small"><i class="fa-solid fa-location-dot"></i> @Model.ShippingAddress</p>
+                    </div>
+                    <div class="col-sm-4">
+                        <p class="mb-1 text-muted small">Trạng thái duyệt</p>
+                        @{
+                            string statusBadge = "bg-secondary";
+                            if (Model.OrderStatus == "Đã duyệt") { statusBadge = "bg-primary"; }
+                            else if (Model.OrderStatus == "Đã hủy") { statusBadge = "bg-danger"; }
+                            else if (Model.OrderStatus == "Đã giao") { statusBadge = "bg-success"; }
+                        }
+                        <h6 class="mb-0"><span class="badge @statusBadge px-3 py-2 fs-6">@Model.OrderStatus</span></h6>
+                    </div>
+                </div>
 
-<div class="order-detail-card shadow-sm">
-    <h4 class="detail-section-title">Thông tin Giao dịch</h4>
-    <dl class="dl-horizontal">
-        <dt>Khách hàng:</dt>
-        <dd class="fw-bold">@Model.Customer.CustomerName</dd>
+                <div class="row mb-4 p-3 bg-light rounded">
+                    <div class="col-sm-6">
+                        <p class="mb-1 text-muted small">Phương thức Thanh toán</p>
+                        <h6 class="fw-bold text-dark mb-2">@Model.PaymentMethod</h6>
+                        @{
+                            string payClass = Model.PaymentStatus == "Đã thanh toán" ? "bg-success" : "bg-warning text-dark";
+                        }
+                        <span class="badge @payClass">@Model.PaymentStatus</span>
+                    </div>
+                    <div class="col-sm-6">
+                        <p class="mb-1 text-muted small">Đơn vị Vận chuyển</p>
+                        <h6 class="fw-bold text-dark">@Model.ShippingMethod</h6>
+                    </div>
+                </div>
 
-        <dt>Địa chỉ:</dt>
-        <dd>@Model.ShippingAddress</dd>
+                <h6 class="fw-bold mb-3 border-bottom pb-2">Danh sách Sản phẩm đã đặt</h6>
+                <div class="table-responsive">
+                    <table class="table table-borderless align-middle">
+                        <thead class="table-light text-muted small">
+                            <tr>
+                                <th>Sản phẩm</th>
+                                <th class="text-center">Đơn giá</th>
+                                <th class="text-center">SL</th>
+                                <th class="text-end">Thành tiền</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.OrderDetails != null)
+                            {
+                                foreach (var detail in Model.OrderDetails)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <img src="@detail.Product.ProductImage" width="40" height="40" class="rounded me-2" style="object-fit:cover;" />
+                                                <span class="fw-bold small" style="max-width: 350px; display: block;">@detail.Product.ProductName</span>
+                                            </div>
+                                        </td>
+                                        <td class="text-center text-danger small">@detail.UnitPrice.ToString("N0") ₫</td>
+                                        <td class="text-center small">@detail.Quantity</td>
+                                        <td class="text-end fw-bold text-danger">@String.Format("{0:N0} ₫", detail.UnitPrice * detail.Quantity)</td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                        <tfoot class="border-top">
+                            @{
+                                // 1. Tính tổng tiền gốc của các sản phẩm (Tạm tính)
+                                decimal subTotal = 0;
+                                if (Model.OrderDetails != null)
+                                {
+                                    subTotal = Model.OrderDetails.Sum(d => d.UnitPrice * d.Quantity);
+                                }
 
-        <dt>Ngày đặt:</dt>
-        <dd>@Model.OrderDate.ToString("dd/MM/yyyy HH:mm")</dd>
+                                // 2. Trích xuất phí vận chuyển dựa trên tên phương thức
+                                decimal shippingFee = 0;
+                                if (Model.ShippingMethod == "Giao hàng nhanh") { shippingFee = 30000; }
+                                else if (Model.ShippingMethod == "Giao hàng tiết kiệm") { shippingFee = 15000; }
 
-        <dt>Trạng thái TT:</dt>
-        <dd>
-            @{
-                string statusClass = (Model.PaymentStatus == "Đã thanh toán" || Model.PaymentStatus == "Paid") ? "bg-success" : "bg-warning text-dark";
-            }
-            <span class="badge @statusClass">@Model.PaymentStatus</span>
-        </dd>
+                                // 3. Tính toán ngược số tiền đã giảm (Voucher)
+                                decimal discountAmount = (subTotal + shippingFee) - Model.TotalAmount;
+                                if (discountAmount < 0) { discountAmount = 0; }
+                            }
 
-        <dt>Phương thức GH:</dt>
-        <dd>@Model.ShippingMethod</dd>
+                            <tr>
+                                <td colspan="3" class="text-end text-muted small pt-3 pb-1">Tạm tính:</td>
+                                <td class="text-end fw-bold pt-3 pb-1">@subTotal.ToString("N0") ₫</td>
+                            </tr>
 
-        <dt>Phương thức TT:</dt>
-        <dd>@Model.PaymentMethod</dd>
-    </dl>
-</div>
+                            <tr>
+                                <td colspan="3" class="text-end text-muted small py-1">
+                                    Phí vận chuyển
+                                    <span style="font-size: 0.85em;">(@Model.ShippingMethod)</span>:
+                                </td>
+                                <td class="text-end fw-bold py-1">@shippingFee.ToString("N0") ₫</td>
+                            </tr>
 
-<h4 class="detail-section-title">Sản phẩm đã đặt</h4>
-<table class="table table-bordered product-detail-table">
-    <thead class="table-light">
-        <tr>
-            <th>Ảnh</th>
-            <th>Sản phẩm</th>
-            <th class="text-end">Đơn giá</th>
-            <th class="text-center">SL</th>
-            <th class="text-end">Thành tiền</th>
-        </tr>
-    </thead>
-    <tbody>
-        @* Cần đảm bảo Controller OrdersController.Details có .Include("OrderDetails.Product") *@
-        @if (Model.OrderDetails != null)
-        {
-            foreach (var detail in Model.OrderDetails)
-            {
-                <tr>
-                    <td><img src="@detail.Product.ProductImage" alt="@detail.Product.ProductName" /></td>
-                    <td>@detail.Product.ProductName</td>
-                    <td class="text-end">@detail.UnitPrice.ToString("N0") ₫</td>
-                    <td class="text-center">@detail.Quantity</td>
-                    <td class="text-end fw-bold text-danger">@String.Format("{0:N0} ₫", detail.TotalPrice)</td>
-                </tr>
-            }
-        }
-    </tbody>
-    <tfoot>
-        <tr class="table-secondary">
-            <td colspan="4" class="text-end fw-bold">TỔNG THANH TOÁN:</td>
-            <td class="text-end fw-bold text-danger fs-5">@Model.TotalAmount.ToString("N0") ₫</td>
-        </tr>
-    </tfoot>
-</table>
+                            @if (discountAmount > 0)
+                            {
+                                <tr>
+                                    <td colspan="3" class="text-end text-success small py-1">Giảm giá (Voucher):</td>
+                                    <td class="text-end fw-bold text-success py-1">-@discountAmount.ToString("N0") ₫</td>
+                                </tr>
+                            }
 
-<div class="mt-4">
-    <a href="@Url.Action("Index", "Orders")" class="btn btn-secondary ms-2">Quay lại danh sách</a>
+                            <tr class="border-top">
+                                <td colspan="3" class="text-end text-dark small pt-3"><strong>TỔNG THANH TOÁN:</strong></td>
+                                <td class="text-end fw-bold text-danger fs-5 pt-3">@Model.TotalAmount.ToString("N0") ₫</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <div class="mt-4 border-top pt-3">
+                    <a href="@Url.Action("Index", "Orders")" class="btn btn-secondary px-4"><i class="fa-solid fa-arrow-left"></i> Quay lại danh sách</a>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

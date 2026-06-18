@@ -1,57 +1,196 @@
 ﻿@model WebBanHang.Models.Order
 
 @{
-    ViewBag.Title = "Xử lý Đơn hàng: " + "tnc_bee" + Model.OrderID + "tncbee";
+    ViewBag.Title = "Xử lý Đơn hàng #" + Model.OrderID;
     Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
 }
 
-<link href="~/Content/Admin/order_admin.css" rel="stylesheet" />
-
-<div class="row">
+<div class="row mt-4">
     <div class="col-md-8">
-        <div class="order-detail-card shadow-sm">
-            <h4 class="detail-section-title">Thông tin Giao dịch</h4>
+        <div class="card shadow-sm mb-4 border-0">
+            <div class="card-header bg-white border-bottom pb-0">
+                <h5 class="fw-bold text-primary"><i class="fa-solid fa-file-invoice"></i> Chi tiết Giao dịch #@Model.OrderID</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-sm-6">
+                        <p class="mb-1 text-muted small">Khách hàng</p>
+                        <h6 class="fw-bold">@Model.Customer.CustomerName</h6>
+                        <p class="mb-0 small"><i class="fa-solid fa-phone"></i> @Model.Customer.CustomerPhone</p>
+                    </div>
+                    <div class="col-sm-6">
+                        <p class="mb-1 text-muted small">Ngày đặt hàng</p>
+                        <h6 class="fw-bold">@Model.OrderDate.ToString("dd/MM/yyyy HH:mm")</h6>
+                        <p class="mb-0 small"><i class="fa-solid fa-location-dot"></i> @Model.ShippingAddress</p>
+                    </div>
+                </div>
 
-            @* Hiển thị chi tiết đơn hàng (giống Details.cshtml) *@
-            @Html.Partial("_OrderDetailsPartial", Model)
+                <div class="row mb-4 p-3 bg-light rounded">
+                    <div class="col-sm-6">
+                        <p class="mb-1 text-muted small">Phương thức Thanh toán</p>
+                        <h6 class="fw-bold text-dark">@Model.PaymentMethod</h6>
+                        @{
+                            string payClass = Model.PaymentStatus == "Đã thanh toán" ? "bg-success" : "bg-warning text-dark";
+                        }
+                        <span class="badge @payClass">@Model.PaymentStatus</span>
+                    </div>
+                    <div class="col-sm-6">
+                        <p class="mb-1 text-muted small">Đơn vị Vận chuyển</p>
+                        <h6 class="fw-bold text-dark">@Model.ShippingMethod</h6>
+                    </div>
+                </div>
 
-            <h4 class="detail-section-title mt-4">Trạng thái hiện tại: <span class="text-primary">@Model.OrderStatus</span></h4>
+                <h6 class="fw-bold mb-3 border-bottom pb-2">Danh sách Sản phẩm</h6>
+                <div class="table-responsive">
+                    <table class="table table-borderless align-middle">
+                        <thead class="table-light text-muted small">
+                            <tr>
+                                <th>Sản phẩm</th>
+                                <th class="text-center">Đơn giá</th>
+                                <th class="text-center">SL</th>
+                                <th class="text-end">Thành tiền</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.OrderDetails != null)
+                            {
+                                foreach (var detail in Model.OrderDetails)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <img src="@detail.Product.ProductImage" width="40" height="40" class="rounded me-2" style="object-fit:cover;" />
+                                                <span class="fw-bold small" style="max-width: 250px; display: block;">@detail.Product.ProductName</span>
+                                            </div>
+                                        </td>
+                                        <td class="text-center text-danger small">@detail.UnitPrice.ToString("N0") ₫</td>
+                                        <td class="text-center small">@detail.Quantity</td>
+                                        <td class="text-end fw-bold text-danger">@String.Format("{0:N0} ₫", detail.UnitPrice * detail.Quantity)</td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                        <tfoot class="border-top">
+                            @{
+                                // 1. Tính tổng tiền gốc của các sản phẩm (Tạm tính)
+                                decimal subTotal = 0;
+                                if (Model.OrderDetails != null)
+                                {
+                                    subTotal = Model.OrderDetails.Sum(d => d.UnitPrice * d.Quantity);
+                                }
+
+                                // 2. Trích xuất phí vận chuyển dựa trên tên phương thức
+                                decimal shippingFee = 0;
+                                if (Model.ShippingMethod == "Giao hàng nhanh") { shippingFee = 30000; }
+                                else if (Model.ShippingMethod == "Giao hàng tiết kiệm") { shippingFee = 15000; }
+
+                                // 3. Tính toán ngược số tiền đã giảm (Voucher)
+                                decimal discountAmount = (subTotal + shippingFee) - Model.TotalAmount;
+                                if (discountAmount < 0) { discountAmount = 0; }
+                            }
+
+                            <tr>
+                                <td colspan="3" class="text-end text-muted small pt-3 pb-1">Tạm tính:</td>
+                                <td class="text-end fw-bold pt-3 pb-1">@subTotal.ToString("N0") ₫</td>
+                            </tr>
+
+                            <tr>
+                                <td colspan="3" class="text-end text-muted small py-1">
+                                    Phí vận chuyển
+                                    <span style="font-size: 0.85em;">(@Model.ShippingMethod)</span>:
+                                </td>
+                                <td class="text-end fw-bold py-1">@shippingFee.ToString("N0") ₫</td>
+                            </tr>
+
+                            @if (discountAmount > 0)
+                            {
+                                <tr>
+                                    <td colspan="3" class="text-end text-success small py-1">Giảm giá (Voucher):</td>
+                                    <td class="text-end fw-bold text-success py-1">-@discountAmount.ToString("N0") ₫</td>
+                                </tr>
+                            }
+
+                            <tr class="border-top">
+                                <td colspan="3" class="text-end text-dark small pt-3"><strong>TỔNG THANH TOÁN:</strong></td>
+                                <td class="text-end fw-bold text-danger fs-5 pt-3">@Model.TotalAmount.ToString("N0") ₫</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 
     <div class="col-md-4">
-        <div class="card shadow-sm p-4 border-primary">
-            <h5 class="text-primary mb-3">Thao tác Xử lý Đơn hàng</h5>
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4 bg-light rounded">
+                <h5 class="fw-bold mb-3"><i class="fa-solid fa-gears"></i> Bảng Điều Khiển</h5>
 
-            @* Dùng chung Action POST Process, chỉ khác actionType *@
-            @using (Html.BeginForm("Process", "Orders", new { id = Model.OrderID }, FormMethod.Post))
-            {
-                @Html.AntiForgeryToken()
+                <div class="mb-4">
+                    <p class="text-muted small mb-1">Trạng thái hiện tại:</p>
+                    @{
+                        string statusBadge = "bg-secondary";
+                        if (Model.OrderStatus == "Đã duyệt") { statusBadge = "bg-primary"; }
+                        else if (Model.OrderStatus == "Đang giao") { statusBadge = "bg-warning text-dark"; }
+                        else if (Model.OrderStatus == "Đã giao") { statusBadge = "bg-success"; }
+                        else if (Model.OrderStatus == "Đã hủy") { statusBadge = "bg-danger"; }
 
-                <p class="text-muted">Chọn hành động cho đơn hàng này:</p>
+                        string displayStatus = string.IsNullOrEmpty(Model.OrderStatus) ? "Chờ xác nhận" : Model.OrderStatus;
+                    }
+                    <h5 class="mb-0"><span class="badge @statusBadge px-3 py-2 w-100 text-start fs-6">@displayStatus</span></h5>
+                </div>
 
-                <button type="submit" name="actionType" value="Approve" class="btn btn-success btn-lg w-100 mb-3"
-                        onclick="return confirm('Xác nhận DUYỆT đơn hàng #@Model.OrderID? Đơn hàng sẽ chuyển sang trạng thái Đã duyệt.')">
-                    <i class="fa-solid fa-check"></i> DUYỆT ĐƠN HÀNG
-                </button>
+                @using (Html.BeginForm("Process", "Orders", new { id = Model.OrderID }, FormMethod.Post))
+                {
+                    @Html.AntiForgeryToken()
 
-                <button type="submit" name="actionType" value="Cancel" class="btn btn-danger btn-lg w-100"
-                        onclick="return confirm('Xác nhận HỦY đơn hàng #@Model.OrderID? Khách hàng sẽ nhận được thông báo.')">
-                    <i class="fa-solid fa-times"></i> HỦY ĐƠN HÀNG
-                </button>
-            }
-            <hr />
-            @using (Html.BeginForm("Delete", "Orders", new { id = Model.OrderID }, FormMethod.Post, new { @class = "mt-3" }))
-            {
-                @Html.AntiForgeryToken()
-                <p class="text-danger">Thao tác này sẽ xóa vĩnh viễn đơn hàng khỏi cơ sở dữ liệu.</p>
-                <button type="submit" class="btn btn-danger btn-sm w-100"
-                        onclick="return confirm('CẢNH BÁO: Xác nhận XÓA VĨNH VIỄN đơn hàng #@Model.OrderID và tất cả chi tiết liên quan?');">
-                    <i class="fa-solid fa-trash-alt"></i> XÓA VĨNH VIỄN
-                </button>
-            }
+                    // 1. NẾU ĐƠN CHƯA DUYỆT -> Hiện nút Duyệt và Hủy
+                    if (string.IsNullOrEmpty(Model.OrderStatus) || Model.OrderStatus == "Chờ xác nhận")
+                    {
+                        <button type="submit" name="actionType" value="Approve" class="btn btn-primary fw-bold py-2 w-100 mb-3">
+                            <i class="fa-solid fa-check"></i> XÁC NHẬN DUYỆT ĐƠN
+                        </button>
+                        <button type="submit" name="actionType" value="Cancel" class="btn btn-outline-danger fw-bold py-2 w-100 mb-3" onclick="return confirm('Xác nhận HỦY đơn hàng? Số lượng sẽ được trả về kho.')">
+                            <i class="fa-solid fa-times"></i> HỦY ĐƠN HÀNG
+                        </button>
+                    }
+
+                    // 2. NẾU ĐƠN ĐÃ DUYỆT -> Hiện nút Giao hàng
+                    else if (Model.OrderStatus == "Đã duyệt")
+                    {
+                        <button type="submit" name="actionType" value="Ship" class="btn btn-warning fw-bold py-2 w-100 mb-3">
+                            <i class="fa-solid fa-truck-fast"></i> BẮT ĐẦU GIAO HÀNG
+                        </button>
+                    }
+
+                    // 3. NẾU ĐƠN ĐANG GIAO -> Hiện nút Xác nhận Hoàn thành
+                    else if (Model.OrderStatus == "Đang giao")
+                    {
+                        <button type="submit" name="actionType" value="Complete" class="btn btn-success fw-bold py-2 w-100 mb-3" onclick="return confirm('Xác nhận khách đã nhận hàng thành công?')">
+                            <i class="fa-solid fa-box-open"></i> XÁC NHẬN ĐÃ GIAO (HOÀN THÀNH)
+                        </button>
+                    }
+
+                    // 4. XỬ LÝ THANH TOÁN (Chỉ hiện khi chưa thanh toán và đơn chưa bị hủy)
+                    if (Model.PaymentStatus != "Đã thanh toán" && Model.OrderStatus != "Đã hủy")
+                    {
+                        <hr />
+                        <button type="submit" name="actionType" value="MarkPaid" class="btn btn-outline-success fw-bold py-2 w-100 mb-3" onclick="return confirm('Xác nhận đã thu tiền từ khách hàng?')">
+                            <i class="fa-solid fa-money-bill-wave"></i> ĐÁNH DẤU ĐÃ THANH TOÁN
+                        </button>
+                    }
+
+                    // 5. NẾU ĐƠN ĐÃ ĐÓNG (Hủy hoặc Hoàn thành)
+                    if (Model.OrderStatus == "Đã hủy" || Model.OrderStatus == "Đã giao")
+                    {
+                        <div class="alert alert-info small text-center mt-3 mb-0">
+                            <i class="fa-solid fa-lock"></i> Đơn hàng đã chuyển trạng thái cố định (Đóng).
+                        </div>
+                    }
+                }
+
+                <a href="@Url.Action("Index", "Orders")" class="btn btn-secondary w-100 py-2 mt-4"><i class="fa-solid fa-arrow-left"></i> Quay lại danh sách</a>
+            </div>
         </div>
-
-        <a href="@Url.Action("Index", "Orders")" class="btn btn-secondary w-100 mt-3">Quay lại danh sách</a>
     </div>
 </div>

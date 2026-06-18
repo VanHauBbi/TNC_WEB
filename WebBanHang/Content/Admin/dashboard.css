@@ -1,0 +1,56 @@
+﻿/* Content/Admin/dashboard.css */
+.dash-card {
+    border-radius: 10px;
+    border: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+    .dash-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+
+.icon-box {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+}
+
+.bg-light-primary {
+    background-color: #e0f2ff;
+    color: #0d6efd;
+}
+
+.bg-light-success {
+    background-color: #e6f8ec;
+    color: #198754;
+}
+
+.bg-light-warning {
+    background-color: #fff9e6;
+    color: #ffc107;
+}
+
+.bg-light-danger {
+    background-color: #fce8e8;
+    color: #dc3545;
+}
+
+.table-top-product img {
+    border-radius: 5px;
+    object-fit: cover;
+}
+
+.progress-thin {
+    height: 8px;
+    border-radius: 10px;
+}
+/* Bổ sung class màu tím cho Lợi nhuận */
+.bg-light-purple {
+    background-color: #f3e8ff;
+    color: #6f42c1;
+}
