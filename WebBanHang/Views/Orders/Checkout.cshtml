@@ -57,12 +57,10 @@
                             <label for="pay-cash">Thanh toán khi nhận hàng (COD)</label>
                         </div>
                         <div class="radio-option">
-                            @Html.RadioButtonFor(m => m.PaymentMethod, "Paypal", new { @id = "pay-paypal" })
-                            <label for="pay-paypal">Thanh toán qua PayPal</label>
-                        </div>
-                        <div class="radio-option">
-                            @Html.RadioButtonFor(m => m.PaymentMethod, "Mua trước trả sau", new { @id = "pay-later" })
-                            <label for="pay-later">Mua trước trả sau (Trả góp 0%)</label>
+                            <label>
+                                <input type="radio" name="PaymentMethod" value="VNPAY" />
+                                <i class="fa fa-credit-card text-primary"></i> Thanh toán qua cổng VNPAY
+                            </label>
                         </div>
                         @Html.ValidationMessageFor(m => m.PaymentMethod, null, new { @class = "text-danger" })
                     </div>

@@ -1,0 +1,248 @@
+﻿/* =========================================================
+   GIAO DIỆN CHATBOT AI TNC STORE (SÁNG SỦA + HEADER LOANG MÀU)
+========================================================= */
+:root {
+    /* Dải màu Gradient Gen Z (Hồng loang Tím) */
+    --genz-gradient: linear-gradient(135deg, #ff7eb3 0%, #ff758c 50%, #8b5cf6 100%);
+    /* Thiết lập lại nền trắng cho dễ đọc */
+    --chat-bg: #ffffff;
+    --chat-body-bg: #f8f9fa;
+    --chat-text: #333333;
+    --chat-radius: 18px;
+}
+
+/* =========================================
+   1. NÚT BẤM BẬT/TẮT CHATBOT (Icon Robot trên nền Gradient)
+========================================= */
+#chatbot-toggle-btn {
+    position: fixed;
+    bottom: 25px;
+    right: 25px;
+    z-index: 999999;
+    width: 65px;
+    height: 65px;
+    border-radius: 50%;
+    background: var(--genz-gradient);
+    color: white;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(139, 92, 246, 0.4);
+    font-size: 32px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.3s ease;
+    animation: pulse 2s infinite;
+}
+
+    #chatbot-toggle-btn:hover {
+        transform: scale(1.1);
+        box-shadow: 0 10px 25px rgba(255, 117, 140, 0.6);
+    }
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* =========================================
+   2. KHUNG CHAT TỔNG THỂ
+========================================= */
+#chatbot-box {
+    display: none;
+    position: fixed;
+    bottom: 100px;
+    right: 25px;
+    width: 360px;
+    height: 480px;
+    background-color: var(--chat-bg);
+    border: 1px solid #eaeaea;
+    border-radius: var(--chat-radius);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    z-index: 999999;
+    flex-direction: column;
+    font-family: Arial, sans-serif;
+    overflow: hidden;
+}
+
+/* =========================================
+   3. PHẦN TIÊU ĐỀ (MÀU LOANG CHỦ ĐẠO)
+========================================= */
+.chat-header {
+    background: var(--genz-gradient);
+    color: white;
+    padding: 15px;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 16px;
+}
+
+    .chat-header .close-btn {
+        cursor: pointer;
+        font-size: 18px;
+        transition: opacity 0.2s;
+    }
+
+        .chat-header .close-btn:hover {
+            opacity: 0.7;
+        }
+
+/* =========================================
+   4. KHU VỰC THÂN CHAT & BONG BÓNG TIN NHẮN
+========================================= */
+#chatbot-messages {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background-color: var(--chat-body-bg);
+}
+
+.chat-bubble {
+    padding: 10px 14px;
+    border-radius: 18px;
+    max-width: 80%;
+    font-size: 14px;
+    line-height: 1.4;
+    word-wrap: break-word;
+}
+
+/* Tin nhắn của AI (Màu Xám Sáng - Chữ Tối) */
+.ai-message {
+    background-color: #e9ecef;
+    color: var(--chat-text);
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+}
+
+/* Tin nhắn của User (Màu Loang - Chữ Trắng) */
+.user-message {
+    background: var(--genz-gradient);
+    color: white;
+    align-self: flex-end;
+    border-bottom-right-radius: 4px;
+    box-shadow: 0 3px 10px rgba(255, 117, 140, 0.2);
+}
+
+/* Thông báo lỗi rõ ràng trên nền sáng */
+.error-message {
+    background-color: #ffe3e3;
+    color: #dc3545;
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+}
+
+.loading-message {
+    background-color: transparent;
+    color: #6c757d;
+    font-style: italic;
+    align-self: flex-start;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* =========================================
+   5. VÙNG NHẬP LIỆU & NÚT GỬI
+========================================= */
+.chat-input-area {
+    display: flex;
+    padding: 12px;
+    background-color: var(--chat-bg);
+    border-top: 1px solid #eaeaea;
+}
+
+    .chat-input-area input {
+        flex: 1;
+        padding: 10px 15px;
+        background: white;
+        color: #333;
+        border: 1px solid #ccc;
+        border-radius: 20px;
+        outline: none;
+        font-size: 14px;
+        transition: border-color 0.3s;
+    }
+
+        .chat-input-area input:focus {
+            border-color: #ff758c; /* Viền ô nhập chuyển sang hồng khi click */
+        }
+
+    /* Nút gửi đồng bộ màu Loang */
+    .chat-input-area button {
+        background: var(--genz-gradient);
+        color: white;
+        border: none;
+        padding: 0 18px;
+        margin-left: 10px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
+
+        .chat-input-area button:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(139, 92, 246, 0.3);
+        }
+
+/* =========================================
+   6. CÁC NÚT LỰA CHỌN (GỢI Ý NHANH) & SPINNER
+========================================= */
+.quick-replies {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.quick-btn {
+    background-color: white;
+    color: #ff758c;
+    border: 1px solid #ff758c;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+    .quick-btn:hover {
+        background: var(--genz-gradient);
+        color: white;
+        border-color: transparent;
+    }
+
+/* Hiệu ứng loading quay tròn */
+.spinner {
+    width: 16px;
+    height: 16px;
+    border: 3px solid rgba(255, 117, 140, 0.2);
+    border-top-color: #ff758c;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}

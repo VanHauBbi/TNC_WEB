@@ -250,17 +250,36 @@ namespace WebBanHang.Controllers
                     db.SaveChanges();
                     transaction.Commit();
 
-                    // Xóa giỏ hàng sau khi mua thành công
-                    var tempCart = Session["BuyNowTempCart"] as WebBanHang.Models.ViewModel.Cart;
-                    if (tempCart != null)
+                    // ---- TÍCH HỢP ĐIỀU HƯỚNG CỔNG THANH TOÁN VNPAY ĐOẠN CUỐI HÀM ----
+                    if (model.PaymentMethod == "VNPAY")
                     {
-                        foreach (var boughtItem in cart.Items) { tempCart.RemoveItem(boughtItem.ProductID); }
-                        Session["Cart"] = tempCart;
-                        Session.Remove("BuyNowTempCart");
-                    }
-                    else
-                    {
-                        Session["Cart"] = null;
+                        string vnp_Url = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
+                        string vnp_TmnCode = "6NQ3MY7C";
+                        string vnp_HashSecret = "HASY7LN7TINZAOCJ1JJZHLBTEQK1JQ4H";
+                        string vnp_Returnurl = "https://localhost:44329/Orders/PaymentCallback";
+
+                        WebBanHang.Utilities.VnPayLibrary vnpay = new WebBanHang.Utilities.VnPayLibrary();
+
+                        vnpay.AddRequestData("vnp_Version", "2.1.0");
+                        vnpay.AddRequestData("vnp_Command", "pay");
+                        vnpay.AddRequestData("vnp_TmnCode", vnp_TmnCode);
+
+                        // Lấy tổng tiền thực tế từ giỏ hàng (nhân 100 theo chuẩn VNPay)
+                        long tAmount = Convert.ToInt64(order.TotalAmount * 100);
+                        vnpay.AddRequestData("vnp_Amount", tAmount.ToString());
+
+                        vnpay.AddRequestData("vnp_CreateDate", DateTime.Now.ToString("yyyyMMddHHmmss"));
+                        vnpay.AddRequestData("vnp_CurrCode", "VND");
+                        vnpay.AddRequestData("vnp_IpAddr", "127.0.0.1");
+
+                        vnpay.AddRequestData("vnp_Locale", "vn");
+                        vnpay.AddRequestData("vnp_OrderInfo", "ThanhToanDonHang_" + order.OrderID.ToString());
+                        vnpay.AddRequestData("vnp_OrderType", "other");
+                        vnpay.AddRequestData("vnp_ReturnUrl", vnp_Returnurl);
+                        vnpay.AddRequestData("vnp_TxnRef", order.OrderID.ToString());
+
+                        string paymentUrl = vnpay.CreateRequestUrl(vnp_Url, vnp_HashSecret);
+                        return Redirect(paymentUrl);
                     }
 
                     return RedirectToAction("OrderSuccess", new { id = order.OrderID });
@@ -294,6 +313,55 @@ namespace WebBanHang.Controllers
             // Trả về View với đối tượng Order đã tìm thấy
             return View(order);
         }
+        public ActionResult PaymentCallback()
+        {
+            if (Request.QueryString.AllKeys.Length > 0)
+            {
+                string vnp_HashSecret = "HASY7LN7TINZAOCJ1JJZHLBTEQK1JQ4H";
 
-    } 
+                var vnpayData = Request.QueryString;
+                WebBanHang.Utilities.VnPayLibrary vnpay = new WebBanHang.Utilities.VnPayLibrary();
+
+                foreach (string s in vnpayData)
+                {
+                    if (!string.IsNullOrEmpty(s) && s.StartsWith("vnp_"))
+                    {
+                        vnpay.AddResponseData(s, vnpayData[s]);
+                    }
+                }
+
+                int orderId = Convert.ToInt32(vnpay.GetResponseData("vnp_TxnRef"));
+                string vnp_ResponseCode = vnpay.GetResponseData("vnp_ResponseCode");
+                string vnp_SecureHash = Request.QueryString["vnp_SecureHash"];
+
+                bool checkSignature = vnpay.ValidateSignature(vnp_SecureHash, vnp_HashSecret);
+                if (checkSignature)
+                {
+                    var order = db.Orders.Find(orderId);
+                    if (order != null)
+                    {
+                        if (vnp_ResponseCode == "00")
+                        {
+                            order.PaymentStatus = "Đã thanh toán";
+                            db.SaveChanges();
+
+                            TempData["Message"] = "Thanh toán đơn hàng linh kiện qua cổng VNPay thành công!";
+                            return RedirectToAction("OrderSuccess", new { id = orderId });
+                        }
+                        else
+                        {
+                            order.PaymentStatus = "Thất bại";
+                            db.SaveChanges();
+
+                            TempData["Error"] = "Giao dịch thất bại hoặc bị hủy bởi người dùng. Mã lỗi: " + vnp_ResponseCode;
+                            return RedirectToAction("Index", "Cart");
+                        }
+                    }
+                }
+            }
+
+            TempData["Error"] = "Chữ ký bảo mật không hợp lệ!";
+            return RedirectToAction("Index", "Cart");
+        }
+    }
 }
