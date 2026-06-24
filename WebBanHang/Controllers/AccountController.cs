@@ -10,7 +10,7 @@ using System.Data.Entity;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace _23DH110809_MyStore.Controllers
+namespace WebBanHang.Controllers
 {
     public class AccountController : Controller
     {

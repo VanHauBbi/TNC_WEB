@@ -103,7 +103,10 @@ namespace WebBanHang.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "Lỗi hệ thống: " + ex.Message });
+                // Log error
+                System.Diagnostics.Debug.WriteLine("Lỗi: " + ex.Message);
+                TempData["ErrorMessage"] = "Có lỗi xảy ra. Vui lòng thử lại.";
+                return RedirectToAction("Index");
             }
         }
 
