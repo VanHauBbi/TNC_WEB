@@ -101,14 +101,34 @@
                             @Html.Action("_HeaderCategory", "Home")
                         </div>
                     </li>
-                    <li><a href="#">Xây Dựng Cấu Hình PC</a></li>
-                    <li><a href="#">PC Gaming</a></li>
-                    <li><a href="#">Màn Hình Gaming</a></li>
-                    <li><a href="#">PC Đồ Đại Học 2024 <span class="fire-emoji">🔥</span></a></li>
-                    <li><a href="#">Laptop Sinh Viên</a></li>
-                    <li><a href="#">PS5 Slim</a></li>
-                    <li><a href="#">Steam Deck</a></li>
-                    <li class="nav-item-sale"><a href="#"><i class="fa-solid fa-tag"></i> Khuyến Mãi <span class="badge">SALE</span></a></li>
+
+                    @{
+                        var db = new WebBanHang.Models.MyStoreEntities();
+                        var topCategories = db.Categories.Take(6).ToList();
+                    }
+
+                    @foreach (var cat in topCategories)
+                    {
+                        <li>
+                            <a href="@Url.Action("DanhMucSanPham", "Home", new { id = cat.CategoryID })">
+                                @cat.CategoryName
+                            </a>
+                        </li>
+                    }
+
+                <li class="nav-item-sale">
+                    @{
+                        // Trích xuất thông tin Controller và Action hiện tại
+                        string currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+                        string currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+
+                        // Cấu trúc URL dựa trên ngữ cảnh
+                        string promoUrl = (currentController == "Home" && currentAction == "Index")
+                                          ? "#khuyen-mai-section"
+                                          : Url.Action("Index", "Home") + "#khuyen-mai-section";
+                    }
+                    <a href="@promoUrl"><i class="fa-solid fa-tag"></i> Khuyến Mãi <span class="badge">SALE</span></a>
+                </li>
                 </ul>
             </div>
         </nav>

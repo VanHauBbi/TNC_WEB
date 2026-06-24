@@ -1,12 +1,20 @@
 ﻿@model IEnumerable<WebBanHang.Models.Category>
 
-<div class="dropdown-content">
-    @foreach (var item in Model)
-    {
-        <div class="dropdown-content_tach">
-            <a href="@Url.Action("DanhMucSanPham", "Home", new { id = item.CategoryID })">
-                @item.CategoryName
-            </a><br />
+<div class="mega-menu-wrapper">
+    <div class="mega-menu-grid">
+        @foreach (var item in Model)
+        {
+            <a href="@Url.Action("DanhMucSanPham", "Home", new { id = item.CategoryID })" class="mega-menu-item">
+                <i class="fa-solid fa-microchip me-2"></i> <span>@item.CategoryName</span>
+            </a>
+        }
+    </div>
+
+    <div class="mega-menu-promo">
+        <img src="~/image/banner-haloween-pc-1.jpg" alt="Khuyến mãi" class="img-fluid rounded shadow-sm promo-img" />
+        <div class="mt-3 text-center">
+            <span class="badge bg-danger pulse-badge">HOT</span>
+            <span class="fw-bold text-primary fs-6 ms-1">Build PC Giảm Giá Sâu</span>
         </div>
-    }
+    </div>
 </div>
