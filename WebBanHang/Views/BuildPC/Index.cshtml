@@ -1,0 +1,258 @@
+﻿@{
+    ViewBag.Title = "Build PC Cấu Hình Tự Chọn";
+    Layout = "~/Views/Shared/_LayoutDivMain.cshtml";
+}
+
+<link href="~/Content/myStyle/buildpc.css" rel="stylesheet" />
+
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-uppercase"><i class="fa-solid fa-desktop text-primary me-2"></i>Build PC Tự Chọn</h2>
+        <button type="button" class="btn btn-outline-danger btn-sm fw-bold" id="btnClearBuild">
+            <i class="fa-solid fa-rotate-left me-1"></i>Làm mới toàn bộ
+        </button>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8" id="buildGrid">
+            @foreach (var item in new[] {
+                new { Code = "CPU", Name = "1. Bộ vi xử lý (CPU)" },
+                new { Code = "MAIN", Name = "2. Bo mạch chủ (Mainboard)" },
+                new { Code = "RAM", Name = "3. Bộ nhớ trong (RAM)" },
+                new { Code = "VGA", Name = "4. Card đồ họa (VGA)" },
+                new { Code = "PSU", Name = "5. Nguồn cấp điện (PSU)" }
+            })
+            {
+                <div class="card shadow-sm mb-3 build-card" id="row-@item.Code" data-type="@item.Code">
+                    <div class="card-body d-flex align-items-center p-3">
+                        <div class="flex-grow-1 me-2">
+                            <h6 class="fw-bold mb-1 text-dark">@item.Name</h6>
+                            <span class="product-info text-muted small">Chưa chọn sản phẩm</span>
+                        </div>
+
+                        <div class="me-4 text-end">
+                            <div class="fw-bold text-danger product-price fs-6" data-price="0">0 VNĐ</div>
+                            <div class="qty-control align-items-center mt-1" style="display: none;">
+                                <button type="button" class="btn-minus">-</button>
+                                <span class="mx-2 qty-val">1</span>
+                                <button type="button" class="btn-plus">+</button>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-primary btn-sm px-3 fw-bold btn-select" data-type="@item.Code">
+                                <i class="fa-solid fa-plus small"></i> Chọn
+                            </button>
+                            <button type="button" class="btn btn-outline-danger btn-sm btn-remove px-2" style="display: none;">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm p-4 sticky-top bg-white" style="top: 20px; border-radius: 20px; border: 2px solid #f1f5f9;">
+                <h5 class="fw-bold text-muted mb-3">Chi phí dự tính</h5>
+                <h2 class="text-danger fw-bolder mb-4" id="totalBuildPrice">0 VNĐ</h2>
+
+                <button type="button" class="btn btn-success w-100 py-3 fw-bold fs-6 shadow-sm mb-2" id="btnAddToCart">
+                    <i class="fa-solid fa-cart-shopping me-2"></i>THÊM VÀO GIỎ HÀNG
+                </button>
+                <small class="text-center text-muted d-block mt-2">Linh kiện tương thích 100%</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="componentModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content" style="border-radius: 16px;">
+            <div class="modal-header bg-light border-0">
+                <h5 class="modal-title fw-bold text-dark" id="modalTitle">Chọn linh kiện</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="list-group list-group-flush" id="componentList"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function formatVND(n) {
+            return n.toLocaleString('vi-VN') + ' VNĐ';
+        }
+
+        $(document).ready(function () {
+            var currentType = "";
+
+            // 1. MỞ MODAL
+            $(document).on('click', '.btn-select', function () {
+                currentType = $(this).attr('data-type');
+                $('#modalTitle').text('CHỌN LINH KIỆN: ' + currentType);
+                $('#componentList').html('<div class="py-5 text-center text-muted"><i class="fa-solid fa-spinner fa-spin me-2"></i>Đang tải danh sách...</div>');
+                $('#componentModal').modal('show');
+
+                $.ajax({
+                    url: '@Url.Action("GetComponents", "BuildPC")',
+                    type: 'GET',
+                    data: { type: currentType },
+                    success: function (data) {
+                        let html = '';
+                        if (!data || data.length === 0) {
+                            $('#componentList').html('<div class="p-4 text-center text-muted">Không có sản phẩm nào thuộc nhóm này.</div>');
+                            return;
+                        }
+                        $.each(data, function (i, item) {
+                            html += `<div class="list-group-item d-flex align-items-center p-3 border-bottom">
+                                <img src="${item.ProductImage}" style="width:50px; height:50px; object-fit:cover;" class="me-3 rounded border">
+                                <div class="flex-grow-1 me-2">
+                                    <h6 class="fw-bold mb-1">${item.ProductName}</h6>
+                                    <small class="text-danger fw-bold">${formatVND(item.ProductPrice)}</small>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-success px-3 fw-bold btn-choose"
+                                        data-id="${item.ProductID}"
+                                        data-name="${item.ProductName}"
+                                        data-price="${item.ProductPrice}">Chọn</button>
+                            </div>`;
+                        });
+                        $('#componentList').html(html);
+                    },
+                    error: function () {
+                        $('#componentList').html('<div class="p-4 text-center text-danger">Lỗi tải dữ liệu.</div>');
+                    }
+                });
+            });
+
+            // 2. CHỌN LINH KIỆN TỪ MODAL
+            $(document).on('click', '.btn-choose', function () {
+                let id = $(this).attr('data-id');
+                let name = $(this).attr('data-name');
+                let price = parseFloat($(this).attr('data-price'));
+
+                let $row = $('#row-' + currentType);
+
+                $row.attr('data-product-id', id);
+                $row.find('.product-info').text(name).removeClass('text-muted').addClass('text-primary fw-bold');
+                $row.find('.product-price').attr('data-price', price).text(formatVND(price));
+
+                // Dùng .css ép hiển thị trực tiếp (vượt qua mọi lỗi ẩn của class)
+                $row.find('.qty-control').css('display', 'inline-flex');
+                $row.find('.btn-remove').css('display', 'inline-block');
+                $row.find('.btn-select').hide();
+
+                $('#componentModal').modal('hide');
+                calcTotal();
+            });
+
+            // 3. TĂNG / GIẢM / XÓA
+            $(document).on('click', '.btn-plus', function () {
+                let $val = $(this).siblings('.qty-val');
+                $val.text(parseInt($val.text()) + 1);
+                calcTotal();
+            });
+
+            $(document).on('click', '.btn-minus', function () {
+                let $val = $(this).siblings('.qty-val');
+                let current = parseInt($val.text());
+                if (current > 1) {
+                    $val.text(current - 1);
+                    calcTotal();
+                }
+            });
+
+            $(document).on('click', '.btn-remove', function () {
+                let $row = $(this).closest('.build-card');
+                $row.removeAttr('data-product-id');
+                $row.find('.product-info').text('Chưa chọn sản phẩm').removeClass('text-primary fw-bold').addClass('text-muted');
+                $row.find('.product-price').attr('data-price', 0).text('0 VNĐ');
+                $row.find('.qty-val').text('1');
+
+                $row.find('.qty-control').css('display', 'none');
+                $row.find('.btn-remove').css('display', 'none');
+                $row.find('.btn-select').show();
+                calcTotal();
+            });
+
+            function calcTotal() {
+                let total = 0;
+                $('.build-card').each(function () {
+                    let p = parseFloat($(this).find('.product-price').attr('data-price')) || 0;
+                    let q = parseInt($(this).find('.qty-val').text()) || 1;
+                    total += (p * q);
+                });
+                $('#totalBuildPrice').text(formatVND(total));
+            }
+
+            // 4. THÊM VÀO GIỎ HÀNG (THUẬT TOÁN ĐỆ QUY TUẦN TỰ CHỐNG DEADLOCK SESSION)
+            $('#btnAddToCart').click(function () {
+                let items = [];
+                $('.build-card').each(function () {
+                    let id = $(this).attr('data-product-id');
+                    if (id) {
+                        items.push({
+                            id: parseInt(id),
+                            qty: parseInt($(this).find('.qty-val').text())
+                        });
+                    }
+                });
+
+                if (items.length === 0) {
+                    alert("⚠️ Bạn chưa chọn linh kiện nào!");
+                    return;
+                }
+
+                let $btn = $(this);
+                $btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin me-2"></i>ĐANG LƯU VÀO GIỎ...');
+
+                let isRequireLogin = false;
+
+                // Hàm đệ quy bắn từng món một: Món 1 xong -> Mới bắn món 2 -> Xong mới bắn món 3
+                function sendNextItem(index) {
+                    if (index >= items.length) {
+                        $btn.prop('disabled', false).html('<i class="fa-solid fa-cart-shopping me-2"></i>THÊM VÀO GIỎ HÀNG');
+
+                        if (isRequireLogin) {
+                            // Ép trả về đúng trang Build sau khi Login
+                            window.location.href = '@Url.Action("Login", "Account")?returnUrl=' + encodeURIComponent(window.location.pathname);
+                        } else {
+                            alert("✅ Đã thêm trọn bộ cấu hình PC vào giỏ hàng!");
+
+                            // Ép trình duyệt đi hỏi C# con số tổng giỏ hàng mới nhất để gắn lên góc phải
+                            $.get('@Url.Action("GetCartCount", "Cart")', function (res) {
+                                if (res && res.count !== undefined) {
+                                    $('.cart-count, [id*="cart-count"]').text(res.count);
+                                }
+                            });
+
+                            if (typeof MiniCart === "function") MiniCart();
+                        }
+                        return;
+                    }
+
+                    $.ajax({
+                        url: '@Url.Action("AddToCart", "Cart")',
+                        type: 'POST',
+                        data: { id: items[index].id, quantity: items[index].qty },
+                        success: function (res) {
+                            if (res.redirectUrl) { isRequireLogin = true; }
+                            sendNextItem(index + 1); // Bắn tiếp món kế
+                        },
+                        error: function () {
+                            sendNextItem(index + 1);
+                        }
+                    });
+                }
+
+                // Phát súng đầu tiên
+                sendNextItem(0);
+            });
+
+            // 5. LÀM MỚI
+            $('#btnClearBuild').click(function () { location.reload(); });
+        });
+    </script>
+}

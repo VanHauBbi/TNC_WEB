@@ -9,8 +9,12 @@ using System.Data.Entity;
 using WebBanHang.Utilities;
 
 namespace WebBanHang.Controllers
-
 {
+    public class BuildPCItemRequest
+    {
+        public int ProductID { get; set; }
+        public int Quantity { get; set; }
+    } 
     public class CartController : Controller
     {
         private MyStoreEntities db = new MyStoreEntities();
@@ -18,6 +22,7 @@ namespace WebBanHang.Controllers
         {
             return new CartService(Session);
         }
+
         public ActionResult Index()
         {
             var cart = Session["Cart"] as WebBanHang.Models.ViewModel.Cart;
@@ -100,6 +105,26 @@ namespace WebBanHang.Controllers
             {
                 return Json(new { success = false, message = "Lỗi hệ thống: " + ex.Message });
             }
+        }
+
+        // XỬ LÝ THÊM CẤU HÌNH BUILD PC VÀO GIỎ HÀNG
+        [HttpPost]
+        public ActionResult AddBuildPC(List<BuildPCItemRequest> items)
+        {
+            var cartService = GetCartService();
+            var cart = cartService.GetCart();
+
+            foreach (var item in items)
+            {
+                var product = db.Products.Find(item.ProductID);
+                if (product != null)
+                {
+                    cart.AddItem(product.ProductID, product.ProductImage, product.ProductName,
+                                 product.ProductPrice, product.ProductPrice, item.Quantity, "");
+                }
+            }
+            Session["Cart"] = cart;
+            return Json(new { success = true });
         }
 
         //public ActionResult MiniCart()

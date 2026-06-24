@@ -145,6 +145,7 @@
     <Compile Include="Areas\Admin\Controllers\PriceHistoryController.cs" />
     <Compile Include="Areas\Admin\Controllers\ProductsController.cs" />
     <Compile Include="Controllers\AccountController.cs" />
+    <Compile Include="Controllers\BuildPCController.cs" />
     <Compile Include="Controllers\CartController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\OrderController.cs" />
@@ -257,6 +258,7 @@
     <Content Include="Content\bootstrap.min.css" />
     <Content Include="Content\bootstrap.rtl.css" />
     <Content Include="Content\bootstrap.rtl.min.css" />
+    <Content Include="Content\myStyle\buildpc.css" />
     <Content Include="Content\myStyle\cart.css" />
     <Content Include="Content\myStyle\checkout.css" />
     <Content Include="Content\myStyle\danhmucsanpham.css" />
@@ -537,6 +539,7 @@
     <Content Include="Views\Home\SearchResults.cshtml" />
     <Content Include="Views\Account\ForgotPassword.cshtml" />
     <Content Include="Views\Account\ResetPassword.cshtml" />
+    <Content Include="Views\BuildPC\Index.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
