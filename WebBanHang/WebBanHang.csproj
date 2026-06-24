@@ -140,6 +140,7 @@
     <Compile Include="Areas\Admin\Controllers\CouponsController.cs" />
     <Compile Include="Areas\Admin\Controllers\CustomersController.cs" />
     <Compile Include="Areas\Admin\Controllers\HomeController.cs" />
+    <Compile Include="Areas\Admin\Controllers\ImportReceiptsController.cs" />
     <Compile Include="Areas\Admin\Controllers\OrdersController.cs" />
     <Compile Include="Areas\Admin\Controllers\PriceHistoryController.cs" />
     <Compile Include="Areas\Admin\Controllers\ProductsController.cs" />
@@ -163,6 +164,12 @@
       <DependentUpon>Model.tt</DependentUpon>
     </Compile>
     <Compile Include="Models\Customer.cs">
+      <DependentUpon>Model.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\ImportReceipt.cs">
+      <DependentUpon>Model.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\ImportReceiptDetail.cs">
       <DependentUpon>Model.tt</DependentUpon>
     </Compile>
     <Compile Include="Models\Model.Context.cs">
@@ -199,6 +206,12 @@
       <DependentUpon>Model.tt</DependentUpon>
     </Compile>
     <Compile Include="Models\ProductVariant.cs">
+      <DependentUpon>Model.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\PurchaseOrder.cs">
+      <DependentUpon>Model.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\PurchaseOrderDetail.cs">
       <DependentUpon>Model.tt</DependentUpon>
     </Compile>
     <Compile Include="Models\User.cs">
@@ -457,6 +470,11 @@
     <Content Include="Areas\Admin\Views\Coupons\Edit.cshtml" />
     <Content Include="Areas\Admin\Views\Coupons\Index.cshtml" />
     <Content Include="Areas\Admin\Views\PriceHistory\Index.cshtml" />
+    <Content Include="Areas\Admin\Views\ImportReceipts\Create.cshtml" />
+    <Content Include="Areas\Admin\Views\ImportReceipts\Delete.cshtml" />
+    <Content Include="Areas\Admin\Views\ImportReceipts\Details.cshtml" />
+    <Content Include="Areas\Admin\Views\ImportReceipts\Edit.cshtml" />
+    <Content Include="Areas\Admin\Views\ImportReceipts\Index.cshtml" />
     <None Include="Scripts\jquery-3.7.0.intellisense.js" />
     <Content Include="Scripts\jquery-3.7.0.js" />
     <Content Include="Scripts\jquery-3.7.0.min.js" />

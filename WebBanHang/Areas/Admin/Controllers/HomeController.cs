@@ -80,5 +80,32 @@ namespace WebBanHang.Areas.Admin.Controllers
 
             return View(dashboardVM);
         }
+
+        [HttpPost]
+        public JsonResult GetDashboardData(DateTime fromDate, DateTime toDate)
+        {
+            var orders = db.Orders
+                .Where(o => o.OrderDate >= fromDate && o.OrderDate <= toDate)
+                .ToList();
+
+            decimal totalRevenue = orders.Sum(o => o.TotalAmount);
+
+            var orderIds = orders.Select(o => o.OrderID).ToList();
+            var details = db.OrderDetails.Where(d => orderIds.Contains(d.OrderID)).ToList();
+
+            decimal totalCost = details.Sum(d => d.Quantity * d.ImportPrice);
+            decimal grossProfit = totalRevenue - totalCost;
+
+            return Json(new
+            {
+                totalRevenue = totalRevenue.ToString("N0") + " ₫",
+                totalProfit = grossProfit.ToString("N0") + " ₫",
+                orderCount = orders.Count,
+
+
+                chartLabels = orders.GroupBy(o => o.OrderDate).Select(g => g.Key.ToString("dd/MM")).ToList(),
+                chartData = orders.GroupBy(o => o.OrderDate).Select(g => (double)g.Sum(o => o.TotalAmount)).ToList()
+            });
+        }
     }
 }

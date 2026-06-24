@@ -33,6 +33,15 @@
         <AssociationConnector Association="MyStoreModel.FK_ProductReview_Product" ManuallyRouted="false" />
         <AssociationConnector Association="MyStoreModel.FK_ProductVariant_Product" ManuallyRouted="false" />
         <AssociationConnector Association="MyStoreModel.CouponProduct" ManuallyRouted="false" />
+        <EntityTypeShape EntityType="MyStoreModel.ImportReceipt" Width="1.5" PointX="12" PointY="0.875" />
+        <EntityTypeShape EntityType="MyStoreModel.ImportReceiptDetail" Width="1.5" PointX="14.25" PointY="10.875" />
+        <EntityTypeShape EntityType="MyStoreModel.PurchaseOrder" Width="1.5" PointX="9.75" PointY="0.75" />
+        <EntityTypeShape EntityType="MyStoreModel.PurchaseOrderDetail" Width="1.5" PointX="11.25" PointY="14" />
+        <AssociationConnector Association="MyStoreModel.FK_ImportDetail_Receipt" />
+        <AssociationConnector Association="MyStoreModel.FK_ImportReceipt_PO" />
+        <AssociationConnector Association="MyStoreModel.FK_ImportDetail_Product" />
+        <AssociationConnector Association="MyStoreModel.FK_PODetail_Product" />
+        <AssociationConnector Association="MyStoreModel.FK_PODetail_PO" />
       </Diagram>
     </edmx:Diagrams>
   </edmx:Designer>

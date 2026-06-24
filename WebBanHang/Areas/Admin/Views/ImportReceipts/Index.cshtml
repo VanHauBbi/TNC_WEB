@@ -1,0 +1,87 @@
+﻿@model IEnumerable<WebBanHang.Models.ImportReceipt>
+
+@{
+    ViewBag.Title = "Quản lý Phiếu Nhập Kho (FIFO)";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="container-fluid py-4">
+    <div class="card shadow border-0 rounded-3">
+        <div class="card-header bg-primary text-white p-4 d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="mb-0 fw-bold"><i class="fa-solid fa-boxes-stacked me-2"></i> LỊCH SỬ NHẬP KHO THEO LÔ (FIFO)</h4>
+                <small class="opacity-75">Hệ thống tự động phân bổ giá vốn khi có giao dịch xuất bán</small>
+            </div>
+            <a href="@Url.Action("Create")" class="btn btn-success fw-bold px-4 shadow-sm">
+                <i class="fa-solid fa-plus me-1"></i> Lập Phiếu Nhập Mới
+            </a>
+        </div>
+
+        <div class="card-body p-4">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle text-center">
+                    <thead class="table-dark">
+                        <tr>
+                            <th style="width: 8%;">Mã Phiếu</th>
+                            <th style="width: 15%;">Thời Gian Nhập</th>
+                            <th style="width: 20%;">Nguồn Nhập / Nhà Cung Cấp</th>
+                            <th style="width: 15%;">Người Phụ Trách</th>
+                            <th style="width: 22%;">Ghi Chú Nội Bộ</th>
+                            <th style="width: 12%;">Tổng Tiền</th>
+                            <th style="width: 8%;">Chi Tiết</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Any())
+                        {
+                            <tr>
+                                <td colspan="7" class="text-center py-4 text-muted">
+                                    <i class="fa-solid fa-box-open fs-2 mb-2 d-block"></i>
+                                    Chưa có chứng từ nhập kho nào được ghi nhận.
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td class="fw-bold text-primary">#@item.ReceiptID</td>
+                                    <td>@item.ReceivedDate.ToString("dd/MM/yyyy HH:mm")</td>
+
+                                    <td class="text-start">
+                                        @if (item.PurchaseOrder != null)
+                                        {
+                                            <span class="badge bg-info text-dark fw-bold px-2 py-1">
+                                                <i class="fa-solid fa-file-contract me-1"></i> @item.PurchaseOrder.SupplierName
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary px-2 py-1">
+                                                <i class="fa-solid fa-bolt me-1"></i> Nhập trực tiếp
+                                            </span>
+                                        }
+                                    </td>
+
+                                    <td>@item.ReceivedBy</td>
+                                    <td class="text-start text-truncate" style="max-width: 200px;">
+                                        @(string.IsNullOrEmpty(item.Note) ? "-" : item.Note)
+                                    </td>
+                                    <td class="text-end fw-bold text-danger">
+                                        @item.TotalAmount.ToString("N0") ₫
+                                    </td>
+                                    <td>
+                                        <a href="@Url.Action("Details", new { id = item.ReceiptID })" class="btn btn-sm btn-outline-primary fw-bold">
+                                            <i class="fa-solid fa-eye"></i> Xem
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

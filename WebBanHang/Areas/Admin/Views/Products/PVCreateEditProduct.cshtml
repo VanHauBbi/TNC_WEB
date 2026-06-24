@@ -1,9 +1,12 @@
 ﻿@model WebBanHang.Models.Product
 
+@{
+    bool isCreateMode = (Model == null || Model.ProductID == 0);
+}
+
 <div class="form-group">
     <div class="control-label col-md-2 fw-bold">Danh mục</div>
     <div class="col-md-10">
-        @* DropDownList phải được truyền CategoryID từ Controller *@
         @Html.DropDownList("CategoryID", null, "--- Chọn Danh mục ---", htmlAttributes: new { @class = "form-control" })
         @Html.ValidationMessageFor(model => model.CategoryID, "", new { @class = "text-danger" })
     </div>
@@ -25,33 +28,39 @@
     </div>
 </div>
 
-<div class="form-group">
-    <div class="control-label col-md-2 fw-bold">Giá bán (Đơn giá)</div>
-    <div class="col-md-10">
-        @* KHẮC PHỤC LỖI HIỂN THỊ SỐ: Dùng TextBoxFor và ép định dạng InvariantCulture *@
-        @Html.TextBoxFor(model => model.ProductPrice, new
-        {
-            @class = "form-control",
-            type = "number",
-            min = "0",
-            @Value = Model != null ? Model.ProductPrice.ToString("0", System.Globalization.CultureInfo.InvariantCulture) : ""
-        })
-        @Html.ValidationMessageFor(model => model.ProductPrice, "", new { @class = "text-danger" })
+<div class="row my-3 bg-light p-3 border rounded">
+    <div class="col-md-6">
+        <div class="form-group mb-0">
+            <label class="control-label fw-bold text-secondary">Giá vốn dự kiến (Tham khảo) <span class="text-danger">*</span></label>
+            @Html.TextBoxFor(model => model.ImportPrice, new
+            {
+                @class = "form-control import-price-input",
+                type = "number",
+                min = "0",
+                @Value = Model != null ? Model.ImportPrice.ToString("0", System.Globalization.CultureInfo.InvariantCulture) : "0"
+            })
+            <small class="form-text text-muted">Dùng làm mỏ neo chống gán nhầm giá bán lỗ.</small>
+            @Html.ValidationMessageFor(model => model.ImportPrice, "", new { @class = "text-danger" })
+        </div>
     </div>
-</div>
 
-<div class="form-group">
-    <div class="control-label col-md-2 fw-bold">Giá nhập kho</div>
-    <div class="col-md-10">
-        @* KHẮC PHỤC LỖI HIỂN THỊ SỐ: Dùng TextBoxFor và ép định dạng InvariantCulture *@
-        @Html.TextBoxFor(model => model.ImportPrice, new
-        {
-            @class = "form-control",
-            type = "number",
-            min = "0",
-            @Value = Model != null ? Model.ImportPrice.ToString("0", System.Globalization.CultureInfo.InvariantCulture) : ""
-        })
-        @Html.ValidationMessageFor(model => model.ImportPrice, "", new { @class = "text-danger" })
+    <div class="col-md-6">
+        <div class="form-group mb-0">
+            <label class="control-label fw-bold text-primary">Giá bán niêm yết <span class="text-danger">*</span></label>
+            @Html.TextBoxFor(model => model.ProductPrice, new
+            {
+                @class = "form-control selling-price-input fw-bold text-primary",
+                type = "number",
+                min = "0",
+                @Value = Model != null ? Model.ProductPrice.ToString("0", System.Globalization.CultureInfo.InvariantCulture) : ""
+            })
+
+            <div id="lossWarningMsg" class="text-danger fw-bold small mt-1 d-none">
+                <i class="fa-solid fa-triangle-exclamation"></i> CẢNH BÁO: Giá bán đang THẤP HƠN giá vốn dự kiến!
+            </div>
+
+            @Html.ValidationMessageFor(model => model.ProductPrice, "", new { @class = "text-danger" })
+        </div>
     </div>
 </div>
 
@@ -63,11 +72,48 @@
     </div>
 </div>
 
-<div class="form-group">
-    <div class="control-label col-md-2 fw-bold">Số lượng tồn kho</div>
-    <div class="col-md-10">
-        @* Số lượng là số nguyên nên giữ nguyên EditorFor nhưng bổ sung value an toàn nếu cần *@
-        @Html.EditorFor(model => model.StockQuantity, new { htmlAttributes = new { @class = "form-control", type = "number", min = "0" } })
-        @Html.ValidationMessageFor(model => model.StockQuantity, "", new { @class = "text-danger" })
+@if (!isCreateMode)
+{
+    <hr class="my-3" />
+    <div class="form-group">
+        <div class="control-label col-md-2 fw-bold">Tồn kho thực tế</div>
+        <div class="col-md-10">
+            <div class="input-group">
+                @Html.EditorFor(model => model.StockQuantity, new { htmlAttributes = new { @class = "form-control bg-light fw-bold text-success", type = "number", @readonly = "readonly" } })
+                <span class="input-group-text bg-warning text-dark small fw-bold">Kho Lô FIFO</span>
+            </div>
+            <div class="form-text text-danger small">
+                *Tồn kho được cộng/trừ tự động từ các Phiếu Nhập Kho. Không thể sửa bằng tay.
+            </div>
+        </div>
     </div>
-</div>
+}
+
+<script>
+    // JS Thuần: Lắng nghe gõ phím để check Lãi/Lỗ ngay lập tức
+    function validateMargin() {
+        const impInput = document.querySelector('.import-price-input');
+        const selInput = document.querySelector('.selling-price-input');
+        const warnBox = document.getElementById('lossWarningMsg');
+
+        if(!impInput || !selInput) return;
+
+        const imp = parseFloat(impInput.value) || 0;
+        const sel = parseFloat(selInput.value) || 0;
+
+        if(sel > 0 && sel < imp) {
+            selInput.style.backgroundColor = '#fff3cd'; // Nền vàng cảnh báo
+            selInput.style.borderColor = '#dc3545';     // Viền đỏ
+            warnBox.classList.remove('d-none');
+        } else {
+            selInput.style.backgroundColor = '';
+            selInput.style.borderColor = '';
+            warnBox.classList.add('d-none');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const priceInputs = document.querySelectorAll('.import-price-input, .selling-price-input');
+        priceInputs.forEach(input => input.addEventListener('input', validateMargin));
+    });
+</script>

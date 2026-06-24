@@ -159,7 +159,7 @@ namespace WebBanHang.Controllers
             {
                 try
                 {
-                    // Lưu hóa đơn
+                    // Lưu hóa đơn Cha
                     var order = new Order
                     {
                         CustomerID = customerId,
@@ -171,19 +171,66 @@ namespace WebBanHang.Controllers
                         TotalAmount = model.TotalAmount
                     };
                     db.Orders.Add(order);
-                    db.SaveChanges();
+                    db.SaveChanges(); // Lưu để EF sinh ra order.OrderID
 
-                    decimal actualTotalOrderAmount = 0; // Biến tính tổng tiền thực tế chống F12 Hack
+                    decimal actualTotalOrderAmount = 0;
 
-                    // 2. TÁCH DÒNG CHI TIẾT & TRỪ VOUCHER ĐA LƯỢNG
+                    // 2. TÁCH DÒNG CHI TIẾT, TRỪ VOUCHER ĐA LƯỢNG & [HẠCH TOÁN FIFO]
                     foreach (var item in cart.Items)
                     {
                         var productInDb = db.Products.Include(p => p.Coupons).SingleOrDefault(p => p.ProductID == item.ProductID);
                         if (productInDb != null)
                         {
-                            productInDb.StockQuantity -= item.Quantity; // Trừ tồn kho
+                            productInDb.StockQuantity -= item.Quantity;
                             if (productInDb.StockQuantity < 0) productInDb.StockQuantity = 0;
 
+                            // =========================================================================
+                            // [LÕI KẾ TOÁN FIFO]: TRỪ LÙI KHO LÔ VÀ BÓC TÁCH GIÁ VỐN GIA QUYỀN
+                            // =========================================================================
+                            int totalQtyNeededForFifo = item.Quantity; // Ví dụ: Mua 5 cái
+                            decimal totalFifoCostForThisItem = 0;      // Gom tổng vốn của 5 cái này
+
+                            // Quét các lô hàng cũ nhất còn tồn của sản phẩm này
+                            var availableBatches = db.ImportReceiptDetails
+                                                     .Where(b => b.ProductID == item.ProductID && b.RemainingQuantity > 0)
+                                                     .OrderBy(b => b.DetailID)
+                                                     .ToList();
+
+                            foreach (var batch in availableBatches)
+                            {
+                                if (totalQtyNeededForFifo <= 0) break;
+
+                                if (batch.RemainingQuantity >= totalQtyNeededForFifo)
+                                {
+                                    // Lô này gánh hết
+                                    batch.RemainingQuantity -= totalQtyNeededForFifo;
+                                    totalFifoCostForThisItem += (totalQtyNeededForFifo * batch.ImportPrice);
+                                    totalQtyNeededForFifo = 0;
+                                }
+                                else
+                                {
+                                    // Vét sạch lô này rồi đi tìm lô tiếp theo
+                                    int qtyTakenFromThisBatch = batch.RemainingQuantity;
+                                    totalFifoCostForThisItem += (qtyTakenFromThisBatch * batch.ImportPrice);
+                                    totalQtyNeededForFifo -= qtyTakenFromThisBatch;
+                                    batch.RemainingQuantity = 0;
+                                }
+                                db.Entry(batch).State = EntityState.Modified;
+                            }
+
+                            // Cứu cánh: Nếu kho lô bị hụt (do trước đây từng sửa tay), lấy mỏ neo ImportPrice bù vào
+                            if (totalQtyNeededForFifo > 0)
+                            {
+                                decimal fallbackCost = productInDb.ImportPrice;
+                                totalFifoCostForThisItem += (totalQtyNeededForFifo * fallbackCost);
+                            }
+
+                            // Ra được Giá vốn bình quân 1 sản phẩm của riêng giao dịch này
+                            decimal lockedUnitImportCost = item.Quantity > 0 ? (totalFifoCostForThisItem / item.Quantity) : 0;
+                            // =========================================================================
+
+
+                            // --- Xử lý tách dòng Voucher ---
                             int applicableQty = 0;
                             int remainingQty = item.Quantity;
 
@@ -196,16 +243,13 @@ namespace WebBanHang.Controllers
 
                                 if (appliedCoupon != null)
                                 {
-                                    // Chốt số lượng hợp lệ và số dư thừa
                                     applicableQty = Math.Min(item.Quantity, appliedCoupon.UsageLimit);
                                     remainingQty = item.Quantity - applicableQty;
-
-                                    // TRỪ ĐÚNG SỐ LƯỢT ĐÃ TIÊU HAO CỦA VOUCHER
                                     appliedCoupon.UsageLimit -= applicableQty;
                                 }
                             }
 
-                            // DÒNG 1: Nhóm sản phẩm được áp giá giảm (Nếu có)
+                            // DÒNG 1: Nhóm sản phẩm được áp giá giảm
                             if (applicableQty > 0)
                             {
                                 db.OrderDetails.Add(new OrderDetail
@@ -213,12 +257,14 @@ namespace WebBanHang.Controllers
                                     OrderID = order.OrderID,
                                     ProductID = item.ProductID,
                                     Quantity = applicableQty,
-                                    UnitPrice = item.UnitPrice
+                                    UnitPrice = item.UnitPrice,
+                                    // [CHỐT HẠ]: Khóa giá vốn FIFO vào dòng này
+                                    ImportPrice = lockedUnitImportCost
                                 });
                                 actualTotalOrderAmount += (applicableQty * item.UnitPrice);
                             }
 
-                            // DÒNG 2: Nhóm sản phẩm bị đẩy về giá gốc do vượt giới hạn voucher (Nếu có)
+                            // DÒNG 2: Nhóm sản phẩm rớt lại giá gốc do vượt giới hạn voucher
                             if (remainingQty > 0)
                             {
                                 db.OrderDetails.Add(new OrderDetail
@@ -226,31 +272,31 @@ namespace WebBanHang.Controllers
                                     OrderID = order.OrderID,
                                     ProductID = item.ProductID,
                                     Quantity = remainingQty,
-                                    UnitPrice = item.OriginalPrice
+                                    UnitPrice = item.OriginalPrice,
+                                    // [CHỐT HẠ]: Khóa giá vốn FIFO vào dòng này
+                                    ImportPrice = lockedUnitImportCost
                                 });
                                 actualTotalOrderAmount += (remainingQty * item.OriginalPrice);
                             }
                         }
                     }
 
-                    // 3. Xử lý Voucher TOÀN ĐƠN và Cập nhật lại tổng tiền Hóa đơn
+                    // 3. Xử lý Voucher TOÀN ĐƠN
                     if (!string.IsNullOrEmpty(model.AppliedVoucherCode))
                     {
                         var globalCoupon = db.Coupons.SingleOrDefault(c => c.Code == model.AppliedVoucherCode);
                         if (globalCoupon != null && globalCoupon.UsageLimit > 0)
                         {
                             globalCoupon.UsageLimit -= 1;
-                            // (Trừ tiền voucher toàn đơn vào biến actualTotalOrderAmount ở đây nếu bạn lưu số discount vào Session)
                             actualTotalOrderAmount -= Convert.ToDecimal(Session["VoucherDiscount"] ?? 0);
                         }
                     }
 
-                    // Chốt tổng tiền an toàn 100% vào DB
                     order.TotalAmount = actualTotalOrderAmount;
                     db.SaveChanges();
                     transaction.Commit();
 
-                    // Xóa giỏ hàng sau khi mua thành công
+                    // Dọn dẹp Session
                     var tempCart = Session["BuyNowTempCart"] as WebBanHang.Models.ViewModel.Cart;
                     if (tempCart != null)
                     {

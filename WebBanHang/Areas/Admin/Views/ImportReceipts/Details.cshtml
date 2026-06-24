@@ -1,0 +1,87 @@
+﻿@model WebBanHang.Models.ImportReceipt
+
+@{
+    ViewBag.Title = "Chi Tiết Phiếu Nhập Kho #" + Model.ReceiptID;
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="container-fluid py-4">
+    <div class="card shadow border-0 rounded-3">
+        <div class="card-header bg-dark text-white p-4 d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="mb-0 fw-bold"><i class="fa-solid fa-file-invoice-dollar me-2"></i> PHIẾU NHẬP KHO LÔ FIFO #@Model.ReceiptID</h4>
+                <small class="text-success fw-bold">Trạng thái: Đã hạch toán vào Tồn kho tổng</small>
+            </div>
+            <h3 class="text-warning mb-0 fw-bold">@Model.TotalAmount.ToString("N0") VND</h3>
+        </div>
+
+        <div class="card-body p-4">
+            <div class="row mb-4 bg-light p-3 border rounded">
+                <div class="col-md-3">
+                    <span class="text-muted small d-block">Ngày nhập:</span>
+                    <strong class="text-dark">@Model.ReceivedDate.ToString("dd/MM/yyyy HH:mm")</strong>
+                </div>
+                <div class="col-md-3">
+                    <span class="text-muted small d-block">Người phụ trách:</span>
+                    <strong class="text-primary">@Model.ReceivedBy</strong>
+                </div>
+                <div class="col-md-3">
+                    <span class="text-muted small d-block">Tham chiếu P.O:</span>
+                    <span class="badge @(Model.PurchaseOrder != null ? "bg-info text-dark" : "bg-secondary")">
+                        @(Model.PurchaseOrder != null ? Model.PurchaseOrder.SupplierName : "Nhập trực tiếp (Không P.O)")
+                    </span>
+                </div>
+                <div class="col-md-3">
+                    <span class="text-muted small d-block">Ghi chú:</span>
+                    <em class="text-dark">@(string.IsNullOrEmpty(Model.Note) ? "Không có ghi chú" : Model.Note)</em>
+                </div>
+            </div>
+
+            <h5 class="fw-bold text-secondary mb-3"><i class="fa-solid fa-box-open me-2"></i> DANH SÁCH SẢN PHẨM NHẬP KHO</h5>
+
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle text-center">
+                    <thead class="table-primary">
+                        <tr>
+                            <th>STT</th>
+                            <th class="text-start">Tên Sản Phẩm</th>
+                            <th>Số Lượng Nhập</th>
+                            <th>Còn Tồn (Lô FIFO)</th>
+                            <th>Giá Vốn Nhập/Cái</th>
+                            <th>Thành Tiền</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{ int stt = 1; }
+                        @foreach (var item in Model.ImportReceiptDetails)
+                        {
+                            <tr>
+                                <td class="fw-bold">@(stt++)</td>
+                                <td class="text-start fw-bold text-primary">@item.Product.ProductName</td>
+                                <td class="fw-bold fs-5">@item.ImportQuantity</td>
+                                <td>
+                                    <span class="badge @(item.RemainingQuantity > 0 ? "bg-success" : "bg-danger") px-3 py-2 fs-6">
+                                        @item.RemainingQuantity / @item.ImportQuantity
+                                    </span>
+                                </td>
+                                <td class="text-end fw-bold">@item.ImportPrice.ToString("N0") ₫</td>
+                                <td class="text-end fw-bold text-danger">
+                                    @((item.ImportQuantity * item.ImportPrice).ToString("N0")) ₫
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mt-4 text-end">
+                <a href="@Url.Action("Index", "ImportReceipts")" class="btn btn-secondary px-4">
+                    <i class="fa-solid fa-arrow-left me-1"></i> Về danh sách phiếu
+                </a>
+                <a href="@Url.Action("Create", "ImportReceipts")" class="btn btn-primary px-4 ms-2">
+                    <i class="fa-solid fa-plus me-1"></i> Lập phiếu nhập mới
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

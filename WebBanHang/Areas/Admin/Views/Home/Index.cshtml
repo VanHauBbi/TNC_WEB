@@ -12,9 +12,32 @@
 <link href="~/Content/Admin/dashboard.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+<div class="row mb-4 bg-white p-3 shadow-sm rounded border align-items-end">
+    <div class="col-md-4">
+        <label class="fw-bold small text-muted mb-1">Từ ngày:</label>
+        <input type="date" id="filterFrom" class="form-control" value="@DateTime.Now.AddMonths(-1).ToString("yyyy-MM-dd")">
+    </div>
+    <div class="col-md-4">
+        <label class="fw-bold small text-muted mb-1">Đến ngày:</label>
+        <input type="date" id="filterTo" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-dd")">
+    </div>
+
+    <div class="col-md-4 d-flex align-items-end gap-2">
+        <button id="btnFilter" class="btn btn-primary fw-bold flex-grow-1">
+            <i class="fa-solid fa-filter me-1"></i> Lọc
+        </button>
+        <button id="btnReset" class="btn btn-secondary fw-bold px-3">
+            <i class="fa-solid fa-rotate-left"></i> Rsest
+        </button>
+        <button id="btnExport" class="btn btn-success fw-bold flex-grow-1">
+            <i class="fa-solid fa-file-excel me-1"></i> Xuất Excel
+        </button>
+    </div>
+</div>
+
 <div class="container-fluid py-4">
     <h3 class="fw-bold mb-4"><i class="fa-solid fa-chart-pie text-primary"></i> Tổng quan Hệ thống</h3>
-
+    
     <div class="row mb-4">
         <div class="col-xl col-md-4 col-sm-6 mb-3">
             <div class="card dash-card shadow-sm h-100">
@@ -22,7 +45,7 @@
                     <div class="icon-box bg-light-primary me-3" style="width:50px; height:50px; font-size:22px;"><i class="fa-solid fa-money-bill-wave"></i></div>
                     <div>
                         <h6 class="text-muted mb-1" style="font-size:0.85em;">Tổng Doanh Thu</h6>
-                        <h5 class="fw-bold mb-0 text-primary">@Model.TotalRevenue.ToString("N0") ₫</h5>
+                        <h5 id="valRevenue" class="fw-bold mb-0 text-primary">@Model.TotalRevenue.ToString("N0") ₫</h5>
                     </div>
                 </div>
             </div>
@@ -34,7 +57,7 @@
                     <div class="icon-box bg-light-purple me-3" style="width:50px; height:50px; font-size:22px;"><i class="fa-solid fa-piggy-bank"></i></div>
                     <div>
                         <h6 class="text-muted mb-1" style="font-size:0.85em;">Tổng Lợi Nhuận</h6>
-                        <h5 class="fw-bold mb-0" style="color: #6f42c1;">@Model.TotalProfit.ToString("N0") ₫</h5>
+                        <h5 id="valProfit" class="fw-bold mb-0" style="color: #6f42c1;">@Model.TotalProfit.ToString("N0") ₫</h5>
                     </div>
                 </div>
             </div>
@@ -46,7 +69,7 @@
                     <div class="icon-box bg-light-success me-3" style="width:50px; height:50px; font-size:22px;"><i class="fa-solid fa-box"></i></div>
                     <div>
                         <h6 class="text-muted mb-1" style="font-size:0.85em;">Tổng Đơn Hàng</h6>
-                        <h5 class="fw-bold mb-0">@Model.TotalOrders đơn</h5>
+                        <h5 id="valOrders" class="fw-bold mb-0">@Model.TotalOrders đơn</h5>
                     </div>
                 </div>
             </div>
@@ -117,7 +140,24 @@
         </div>
     </div>
 </div>
-
+<div style="display:none;">
+    <table id="tableReport">
+        <thead>
+            <tr>
+                <th>Tổng Doanh Thu</th>
+                <th>Tổng Lợi Nhuận</th>
+                <th>Tổng Đơn Hàng</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td id="exportRevenue">@Model.TotalRevenue.ToString("N0") ₫</td>
+                <td id="exportProfit">@Model.TotalProfit.ToString("N0") ₫</td>
+                <td id="exportOrders">@Model.TotalOrders</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
 @section Scripts {
     <script>
         // Lấy dữ liệu từ C# truyền xuống JS
@@ -126,7 +166,7 @@
 
         var ctx = document.getElementById('revenueChart').getContext('2d');
         var revenueChart = new Chart(ctx, {
-            type: 'bar', // Có thể đổi thành 'line' nếu muốn biểu đồ đường
+            type: 'line', // Có thể đổi thành 'line' nếu muốn biểu đồ đường
             data: {
                 labels: labels,
                 datasets: [{
@@ -162,5 +202,55 @@
                 }
             }
         });
-    </script>
+
+    $('#btnFilter').click(function() {
+        var fromDate = $('#filterFrom').val();
+        var toDate = $('#filterTo').val();
+
+        $.post('@Url.Action("GetDashboardData", "Home")', {
+            fromDate: fromDate,
+            toDate: toDate
+        }, function(res) {
+            // Cập nhật giá trị hiển thị bằng ID đã gắn ở trên
+            $('#valRevenue').text(res.totalRevenue);
+            $('#valProfit').text(res.grossProfit);
+            $('#valOrders').text(res.orderCount + " đơn");
+
+            $('#exportRevenue').text(res.totalRevenue);
+            $('#exportProfit').text(res.totalProfit);
+            $('#exportOrders').text(res.orderCount);
+        });
+    });
+    $('#btnReset').click(function() {
+        // 1. Reset các ô input về mặc định
+        $('#filterFrom').val('2026-03-18'); // Hoặc ngày bắt đầu project của bạn
+        $('#filterTo').val('@DateTime.Now.ToString("yyyy-MM-dd")');
+
+        // 2. Gọi lại hàm lọc với dữ liệu toàn bộ
+        $.post('@Url.Action("GetDashboardData", "Home")', {
+            fromDate: '2026-03-18',
+            toDate: '@DateTime.Now.ToString("yyyy-MM-dd")'
+        }, function(res) {
+            $('#valRevenue').text(res.totalRevenue);
+            $('#valProfit').text(res.grossProfit);
+            $('#valOrders').text(res.orderCount + " đơn");
+
+            revenueChart.data.labels = res.chartLabels;
+            revenueChart.data.datasets[0].data = res.chartData;
+            revenueChart.update();
+        });
+    });
+
+    $('#btnExport').click(function() {
+        var uri = 'data:application/vnd.ms-excel;base64,';
+        var template = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head></head><body><table>{table}</table></body></html>';
+        var base64 = function(s) { return window.btoa(unescape(encodeURIComponent(s))) };
+        var format = function(s, c) { return s.replace(/{(\w+)}/g, function(m, p) { return c[p]; }) };
+    
+        // Giả sử bảng chi tiết đơn hàng của bạn có id="tableReport"
+        var table = document.getElementById("tableReport");
+        var ctx = { worksheet: 'BaoCao', table: table.innerHTML };
+        window.location.href = uri + base64(format(template, ctx));
+    });
+   </script>
 }

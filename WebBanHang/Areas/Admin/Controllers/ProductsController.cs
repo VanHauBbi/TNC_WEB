@@ -102,13 +102,33 @@ namespace WebBanHang.Areas.Admin.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create([Bind(Include = "ProductID,CategoryID,ProductName,ProductDescription,ProductPrice,ImportPrice,ProductImage,StockQuantity")] Product product)
+        public ActionResult Create([Bind(Include = "ProductID,CategoryID,ProductName,ProductDescription,ProductPrice,ImportPrice,ProductImage")] Product product)
         {
             if (ModelState.IsValid)
             {
-                db.Products.Add(product);
-                db.SaveChanges();
-                return RedirectToAction("Index");
+                try
+                {
+                    product.StockQuantity = 0;
+
+                    db.Products.Add(product);
+                    db.SaveChanges();
+                    TempData["SuccessMessage"] = $"Đã tạo danh mục '{product.ProductName}'. Vui lòng sang phân hệ Nhập Kho để nhập số lượng!";
+                    return RedirectToAction("Index");
+                }
+                catch (System.Data.Entity.Validation.DbEntityValidationException ex)
+                {
+                    var errorDetailLists = ex.EntityValidationErrors
+                        .SelectMany(validationResult => validationResult.ValidationErrors)
+                        .Select(validationError => $"Cột [{validationError.PropertyName}]: {validationError.ErrorMessage}");
+
+                    string fullSqlErrors = string.Join(" | ", errorDetailLists);
+
+                    ModelState.AddModelError("", "LỖI TỪ DATABASE: " + fullSqlErrors);
+                }
+                catch (Exception genEx)
+                {
+                    ModelState.AddModelError("", "Lỗi hệ thống khác: " + genEx.Message);
+                }
             }
 
             ViewBag.CategoryID = new SelectList(db.Categories, "CategoryID", "CategoryName", product.CategoryID);
@@ -132,14 +152,29 @@ namespace WebBanHang.Areas.Admin.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit([Bind(Include = "ProductID,CategoryID,ProductName,ProductDescription,ProductPrice,ImportPrice,ProductImage,StockQuantity")] Product product)
+        public ActionResult Edit([Bind(Include = "ProductID,CategoryID,ProductName,ProductDescription,ProductPrice,ProductImage")] Product product)
         {
             if (ModelState.IsValid)
             {
-                db.Entry(product).State = EntityState.Modified;
+                var existingProduct = db.Products.Find(product.ProductID);
+                if (existingProduct == null) return HttpNotFound();
+
+                existingProduct.ProductName = product.ProductName;
+                existingProduct.CategoryID = product.CategoryID;
+                existingProduct.ProductDescription = product.ProductDescription;
+                existingProduct.ProductPrice = product.ProductPrice;
+
+                if (!string.IsNullOrEmpty(product.ProductImage))
+                {
+                    existingProduct.ProductImage = product.ProductImage;
+                }
+
+                db.Entry(existingProduct).State = EntityState.Modified;
                 db.SaveChanges();
+                TempData["SuccessMessage"] = "Cập nhật thông tin sản phẩm thành công!";
                 return RedirectToAction("Index");
             }
+
             ViewBag.CategoryID = new SelectList(db.Categories, "CategoryID", "CategoryName", product.CategoryID);
             return View(product);
         }
