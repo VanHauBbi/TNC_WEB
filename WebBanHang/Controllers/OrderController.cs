@@ -295,13 +295,14 @@ namespace WebBanHang.Controllers
                     order.TotalAmount = actualTotalOrderAmount;
                     db.SaveChanges();
                     transaction.Commit();
-
-                    // ---- TÍCH HỢP ĐIỀU HƯỚNG CỔNG THANH TOÁN VNPAY ĐOẠN CUỐI HÀM ----
-                    if (model.PaymentMethod == "VNPAY")
+                   
                     // Dọn dẹp Session
                     var tempCart = Session["BuyNowTempCart"] as WebBanHang.Models.ViewModel.Cart;
                     if (tempCart != null)
-                    {
+
+                        // ---- TÍCH HỢP ĐIỀU HƯỚNG CỔNG THANH TOÁN VNPAY ĐOẠN CUỐI HÀM ----
+                        if (model.PaymentMethod == "VNPAY")
+                        {
                         string vnp_Url = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
                         string vnp_TmnCode = "6NQ3MY7C";
                         string vnp_HashSecret = "HASY7LN7TINZAOCJ1JJZHLBTEQK1JQ4H";
