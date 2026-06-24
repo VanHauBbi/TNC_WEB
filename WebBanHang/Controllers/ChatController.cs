@@ -61,7 +61,7 @@ namespace WebBanHang.Controllers
             // =========================================================================
             // 4. GỌI API GEMINI CHO CÁC YÊU CẦU CHUYÊN SÂU
             // =========================================================================
-            string apiKey = "AQ.Ab8RN6IPL1Q4E-DzkdOAr-W7r1XC44MB11bEVkEy0XbB42Ry-w";
+            string apiKey = "";
             string url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={apiKey}";
 
             string systemPrompt = "Bạn là nhân viên tư vấn kỹ thuật thông minh của cửa hàng máy tính TNC Store. " +
