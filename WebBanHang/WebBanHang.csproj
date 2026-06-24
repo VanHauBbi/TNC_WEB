@@ -147,6 +147,7 @@
     <Compile Include="Controllers\AccountController.cs" />
     <Compile Include="Controllers\BuildPCController.cs" />
     <Compile Include="Controllers\CartController.cs" />
+    <Compile Include="Controllers\ChatController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\OrderController.cs" />
     <Compile Include="Global.asax.cs">
@@ -233,6 +234,7 @@
     <Compile Include="Models\ViewModel\ResetPasswordVM.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utilities\PriceHelper.cs" />
+    <Compile Include="Utilities\VnPayLibrary.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="BottomIcon\mastercard-3.svg" />
@@ -260,6 +262,7 @@
     <Content Include="Content\bootstrap.rtl.min.css" />
     <Content Include="Content\myStyle\buildpc.css" />
     <Content Include="Content\myStyle\cart.css" />
+    <Content Include="Content\myStyle\chatbot.css" />
     <Content Include="Content\myStyle\checkout.css" />
     <Content Include="Content\myStyle\danhmucsanpham.css" />
     <Content Include="Content\myStyle\home.css" />
@@ -547,6 +550,7 @@
     <Folder Include="Content\image\" />
     <Folder Include="Data\" />
     <Folder Include="Font\" />
+    <Folder Include="Views\Chat\" />
     <Folder Include="Views\TrangSanPham\" />
   </ItemGroup>
   <ItemGroup>
