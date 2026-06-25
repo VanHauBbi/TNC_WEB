@@ -1,0 +1,19 @@
+{
+  "Products": [
+    {
+      "SKU": "SKU-MON-ASUS27",
+      "ProductName": "Màn hình ASUS TUF Gaming VG27AQ",
+      "UnitPrice": 5500000
+    },
+    {
+      "SKU": "SKU-RAM-8GB",
+      "ProductName": "Ram 8GB DDR4 XPG",
+      "UnitPrice": 400000
+    },
+    {
+      "SKU": "SKU-VGA-3060",
+      "ProductName": "VGA RTX 3060 12GB",
+      "UnitPrice": 7200000
+    }
+  ]
+}
