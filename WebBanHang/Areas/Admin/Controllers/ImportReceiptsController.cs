@@ -2,12 +2,18 @@
 using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
+using System.Net.Http;
+using System.Threading.Tasks;
 using System.Web.Mvc;
-using WebBanHang.Models; // Sửa lại đúng namespace Models của bạn
+using Newtonsoft.Json;
+using WebBanHang.Models;
+using WebBanHang.Models.ViewModel;
 
 namespace WebBanHang.Areas.Admin.Controllers
 {
-    // 1. DTO hứng dữ liệu mảng JSON từ giao diện gửi lên
+    // =====================================================================
+    // DTO HỨNG DỮ LIỆU TỪ GIAO DIỆN
+    // =====================================================================
     public class ImportReceiptDTO
     {
         public int? POID { get; set; }
@@ -25,7 +31,7 @@ namespace WebBanHang.Areas.Admin.Controllers
 
     public class ImportReceiptsController : Controller
     {
-        private MyStoreEntities db = new MyStoreEntities(); // DB Context của bạn
+        private MyStoreEntities db = new MyStoreEntities();
 
         // =====================================================================
         // 1. DANH SÁCH PHIẾU NHẬP
@@ -41,13 +47,61 @@ namespace WebBanHang.Areas.Admin.Controllers
         // =====================================================================
         public ActionResult Create()
         {
+            // Truyền danh sách sản phẩm ra View để chọn
             ViewBag.ProductsList = db.Products.ToList();
-
             return View();
         }
 
         // =====================================================================
-        // 3. API CHỐT PHIẾU NHẬP KHO (XỬ LÝ ACID TRANSACTION)
+        // 3. API LẤY GIÁ TỪ NHÀ CUNG CẤP (GITHUB MOCK API)
+        // =====================================================================
+        [HttpGet]
+        public async Task<ActionResult> FetchSupplierPrice(string sku)
+        {
+            if (string.IsNullOrEmpty(sku))
+            {
+                return Json(new { success = false, message = "Vui lòng nhập mã SKU" }, JsonRequestBehavior.AllowGet);
+            }
+
+            // Ép hệ thống dùng chuẩn bảo mật TLS 1.2
+            System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
+
+            using (var client = new HttpClient())
+            {
+                // Nhớ đổi 'VanHauBbi' thành tên Github của bạn nếu cần
+                string apiUrl = $"https://my-json-server.typicode.com/VanHauBbi/TNC_WEB/Products?SKU={sku}";
+
+                try
+                {
+                    var response = await client.GetAsync(apiUrl);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var jsonString = await response.Content.ReadAsStringAsync();
+
+                        var productList = JsonConvert.DeserializeObject<List<SupplierProductVM>>(jsonString);
+                        var productInfo = productList?.FirstOrDefault();
+
+                        if (productInfo != null)
+                        {
+                            return Json(new
+                            {
+                                success = true,
+                                price = productInfo.UnitPrice,
+                                name = productInfo.ProductName
+                            }, JsonRequestBehavior.AllowGet);
+                        }
+                    }
+                    return Json(new { success = false, message = "Không tìm thấy báo giá cho mã SKU này trên hệ thống nhà cung cấp." }, JsonRequestBehavior.AllowGet);
+                }
+                catch (Exception ex)
+                {
+                    return Json(new { success = false, message = "Lỗi kết nối API: " + ex.Message }, JsonRequestBehavior.AllowGet);
+                }
+            }
+        }
+
+        // =====================================================================
+        // 4. API CHỐT PHIẾU NHẬP KHO (XỬ LÝ ACID TRANSACTION & FIFO)
         // =====================================================================
         [HttpPost]
         public JsonResult SubmitReceipt(ImportReceiptDTO model)
@@ -61,12 +115,12 @@ namespace WebBanHang.Areas.Admin.Controllers
             {
                 try
                 {
-                    // A. Tạo phần "Cha" (ImportReceipt)
+                    // A. Tạo phiếu nhập (ImportReceipt)
                     var receipt = new ImportReceipt
                     {
                         POID = model.POID,
                         ReceivedDate = DateTime.Now,
-                        ReceivedBy = string.IsNullOrEmpty(model.ReceivedBy) ? "Admin Core" : model.ReceivedBy,
+                        ReceivedBy = string.IsNullOrEmpty(model.ReceivedBy) ? "Admin" : model.ReceivedBy,
                         Note = model.Note,
                         TotalAmount = 0
                     };
@@ -77,7 +131,7 @@ namespace WebBanHang.Areas.Admin.Controllers
                     decimal grandTotal = 0;
                     List<string> marginAlerts = new List<string>();
 
-                    // B. Lặp và xử lý các phần "Con" (ImportReceiptDetail)
+                    // B. Xử lý chi tiết (ImportReceiptDetail)
                     foreach (var item in model.Details)
                     {
                         if (item.Quantity <= 0 || item.ImportPrice < 0) continue;
@@ -88,37 +142,33 @@ namespace WebBanHang.Areas.Admin.Controllers
                             ProductID = item.ProductID,
                             ImportPrice = item.ImportPrice,
                             ImportQuantity = item.Quantity,
-                            // [BIẾN SỐ SỐNG CÒN CỦA FIFO]: Khởi tạo số tồn của lô = đúng số lượng nhập
-                            RemainingQuantity = item.Quantity
+                            RemainingQuantity = item.Quantity // Tồn kho của lô này phục vụ FIFO
                         };
                         db.ImportReceiptDetails.Add(detail);
 
                         grandTotal += (item.ImportPrice * item.Quantity);
 
-                        // --- THỰC THI CÁC CHỐT CHẶN ERP TRÊN BẢNG PRODUCT ---
+                        // Cập nhật tồn kho tổng và cảnh báo giá
                         var targetProduct = db.Products.Find(item.ProductID);
                         if (targetProduct != null)
                         {
-                            // Chức năng 1: Cộng dồn Tồn kho vật lý
                             targetProduct.StockQuantity += item.Quantity;
 
-                            // Chức năng 2: Tự động kéo mỏ neo giá vốn lên nếu lô này nhập đắt hơn
                             if (item.ImportPrice > targetProduct.ImportPrice)
                             {
-                                targetProduct.ImportPrice = item.ImportPrice;
+                                targetProduct.ImportPrice = item.ImportPrice; // Neo giá vốn cao nhất
                             }
 
-                            // Chức năng 3: Cảnh báo trượt giá (Bán lỗ)
                             if (item.ImportPrice >= targetProduct.ProductPrice)
                             {
-                                marginAlerts.Add($"Mặt hàng [{targetProduct.ProductName}] có giá nhập đợt này ({item.ImportPrice:N0}đ) >= Giá bán niêm yết ({targetProduct.ProductPrice:N0}đ). Nguy cơ bán lỗ!");
+                                marginAlerts.Add($"Nguy cơ bán lỗ: [{targetProduct.ProductName}] có giá nhập ({item.ImportPrice:N0}đ) >= Giá bán ra.");
                             }
 
                             db.Entry(targetProduct).State = EntityState.Modified;
                         }
                     }
 
-                    // Cập nhật lại tổng tiền cho phiếu
+                    // Cập nhật tổng tiền cho phiếu
                     receipt.TotalAmount = grandTotal;
                     db.Entry(receipt).State = EntityState.Modified;
 
@@ -141,7 +191,7 @@ namespace WebBanHang.Areas.Admin.Controllers
         }
 
         // =====================================================================
-        // 4. XEM CHI TIẾT PHIẾU ĐÃ NHẬP
+        // 5. XEM CHI TIẾT PHIẾU ĐÃ NHẬP
         // =====================================================================
         public ActionResult Details(int id)
         {
