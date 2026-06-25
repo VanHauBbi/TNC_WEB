@@ -418,17 +418,10 @@ namespace WebBanHang.Controllers
                             db.SaveChanges();
 
                             // --- DỌN DẸP GIỎ HÀNG TẠI ĐÂY ---
-                            var tempCart = Session["BuyNowTempCart"] as WebBanHang.Models.ViewModel.Cart;
-                            if (tempCart != null)
-                            {
-                                Session["Cart"] = tempCart;
-                                Session.Remove("BuyNowTempCart");
-                            }
-                            else
-                            {
-                                Session.Remove("Cart");
-                                Session.Remove("VoucherDiscount");
-                            }
+                            // ✅ FIX: Luôn xóa giỏ hàng và session khi thanh toán thành công
+                            Session.Remove("Cart");
+                            Session.Remove("VoucherDiscount");
+                            Session.Remove("BuyNowTempCart");
 
                             TempData["Message"] = "Thanh toán đơn hàng qua cổng VNPay thành công!";
                             return RedirectToAction("OrderSuccess", new { id = orderId });
@@ -468,12 +461,18 @@ namespace WebBanHang.Controllers
                             db.Entry(order).State = EntityState.Modified; // Báo EF lưu trạng thái đơn
                             db.SaveChanges();
 
-                            // 4. PHỤC HỒI GIỎ HÀNG
+                            // 4. PHỤC HỒI GIỎ HÀNG (Nếu có BuyNowTempCart)
                             var tempCart = Session["BuyNowTempCart"] as WebBanHang.Models.ViewModel.Cart;
                             if (tempCart != null)
                             {
                                 Session["Cart"] = tempCart;
                                 Session.Remove("BuyNowTempCart");
+                            }
+                            else
+                            {
+                                // ✅ FIX: Xóa giỏ hàng hiện tại khi thanh toán thất bại
+                                Session.Remove("Cart");
+                                Session.Remove("VoucherDiscount");
                             }
 
                             TempData["Error"] = "Giao dịch thất bại. Đơn hàng đã tự động hủy. Mã lỗi: " + vnp_ResponseCode;
