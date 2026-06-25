@@ -107,7 +107,7 @@
         <div class="col-lg-8 mb-4">
             <div class="card dash-card shadow-sm h-100">
                 <div class="card-header bg-white py-3">
-                    <h5 class="mb-0 fw-bold"><i class="fa-solid fa-chart-line"></i> Biểu đồ Doanh thu (6 tháng gần nhất)</h5>
+                    <h5 class="mb-0 fw-bold"><i class="fa-solid fa-chart-line"></i> Biểu đồ Doanh thu</h5>
                 </div>
                 <div class="card-body">
                     <canvas id="revenueChart" height="100"></canvas>
@@ -166,7 +166,7 @@
 
         var ctx = document.getElementById('revenueChart').getContext('2d');
         var revenueChart = new Chart(ctx, {
-            type: 'line', // Có thể đổi thành 'line' nếu muốn biểu đồ đường
+            type: 'bar', // Có thể đổi thành 'line' nếu muốn biểu đồ đường
             data: {
                 labels: labels,
                 datasets: [{
@@ -210,35 +210,34 @@
         $.post('@Url.Action("GetDashboardData", "Home")', {
             fromDate: fromDate,
             toDate: toDate
-        }, function(res) {
-            // Cập nhật giá trị hiển thị bằng ID đã gắn ở trên
+        }, function (res) {
             $('#valRevenue').text(res.totalRevenue);
-            $('#valProfit').text(res.grossProfit);
+            $('#valProfit').text(res.totalProfit); // Phải dùng totalProfit (đúng với key trong JSON)
             $('#valOrders').text(res.orderCount + " đơn");
 
-            $('#exportRevenue').text(res.totalRevenue);
-            $('#exportProfit').text(res.totalProfit);
-            $('#exportOrders').text(res.orderCount);
+            // CẬP NHẬT BIỂU ĐỒ KHI LỌC
+            revenueChart.data.labels = res.chartLabels;
+            revenueChart.data.datasets[0].data = res.chartData;
+            revenueChart.update();
         });
     });
+
     $('#btnReset').click(function() {
-        // 1. Reset các ô input về mặc định
-        $('#filterFrom').val('2026-03-18'); // Hoặc ngày bắt đầu project của bạn
+        $('#filterFrom').val('@DateTime.Now.AddMonths(-1).ToString("yyyy-MM-dd")');
         $('#filterTo').val('@DateTime.Now.ToString("yyyy-MM-dd")');
 
-        // 2. Gọi lại hàm lọc với dữ liệu toàn bộ
         $.post('@Url.Action("GetDashboardData", "Home")', {
-            fromDate: '2026-03-18',
+            fromDate: '@DateTime.Now.AddMonths(-1).ToString("yyyy-MM-dd")',
             toDate: '@DateTime.Now.ToString("yyyy-MM-dd")'
-        }, function(res) {
+        }, function(res) { // ĐÃ THÊM DẤU { VÀO ĐÂY
             $('#valRevenue').text(res.totalRevenue);
-            $('#valProfit').text(res.grossProfit);
+            $('#valProfit').text(res.totalProfit);
             $('#valOrders').text(res.orderCount + " đơn");
 
             revenueChart.data.labels = res.chartLabels;
             revenueChart.data.datasets[0].data = res.chartData;
             revenueChart.update();
-        });
+        }); // Đóng } ở đây
     });
 
     $('#btnExport').click(function() {
@@ -246,11 +245,11 @@
         var template = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head></head><body><table>{table}</table></body></html>';
         var base64 = function(s) { return window.btoa(unescape(encodeURIComponent(s))) };
         var format = function(s, c) { return s.replace(/{(\w+)}/g, function(m, p) { return c[p]; }) };
-    
+
         // Giả sử bảng chi tiết đơn hàng của bạn có id="tableReport"
         var table = document.getElementById("tableReport");
         var ctx = { worksheet: 'BaoCao', table: table.innerHTML };
         window.location.href = uri + base64(format(template, ctx));
     });
-   </script>
+    </script>
 }
