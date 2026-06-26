@@ -1,0 +1,201 @@
+﻿@model WebBanHang.Models.Order
+@{
+    ViewBag.Title = "Theo dõi đơn hàng #" + Model.OrderID;
+    Layout = "~/Views/Shared/_LayoutDivMain.cshtml";
+
+    // XÁC ĐỊNH MỨC ĐỘ TIẾN ĐỘ DỰA VÀO CHUỖI TRẠNG THÁI
+    string status = Model.OrderStatus;
+    int step = 1; // Mặc định là Chờ duyệt
+
+    if (status.Contains("Đã duyệt")) { step = 2; }  
+    if (status.Contains("Đang giao")) { step = 3; }
+    if (status.Contains("Đã giao")) { step = 4; }
+    if (status.Contains("hủy")) { step = -1; } // Trạng thái hủy
+}
+
+<style>
+    .tracking-container {
+        background: #fff;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin-top: 20px;
+    }
+
+    .ghn-color {
+        color: #f26522;
+    }
+    /* Màu cam GHN */
+    .ghn-bg {
+        background-color: #f26522 !important;
+        color: white !important;
+    }
+
+    /* CSS CỦA TIMELINE */
+    .timeline-wrapper {
+        position: relative;
+        margin: 40px 0;
+    }
+
+    .timeline-progress-bar {
+        position: absolute;
+        top: 15px;
+        left: 10%;
+        right: 10%;
+        height: 4px;
+        background: #e9ecef;
+        z-index: 1;
+    }
+
+    .timeline-progress-fill {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        background: #f26522;
+        transition: width 0.5s ease;
+    }
+
+    .timeline-steps {
+        display: flex;
+        justify-content: space-between;
+        position: relative;
+        z-index: 2;
+    }
+
+    .step-item {
+        text-align: center;
+        width: 25%;
+    }
+
+    .step-icon {
+        width: 35px;
+        height: 35px;
+        margin: 0 auto 10px;
+        background: #e9ecef;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: #adb5bd;
+        border: 3px solid #fff;
+        box-shadow: 0 0 0 2px #e9ecef;
+    }
+
+    .step-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #6c757d;
+    }
+
+    .step-date {
+        font-size: 0.75rem;
+        color: #adb5bd;
+        margin-top: 5px;
+        display: block;
+    }
+
+    /* Trạng thái Active & Hoàn thành */
+    .step-item.active .step-icon, .step-item.completed .step-icon {
+        background: #f26522;
+        color: #fff;
+        box-shadow: 0 0 0 2px #f26522;
+    }
+
+    .step-item.active .step-label, .step-item.completed .step-label {
+        color: #f26522;
+    }
+
+    /* Trạng thái Hủy */
+    .cancelled-state {
+        text-align: center;
+        color: #dc3545;
+        padding: 20px;
+        border: 1px dashed #dc3545;
+        border-radius: 5px;
+        margin-top: 20px;
+    }
+</style>
+
+<div class="container tracking-container">
+    <h3 class="mb-4">Theo dõi đơn hàng: <span class="ghn-color">#@Model.OrderID</span></h3>
+
+    @if (step == -1)
+    {
+        <div class="cancelled-state">
+            <h4><i class="fa-solid fa-ban"></i> Đơn hàng đã bị hủy</h4>
+            <p>Rất tiếc, đơn hàng này không còn hiệu lực. Vui lòng liên hệ Admin để biết thêm chi tiết.</p>
+        </div>
+    }
+    else
+    {
+        string progressWidth = "0%";
+        if (step == 2) { progressWidth = "33%"; }
+        if (step == 3) { progressWidth = "66%"; }
+        if (step == 4) { progressWidth = "100%"; }
+
+        <div class="timeline-wrapper">
+            <div class="timeline-progress-bar">
+                <div class="timeline-progress-fill" style="width: @progressWidth;"></div>
+            </div>
+
+            <div class="timeline-steps">
+                <div class="step-item @(step >= 1 ? "completed" : "")">
+                    <div class="step-icon"><i class="fa-solid fa-receipt"></i></div>
+                    <div class="step-label">Chờ duyệt</div>
+                    <span class="step-date">@Model.OrderDate.ToString("dd/MM/yyyy HH:mm")</span>
+                </div>
+
+                <div class="step-item @(step >= 2 ? "completed" : "")">
+                    <div class="step-icon"><i class="fa-solid fa-box-open"></i></div>
+                    <div class="step-label">Đã duyệt & Đóng gói</div>
+                    @if (step >= 2)
+                    {<span class="step-date">Hệ thống ghi nhận</span>}
+                </div>
+
+                <div class="step-item @(step >= 3 ? "completed" : "")">
+                    <div class="step-icon"><i class="fa-solid fa-truck-fast"></i></div>
+                    <div class="step-label">Đang giao hàng</div>
+                    @if (step >= 3)
+                    {<span class="step-date">Đang luân chuyển</span>}
+                </div>
+
+                <div class="step-item @(step >= 4 ? "completed" : "")">
+                    <div class="step-icon"><i class="fa-solid fa-house-circle-check"></i></div>
+                    <div class="step-label">Giao thành công</div>
+                    @if (step >= 4)
+                    {<span class="step-date">Hoàn thành</span>}
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-5 border-0 bg-light">
+            <div class="card-body">
+                <h5 class="card-title fw-bold border-bottom pb-2"><i class="fa-solid fa-list-check"></i> Lịch sử cập nhật</h5>
+                <ul class="list-unstyled mt-3">
+                    @if (step >= 4)
+                    {
+                        <li class="mb-2 text-success"><i class="fa-solid fa-check-circle me-2"></i> <strong>Đã giao hàng:</strong> Kiện hàng đã được giao thành công đến người nhận.</li>
+}
+                    @if (step >= 3)
+                    {
+                        <li class="mb-2"><i class="fa-solid fa-circle-dot me-2 text-warning"></i> <strong>Đang giao hàng:</strong> Shipper đang trên đường giao hàng đến địa chỉ: @Model.ShippingAddress</li>
+}
+                    @if (step >= 2)
+                    {
+                        <li class="mb-2"><i class="fa-solid fa-circle-dot me-2 text-info"></i> <strong>Đã duyệt:</strong> Admin TNC đã xác nhận đơn hàng, kiện hàng đang được chuẩn bị để giao cho ĐVVC.</li>
+}
+                    @if (step >= 1)
+                    {
+                        <li class="mb-2"><i class="fa-solid fa-circle-dot me-2 text-secondary"></i> <strong>Chờ duyệt:</strong> Đơn hàng được tạo thành công lúc @Model.OrderDate.ToString("HH:mm - dd/MM/yyyy").</li>
+}
+                </ul>
+            </div>
+        </div>
+    }
+
+    <div class="mt-4 text-center">
+        <a href="@Url.Action("Index", "Home")" class="btn btn-outline-secondary">Về trang chủ</a>
+    </div>
+</div>
