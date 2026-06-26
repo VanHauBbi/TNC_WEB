@@ -46,15 +46,28 @@
                                 }
                             </div>
 
-                            <div class="action-buttons mt-2 d-flex justify-content-between">
-                                <button class="btn btn-primary btn-sm flex-grow-1 me-1 add-to-cart-btn"
-                                        data-product-id="@p.ProductID">
-                                    Thêm vào giỏ
-                                </button>
-                                <button class="btn btn-success btn-sm flex-grow-1 ms-1 buy-now-btn"
-                                        data-product-id="@p.ProductID">
-                                    Mua ngay
-                                </button>
+                            <div class="action-buttons mt-2">
+                                @{ string searchItemState = p.GetStatusLabel(); }
+
+                                @if (searchItemState == "AVAILABLE")
+                                {
+                                    <div class="d-flex justify-content-between gap-1">
+                                        <button class="btn btn-primary btn-sm flex-grow-1 add-to-cart-btn" data-product-id="@p.ProductID">Thêm vào giỏ</button>
+                                        <button class="btn btn-success btn-sm flex-grow-1 buy-now-btn" data-product-id="@p.ProductID">Mua ngay</button>
+                                    </div>
+                                }
+                                else if (searchItemState == "OUT_OF_STOCK")
+                                {
+                                    <span class="badge bg-secondary w-100 py-2 d-block text-center">Tạm hết hàng</span>
+                                }
+                                else if (searchItemState == "COMING_SOON")
+                                {
+                                    <span class="badge bg-warning text-dark w-100 py-2 d-block text-center fw-bold">Hàng sắp về</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger w-100 py-2 d-block text-center">Ngừng kinh doanh</span>
+                                }
                             </div>
                         </div>
                     </div>

@@ -11,17 +11,94 @@ using PagedList.Mvc;
 using WebBanHang.Models.ViewModel;
 using WebBanHang.Models;
 
-
-
 namespace WebBanHang.Areas.Admin.Controllers
 {
     public class ProductsController : Controller
     {
         private MyStoreEntities db = new MyStoreEntities();
 
+        // =====================================================================
+        // THUẬT TOÁN HỖ TRỢ SINH MÃ SKU
+        // =====================================================================
+
+        // Hàm loại bỏ dấu tiếng Việt
+        private string RemoveVietnameseTone(string text)
+        {
+            string[] vietnameseSigns = new string[]
+            {
+                "aAeEoOuUiIdDyY",
+                "áàạảãâấầậẩẫăắằặẳẵ",
+                "ÁÀẠẢÃÂẤẦẬẨẪĂẮẰẶẲẴ",
+                "éèẹẻẽêếềệểễ",
+                "ÉÈẸẺẼÊẾỀỆỂỄ",
+                "óòọỏõôốồộổỗơớờợởỡ",
+                "ÓÒỌỎÕÔỐỒỘỔỖƠỚỜỢỞỠ",
+                "úùụủũưứừựửữ",
+                "ÚÙỤỦŨƯỨỪỰỬỮ",
+                "íìịỉĩ",
+                "ÍÌỊỈĨ",
+                "đ",
+                "Đ",
+                "ýỳỵỷỹ",
+                "ÝỲỴỶỸ"
+            };
+            for (int i = 1; i < vietnameseSigns.Length; i++)
+            {
+                for (int j = 0; j < vietnameseSigns[i].Length; j++)
+                {
+                    text = text.Replace(vietnameseSigns[i][j], vietnameseSigns[0][i - 1]);
+                }
+            }
+            return text;
+        }
+
+        // Hàm sinh SKU thông minh dựa trên tên sản phẩm
+        private string GenerateSmartSKU(string productName)
+        {
+            if (string.IsNullOrWhiteSpace(productName)) return "SKU-DEFAULT";
+
+            // 1. Bỏ dấu và viết hoa
+            string cleanName = RemoveVietnameseTone(productName).ToUpper();
+
+            // 2. Chỉ giữ lại chữ cái, số và khoảng trắng
+            cleanName = new string(cleanName.Where(c => char.IsLetterOrDigit(c) || char.IsWhiteSpace(c)).ToArray());
+
+            // 3. Tách từ và lấy tối đa 3 từ đầu tiên
+            var words = cleanName.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            string baseSku = "SKU-" + string.Join("-", words.Take(3));
+
+            // 4. Kiểm tra trùng lặp trong cơ sở dữ liệu
+            string finalSku = baseSku;
+            int counter = 1;
+            while (db.Products.Any(p => p.SKU == finalSku))
+            {
+                finalSku = $"{baseSku}-{counter}";
+                counter++;
+            }
+
+            return finalSku;
+        }
+
+        // Thêm API nhỏ này để giao diện gọi lên lấy SKU
+        [HttpGet]
+        public JsonResult GenerateSKUPreview(string productName)
+        {
+            if (string.IsNullOrWhiteSpace(productName))
+            {
+                return Json(new { success = false, message = "Vui lòng nhập tên sản phẩm!" }, JsonRequestBehavior.AllowGet);
+            }
+
+            string generatedSku = GenerateSmartSKU(productName);
+            return Json(new { success = true, sku = generatedSku }, JsonRequestBehavior.AllowGet);
+        }
+
+        // =====================================================================
+        // CÁC ACTION CỦA CONTROLLER
+        // =====================================================================
+
         public ActionResult Index(string searchTerm, decimal? MinPrice, decimal? MaxPrice, string SortOrder, int? page)
         {
-            var product = db.Products.Include(p => p.Category).AsQueryable(); // THÊM INCLUDE CATEGORY
+            var product = db.Products.Include(p => p.Category).AsQueryable();
 
             // 1. Áp dụng các bộ lọc tìm kiếm
             if (!string.IsNullOrEmpty(searchTerm))
@@ -56,13 +133,13 @@ namespace WebBanHang.Areas.Admin.Controllers
                     product = product.OrderByDescending(p => p.ProductPrice);
                     break;
                 default:
-                    product = product.OrderBy(p => p.ProductID); // Sắp xếp mặc định theo ID
+                    product = product.OrderBy(p => p.ProductID);
                     break;
             }
 
             // 3. Phân trang
             int pageNumber = page ?? 1;
-            int pageSize = 10; // Thay đổi từ 5 lên 10 để Admin dễ quản lý hơn
+            int pageSize = 10;
 
             var model = new ProductSearchVM
             {
@@ -70,15 +147,13 @@ namespace WebBanHang.Areas.Admin.Controllers
                 MinPrice = MinPrice,
                 MaxPrice = MaxPrice,
                 sortOrder = SortOrder,
-                page = page, // Lưu lại số trang hiện tại
+                page = page,
                 products = product.ToPagedList(pageNumber, pageSize)
             };
 
             return View(model);
         }
 
-
-        // GET: Admin/Products/Details/5
         public ActionResult Details(int? id)
         {
             if (id == null)
@@ -93,7 +168,6 @@ namespace WebBanHang.Areas.Admin.Controllers
             return View(product);
         }
 
-        // GET: Admin/Products/Create
         public ActionResult Create()
         {
             ViewBag.CategoryID = new SelectList(db.Categories, "CategoryID", "CategoryName");
@@ -102,32 +176,34 @@ namespace WebBanHang.Areas.Admin.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create([Bind(Include = "ProductID,CategoryID,ProductName,ProductDescription,ProductPrice,ImportPrice,ProductImage")] Product product)
+        public ActionResult Create([Bind(Include = "ProductID,CategoryID,ProductName,ProductDescription,ProductPrice,ProductImage,ComponentType,SKU")] Product product)
         {
             if (ModelState.IsValid)
             {
                 try
                 {
+                    if (string.IsNullOrEmpty(product.SKU))
+                    {
+                        product.SKU = GenerateSmartSKU(product.ProductName);
+                    }
+
                     product.StockQuantity = 0;
+                    product.ImportPrice = 0;
+                    product.Status = 0; // Khởi tạo ở trạng thái Nháp (chưa bán ra thị trường)
+
+                    if (string.IsNullOrEmpty(product.ProductDescription))
+                    {
+                        product.ProductDescription = "Chưa có mô tả";
+                    }
 
                     db.Products.Add(product);
                     db.SaveChanges();
-                    TempData["SuccessMessage"] = $"Đã tạo danh mục '{product.ProductName}'. Vui lòng sang phân hệ Nhập Kho để nhập số lượng!";
+                    TempData["SuccessMessage"] = $"Đã tạo sản phẩm '{product.ProductName}'. Trạng thái hiện tại: Bản nháp.";
                     return RedirectToAction("Index");
                 }
-                catch (System.Data.Entity.Validation.DbEntityValidationException ex)
+                catch (Exception ex)
                 {
-                    var errorDetailLists = ex.EntityValidationErrors
-                        .SelectMany(validationResult => validationResult.ValidationErrors)
-                        .Select(validationError => $"Cột [{validationError.PropertyName}]: {validationError.ErrorMessage}");
-
-                    string fullSqlErrors = string.Join(" | ", errorDetailLists);
-
-                    ModelState.AddModelError("", "LỖI TỪ DATABASE: " + fullSqlErrors);
-                }
-                catch (Exception genEx)
-                {
-                    ModelState.AddModelError("", "Lỗi hệ thống khác: " + genEx.Message);
+                    ModelState.AddModelError("", "Lỗi hệ thống: " + ex.Message);
                 }
             }
 
@@ -152,7 +228,7 @@ namespace WebBanHang.Areas.Admin.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit([Bind(Include = "ProductID,CategoryID,ProductName,ProductDescription,ProductPrice,ProductImage")] Product product)
+        public ActionResult Edit([Bind(Include = "ProductID,CategoryID,ProductName,ProductDescription,ProductPrice,ProductImage,ComponentType,Status")] Product product)
         {
             if (ModelState.IsValid)
             {
@@ -161,8 +237,10 @@ namespace WebBanHang.Areas.Admin.Controllers
 
                 existingProduct.ProductName = product.ProductName;
                 existingProduct.CategoryID = product.CategoryID;
+                existingProduct.ComponentType = product.ComponentType;
                 existingProduct.ProductDescription = product.ProductDescription;
                 existingProduct.ProductPrice = product.ProductPrice;
+                existingProduct.Status = product.Status; // Cho phép Admin thay đổi trạng thái
 
                 if (!string.IsNullOrEmpty(product.ProductImage))
                 {
@@ -171,7 +249,7 @@ namespace WebBanHang.Areas.Admin.Controllers
 
                 db.Entry(existingProduct).State = EntityState.Modified;
                 db.SaveChanges();
-                TempData["SuccessMessage"] = "Cập nhật thông tin sản phẩm thành công!";
+                TempData["SuccessMessage"] = "Cập nhật sản phẩm thành công!";
                 return RedirectToAction("Index");
             }
 
@@ -179,7 +257,6 @@ namespace WebBanHang.Areas.Admin.Controllers
             return View(product);
         }
 
-        // GET: Admin/Products/Delete/5
         public ActionResult Delete(int? id)
         {
             if (id == null)
@@ -194,7 +271,6 @@ namespace WebBanHang.Areas.Admin.Controllers
             return View(product);
         }
 
-        // POST: Admin/Products/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public ActionResult DeleteConfirmed(int id)
@@ -203,7 +279,6 @@ namespace WebBanHang.Areas.Admin.Controllers
             {
                 Product product = db.Products.Find(id);
 
-                // Kiểm tra ràng buộc OrderDetail
                 bool isUsedInOrder = db.OrderDetails.Any(o => o.ProductID == id);
                 if (isUsedInOrder)
                 {

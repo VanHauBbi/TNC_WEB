@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="TNCStore" />
     <meta name="keywords" content="TNC, TNCStore, TNCStoreGaming" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -10,7 +10,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
 
     <link href="~/Content/bootstrap.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
     <link rel="stylesheet" href="~/Content/myStyle/header.css" />
@@ -18,7 +17,7 @@
     <link rel="stylesheet" href="~/Content/myStyle/home.css" />
 
     <script>
-    var isLoggedIn = @(Session["UserName"] != null ? "true" : "false");
+        var isLoggedIn = @(Session["UserName"] != null ? "true" : "false");
     </script>
     <title>@ViewBag.Title</title>
 </head>
@@ -32,7 +31,7 @@
                     </a>
                 </div>
 
-                <form class="search-box new-style" action="@Url.Action("ProductSearch", "Home")" method="get">
+                <form class="search-box new-style" action="@Url.Action("ProductSearch", "Home", null, Request.Url.Scheme)" method="get" target="_self">
                     <input type="text"
                            placeholder="Tìm kiếm sản phẩm..."
                            name="query"
@@ -335,9 +334,7 @@
                 }
             });
             MiniCart();
-        });
 
-        $(document).ready(function () {
             const messageBox = $('#tempMessage');
             if (messageBox.length) {
                 messageBox.fadeIn(400);

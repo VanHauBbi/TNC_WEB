@@ -138,6 +138,8 @@
           <Property Name="ProductImage" Type="nvarchar(max)" />
           <Property Name="StockQuantity" Type="int" Nullable="false" />
           <Property Name="ComponentType" Type="nvarchar" MaxLength="50" />
+          <Property Name="SKU" Type="nvarchar" MaxLength="100" Nullable="false" />
+          <Property Name="Status" Type="int" Nullable="false" />
         </EntityType>
         <EntityType Name="ProductPriceHistory">
           <Key>
@@ -713,6 +715,8 @@
           <NavigationProperty Name="ImportReceiptDetails" Relationship="MyStoreModel.FK_ImportDetail_Product" FromRole="Product" ToRole="ImportReceiptDetail" />
           <NavigationProperty Name="PurchaseOrderDetails" Relationship="MyStoreModel.FK_PODetail_Product" FromRole="Product" ToRole="PurchaseOrderDetail" />
           <Property Name="ComponentType" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="SKU" Type="String" Nullable="false" MaxLength="100" FixedLength="false" Unicode="true" />
+          <Property Name="Status" Type="Int32" Nullable="false" />
         </EntityType>
         <EntityType Name="ProductPriceHistory">
           <Key>
@@ -1267,6 +1271,8 @@
           <EntitySetMapping Name="Products">
             <EntityTypeMapping TypeName="MyStoreModel.Product">
               <MappingFragment StoreEntitySet="Product">
+                <ScalarProperty Name="Status" ColumnName="Status" />
+                <ScalarProperty Name="SKU" ColumnName="SKU" />
                 <ScalarProperty Name="ComponentType" ColumnName="ComponentType" />
                 <ScalarProperty Name="ImportPrice" ColumnName="ImportPrice" />
                 <ScalarProperty Name="ProductID" ColumnName="ProductID" />

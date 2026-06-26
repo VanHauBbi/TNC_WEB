@@ -4,120 +4,94 @@
     bool isCreateMode = (Model == null || Model.ProductID == 0);
 }
 
-<div class="form-group">
-    <div class="control-label col-md-2 fw-bold">Danh mục</div>
-    <div class="col-md-10">
+<div class="row mb-3">
+    <div class="col-md-6">
+        <label class="form-label fw-bold">Danh mục <span class="text-danger">*</span></label>
         @Html.DropDownList("CategoryID", null, "--- Chọn Danh mục ---", htmlAttributes: new { @class = "form-control" })
         @Html.ValidationMessageFor(model => model.CategoryID, "", new { @class = "text-danger" })
     </div>
-</div>
-<div class="form-group">
-    <label>Nhãn Build PC (CPU, RAM, VGA...):</label>
-    @Html.EditorFor(model => model.ComponentType, new { htmlAttributes = new { @class = "form-control" } })
+    <div class="col-md-6">
+        <label class="form-label fw-bold">Nhãn Build PC (Phân loại)</label>
+        <select name="ComponentType" class="form-control">
+            <option value="" @(Model?.ComponentType == "" ? "selected" : "")>-- Không phân loại / PC Nguyên bộ --</option>
+            <option value="CPU" @(Model?.ComponentType == "CPU" ? "selected" : "")>CPU - Vi xử lý</option>
+            <option value="RAM" @(Model?.ComponentType == "RAM" ? "selected" : "")>RAM - Bộ nhớ trong</option>
+            <option value="VGA" @(Model?.ComponentType == "VGA" ? "selected" : "")>VGA - Card màn hình</option>
+            <option value="MAIN" @(Model?.ComponentType == "MAIN" ? "selected" : "")>Mainboard - Bo mạch chủ</option>
+            <option value="SSD" @(Model?.ComponentType == "SSD" ? "selected" : "")>Ổ cứng SSD/HDD</option>
+            <option value="PSU" @(Model?.ComponentType == "PSU" ? "selected" : "")>PSU - Nguồn máy tính</option>
+            <option value="CASE" @(Model?.ComponentType == "CASE" ? "selected" : "")>Case - Vỏ máy tính</option>
+            <option value="MONITOR" @(Model?.ComponentType == "MONITOR" ? "selected" : "")>Màn hình</option>
+            <option value="GEAR" @(Model?.ComponentType == "GEAR" ? "selected" : "")>Phụ kiện (Gear)</option>
+        </select>
+    </div>
 </div>
 
-<div class="form-group">
-    <div class="control-label col-md-2 fw-bold">Tên sản phẩm</div>
-    <div class="col-md-10">
-        @Html.EditorFor(model => model.ProductName, new { htmlAttributes = new { @class = "form-control" } })
+<div class="row mb-3">
+    <div class="col-md-7">
+        <label class="form-label fw-bold">Tên sản phẩm <span class="text-danger">*</span></label>
+        @Html.EditorFor(model => model.ProductName, new { htmlAttributes = new { @class = "form-control", id = "txtProductName" } })
         @Html.ValidationMessageFor(model => model.ProductName, "", new { @class = "text-danger" })
     </div>
-</div>
-
-<div class="form-group">
-    <div class="control-label col-md-2 fw-bold">Mô tả</div>
-    <div class="col-md-10">
-        @Html.TextAreaFor(model => model.ProductDescription, new { @class = "form-control", rows = 4 })
-        @Html.ValidationMessageFor(model => model.ProductDescription, "", new { @class = "text-danger" })
-    </div>
-</div>
-
-<div class="row my-3 bg-light p-3 border rounded">
-    <div class="col-md-6">
-        <div class="form-group mb-0">
-            <label class="control-label fw-bold text-secondary">Giá vốn dự kiến (Tham khảo) <span class="text-danger">*</span></label>
-            @Html.TextBoxFor(model => model.ImportPrice, new
+    <div class="col-md-5">
+        <label class="form-label fw-bold">Mã SKU & Đối soát API</label>
+        <div class="input-group">
+            @Html.EditorFor(model => model.SKU, new { htmlAttributes = new { @class = "form-control bg-light fw-bold text-primary", id = "txtSKU", @readonly = "readonly" } })
+            @if (isCreateMode)
             {
-                @class = "form-control import-price-input",
-                type = "number",
-                min = "0",
-                @Value = Model != null ? Model.ImportPrice.ToString("0", System.Globalization.CultureInfo.InvariantCulture) : "0"
-            })
-            <small class="form-text text-muted">Dùng làm mỏ neo chống gán nhầm giá bán lỗ.</small>
-            @Html.ValidationMessageFor(model => model.ImportPrice, "", new { @class = "text-danger" })
+                <button class="btn btn-warning fw-bold" type="button" id="btnGetSKU" title="Sinh mã SKU từ tên">Tạo SKU</button>
+            }
+            <button class="btn btn-info fw-bold text-white" type="button" id="btnScrapePrice" title="Tra cứu giá gốc từ GitHub">
+                <i class="fa-solid fa-cloud-arrow-down"></i> Cào Giá
+            </button>
         </div>
-    </div>
-
-    <div class="col-md-6">
-        <div class="form-group mb-0">
-            <label class="control-label fw-bold text-primary">Giá bán niêm yết <span class="text-danger">*</span></label>
-            @Html.TextBoxFor(model => model.ProductPrice, new
-            {
-                @class = "form-control selling-price-input fw-bold text-primary",
-                type = "number",
-                min = "0",
-                @Value = Model != null ? Model.ProductPrice.ToString("0", System.Globalization.CultureInfo.InvariantCulture) : ""
-            })
-
-            <div id="lossWarningMsg" class="text-danger fw-bold small mt-1 d-none">
-                <i class="fa-solid fa-triangle-exclamation"></i> CẢNH BÁO: Giá bán đang THẤP HƠN giá vốn dự kiến!
-            </div>
-
-            @Html.ValidationMessageFor(model => model.ProductPrice, "", new { @class = "text-danger" })
-        </div>
+        <small id="scrapeMsg" class="fw-bold mt-1 d-block"></small>
     </div>
 </div>
 
-<div class="form-group">
-    <div class="control-label col-md-2 fw-bold">Hình ảnh (URL)</div>
-    <div class="col-md-10">
+<div class="mb-3">
+    <label class="form-label fw-bold">Mô tả sản phẩm</label>
+    @Html.TextAreaFor(model => model.ProductDescription, new { @class = "form-control", rows = 3 })
+</div>
+
+<div class="row mb-4 p-3 bg-light rounded border">
+    <div class="col-md-4">
+        <label class="form-label fw-bold text-primary">Giá bán niêm yết (₫)</label>
+        @Html.TextBoxFor(model => model.ProductPrice, new
+        {
+            @class = "form-control fw-bold text-primary fs-5",
+            type = "number",
+            min = "0",
+            id = "ProductPrice",
+            @Value = Model != null ? Model.ProductPrice.ToString("0") : "0"
+        })
+        <small class="text-muted">Nhập '0' nếu là hàng mới chưa chốt giá bán ra</small>
+    </div>
+    <div class="col-md-8">
+        <label class="form-label fw-bold">Hình ảnh (URL)</label>
         @Html.EditorFor(model => model.ProductImage, new { htmlAttributes = new { @class = "form-control" } })
-        @Html.ValidationMessageFor(model => model.ProductImage, "", new { @class = "text-danger" })
     </div>
 </div>
 
 @if (!isCreateMode)
 {
     <hr class="my-3" />
-    <div class="form-group">
-        <div class="control-label col-md-2 fw-bold">Tồn kho thực tế</div>
-        <div class="col-md-10">
-            <div class="input-group">
-                @Html.EditorFor(model => model.StockQuantity, new { htmlAttributes = new { @class = "form-control bg-light fw-bold text-success", type = "number", @readonly = "readonly" } })
-                <span class="input-group-text bg-warning text-dark small fw-bold">Kho Lô FIFO</span>
-            </div>
-            <div class="form-text text-danger small">
-                *Tồn kho được cộng/trừ tự động từ các Phiếu Nhập Kho. Không thể sửa bằng tay.
-            </div>
+    <div class="row mb-3 bg-white p-3 border rounded">
+        <div class="col-md-4">
+            <label class="form-label fw-bold">Trạng thái kinh doanh</label>
+            <select name="Status" class="form-control fw-bold">
+                <option value="0" @(Model?.Status == 0 ? "selected" : "")>0: Bản nháp (Chờ hàng về)</option>
+                <option value="1" @(Model?.Status == 1 ? "selected" : "")>1: Đang kinh doanh</option>
+                <option value="2" @(Model?.Status == 2 ? "selected" : "")>2: Tạm hết hàng</option>
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label fw-bold">Tồn kho thực tế (FIFO)</label>
+            @Html.EditorFor(model => model.StockQuantity, new { htmlAttributes = new { @class = "form-control bg-light fw-bold text-success", @readonly = "readonly" } })
+        </div>
+        <div class="col-md-4">
+            <label class="form-label fw-bold">Giá Vốn Kế Toán</label>
+            @Html.EditorFor(model => model.ImportPrice, new { htmlAttributes = new { @class = "form-control bg-light fw-bold text-danger", @readonly = "readonly", @Value = Model != null ? Model.ImportPrice.ToString("0") : "0" } })
         </div>
     </div>
 }
-
-<script>
-    // JS Thuần: Lắng nghe gõ phím để check Lãi/Lỗ ngay lập tức
-    function validateMargin() {
-        const impInput = document.querySelector('.import-price-input');
-        const selInput = document.querySelector('.selling-price-input');
-        const warnBox = document.getElementById('lossWarningMsg');
-
-        if(!impInput || !selInput) return;
-
-        const imp = parseFloat(impInput.value) || 0;
-        const sel = parseFloat(selInput.value) || 0;
-
-        if(sel > 0 && sel < imp) {
-            selInput.style.backgroundColor = '#fff3cd'; // Nền vàng cảnh báo
-            selInput.style.borderColor = '#dc3545';     // Viền đỏ
-            warnBox.classList.remove('d-none');
-        } else {
-            selInput.style.backgroundColor = '';
-            selInput.style.borderColor = '';
-            warnBox.classList.add('d-none');
-        }
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-        const priceInputs = document.querySelectorAll('.import-price-input, .selling-price-input');
-        priceInputs.forEach(input => input.addEventListener('input', validateMargin));
-    });
-</script>

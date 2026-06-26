@@ -47,8 +47,8 @@ namespace WebBanHang.Areas.Admin.Controllers
         // =====================================================================
         public ActionResult Create()
         {
-            // Truyền danh sách sản phẩm ra View để chọn
-            ViewBag.ProductsList = db.Products.ToList();
+            // Rút danh sách Category từ DB gửi ra View
+            ViewBag.CategoriesList = db.Categories.ToList();
             return View();
         }
 
@@ -132,6 +132,8 @@ namespace WebBanHang.Areas.Admin.Controllers
                     List<string> marginAlerts = new List<string>();
 
                     // B. Xử lý chi tiết (ImportReceiptDetail)
+                    // Thay thế vòng lặp foreach trong Action SubmitReceipt bằng mã nguồn sau:
+
                     foreach (var item in model.Details)
                     {
                         if (item.Quantity <= 0 || item.ImportPrice < 0) continue;
@@ -142,26 +144,39 @@ namespace WebBanHang.Areas.Admin.Controllers
                             ProductID = item.ProductID,
                             ImportPrice = item.ImportPrice,
                             ImportQuantity = item.Quantity,
-                            RemainingQuantity = item.Quantity // Tồn kho của lô này phục vụ FIFO
+                            RemainingQuantity = item.Quantity
                         };
                         db.ImportReceiptDetails.Add(detail);
 
                         grandTotal += (item.ImportPrice * item.Quantity);
 
-                        // Cập nhật tồn kho tổng và cảnh báo giá
                         var targetProduct = db.Products.Find(item.ProductID);
                         if (targetProduct != null)
                         {
-                            targetProduct.StockQuantity += item.Quantity;
+                            // [LOGIC MỚI] Kiểm tra xem đây là Hàng Mới Tinh hay Hàng Đang Kinh Doanh
+                            bool isFirstTimeIntake = (targetProduct.Status == 0 || targetProduct.ProductPrice == 0);
 
-                            if (item.ImportPrice > targetProduct.ImportPrice)
+                            if (isFirstTimeIntake)
                             {
-                                targetProduct.ImportPrice = item.ImportPrice; // Neo giá vốn cao nhất
+                                // TRƯỜNG HỢP 1: Hàng mới nhập lần đầu -> KHÔNG CHẶN, CHỈ ĐẨY THÔNG BÁO NHẮC
+                                targetProduct.Status = 1; // Kích hoạt trạng thái sẵn sàng kinh doanh
+
+                                marginAlerts.Add($"🔔 [HÀNG MỚI]: '{targetProduct.ProductName}' vừa được nhập kho lần đầu (Giá vốn: {item.ImportPrice:N0}đ). Vui lòng sang Quản lý sản phẩm thiết lập Giá Bán!");
+                            }
+                            else
+                            {
+                                // TRƯỜNG HỢP 2: Hàng cũ đã có giá -> ÁP DỤNG CHỐT CHẶN CỨNG CHỐNG BÁN LỖ
+                                if (item.ImportPrice >= targetProduct.ProductPrice)
+                                {
+                                    throw new Exception($"CHẶN GIAO DỊCH: Mặt hàng [{targetProduct.ProductName}] có giá nhập đợt mới ({item.ImportPrice:N0}đ) đang CAO HƠN HOẶC BẰNG giá bán niêm yết hiện tại ({targetProduct.ProductPrice:N0}đ). Vui lòng ra nâng giá bán niêm yết trước khi nhập kho!");
+                                }
                             }
 
-                            if (item.ImportPrice >= targetProduct.ProductPrice)
+                            // Cộng dồn tồn kho vật lý và cập nhật giá vốn cao nhất
+                            targetProduct.StockQuantity += item.Quantity;
+                            if (item.ImportPrice > targetProduct.ImportPrice)
                             {
-                                marginAlerts.Add($"Nguy cơ bán lỗ: [{targetProduct.ProductName}] có giá nhập ({item.ImportPrice:N0}đ) >= Giá bán ra.");
+                                targetProduct.ImportPrice = item.ImportPrice;
                             }
 
                             db.Entry(targetProduct).State = EntityState.Modified;
@@ -201,6 +216,57 @@ namespace WebBanHang.Areas.Admin.Controllers
 
             if (receipt == null) return HttpNotFound();
             return View(receipt);
+        }
+
+        // 1. Action lấy danh sách sản phẩm theo Danh mục cho hộp kiểm
+        [HttpGet]
+        public JsonResult GetProductsByCategory(int categoryId)
+        {
+            db.Configuration.ProxyCreationEnabled = false; // Ngăn EF tạo vòng lặp tham chiếu
+            var products = db.Products
+                             .Where(p => p.CategoryID == categoryId)
+                             .Select(p => new { p.ProductID, p.ProductName, p.SKU })
+                             .ToList();
+
+            return Json(products, JsonRequestBehavior.AllowGet);
+        }
+
+        // 2. Action truy xuất báo giá hàng loạt cho danh sách SKU
+        [HttpPost]
+        public async Task<JsonResult> FetchBatchSupplierPrices(List<string> skuList)
+        {
+            if (skuList == null || !skuList.Any())
+                return Json(new { success = false, message = "Danh sách SKU trống!" });
+
+            System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
+            List<SupplierProductVM> matchedProducts = new List<SupplierProductVM>();
+
+            using (var client = new HttpClient())
+            {
+                // Tải toàn bộ danh mục từ GitHub đối tác về để đối chiếu hàng loạt
+                string apiUrl = "https://my-json-server.typicode.com/VanHauBbi/TNC_WEB/Products";
+                try
+                {
+                    var response = await client.GetAsync(apiUrl);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var jsonString = await response.Content.ReadAsStringAsync();
+                        var allSupplierProducts = JsonConvert.DeserializeObject<List<SupplierProductVM>>(jsonString);
+
+                        // Đối chiếu các SKU được tick chọn với kho dữ liệu GitHub
+                        matchedProducts = allSupplierProducts
+                            .Where(sp => skuList.Contains(sp.SKU))
+                            .ToList();
+
+                        return Json(new { success = true, data = matchedProducts });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return Json(new { success = false, message = ex.Message });
+                }
+            }
+            return Json(new { success = false, message = "Không thể kết nối API đối tác." });
         }
     }
 }

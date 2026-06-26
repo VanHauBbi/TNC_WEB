@@ -156,50 +156,5 @@ namespace WebBanHang.Areas.Admin.Controllers
                 chartData = orders.GroupBy(o => o.OrderDate.Date).Select(g => (double)g.Sum(o => o.TotalAmount)).ToList()
             });
         }
-
-        [HttpGet]
-        public async Task<ActionResult> FetchSupplierPrice(string sku) // Đổi từ JsonResult thành ActionResult
-        {
-            if (string.IsNullOrEmpty(sku))
-            {
-                return Json(new { success = false, message = "Vui lòng nhập mã SKU" }, JsonRequestBehavior.AllowGet);
-            }
-
-            // [QUAN TRỌNG]: Ép hệ thống dùng chuẩn bảo mật TLS 1.2 để không bị GitHub từ chối kết nối
-            System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
-
-            using (var client = new HttpClient())
-            {
-                // Link API của bạn
-                string apiUrl = $"https://my-json-server.typicode.com/VanHauBbi/TNC_WEB/Products?SKU={sku}";
-
-                try
-                {
-                    var response = await client.GetAsync(apiUrl);
-                    if (response.IsSuccessStatusCode)
-                    {
-                        var jsonString = await response.Content.ReadAsStringAsync();
-
-                        var productList = JsonConvert.DeserializeObject<List<SupplierProductVM>>(jsonString);
-                        var productInfo = productList?.FirstOrDefault();
-
-                        if (productInfo != null)
-                        {
-                            return Json(new
-                            {
-                                success = true,
-                                price = productInfo.UnitPrice,
-                                name = productInfo.ProductName
-                            }, JsonRequestBehavior.AllowGet);
-                        }
-                    }
-                    return Json(new { success = false, message = "Không tìm thấy báo giá cho mã SKU này." }, JsonRequestBehavior.AllowGet);
-                }
-                catch (Exception ex)
-                {
-                    return Json(new { success = false, message = "Lỗi kết nối API: " + ex.Message }, JsonRequestBehavior.AllowGet);
-                }
-            }
-        }
     }
 }

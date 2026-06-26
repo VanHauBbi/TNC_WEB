@@ -1,208 +1,225 @@
 ﻿@{
-    ViewBag.Title = "Lập Phiếu Nhập Kho Lô FIFO";
+    ViewBag.Title = "Lập Phiếu Nhập Kho";
     Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+    var categories = ViewBag.CategoriesList as List<WebBanHang.Models.Category>;
 }
 
-<div class="container-fluid py-4">
-    <div class="card shadow border-0 rounded-3">
-        <div class="card-header bg-primary text-white p-4">
-            <h4 class="mb-0 fw-bold"><i class="fa-solid fa-boxes-packing me-2"></i> CHỨNG TỪ NHẬP KHO HÀNG HÓA</h4>
-            <small class="opacity-75">Hạch toán tự động vào mảng Tồn kho vật lý & Cấu trúc FIFO</small>
+<div class="card shadow-sm border-0 p-4 mb-4">
+    <h5 class="fw-bold text-primary mb-3">Quy trình chọn sản phẩm cần nhập hàng</h5>
+    <div class="row g-3 bg-light p-3 rounded border">
+        <div class="col-md-4">
+            <label class="form-label fw-bold">Bước 1: Chọn Danh mục</label>
+            <select id="selCategory" class="form-select">
+                <option value="">-- Tất cả danh mục --</option>
+                @if (categories != null)
+                {
+                    foreach (var c in categories)
+                    {
+                        <option value="@c.CategoryID">@c.CategoryName</option>
+                    }
+                }
+            </select>
         </div>
 
-        <div class="card-body p-4">
-            <div class="row bg-light p-3 rounded mb-4 border">
-                <div class="col-md-4 mb-3 mb-md-0">
-                    <label class="form-label fw-bold">Người lập phiếu:</label>
-                    <input type="text" id="txtReceivedBy" class="form-control fw-bold text-primary" value="@(Session["UserName"] ?? "Admin Warehouse")" />
-                </div>
-                <div class="col-md-8">
-                    <label class="form-label fw-bold">Ghi chú nội bộ (Lô / Đợt / Lái xe):</label>
-                    <input type="text" id="txtNote" class="form-control" placeholder="Ví dụ: Nhập hàng đợt 1 từ nhà phân phối Viết Sơn..." />
-                </div>
+        <div class="col-md-5">
+            <label class="form-label fw-bold">Bước 2: Chọn sản phẩm cần nhập</label>
+            <div id="productCheckboxContainer" class="border bg-white p-2 rounded" style="height: 200px; overflow-y: auto;">
+                <span class="text-muted small">Vui lòng chọn danh mục ở Bước 1...</span>
             </div>
+        </div>
 
-            <div class="row align-items-end mb-4 bg-white p-3 border rounded shadow-sm">
-                <div class="col-md-7 mb-2 mb-md-0">
-                    <label class="form-label fw-bold text-success">1. Chọn sản phẩm cần nhập kho:</label>
-                    <select id="ddlProductSelector" class="form-select border-success">
-                        <option value="">-- Click để chọn mặt hàng --</option>
-                        @foreach (var item in ViewBag.ProductsList)
-                        {
-                            <option value="@item.ProductID" data-cost="@item.ImportPrice" data-price="@item.ProductPrice">
-                                @item.ProductName (Niêm yết: @item.ProductPrice.ToString("N0")đ)
-                            </option>
-                        }
-                    </select>
-                </div>
-                <div class="col-md-5">
-                    <button type="button" id="btnAddItem" class="btn btn-success fw-bold w-100 py-2">
-                        <i class="fa-solid fa-plus me-1"></i> Bổ sung mặt hàng này vào danh sách
-                    </button>
-                </div>
-            </div>
-
-            <div class="table-responsive mb-4">
-                <table class="table table-bordered table-hover align-middle" id="tblReceiptDetails">
-                    <thead class="table-dark text-center">
-                        <tr>
-                            <th>STT</th>
-                            <th style="width: 35%;">Tên Sản Phẩm</th>
-                            <th style="width: 15%;">Số Lượng Nhập</th>
-                            <th style="width: 20%;">Đơn Giá Nhập (VND)</th>
-                            <th style="width: 20%;">Thành Tiền (VND)</th>
-                            <th style="width: 10%;">Xóa</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tbodyDetails">
-                        <tr id="emptyRow">
-                            <td colspan="6" class="text-center text-muted py-4">Chưa có mặt hàng nào trong phiếu nhập đợt này.</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="d-flex flex-column flex-md-row justify-content-between align-items-end bg-light p-4 rounded border">
-                <div id="alertArea" class="w-100 me-md-4 mb-3 mb-md-0"></div>
-
-                <div class="text-end min-w-300">
-                    <span class="text-muted fs-5">Tổng giá trị phiếu:</span>
-                    <h2 class="text-danger fw-bold mb-3" id="lblGrandTotal">0 ₫</h2>
-                    <button type="button" id="btnSubmitReceipt" class="btn btn-primary btn-lg fw-bold px-5 w-100">
-                        <i class="fa-solid fa-cloud-arrow-up me-2"></i> HOÀN TẤT NHẬP KHO
-                    </button>
-                </div>
-            </div>
+        <div class="col-md-3 d-flex flex-column justify-content-end">
+            <label class="form-label fw-bold">Bước 3: Tải giá đối tác</label>
+            <button type="button" id="btnBatchFetch" class="btn btn-warning fw-bold py-2">
+                <i class="fa-solid fa-cloud-arrow-down"></i> Lấy Giá API Hàng Loạt
+            </button>
         </div>
     </div>
 </div>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script>
-    let itemCounter = 0;
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-dark text-white fw-bold d-flex justify-content-between">
+        <span>Danh sách chốt phiếu nhập</span>
+        <span>Tổng giá trị: <span id="grandTotal" class="text-danger fw-bold fs-5">0</span> ₫</span>
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0" id="importTable">
+            <thead class="table-light">
+                <tr>
+                    <th>Tên sản phẩm</th>
+                    <th>Mã SKU</th>
+                    <th class="text-end">Đơn giá nhập (Cố định)</th>
+                    <th class="text-center" style="width: 150px;">Số lượng</th>
+                    <th class="text-end">Thành tiền</th>
+                    <th class="text-center">Xóa</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+    <div class="card-footer p-3 bg-white">
+        <button id="btnSubmitReceipt" class="btn btn-primary w-100 fw-bold py-2">XÁC NHẬN CHỐT PHIẾU NHẬP KHO</button>
+    </div>
+</div>
 
-    // BẤM NÚT THÊM SẢN PHẨM VÀO BẢNG
-    $('#btnAddItem').click(function () {
-        const selectedOpt = $('#ddlProductSelector option:selected');
-        const prodId = selectedOpt.val();
+@section Scripts {
+    <script>
+    var importItems = [];
 
-        if (!prodId) {
-            alert('Vui lòng chọn một mặt hàng trước!');
-            return;
-        }
-
-        const prodName = selectedOpt.text().split('(')[0].trim();
-        const suggestCost = parseFloat(selectedOpt.data('cost')) || 0;
-
-        // Check xem hàng này đã có trong bảng chưa (tránh add trùng dòng)
-        if ($(`#tr_${prodId}`).length > 0) {
-            alert('Mặt hàng này đã có trong lưới bên dưới, vui lòng tăng số lượng thay vì thêm mới!');
-            return;
-        }
-
-        $('#emptyRow').remove();
-        itemCounter++;
-
-        const newRowHtml = `
-            <tr id="tr_${prodId}" data-id="${prodId}">
-                <td class="text-center fw-bold">${itemCounter}</td>
-                <td class="fw-bold text-primary">${prodName}</td>
-                <td>
-                    <input type="number" class="form-control text-center input-qty fw-bold" value="10" min="1" />
-                </td>
-                <td>
-                    <input type="number" class="form-control text-end input-price fw-bold" value="${suggestCost}" min="0" step="1000" />
-                </td>
-                <td class="text-end fw-bold text-danger row-total">0 ₫</td>
-                <td class="text-center">
-                    <button type="button" class="btn btn-sm btn-outline-danger btn-remove-row"><i class="fa-solid fa-trash"></i></button>
-                </td>
-            </tr>
-        `;
-
-        $('#tbodyDetails').append(newRowHtml);
-        recalculateAll();
-        $('#ddlProductSelector').val(''); // reset ddl
-    });
-
-    // XÓA DÒNG
-    $(document).on('click', '.btn-remove-row', function () {
-        $(this).closest('tr').remove();
-        if ($('#tbodyDetails tr').length === 0) {
-            $('#tbodyDetails').html('<tr id="emptyRow"><td colspan="6" class="text-center text-muted py-4">Chưa có mặt hàng nào.</td></tr>');
-            itemCounter = 0;
-        }
-        recalculateAll();
-    });
-
-    // LẮNG NGHE GÕ PHÍM Ở SỐ LƯỢNG / ĐƠN GIÁ ĐỂ TÍNH TIỀN TRỰC TIẾP
-    $(document).on('input', '.input-qty, .input-price', function () {
-        recalculateAll();
-    });
-
-    // HÀM TÍNH TOÁN TỔNG
-    function recalculateAll() {
-        let grandTotal = 0;
-
-        $('#tbodyDetails tr:not(#emptyRow)').each(function () {
-            const qty = parseFloat($(this).find('.input-qty').value) || parseFloat($(this).find('.input-qty').val()) || 0;
-            const price = parseFloat($(this).find('.input-price').value) || parseFloat($(this).find('.input-price').val()) || 0;
-            const subtotal = qty * price;
-
-            $(this).find('.row-total').text(subtotal.toLocaleString('vi-VN') + ' ₫');
-            grandTotal += subtotal;
-        });
-
-        $('#lblGrandTotal').text(grandTotal.toLocaleString('vi-VN') + ' ₫');
-    }
-
-    // BẤM NÚT HOÀN TẤT GỬI LÊN SERVER
+    // --- BỔ SUNG SỰ KIỆN BẤM NÚT CHỐT PHIẾU ---
     $('#btnSubmitReceipt').click(function () {
-        const rows = $('#tbodyDetails tr:not(#emptyRow)');
-        if (rows.length === 0) {
-            alert('Bảng nhập kho đang trống!');
+        if (importItems.length === 0) {
+            alert("Danh sách nhập kho đang trống, không có gì để lưu!");
             return;
         }
 
-        if (!confirm('Xác nhận chốt số liệu nhập kho? Hàng hóa sẽ được ném vào kho Lô FIFO.')) return;
+        // Quét linh hoạt lấy Người lập và Ghi chú ở 2 ô input trên cùng của bạn
+        var receivedBy = $('#txtReceivedBy').val() || $('input[placeholder*="Người lập"]').val() || "AdminTNC";
+        var note = $('#txtNote').val() || $('input[placeholder*="Ghi chú"]').val() || "Nhập kho qua hệ thống PO";
 
-        // Gom mảng dữ liệu
-        const detailPayload = [];
-        rows.each(function () {
-            detailPayload.push({
-                ProductID: parseInt($(this).data('id')),
-                Quantity: parseInt($(this).find('.input-qty').val()),
-                ImportPrice: parseFloat($(this).find('.input-price').val())
-            });
-        });
-
-        const masterPayload = {
-            ReceivedBy: $('#txtReceivedBy').val(),
-            Note: $('#txtNote').val(),
-            Details: detailPayload
+        var payload = {
+            ReceivedBy: receivedBy,
+            Note: note,
+            Details: importItems.map(function (item) {
+                return {
+                    ProductID: item.ProductID,
+                    Quantity: parseInt(item.Quantity),
+                    ImportPrice: parseFloat(item.ImportPrice)
+                };
+            })
         };
 
-        // Gửi AJAX
+        if (!confirm("Xác nhận chốt phiếu nhập kho với tổng giá trị: " + $('#grandTotal').text() + " ₫ ?\nSau khi bấm OK, hệ thống sẽ cộng dồn tồn kho vật lý!")) {
+            return;
+        }
+
+        // Khóa tạm nút lại để tránh user bấm đúp gửi 2 phiếu giống nhau
+        var btn = $(this);
+        btn.prop('disabled', true).text("Đang ghi dữ liệu...");
+
         $.ajax({
             url: '@Url.Action("SubmitReceipt", "ImportReceipts")',
             type: 'POST',
             contentType: 'application/json',
-            data: JSON.stringify(masterPayload),
+            data: JSON.stringify(payload),
             success: function (res) {
                 if (res.success) {
-                    let msg = "🎉 NHẬP KHO THÀNH CÔNG!";
+                    var msg = "🎉 LƯU PHIẾU NHẬP KHO THÀNH CÔNG!\nMã chứng từ: #" + res.receiptId;
+
+                    // Nếu hệ thống phát hiện lô này nhập đắt hơn giá bán, in ra cảnh báo
                     if (res.alerts && res.alerts.length > 0) {
-                        msg += "\n\n⚠️ CẢNH BÁO KINH DOANH:\n" + res.alerts.join('\n');
+                        msg += "\n\n⚠️ CẢNH BÁO KINH DOANH:\n" + res.alerts.join("\n");
                     }
+
                     alert(msg);
-                    window.location.href = '@Url.Action("Details", "ImportReceipts")/' + res.receiptId;
+                    window.location.href = '@Url.Action("Index", "ImportReceipts")';
                 } else {
-                    alert("Lỗi: " + res.message);
+                    alert("❌ TỪ CHỐI LƯU: " + res.message);
+                    btn.prop('disabled', false).text("XÁC NHẬN CHỐT PHIẾU NHẬP KHO");
                 }
             },
-            error: function () {
-                alert("Mất kết nối tới máy chủ Warehouse!");
+            error: function (err) {
+                alert("❌ Lỗi nghiêm trọng: Không thể kết nối đến Action SubmitReceipt!");
+                console.error(err);
+                btn.prop('disabled', false).text("XÁC NHẬN CHỐT PHIẾU NHẬP KHO");
             }
         });
     });
-</script>
+
+    // Lọc sản phẩm theo Danh mục
+    $('#selCategory').change(function () {
+        var catId = $(this).val();
+        var container = $('#productCheckboxContainer');
+        container.empty();
+
+        if (!catId) { container.html('<span class="text-muted small">Vui lòng chọn danh mục...</span>'); return; }
+
+        $.get('@Url.Action("GetProductsByCategory", "ImportReceipts")', { categoryId: catId }, function (data) {
+            if (data.length === 0) { container.html('<span class="text-danger small">Danh mục này trống.</span>'); return; }
+
+            data.forEach(function (p) {
+                container.append(`
+                    <div class="form-check border-bottom py-1">
+                        <input class="form-check-input chk-product" type="checkbox" value="${p.ProductID}" data-name="${p.ProductName}" data-sku="${p.SKU}" id="chk_${p.ProductID}">
+                        <label class="form-check-label small d-block cursor-pointer" for="chk_${p.ProductID}">
+                            ${p.ProductName} <br><small class="text-primary fw-bold">[${p.SKU}]</small>
+                        </label>
+                    </div>
+                `);
+            });
+        });
+    });
+
+    // Truy Xuất Giá API Hàng Loạt
+    $('#btnBatchFetch').click(function () {
+        var selectedChecked = $('.chk-product:checked');
+        if (selectedChecked.length === 0) { alert("Vui lòng tick chọn ít nhất 1 sản phẩm!"); return; }
+
+        var skuList = [];
+        selectedChecked.each(function () { skuList.push($(this).data('sku')); });
+
+        $.ajax({
+            url: '@Url.Action("FetchBatchSupplierPrices", "ImportReceipts")',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ skuList: skuList }),
+            success: function (res) {
+                if (res.success) {
+                    var fetchedData = res.data;
+                    selectedChecked.each(function () {
+                        var pid = parseInt($(this).val());
+                        var pname = $(this).data('name');
+                        var psku = $(this).data('sku');
+
+                        var apiMatch = fetchedData.find(sp => sp.SKU === psku);
+                        if (apiMatch) {
+                            var existing = importItems.find(i => i.ProductID === pid);
+                            if (!existing) {
+                                importItems.push({ ProductID: pid, ProductName: pname, SKU: psku, ImportPrice: apiMatch.UnitPrice, Quantity: 1 });
+                            }
+                        } else {
+                            alert(`Mặt hàng [${pname}] không tìm thấy báo giá trên GitHub đối tác.`);
+                        }
+                    });
+                    RenderTable();
+                    $('.chk-product').prop('checked', false); // Reset tick
+                } else { alert(res.message); }
+            }
+        });
+    });
+
+    function RenderTable() {
+        var tbody = $('#importTable tbody');
+        tbody.empty();
+        var grandTotal = 0;
+
+        importItems.forEach(function (item, idx) {
+            var totalLine = item.ImportPrice * item.Quantity;
+            grandTotal += totalLine;
+
+            tbody.append(`
+                <tr>
+                    <td class="fw-bold">${item.ProductName}</td>
+                    <td class="text-primary fw-bold">${item.SKU}</td>
+                    <td class="text-end text-danger fw-bold">${item.ImportPrice.toLocaleString('vi-VN')} ₫</td>
+                    <td class="text-center">
+                        <input type="number" class="form-control text-center" value="${item.Quantity}" min="1" onchange="UpdateQty(${idx}, this.value)">
+                    </td>
+                    <td class="text-end fw-bold text-danger">${totalLine.toLocaleString('vi-VN')} ₫</td>
+                    <td class="text-center"><button class="btn btn-sm btn-outline-danger" onclick="RemoveItem(${idx})"><i class="fa-solid fa-trash"></i></button></td>
+                </tr>
+            `);
+        });
+        $('#grandTotal').text(grandTotal.toLocaleString('vi-VN'));
+    }
+
+    window.UpdateQty = function (idx, val) {
+        var newQty = parseInt(val);
+        if (isNaN(newQty) || newQty <= 0) return;
+        importItems[idx].Quantity = newQty;
+        RenderTable();
+    }
+
+    window.RemoveItem = function (idx) { importItems.splice(idx, 1); RenderTable(); }
+    </script>
+}

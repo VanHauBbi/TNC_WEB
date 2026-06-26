@@ -17,23 +17,33 @@ namespace WebBanHang.Controllers
         public ActionResult Index(string searchTerm, int? page)
         {
             var model = new HomeProductVM();
-            var products = db.Products.Include(p => p.Coupons).AsQueryable();
-            
+
+            var baseQuery = db.Products
+                .Include(p => p.Category)
+                .Include(p => p.OrderDetails)
+                .Include(p => p.Coupons)
+                .Where(p => p.Status != 2)
+                .AsQueryable();
+
             if (!string.IsNullOrEmpty(searchTerm))
             {
                 model.SearchTerm = searchTerm;
-                products = products.Where(p => p.ProductName.Contains(searchTerm) ||
-                                               p.ProductDescription.Contains(searchTerm) ||
-                                               p.Category.CategoryName.Contains(searchTerm));
+                baseQuery = baseQuery.Where(p => p.ProductName.Contains(searchTerm) ||
+                                                 p.ProductDescription.Contains(searchTerm) ||
+                                                 p.Category.CategoryName.Contains(searchTerm));
             }
 
-            // Lấy toàn bộ để hiển thị theo từng khối
-            model.FeaturedProducts = products
-                .Include(p => p.Category)
-                .Include(p => p.OrderDetails)
+            // 2. Tải Sản phẩm nổi bật (Lấy Top 8 món bán chạy nhất)
+            model.FeaturedProducts = baseQuery
                 .OrderByDescending(p => p.OrderDetails.Count())
+                .Take(8)
                 .ToList();
-            model.NewProducts = products.OrderByDescending(p => p.ProductID).ToList();
+
+            // 3. Tải Sản phẩm mới nhất (Lấy Top 8 món có ID lớn nhất)
+            model.NewProducts = baseQuery
+                .OrderByDescending(p => p.ProductID)
+                .Take(8)
+                .ToList();
 
             return View(model);
         }
@@ -192,8 +202,11 @@ namespace WebBanHang.Controllers
             try
             {
                 // 1. Lấy sản phẩm
-                var products = db.Products.Include(p => p.Coupons).Where(p => p.CategoryID == id.Value).AsQueryable();
-
+                var products = db.Products
+                    .Include(p => p.Coupons)
+                    .Include(p => p.OrderDetails)
+                    .Where(p => p.CategoryID == id.Value && p.Status != 2)
+                    .AsQueryable();
                 // 2. Lọc theo Khoảng giá (logic cũ giữ nguyên)
                 switch (priceRange)
                 {

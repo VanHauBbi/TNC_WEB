@@ -1,36 +1,76 @@
 ﻿@model WebBanHang.Models.Product
 
 @{
-    // Thiết lập tiêu đề động
-    ViewBag.Title = Model.ProductID == 0 ? "Thêm Sản Phẩm Mới" : "Cập nhật Sản phẩm";
+    ViewBag.Title = "Cập nhật Sản phẩm";
     Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
 }
 
-@* KHẮC PHỤC LỖI ĐƯỜNG DẪN CSS *@
 <link href="@Url.Content("~/Content/Admin/products_admin.css")" rel="stylesheet" />
 
 @using (Html.BeginForm())
 {
     @Html.AntiForgeryToken()
-    <div class="form-horizontal card p-4 shadow-sm">
+    <div class="form-horizontal card p-4 shadow-sm border-0">
+        <h4 class="fw-bold text-primary mb-3">@ViewBag.Title</h4>
         <hr />
         @Html.ValidationSummary(true, "", new { @class = "text-danger" })
-
-        @* Giữ hidden field cho Edit *@
         @Html.HiddenFor(model => model.ProductID)
 
         @Html.Partial("PVCreateEditProduct", Model)
 
-        <div class="form-group admin-action-buttons">
-            <div style="margin-left: 150px; padding-top: 10px;">
-                <input type="submit" value="Lưu" class="btn btn-primary" />
-                @Html.ActionLink("Quay lại danh sách", "Index", null, new { @class = "btn btn-secondary" })
-            </div>
+        <div class="form-group mt-4">
+            <input type="submit" value="Cập nhật thay đổi" class="btn btn-primary px-4 fw-bold" />
+            @Html.ActionLink("Quay lại danh sách", "Index", null, new { @class = "btn btn-secondary px-4" })
         </div>
     </div>
 }
 
 @section Scripts {
-    @* Đảm bảo liên kết đúng thư viện Validation *@
     @Scripts.Render("~/bundles/jqueryval")
+    <script>
+        $(document).ready(function () {
+
+            // 1. NÚT TẠO SKU NỘI BỘ
+            $('#btnGetSKU').click(function () {
+                var name = $('#txtProductName').val();
+                if (!name) { alert("Vui lòng nhập Tên sản phẩm trước!"); return; }
+
+                $.get('@Url.Action("GenerateSKUPreview", "Products")', { productName: name }, function (res) {
+                    if (res.success) { $('#txtSKU').val(res.sku); }
+                    else { alert(res.message); }
+                });
+            });
+
+            // 2. NÚT CÀO GIÁ TỪ GITHUB
+            $('#btnScrapePrice').click(function () {
+                var sku = $('#txtSKU').val();
+                var msgBox = $('#scrapeMsg');
+
+                if (!sku) {
+                    alert("Vui lòng gõ hoặc bấm 'Tạo SKU' trước khi cào dữ liệu đối tác!");
+                    return;
+                }
+
+                msgBox.text("Đang kết nối API GitHub...").removeClass("text-danger text-success").addClass("text-primary");
+
+                // Gọi chéo sang Action FetchSupplierPrice bên ImportReceipts
+                $.get('/Admin/ImportReceipts/FetchSupplierPrice', { sku: sku }, function (res) {
+                    if (res.success) {
+                        msgBox.text("💡 Giá nhập đối tác: " + res.price.toLocaleString('vi-VN') + " đ").removeClass("text-primary").addClass("text-success");
+
+                        // Nếu ô giá bán đang là 0, gợi ý gán luôn bằng giá nhập + 20% lợi nhuận
+                        var curPrice = parseFloat($('#ProductPrice').val()) || 0;
+                        if (curPrice === 0) {
+                            var suggestedSelling = res.price * 1.2; // Gợi ý lời 20%
+                            $('#ProductPrice').val(suggestedSelling);
+                            alert("Đã cào được giá gốc: " + res.price.toLocaleString('vi-VN') + " đ.\n\n💡 Hệ thống tạm điền gợi ý Giá Bán (đã cộng 20% lời) là: " + suggestedSelling.toLocaleString('vi-VN') + " đ.\nBạn có thể tự chỉnh lại con số này tùy ý!");
+                        }
+                    } else {
+                        msgBox.text("Không tìm thấy SKU này trên API đối tác.").removeClass("text-primary").addClass("text-danger");
+                    }
+                });
+            });
+
+        });
+    </script>
 }
