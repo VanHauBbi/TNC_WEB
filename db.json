@@ -1,19 +1,64 @@
 {
   "Products": [
     {
-      "SKU": "SKU-MON-ASUS27",
-      "ProductName": "Màn hình ASUS TUF Gaming VG27AQ",
-      "UnitPrice": 5500000
+      "SKU": "SKU-PC-GAMING-BREUNOR",
+      "ProductName": "PC GAMING - BREUNOR COOLWAVE Ryzen 5 7600 + RTX 5070 12GB",
+      "UnitPrice": 23500000
     },
     {
-      "SKU": "SKU-RAM-8GB",
-      "ProductName": "Ram 8GB DDR4 XPG",
-      "UnitPrice": 400000
+      "SKU": "SKU-PC-GAMING-CORE",
+      "ProductName": "PC Gaming Core I5 14600KF | RTX 3060 12G | RAM 16G | NVME 512G",
+      "UnitPrice": 16800000
     },
     {
-      "SKU": "SKU-VGA-3060",
-      "ProductName": "VGA RTX 3060 12GB",
-      "UnitPrice": 7200000
+      "SKU": "SKU-BO-PC-GAMING",
+      "ProductName": "Bộ PC Gaming i5-12400F, RAM 16GB, RTX 3060 Ultra White 12GB OC",
+      "UnitPrice": 14200000
+    },
+    {
+      "SKU": "SKU-MAN-HINH-GAMING",
+      "ProductName": "Màn hình Gaming Gigabyte G27F 2 (27 inch - FHD - IPS - 165Hz)",
+      "UnitPrice": 3600000
+    },
+    {
+      "SKU": "SKU-MAINBOARD-GIGABYTE-B760M",
+      "ProductName": "Mainboard Gigabyte B760M Pro RS/D4 Wifi",
+      "UnitPrice": 2450000
+    },
+    {
+      "SKU": "SKU-O-CUNG-SSD",
+      "ProductName": "Ổ cứng SSD Kingston SKC3000 M2 PCIe NVME Gen 4 1TB",
+      "UnitPrice": 1650000
+    },
+    {
+      "SKU": "SKU-O-CUNG-SSD-1",
+      "ProductName": "Ổ cứng SSD MSI SPATIUM M450 M.2 PCIe Gen 4 NVMe 500GB",
+      "UnitPrice": 850000
+    },
+    {
+      "SKU": "SKU-O-CUNG-HDD",
+      "ProductName": "Ổ Cứng HDD Western Red 4TB PLUS NAS",
+      "UnitPrice": 2100000
+    },
+    {
+      "SKU": "SKU-CPU-AMD-RYZEN",
+      "ProductName": "CPU AMD Ryzen 7 7800X3D (Tray)",
+      "UnitPrice": 8800000
+    },
+    {
+      "SKU": "SKU-RAM-PNY-XLR8",
+      "ProductName": "RAM PNY XLR8 DDR4 3200MHz Heatsink RGB 8GB",
+      "UnitPrice": 420000
+    },
+    {
+      "SKU": "SKU-VGA-MSI-GEFORCE",
+      "ProductName": "VGA MSI Geforce RTX 5090 32G Gaming Trio OC",
+      "UnitPrice": 48000000
+    },
+    {
+      "SKU": "SKU-TAI-NGHE-CLOUD",
+      "ProductName": "Cloud Alpha Wireless – DTS – Tai nghe chơi game",
+      "UnitPrice": 2800000
     }
   ]
 }
