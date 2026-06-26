@@ -232,6 +232,7 @@
     <Compile Include="Models\ViewModel\ProductSearchVM.cs" />
     <Compile Include="Models\ViewModel\RegisterVM.cs" />
     <Compile Include="Models\ViewModel\ResetPasswordVM.cs" />
+    <Compile Include="Models\ViewModel\SupplierProductVM.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Services\GHNService.cs" />
     <Compile Include="Utilities\PriceHelper.cs" />

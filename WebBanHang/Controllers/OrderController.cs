@@ -298,14 +298,14 @@ namespace WebBanHang.Controllers
                     order.TotalAmount = actualTotalOrderAmount;
                     db.SaveChanges();
                     transaction.Commit();
-                   
-                    // Dọn dẹp Session
-                    var tempCart = Session["BuyNowTempCart"] as WebBanHang.Models.ViewModel.Cart;
-                    if (tempCart != null)
 
-                        // ---- TÍCH HỢP ĐIỀU HƯỚNG CỔNG THANH TOÁN VNPAY ĐOẠN CUỐI HÀM ----
-                        if (model.PaymentMethod == "VNPAY")
-                        {
+                    bool isCommitted = true;
+
+                    // ==========================================================
+                    // NHÁNH 1: THANH TOÁN VNPAY (Tuyệt đối không xóa giỏ hàng ở đây)
+                    // ==========================================================
+                    if (model.PaymentMethod == "VNPAY")
+                    {
                         string vnp_Url = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
                         string vnp_TmnCode = "6NQ3MY7C";
                         string vnp_HashSecret = "HASY7LN7TINZAOCJ1JJZHLBTEQK1JQ4H";
@@ -317,7 +317,6 @@ namespace WebBanHang.Controllers
                         vnpay.AddRequestData("vnp_Command", "pay");
                         vnpay.AddRequestData("vnp_TmnCode", vnp_TmnCode);
 
-                        // Lấy tổng tiền thực tế từ giỏ hàng (nhân 100 theo chuẩn VNPay)
                         long tAmount = Convert.ToInt64(order.TotalAmount * 100);
                         vnpay.AddRequestData("vnp_Amount", tAmount.ToString());
 
@@ -335,12 +334,30 @@ namespace WebBanHang.Controllers
                         return Redirect(paymentUrl);
                     }
 
+                    // ==========================================================
+                    // NHÁNH 2: THANH TOÁN TIỀN MẶT (COD) -> XÓA GIỎ HÀNG NGAY LẬP TỨC
+                    // ==========================================================
+                    var tempCart = Session["BuyNowTempCart"] as WebBanHang.Models.ViewModel.Cart;
+                    if (tempCart != null)
+                    {
+                        Session["Cart"] = tempCart;
+                        Session.Remove("BuyNowTempCart");
+                    }
+                    else
+                    {
+                        Session.Remove("Cart");
+                        Session.Remove("VoucherDiscount");
+                    }
+
                     return RedirectToAction("OrderSuccess", new { id = order.OrderID });
                 }
                 catch (Exception ex)
                 {
-                    transaction.Rollback();
-                    ModelState.AddModelError("", "Đã xảy ra lỗi hệ thống khi lưu đơn hàng. Vui lòng thử lại!");
+                    if (transaction.UnderlyingTransaction.Connection != null)
+                    {
+                        transaction.Rollback();
+                    }
+                    ModelState.AddModelError("", "Lỗi hệ thống: " + ex.Message);
                     model.AvailableCoupons = db.Coupons.Where(c => !c.Products.Any()).ToList();
                     return View(model);
                 }
@@ -390,23 +407,78 @@ namespace WebBanHang.Controllers
                 bool checkSignature = vnpay.ValidateSignature(vnp_SecureHash, vnp_HashSecret);
                 if (checkSignature)
                 {
-                    var order = db.Orders.Find(orderId);
+                    // FIX LỖI 1: Phải dùng Include để gọi kèm OrderDetails ra, nếu không vòng lặp foreach sẽ bị Crash
+                    var order = db.Orders.Include(o => o.OrderDetails).SingleOrDefault(o => o.OrderID == orderId);
+
                     if (order != null)
                     {
+                        // ==========================================================
+                        // NHÁNH THÀNH CÔNG: KHÁCH ĐÃ TRẢ TIỀN -> XÓA GIỎ
+                        // ==========================================================
                         if (vnp_ResponseCode == "00")
                         {
                             order.PaymentStatus = "Đã thanh toán";
                             db.SaveChanges();
 
-                            TempData["Message"] = "Thanh toán đơn hàng linh kiện qua cổng VNPay thành công!";
+                            // --- DỌN DẸP GIỎ HÀNG TẠI ĐÂY ---
+                            // ✅ FIX: Luôn xóa giỏ hàng và session khi thanh toán thành công
+                            Session.Remove("Cart");
+                            Session.Remove("VoucherDiscount");
+                            Session.Remove("BuyNowTempCart");
+
+                            TempData["Message"] = "Thanh toán đơn hàng qua cổng VNPay thành công!";
                             return RedirectToAction("OrderSuccess", new { id = orderId });
                         }
+
+                        // ==========================================================
+                        // NHÁNH THẤT BẠI: HỦY ĐƠN HÀNG & HOÀN TRẢ TỒN KHO (FIFO)
+                        // ==========================================================
                         else
                         {
+                            // 1. Cập nhật trạng thái thanh toán và DUYỆT
                             order.PaymentStatus = "Thất bại";
+                            order.OrderStatus = "Đã hủy";
+
+                            // 2. HOÀN TRẢ TỒN KHO & FIFO
+                            foreach (var detail in order.OrderDetails)
+                            {
+                                var productInDb = db.Products.Find(detail.ProductID);
+                                if (productInDb != null)
+                                {
+                                    productInDb.StockQuantity += detail.Quantity;
+                                    db.Entry(productInDb).State = EntityState.Modified; // Bắt buộc báo EF cần update
+
+                                    var latestBatch = db.ImportReceiptDetails
+                                                        .Where(b => b.ProductID == detail.ProductID)
+                                                        .OrderByDescending(b => b.DetailID)
+                                                        .FirstOrDefault();
+                                    if (latestBatch != null)
+                                    {
+                                        latestBatch.RemainingQuantity += detail.Quantity;
+                                        db.Entry(latestBatch).State = EntityState.Modified;
+                                    }
+                                }
+                            }
+
+                            // 3. LƯU THAY ĐỔI VÀO DB
+                            db.Entry(order).State = EntityState.Modified; // Báo EF lưu trạng thái đơn
                             db.SaveChanges();
 
-                            TempData["Error"] = "Giao dịch thất bại hoặc bị hủy bởi người dùng. Mã lỗi: " + vnp_ResponseCode;
+                            // 4. PHỤC HỒI GIỎ HÀNG (Nếu có BuyNowTempCart)
+                            var tempCart = Session["BuyNowTempCart"] as WebBanHang.Models.ViewModel.Cart;
+                            if (tempCart != null)
+                            {
+                                Session["Cart"] = tempCart;
+                                Session.Remove("BuyNowTempCart");
+                            }
+                            else
+                            {
+                                // ✅ FIX: Xóa giỏ hàng hiện tại khi thanh toán thất bại
+                                Session.Remove("Cart");
+                                Session.Remove("VoucherDiscount");
+                            }
+
+                            TempData["Error"] = "Giao dịch thất bại. Đơn hàng đã tự động hủy. Mã lỗi: " + vnp_ResponseCode;
                             return RedirectToAction("Index", "Cart");
                         }
                     }

@@ -144,48 +144,60 @@
                 {
                     @Html.AntiForgeryToken()
 
-                    // 1. NẾU ĐƠN CHƯA DUYỆT -> Hiện nút Duyệt và Hủy
-                    if (string.IsNullOrEmpty(Model.OrderStatus) || Model.OrderStatus == "Chờ xác nhận")
+                    // CHỐT CHẶN UI: Kiểm tra trạng thái thanh toán và trạng thái hủy
+                    if (Model.PaymentStatus == "Thất bại" || Model.PaymentStatus == "Đã hủy" || Model.OrderStatus == "Đã hủy")
                     {
-                        <button type="submit" name="actionType" value="Approve" class="btn btn-primary fw-bold py-2 w-100 mb-3">
-                            <i class="fa-solid fa-check"></i> XÁC NHẬN DUYỆT ĐƠN
-                        </button>
-                        <button type="submit" name="actionType" value="Cancel" class="btn btn-outline-danger fw-bold py-2 w-100 mb-3" onclick="return confirm('Xác nhận HỦY đơn hàng? Số lượng sẽ được trả về kho.')">
-                            <i class="fa-solid fa-times"></i> HỦY ĐƠN HÀNG
-                        </button>
-                    }
-
-                    // 2. NẾU ĐƠN ĐÃ DUYỆT -> Hiện nút Giao hàng
-                    else if (Model.OrderStatus == "Đã duyệt")
-                    {
-                        <button type="submit" name="actionType" value="Ship" class="btn btn-warning fw-bold py-2 w-100 mb-3">
-                            <i class="fa-solid fa-truck-fast"></i> BẮT ĐẦU GIAO HÀNG
-                        </button>
-                    }
-
-                    // 3. NẾU ĐƠN ĐANG GIAO -> Hiện nút Xác nhận Hoàn thành
-                    else if (Model.OrderStatus == "Đang giao")
-                    {
-                        <button type="submit" name="actionType" value="Complete" class="btn btn-success fw-bold py-2 w-100 mb-3" onclick="return confirm('Xác nhận khách đã nhận hàng thành công?')">
-                            <i class="fa-solid fa-box-open"></i> XÁC NHẬN ĐÃ GIAO (HOÀN THÀNH)
-                        </button>
-                    }
-
-                    // 4. XỬ LÝ THANH TOÁN (Chỉ hiện khi chưa thanh toán và đơn chưa bị hủy)
-                    if (Model.PaymentStatus != "Đã thanh toán" && Model.OrderStatus != "Đã hủy")
-                    {
-                        <hr />
-                        <button type="submit" name="actionType" value="MarkPaid" class="btn btn-outline-success fw-bold py-2 w-100 mb-3" onclick="return confirm('Xác nhận đã thu tiền từ khách hàng?')">
-                            <i class="fa-solid fa-money-bill-wave"></i> ĐÁNH DẤU ĐÃ THANH TOÁN
-                        </button>
-                    }
-
-                    // 5. NẾU ĐƠN ĐÃ ĐÓNG (Hủy hoặc Hoàn thành)
-                    if (Model.OrderStatus == "Đã hủy" || Model.OrderStatus == "Đã giao")
-                    {
-                        <div class="alert alert-info small text-center mt-3 mb-0">
-                            <i class="fa-solid fa-lock"></i> Đơn hàng đã chuyển trạng thái cố định (Đóng).
+                        <div class="alert alert-danger text-center mt-3 mb-0">
+                            <i class="fa-solid fa-ban fa-2x mb-2"></i><br />
+                            <strong>Đơn hàng vô hiệu!</strong><br />
+                            Giao dịch này đã bị hủy hoặc thanh toán thất bại. Hệ thống đã khóa chức năng xử lý.
                         </div>
+                    }
+                    else
+                    {
+                        // 1. NẾU ĐƠN CHƯA DUYỆT -> Hiện nút Duyệt và Hủy
+                        if (string.IsNullOrEmpty(Model.OrderStatus) || Model.OrderStatus == "Chờ xác nhận")
+                        {
+                            <button type="submit" name="actionType" value="Approve" class="btn btn-primary fw-bold py-2 w-100 mb-3">
+                                <i class="fa-solid fa-check"></i> XÁC NHẬN DUYỆT ĐƠN
+                            </button>
+                            <button type="submit" name="actionType" value="Cancel" class="btn btn-outline-danger fw-bold py-2 w-100 mb-3" onclick="return confirm('Xác nhận HỦY đơn hàng? Số lượng sẽ được trả về kho.')">
+                                <i class="fa-solid fa-times"></i> HỦY ĐƠN HÀNG
+                            </button>
+                        }
+
+                        // 2. NẾU ĐƠN ĐÃ DUYỆT -> Hiện nút Giao hàng
+                        else if (Model.OrderStatus == "Đã duyệt")
+                        {
+                            <button type="submit" name="actionType" value="Ship" class="btn btn-warning fw-bold py-2 w-100 mb-3">
+                                <i class="fa-solid fa-truck-fast"></i> BẮT ĐẦU GIAO HÀNG
+                            </button>
+                        }
+
+                        // 3. NẾU ĐƠN ĐANG GIAO -> Hiện nút Xác nhận Hoàn thành
+                        else if (Model.OrderStatus == "Đang giao")
+                        {
+                            <button type="submit" name="actionType" value="Complete" class="btn btn-success fw-bold py-2 w-100 mb-3" onclick="return confirm('Xác nhận khách đã nhận hàng thành công?')">
+                                <i class="fa-solid fa-box-open"></i> XÁC NHẬN ĐÃ GIAO (HOÀN THÀNH)
+                            </button>
+                        }
+
+                        // 4. XỬ LÝ THANH TOÁN (Chỉ hiện khi chưa thanh toán)
+                        if (Model.PaymentStatus != "Đã thanh toán")
+                        {
+                            <hr />
+                            <button type="submit" name="actionType" value="MarkPaid" class="btn btn-outline-success fw-bold py-2 w-100 mb-3" onclick="return confirm('Xác nhận đã thu tiền từ khách hàng?')">
+                                <i class="fa-solid fa-money-bill-wave"></i> ĐÁNH DẤU ĐÃ THANH TOÁN
+                            </button>
+                        }
+
+                        // 5. NẾU ĐƠN ĐÃ ĐÓNG (Hoàn thành)
+                        if (Model.OrderStatus == "Đã giao")
+                        {
+                            <div class="alert alert-info small text-center mt-3 mb-0">
+                                <i class="fa-solid fa-lock"></i> Đơn hàng đã chuyển trạng thái cố định (Đóng).
+                            </div>
+                        }
                     }
                 }
 
