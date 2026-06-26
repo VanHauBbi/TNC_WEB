@@ -6,14 +6,17 @@ using System.Linq;
 using System.Net;
 using System.Web;
 using System.Web.Mvc;
+using System.Threading.Tasks; 
 using WebBanHang.Models;
 using WebBanHang.Models.ViewModel;
+using WebBanHang.Services;
 
 namespace WebBanHang.Controllers
 {
     public class OrdersController : Controller
     {
         private MyStoreEntities db = new MyStoreEntities();
+        private readonly GHNService _ghnService = new GHNService();
 
         // GET: Orders
         public ActionResult Index()
@@ -484,6 +487,89 @@ namespace WebBanHang.Controllers
 
             TempData["Error"] = "Chữ ký bảo mật không hợp lệ!";
             return RedirectToAction("Index", "Cart");
+        }
+
+        // ==========================================================
+        // BƯỚC 3.1: API LẤY DỮ LIỆU TỈNH/HUYỆN/XÃ VÀ TÍNH PHÍ GHN
+        // ==========================================================
+
+        [HttpGet]
+        public async Task<ActionResult> GetProvinces() // Đổi JsonResult thành ActionResult
+        {
+            try
+            {
+                var provinces = await _ghnService.GetProvincesAsync();
+                // Trả về Content kiểu application/json để tránh bị mã hóa kép
+                return Content(provinces.ToString(), "application/json");
+            }
+            catch (Exception ex)
+            {
+                return Json(new { error = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        [HttpGet]
+        public async Task<ActionResult> GetDistricts(int provinceId)
+        {
+            try
+            {
+                var districts = await _ghnService.GetDistrictsAsync(provinceId);
+                return Content(districts.ToString(), "application/json");
+            }
+            catch (Exception ex)
+            {
+                return Json(new { error = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        [HttpGet]
+        public async Task<ActionResult> GetWards(int districtId)
+        {
+            try
+            {
+                var wards = await _ghnService.GetWardsAsync(districtId);
+                return Content(wards.ToString(), "application/json");
+            }
+            catch (Exception ex)
+            {
+                return Json(new { error = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        [HttpPost]
+        public async Task<JsonResult> CalculateShippingFee(int districtId, string wardCode, int totalQuantity)
+        {
+            try
+            {
+                // Tính khối lượng bưu kiện giả định: 500g * số lượng mặt hàng
+                int totalWeightInGrams = totalQuantity * 500;
+                if (totalWeightInGrams <= 0) totalWeightInGrams = 1000;
+
+                decimal fee = await _ghnService.CalculateFeeAsync(districtId, wardCode, totalWeightInGrams);
+
+                return Json(new { success = true, fee = fee });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, error = ex.Message });
+            }
+        }
+
+        // GET: Orders/Tracking/5
+        public ActionResult Tracking(int? id)
+        {
+            if (id == null) return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+
+            var order = db.Orders.Include(o => o.OrderDetails.Select(od => od.Product)).SingleOrDefault(o => o.OrderID == id);
+            if (order == null) return HttpNotFound();
+
+            // Nếu lúc thanh toán bạn lưu là rỗng, thì gán mặc định là Chờ duyệt để code không bị lỗi
+            if (string.IsNullOrEmpty(order.OrderStatus))
+            {
+                order.OrderStatus = "Chờ duyệt";
+            }
+
+            return View(order);
         }
     }
 }

@@ -26,10 +26,14 @@
                     <div class="col-sm-4">
                         <p class="mb-1 text-muted small">Trạng thái duyệt</p>
                         @{
-                            string statusBadge = "bg-secondary";
-                            if (Model.OrderStatus == "Đã duyệt") { statusBadge = "bg-primary"; }
-                            else if (Model.OrderStatus == "Đã hủy") { statusBadge = "bg-danger"; }
-                            else if (Model.OrderStatus == "Đã giao") { statusBadge = "bg-success"; }
+                            string statusBadge = "bg-secondary"; // Mặc định là Chờ duyệt
+                            if (Model.OrderStatus != null)
+                            {
+                                if (Model.OrderStatus.Contains("Đã duyệt")) { statusBadge = "bg-info text-dark"; }
+                                else if (Model.OrderStatus.Contains("Đang giao")) { statusBadge = "bg-warning text-dark"; }
+                                else if (Model.OrderStatus.Contains("Đã giao")) { statusBadge = "bg-success"; }
+                                else if (Model.OrderStatus.Contains("hủy")) { statusBadge = "bg-danger"; }
+                            }
                         }
                         <h6 class="mb-0"><span class="badge @statusBadge px-3 py-2 fs-6">@Model.OrderStatus</span></h6>
                     </div>
@@ -82,43 +86,31 @@
                         </tbody>
                         <tfoot class="border-top">
                             @{
-                                // 1. Tính tổng tiền gốc của các sản phẩm (Tạm tính)
+                                // 1. Tính tổng tiền các sản phẩm dựa trên chi tiết đơn
                                 decimal subTotal = 0;
                                 if (Model.OrderDetails != null)
                                 {
                                     subTotal = Model.OrderDetails.Sum(d => d.UnitPrice * d.Quantity);
                                 }
 
-                                // 2. Trích xuất phí vận chuyển dựa trên tên phương thức
-                                decimal shippingFee = 0;
-                                if (Model.ShippingMethod == "Giao hàng nhanh") { shippingFee = 30000; }
-                                else if (Model.ShippingMethod == "Giao hàng tiết kiệm") { shippingFee = 15000; }
-
-                                // 3. Tính toán ngược số tiền đã giảm (Voucher)
-                                decimal discountAmount = (subTotal + shippingFee) - Model.TotalAmount;
-                                if (discountAmount < 0) { discountAmount = 0; }
+                                // 2. Tính toán phí vận chuyển thực tế từ độ chênh lệch
+                                decimal realShippingFee = Model.TotalAmount - subTotal;
+                                if (realShippingFee < 0) { realShippingFee = 0; }
                             }
 
                             <tr>
-                                <td colspan="3" class="text-end text-muted small pt-3 pb-1">Tạm tính:</td>
+                                <td colspan="3" class="text-end text-muted small pt-3 pb-1">Tiền hàng:</td>
                                 <td class="text-end fw-bold pt-3 pb-1">@subTotal.ToString("N0") ₫</td>
                             </tr>
 
                             <tr>
                                 <td colspan="3" class="text-end text-muted small py-1">
-                                    Phí vận chuyển
-                                    <span style="font-size: 0.85em;">(@Model.ShippingMethod)</span>:
+                                    Phí bưu điện (GHN):
                                 </td>
-                                <td class="text-end fw-bold py-1">@shippingFee.ToString("N0") ₫</td>
+                                <td class="text-end fw-bold text-success py-1">
+                                    @(realShippingFee > 0 ? "+" + realShippingFee.ToString("N0") + " ₫" : "Miễn phí")
+                                </td>
                             </tr>
-
-                            @if (discountAmount > 0)
-                            {
-                                <tr>
-                                    <td colspan="3" class="text-end text-success small py-1">Giảm giá (Voucher):</td>
-                                    <td class="text-end fw-bold text-success py-1">-@discountAmount.ToString("N0") ₫</td>
-                                </tr>
-                            }
 
                             <tr class="border-top">
                                 <td colspan="3" class="text-end text-dark small pt-3"><strong>TỔNG THANH TOÁN:</strong></td>
@@ -132,6 +124,35 @@
                     <a href="@Url.Action("Index", "Orders")" class="btn btn-secondary px-4"><i class="fa-solid fa-arrow-left"></i> Quay lại danh sách</a>
                 </div>
             </div>
+
+            <div class="card mt-3">
+                <div class="card-header bg-primary text-white">
+                    <strong><i class="fa fa-truck"></i> Cập nhật tiến độ giao hàng</strong>
+                </div>
+                <div class="card-body">
+                    @using (Html.BeginForm("UpdateOrderStatus", "Orders", new { area = "Admin" }, FormMethod.Post))
+                    {
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="orderId" value="@Model.OrderID" />
+
+                        <div class="input-group">
+                            <select name="newStatus" class="form-control">
+                                <option value="Chờ duyệt" @(Model.OrderStatus == "Chờ duyệt" ? "selected" : "")>1. Chờ duyệt (Mới đặt)</option>
+                                <option value="Đã duyệt - Đang lấy hàng" @(Model.OrderStatus == "Đã duyệt - Đang lấy hàng" ? "selected" : "")>2. Đã duyệt - Đang lấy hàng</option>
+                                <option value="Đang giao hàng" @(Model.OrderStatus == "Đang giao hàng" ? "selected" : "")>3. Đang giao hàng</option>
+                                <option value="Đã giao hàng" @(Model.OrderStatus == "Đã giao hàng" ? "selected" : "")>4. Đã giao hàng (Hoàn thành)</option>
+                                <option value="Đã hủy" @(Model.OrderStatus == "Đã hủy" ? "selected" : "")>Đơn đã hủy</option>
+                            </select>
+                            <button type="submit" class="btn btn-warning fw-bold">Cập nhật ngay</button>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <a href="@Url.Action("Tracking", "Orders", new { id = Model.OrderID })" class="btn btn-warning fw-bold text-white">
+                <i class="fa-solid fa-location-dot"></i> THEO DÕI ĐƠN HÀNG
+            </a>
+
         </div>
     </div>
 </div>

@@ -183,5 +183,25 @@ namespace WebBanHang.Areas.Admin.Controllers
                 db.Dispose();
             base.Dispose(disposing);
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult UpdateOrderStatus(int orderId, string newStatus)
+        {
+            var order = db.Orders.Find(orderId);
+            if (order != null)
+            {
+                order.OrderStatus = newStatus;
+                db.SaveChanges();
+                TempData["Message"] = "Cập nhật trạng thái đơn hàng thành công!";
+            }
+            else
+            {
+                TempData["Error"] = "Không tìm thấy đơn hàng!";
+            }
+
+            // Quay lại trang chi tiết đơn hàng của Admin
+            return RedirectToAction("Details", new { id = orderId });
+        }
     }
 }
