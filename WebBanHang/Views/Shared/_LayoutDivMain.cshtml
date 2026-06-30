@@ -123,21 +123,10 @@
 
                     <li class="nav-item-sale">
                         @{
-                            string currentController = ViewContext.RouteData.Values["controller"]?.ToString();
-                            string currentAction = ViewContext.RouteData.Values["action"]?.ToString();
-                    <li class="nav-item-sale">
-                        @{
                             // Trích xuất thông tin Controller và Action hiện tại
                             string currentController = ViewContext.RouteData.Values["controller"]?.ToString();
                             string currentAction = ViewContext.RouteData.Values["action"]?.ToString();
 
-                            string promoUrl = (currentController == "Home" && currentAction == "Index")
-                                              ? "#khuyen-mai-section"
-                                              : Url.Action("Index", "Home") + "#khuyen-mai-section";
-                        }
-                        <a href="@promoUrl"><i class="fa-solid fa-tag"></i> Khuyến Mãi <span class="badge">SALE</span></a>
-                    </li>
-                            // Cấu trúc URL dựa trên ngữ cảnh
                             string promoUrl = (currentController == "Home" && currentAction == "Index")
                                               ? "#khuyen-mai-section"
                                               : Url.Action("Index", "Home") + "#khuyen-mai-section";

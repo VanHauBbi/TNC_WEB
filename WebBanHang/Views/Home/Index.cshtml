@@ -295,28 +295,6 @@
 
 </div>
 
-<div id="chatbot-toggle-btn" onclick="toggleChat()">
-    <span class="robot-icon">🤖</span>
-</div>
-
-<div id="chatbot-box">
-    <div class="chat-header">
-        <span>🤖 Trợ Lý Ảo TNC Store</span>
-        <span class="close-btn" onclick="toggleChat()">✕</span>
-    </div>
-
-    <div id="chatbot-messages">
-        <div class="chat-bubble ai-message">
-            Xin chào! Tôi là trợ lý AI của TNC Store. Bạn cần hỗ trợ gì hôm nay?
-        </div>
-    </div>
-
-    <div class="chat-input-area">
-        <input type="text" id="chatbot-input" placeholder="Nhập câu hỏi tại đây..." onkeypress="handleKeyPress(event)" />
-        <button onclick="sendUserMessage()">Gửi</button>
-    </div>
-</div>
-
 @section Scripts {
     <script>
         function setupProductToggle(buttonId, productClass) {
@@ -355,84 +333,5 @@
                 }
             });
         });
-    </script>
-
-    <script>
-        function toggleChat() {
-            var box = document.getElementById('chatbot-box');
-            box.style.display = (box.style.display === 'none' || box.style.display === '') ? 'flex' : 'none';
-        }
-
-        function handleKeyPress(e) { if (e.keyCode === 13) sendUserMessage(); }
-
-        const menuOptions = [
-            { text: "🖥️ Build PC", val: "Tôi muốn Build PC" },
-            { text: "📦 Tư vấn sản phẩm", val: "Tư vấn sản phẩm" },
-            { text: "💰 Hỏi giá/KM", val: "Hỏi giá và khuyến mãi" },
-            { text: "👨‍💻 Gặp Admin", val: "Tôi muốn gặp Admin" }
-        ];
-
-        function renderMenu() {
-            let container = document.getElementById('chatbot-messages');
-            let html = '<div class="quick-replies" id="initial-quick-replies">';
-            menuOptions.forEach(opt => {
-                html += `<button class="quick-btn" onclick="sendQuickReply('${opt.val}')">${opt.text}</button>`;
-            });
-            html += '</div>';
-            container.innerHTML += html;
-        }
-
-        function sendQuickReply(text) {
-            var repliesBox = document.getElementById('initial-quick-replies');
-            if (repliesBox) repliesBox.style.display = 'none';
-
-            document.getElementById('chatbot-input').value = text;
-            sendUserMessage();
-        }
-
-        var isProcessing = false;
-
-        function sendUserMessage() {
-            if (isProcessing) return;
-
-            var input = document.getElementById('chatbot-input');
-            var msgText = input.value.trim();
-            if (msgText === '') return;
-
-            isProcessing = true;
-            input.disabled = true;
-
-            var messagesDiv = document.getElementById('chatbot-messages');
-            messagesDiv.innerHTML += `<div class="chat-bubble user-message">${msgText}</div>`;
-            input.value = '';
-
-            var loadingId = 'loading-' + Date.now();
-            messagesDiv.innerHTML += `<div id="${loadingId}" class="chat-bubble loading-message"><div class="spinner"></div> Đang suy nghĩ...</div>`;
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-
-            var formData = new FormData();
-            formData.append('userMessage', msgText);
-
-            fetch('/Chat/SendMessage', { method: 'POST', body: formData })
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById(loadingId)?.remove();
-                    var cssClass = data.success ? "chat-bubble ai-message" : "chat-bubble error-message";
-                    messagesDiv.innerHTML += `<div class="${cssClass}">${data.reply}</div>`;
-                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-                })
-                .catch(error => {
-                    document.getElementById(loadingId)?.remove();
-                    messagesDiv.innerHTML += `<div class="chat-bubble error-message">Lỗi kết nối máy chủ.</div>`;
-                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-                })
-                .finally(() => {
-                    isProcessing = false;
-                    input.disabled = false;
-                    input.focus();
-                });
-        }
-
-        renderMenu();
     </script>
 }
