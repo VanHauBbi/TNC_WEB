@@ -240,12 +240,31 @@ namespace WebBanHang.Controllers
                         if (globalCoupon != null && globalCoupon.UsageLimit > 0)
                         {
                             globalCoupon.UsageLimit -= 1;
-                            // (Trừ tiền voucher toàn đơn vào biến actualTotalOrderAmount ở đây nếu bạn lưu số discount vào Session)
                             actualTotalOrderAmount -= Convert.ToDecimal(Session["VoucherDiscount"] ?? 0);
                         }
                     }
 
-                    // Chốt tổng tiền an toàn 100% vào DB
+                    // ----- CODE MỚI: XỬ LÝ CỘNG TIỀN PHÍ SHIP -----
+                    decimal shippingFee = 0;
+                    // Dựa vào hình ảnh UI của bạn, mình bắt chuỗi để tính phí
+                    if (!string.IsNullOrEmpty(model.ShippingMethod))
+                    {
+                        if (model.ShippingMethod.Contains("nhanh"))
+                        {
+                            shippingFee = 30000;
+                        }
+                        else if (model.ShippingMethod.Contains("tiết kiệm"))
+                        {
+                            shippingFee = 15000;
+                        }
+                        // (Nếu Model CheckoutVM của bạn đã có sẵn trường model.ShippingFee thì chỉ cần gán: shippingFee = model.ShippingFee;)
+                    }
+
+                    // Cộng tiền ship vào tổng tiền cuối cùng
+                    actualTotalOrderAmount += shippingFee;
+                    // ----------------------------------------------
+
+                    // Chốt tổng tiền (đã bao gồm Ship) an toàn 100% vào DB
                     order.TotalAmount = actualTotalOrderAmount;
                     db.SaveChanges();
                     transaction.Commit();
@@ -281,6 +300,8 @@ namespace WebBanHang.Controllers
                         string paymentUrl = vnpay.CreateRequestUrl(vnp_Url, vnp_HashSecret);
                         return Redirect(paymentUrl);
                     }
+
+                    Session["Cart"] = null;
 
                     return RedirectToAction("OrderSuccess", new { id = order.OrderID });
                 }
@@ -345,12 +366,25 @@ namespace WebBanHang.Controllers
                             order.PaymentStatus = "Đã thanh toán";
                             db.SaveChanges();
 
+                            Session["Cart"] = null;
+
                             TempData["Message"] = "Thanh toán đơn hàng linh kiện qua cổng VNPay thành công!";
                             return RedirectToAction("OrderSuccess", new { id = orderId });
                         }
                         else
                         {
                             order.PaymentStatus = "Thất bại";
+
+                            foreach (var detail in order.OrderDetails)
+                            {
+                                var productInDb = db.Products.Find(detail.ProductID);
+                                if (productInDb != null)
+                                {
+                                    // Trả lại số lượng vào kho
+                                    productInDb.StockQuantity += detail.Quantity;
+                                }
+                            }
+
                             db.SaveChanges();
 
                             TempData["Error"] = "Giao dịch thất bại hoặc bị hủy bởi người dùng. Mã lỗi: " + vnp_ResponseCode;

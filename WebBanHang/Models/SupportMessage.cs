@@ -12,15 +12,14 @@ namespace WebBanHang.Models
     using System;
     using System.Collections.Generic;
     
-    public partial class PurchaseOrderDetail
+    public partial class SupportMessage
     {
-        public int PODetailID { get; set; }
-        public int POID { get; set; }
-        public int ProductID { get; set; }
-        public int OrderedQty { get; set; }
-        public decimal EstimatedPrice { get; set; }
+        public int MessageID { get; set; }
+        public int SessionID { get; set; }
+        public bool IsAdmin { get; set; }
+        public string MessageContent { get; set; }
+        public System.DateTime SendTime { get; set; }
     
-        public virtual Product Product { get; set; }
-        public virtual PurchaseOrder PurchaseOrder { get; set; }
+        public virtual SupportSession SupportSession { get; set; }
     }
 }

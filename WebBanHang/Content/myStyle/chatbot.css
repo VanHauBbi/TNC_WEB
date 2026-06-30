@@ -2,9 +2,7 @@
    GIAO DIỆN CHATBOT AI TNC STORE (SÁNG SỦA + HEADER LOANG MÀU)
 ========================================================= */
 :root {
-    /* Dải màu Gradient Gen Z (Hồng loang Tím) */
-    --genz-gradient: linear-gradient(135deg, #ff7eb3 0%, #ff758c 50%, #8b5cf6 100%);
-    /* Thiết lập lại nền trắng cho dễ đọc */
+    --genz-gradient: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);
     --chat-bg: #ffffff;
     --chat-body-bg: #f8f9fa;
     --chat-text: #333333;

@@ -1,0 +1,199 @@
+﻿@{
+    ViewBag.Title = "Trợ lý ảo AI - TNC Store";
+    Layout = "~/Views/Shared/_LayoutDivMain.cshtml";
+}
+
+<link href="~/Content/myStyle/chatbot.css" rel="stylesheet" />
+
+<style>
+    /* Tinh chỉnh lại CSS để khung chat hiển thị cố định giữa trang thay vì bo góc dưới */
+    #chatbot-box {
+        display: flex !important; /* Luôn luôn hiển thị */
+        position: relative !important;
+        bottom: auto !important;
+        right: auto !important;
+        width: 100% !important;
+        max-width: 700px !important;
+        height: 550px !important;
+        margin: 30px auto !important;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important;
+        border-radius: 12px !important;
+    }
+
+    .chat-header {
+        border-top-left-radius: 12px;
+        border-top-right-radius: 12px;
+    }
+
+    .quick-replies {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 10px;
+        padding: 5px;
+    }
+
+    .quick-btn {
+        background-color: #e9ecef;
+        border: 1px solid #ced4da;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+        .quick-btn:hover {
+            background-color: #0d6efd;
+            color: white;
+            border-color: #0d6efd;
+        }
+</style>
+
+<div class="container">
+    <div class="row">
+        <div class="col-12 text-center mt-4">
+            <h3 class="fw-bold text-uppercase text-primary">Trung Tâm Tư Vấn Khách Hàng</h3>
+            <p class="text-muted">Hỏi đáp thông minh về cấu hình PC và linh kiện máy tính cùng Trợ lý AI</p>
+        </div>
+    </div>
+
+    <div id="chatbot-box">
+        <div class="chat-header d-flex justify-content-between align-items-center bg-primary text-white p-3">
+            <span>🤖 Trợ Lý Ảo TNC Store (AI Generation)</span>
+            <span class="badge bg-light text-primary">Online</span>
+        </div>
+
+        <div id="chatbot-messages" class="p-3" style="flex: 1; overflow-y: auto;">
+            <div class="chat-bubble ai-message mb-2">
+                Xin chào! Tôi là trợ lý AI của TNC Store. Bạn cần hỗ trợ gì về linh kiện hay cấu hình máy tính hôm nay không ạ?
+            </div>
+        </div>
+
+        <div class="chat-input-area p-3 border-top bg-light">
+            <div class="input-group">
+                <input type="text" id="chatbot-input" class="form-control" placeholder="Nhập câu hỏi tại đây..." onkeypress="handleKeyPress(event)" autocomplete="off" />
+                <button class="btn btn-primary px-4" onclick="sendUserMessage()">Gửi</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var sendMessageUrl = '@Url.Action("SendMessage", "Chat")';
+
+        // Hàm bắt sự kiện khi người dùng nhấn phím Enter
+        function handleKeyPress(e) {
+            if (e.keyCode === 13) sendUserMessage();
+        }
+
+        // Danh sách menu lựa chọn nhanh (Không tốn chi phí gọi API)
+        const menuOptions = [
+            { text: "🖥️ Build PC", val: "Tôi muốn Build PC" },
+            { text: "📦 Tư vấn sản phẩm", val: "Tư vấn sản phẩm" },
+            { text: "💰 Hỏi giá/KM", val: "Hỏi giá và khuyến mãi" },
+            { text: "👨‍💻 Gặp Admin", val: "Tôi muốn gặp Admin" }
+        ];
+
+        // Hàm tự động tạo và hiển thị menu lựa chọn nhanh khi vừa tải trang
+        function renderMenu() {
+            let messagesDiv = document.getElementById('chatbot-messages');
+            let html = '<div class="quick-replies my-2" id="initial-quick-replies">';
+            menuOptions.forEach(opt => {
+                html += `<button class="quick-btn me-2 mb-2" onclick="sendQuickReply('${opt.val}')">${opt.text}</button>`;
+            });
+            html += '</div>';
+            messagesDiv.innerHTML += html;
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // Xử lý khi khách bấm vào một nút lựa chọn nhanh
+        function sendQuickReply(text) {
+            // Ẩn menu đi để giữ giao diện sạch sẽ, gọn gàng
+            var repliesBox = document.getElementById('initial-quick-replies');
+            if (repliesBox) repliesBox.style.display = 'none';
+
+            document.getElementById('chatbot-input').value = text;
+            sendUserMessage();
+        }
+
+        // Biến cờ chốt chặn chống spam gửi tin nhắn liên tục khi API chưa phản hồi xong
+        var isProcessing = false;
+
+        function sendUserMessage() {
+            if (isProcessing) return;
+
+            var input = document.getElementById('chatbot-input');
+            var msgText = input.value.trim();
+            if (msgText === '') return;
+
+            isProcessing = true;
+            input.disabled = true;
+
+            var messagesDiv = document.getElementById('chatbot-messages');
+
+            // Hiển thị tin nhắn của khách lên màn hình chat
+            messagesDiv.innerHTML += `<div class="chat-bubble user-message my-2 text-end">${msgText}</div>`;
+            input.value = '';
+
+            // Tạo hiệu ứng Spinner "Đang suy nghĩ..." động
+            var loadingId = 'loading-' + Date.now();
+            messagesDiv.innerHTML += `
+                <div id="${loadingId}" class="chat-bubble loading-message my-2 text-muted">
+                    <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                    <span>Đang suy nghĩ...</span>
+                </div>`;
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+            // Đóng gói dữ liệu gửi lên Backend Controller qua Ajax Fetch
+            var formData = new FormData();
+            formData.append('userMessage', msgText);
+
+            fetch(sendMessageUrl, { method: 'POST', body: formData })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Xóa bỏ hiệu ứng Loading sau khi nhận được phản hồi
+                    document.getElementById(loadingId)?.remove();
+
+                    // ĐÁNH CHẶN ĐIỀU HƯỚNG: Nếu Backend gửi yêu cầu chuyển sang phòng chat SignalR
+                    if (data.isRedirect) {
+                        messagesDiv.innerHTML += `<div class="chat-bubble ai-message my-2 text-success fw-bold">🚀 Đang kết nối trực tiếp với Hỗ trợ viên, vui lòng đợi trong giây lát...</div>`;
+                        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+                        setTimeout(function() {
+                            window.location.href = data.redirectUrl;
+                        }, 1000); // Trì hoãn 1 giây để tạo hiệu ứng mượt mà
+                        return;
+                    }
+
+                    // Hiển thị câu trả lời thông thường của Bot AI Gemini
+                    var cssClass = data.success ? "chat-bubble ai-message my-2" : "chat-bubble error-message my-2 text-danger";
+                    messagesDiv.innerHTML += `<div class="${cssClass}">${data.reply}</div>`;
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                })
+                .catch(error => {
+                    console.error('Lỗi Fetch:', error);
+                    document.getElementById(loadingId)?.remove();
+                    messagesDiv.innerHTML += `<div class="chat-bubble error-message my-2 text-danger">⚠️ Lỗi kết nối máy chủ. Vui lòng kiểm tra lại đường truyền!</div>`;
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                })
+                .finally(() => {
+                    // Mở khóa chốt chặn sau khi xử lý xong luồng
+                    isProcessing = false;
+                    input.disabled = false;
+                    input.focus();
+                });
+        }
+
+        // Tự động kích hoạt hiển thị Menu Quick Replies ngay khi trang tải xong
+        document.addEventListener("DOMContentLoaded", function() {
+            renderMenu();
+        });
+    </script>
+}

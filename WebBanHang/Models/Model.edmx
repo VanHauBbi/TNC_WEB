@@ -115,6 +115,7 @@
           <Property Name="ImportPrice" Type="money" Nullable="false" />
           <Property Name="ProductImage" Type="nvarchar(max)" />
           <Property Name="StockQuantity" Type="int" Nullable="false" />
+          <Property Name="ComponentType" Type="nvarchar" MaxLength="50" />
         </EntityType>
         <EntityType Name="ProductPriceHistory">
           <Key>
@@ -147,6 +148,25 @@
           <Property Name="VariantAttributes" Type="nvarchar" MaxLength="255" Nullable="false" />
           <Property Name="VariantPrice" Type="money" Nullable="false" />
           <Property Name="StockQuantity" Type="int" Nullable="false" />
+        </EntityType>
+        <EntityType Name="SupportMessage">
+          <Key>
+            <PropertyRef Name="MessageID" />
+          </Key>
+          <Property Name="MessageID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="SessionID" Type="int" Nullable="false" />
+          <Property Name="IsAdmin" Type="bit" Nullable="false" />
+          <Property Name="MessageContent" Type="nvarchar(max)" Nullable="false" />
+          <Property Name="SendTime" Type="datetime" Nullable="false" />
+        </EntityType>
+        <EntityType Name="SupportSession">
+          <Key>
+            <PropertyRef Name="SessionID" />
+          </Key>
+          <Property Name="SessionID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="CustomerID" Type="int" Nullable="false" />
+          <Property Name="StartTime" Type="datetime" Nullable="false" />
+          <Property Name="Status" Type="int" Nullable="false" />
         </EntityType>
         <EntityType Name="User">
           <Key>
@@ -366,6 +386,34 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
+        <Association Name="FK_SupportMessage_Session">
+          <End Role="SupportSession" Type="Self.SupportSession" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="SupportMessage" Type="Self.SupportMessage" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="SupportSession">
+              <PropertyRef Name="SessionID" />
+            </Principal>
+            <Dependent Role="SupportMessage">
+              <PropertyRef Name="SessionID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_SupportSession_Customer">
+          <End Role="Customer" Type="Self.Customer" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="SupportSession" Type="Self.SupportSession" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Customer">
+              <PropertyRef Name="CustomerID" />
+            </Principal>
+            <Dependent Role="SupportSession">
+              <PropertyRef Name="CustomerID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
         <EntityContainer Name="MyStoreModelStoreContainer">
           <EntitySet Name="Cart" EntityType="Self.Cart" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="CartItem" EntityType="Self.CartItem" Schema="dbo" store:Type="Tables" />
@@ -380,6 +428,8 @@
           <EntitySet Name="ProductPriceHistory" EntityType="Self.ProductPriceHistory" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="ProductReview" EntityType="Self.ProductReview" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="ProductVariant" EntityType="Self.ProductVariant" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="SupportMessage" EntityType="Self.SupportMessage" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="SupportSession" EntityType="Self.SupportSession" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="User" EntityType="Self.User" Schema="dbo" store:Type="Tables" />
           <AssociationSet Name="FK_Cart_Customer" Association="Self.FK_Cart_Customer">
             <End Role="Customer" EntitySet="Customer" />
@@ -445,6 +495,14 @@
             <End Role="Product" EntitySet="Product" />
             <End Role="ProductVariant" EntitySet="ProductVariant" />
           </AssociationSet>
+          <AssociationSet Name="FK_SupportMessage_Session" Association="Self.FK_SupportMessage_Session">
+            <End Role="SupportSession" EntitySet="SupportSession" />
+            <End Role="SupportMessage" EntitySet="SupportMessage" />
+          </AssociationSet>
+          <AssociationSet Name="FK_SupportSession_Customer" Association="Self.FK_SupportSession_Customer">
+            <End Role="Customer" EntitySet="Customer" />
+            <End Role="SupportSession" EntitySet="SupportSession" />
+          </AssociationSet>
         </EntityContainer>
       </Schema></edmx:StorageModels>
     <!-- CSDL content -->
@@ -509,6 +567,7 @@
           <NavigationProperty Name="User" Relationship="Self.FK_Customer_User" FromRole="Customer" ToRole="User" />
           <NavigationProperty Name="Orders" Relationship="Self.FK_Order_Customer" FromRole="Customer" ToRole="Order" />
           <NavigationProperty Name="ProductReviews" Relationship="Self.FK_ProductReview_Customer" FromRole="Customer" ToRole="ProductReview" />
+          <NavigationProperty Name="SupportSessions" Relationship="MyStoreModel.FK_SupportSession_Customer" FromRole="Customer" ToRole="SupportSession" />
         </EntityType>
         <EntityType Name="Order">
           <Key>
@@ -577,6 +636,7 @@
           <NavigationProperty Name="ProductVariants" Relationship="Self.FK_ProductVariant_Product" FromRole="Product" ToRole="ProductVariant" />
           <NavigationProperty Name="Coupons" Relationship="Self.CouponProduct" FromRole="Product" ToRole="Coupon" />
           <Property Name="ImportPrice" Type="Decimal" Nullable="false" Precision="19" Scale="4" />
+          <Property Name="ComponentType" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
         </EntityType>
         <EntityType Name="ProductPriceHistory">
           <Key>
@@ -883,7 +943,67 @@
             <End Role="Coupon" EntitySet="Coupons" />
             <End Role="Product" EntitySet="Products" />
           </AssociationSet>
+          <EntitySet Name="SupportMessages" EntityType="MyStoreModel.SupportMessage" />
+          <EntitySet Name="SupportSessions" EntityType="MyStoreModel.SupportSession" />
+          <AssociationSet Name="FK_SupportSession_Customer" Association="MyStoreModel.FK_SupportSession_Customer">
+            <End Role="Customer" EntitySet="Customers" />
+            <End Role="SupportSession" EntitySet="SupportSessions" />
+          </AssociationSet>
+          <AssociationSet Name="FK_SupportMessage_Session" Association="MyStoreModel.FK_SupportMessage_Session">
+            <End Role="SupportSession" EntitySet="SupportSessions" />
+            <End Role="SupportMessage" EntitySet="SupportMessages" />
+          </AssociationSet>
         </EntityContainer>
+        <EntityType Name="SupportMessage">
+          <Key>
+            <PropertyRef Name="MessageID" />
+          </Key>
+          <Property Name="MessageID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="SessionID" Type="Int32" Nullable="false" />
+          <Property Name="IsAdmin" Type="Boolean" Nullable="false" />
+          <Property Name="MessageContent" Type="String" Nullable="false" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="SendTime" Type="DateTime" Nullable="false" Precision="3" />
+          <NavigationProperty Name="SupportSession" Relationship="MyStoreModel.FK_SupportMessage_Session" FromRole="SupportMessage" ToRole="SupportSession" />
+        </EntityType>
+        <EntityType Name="SupportSession">
+          <Key>
+            <PropertyRef Name="SessionID" />
+          </Key>
+          <Property Name="SessionID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="CustomerID" Type="Int32" Nullable="false" />
+          <Property Name="StartTime" Type="DateTime" Nullable="false" Precision="3" />
+          <Property Name="Status" Type="Int32" Nullable="false" />
+          <NavigationProperty Name="Customer" Relationship="MyStoreModel.FK_SupportSession_Customer" FromRole="SupportSession" ToRole="Customer" />
+          <NavigationProperty Name="SupportMessages" Relationship="MyStoreModel.FK_SupportMessage_Session" FromRole="SupportSession" ToRole="SupportMessage" />
+        </EntityType>
+        <Association Name="FK_SupportSession_Customer">
+          <End Type="MyStoreModel.Customer" Role="Customer" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Type="MyStoreModel.SupportSession" Role="SupportSession" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Customer">
+              <PropertyRef Name="CustomerID" />
+            </Principal>
+            <Dependent Role="SupportSession">
+              <PropertyRef Name="CustomerID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_SupportMessage_Session">
+          <End Type="MyStoreModel.SupportSession" Role="SupportSession" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Type="MyStoreModel.SupportMessage" Role="SupportMessage" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="SupportSession">
+              <PropertyRef Name="SessionID" />
+            </Principal>
+            <Dependent Role="SupportMessage">
+              <PropertyRef Name="SessionID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
       </Schema>
     </edmx:ConceptualModels>
     <!-- C-S mapping content -->
@@ -991,6 +1111,7 @@
           <EntitySetMapping Name="Products">
             <EntityTypeMapping TypeName="MyStoreModel.Product">
               <MappingFragment StoreEntitySet="Product">
+                <ScalarProperty Name="ComponentType" ColumnName="ComponentType" />
                 <ScalarProperty Name="ImportPrice" ColumnName="ImportPrice" />
                 <ScalarProperty Name="ProductID" ColumnName="ProductID" />
                 <ScalarProperty Name="CategoryID" ColumnName="CategoryID" />
@@ -1056,6 +1177,27 @@
               <ScalarProperty Name="ProductID" ColumnName="ProductID" />
             </EndProperty>
           </AssociationSetMapping>
+          <EntitySetMapping Name="SupportMessages">
+            <EntityTypeMapping TypeName="MyStoreModel.SupportMessage">
+              <MappingFragment StoreEntitySet="SupportMessage">
+                <ScalarProperty Name="SendTime" ColumnName="SendTime" />
+                <ScalarProperty Name="MessageContent" ColumnName="MessageContent" />
+                <ScalarProperty Name="IsAdmin" ColumnName="IsAdmin" />
+                <ScalarProperty Name="SessionID" ColumnName="SessionID" />
+                <ScalarProperty Name="MessageID" ColumnName="MessageID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="SupportSessions">
+            <EntityTypeMapping TypeName="MyStoreModel.SupportSession">
+              <MappingFragment StoreEntitySet="SupportSession">
+                <ScalarProperty Name="Status" ColumnName="Status" />
+                <ScalarProperty Name="StartTime" ColumnName="StartTime" />
+                <ScalarProperty Name="CustomerID" ColumnName="CustomerID" />
+                <ScalarProperty Name="SessionID" ColumnName="SessionID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
         </EntityContainerMapping>
       </Mapping>
     </edmx:Mappings>

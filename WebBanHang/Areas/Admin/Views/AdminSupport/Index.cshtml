@@ -1,0 +1,96 @@
+﻿@model IEnumerable<WebBanHang.Models.SupportSession>
+
+@{
+    ViewBag.Title = "Quản lý Yêu Cầu Hỗ Trợ";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="card shadow-sm border-0 mt-3">
+    <div class="card-header bg-white py-3 border-bottom-0">
+        <h5 class="mb-0 fw-bold text-dark"><i class="fa-solid fa-list-check text-primary me-2"></i> Các phiên cần hỗ trợ trực tuyến</h5>
+    </div>
+    <div class="card-body pt-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle border">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 10%;">Mã phòng</th>
+                        <th style="width: 25%;">Tên khách hàng</th>
+                        <th style="width: 25%;">Thời gian bắt đầu</th>
+                        <th style="width: 20%;">Trạng thái phòng</th>
+                        <th style="width: 20%;" class="text-center">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model == null || !Model.Any())
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-5">
+                                <i class="fa-solid fa-comment-slash fs-3 d-block mb-2 text-secondary"></i>
+                                Hiện tại không có yêu cầu hỗ trợ nào đang chờ xử lý.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var item in Model)
+                        {
+                            <tr>
+                                <td><strong class="text-primary">#@item.SessionID</strong></td>
+                                <td>
+                                    <div class="fw-bold text-dark">@item.Customer.CustomerName</div>
+                                    <small class="text-muted"><i class="fa-solid fa-phone-flip small"></i> @item.Customer.CustomerPhone</small>
+                                </td>
+                                <td>
+                                    <span class="text-secondary">
+                                        <i class="fa-regular fa-clock me-1"></i> @item.StartTime.ToString("dd/MM/yyyy HH:mm")
+                                    </span>
+                                </td>
+                                <td>
+                                    @if (item.Status == 0)
+                                    {
+                                        <span class="badge bg-danger px-2 py-2"><i class="fa-solid fa-bell fa-beat me-1"></i> Đang chờ Admin</span>
+                                    }
+                                    else if (item.Status == 1)
+                                    {
+                                        <span class="badge bg-warning text-dark px-2 py-2"><i class="fa-solid fa-spinner fa-spin me-1"></i> Đang chat...</span>
+                                    }
+                                    else if (item.Status == 2)
+                                    {
+                                        <span class="badge bg-secondary px-2 py-2"><i class="fa-solid fa-lock me-1"></i> Đã đóng</span>
+                                    }
+                                    else if (item.Status == 3)
+                                    {
+                                        <!-- THÊM TRẠNG THÁI MỚI Ở ĐÂY -->
+                                        <span class="badge bg-info text-dark px-2 py-2 shadow-sm"><i class="fa-solid fa-hourglass-half fa-spin me-1"></i> Chờ kết thúc</span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    <a href="@Url.Action("ChatRoom", "AdminSupport", new { id = item.SessionID })" class="btn btn-primary btn-sm px-3 fw-bold me-1">
+                                        <i class="fa-solid fa-comments me-1"></i> Trò chuyện
+                                    </a>
+
+                                    @* Nếu đã đóng (2) HOẶC đang chờ khách xác nhận (3) thì mờ nút Đóng đi *@
+                                    @if (item.Status == 2 || item.Status == 3)
+                                    {
+                                        <button class="btn btn-outline-secondary btn-sm" disabled title="Không thể thao tác lúc này" style="cursor: not-allowed; opacity: 0.6;">
+                                            <i class="fa-solid fa-circle-check"></i> Đóng
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <a href="@Url.Action("EndSession", "AdminSupport", new { id = item.SessionID })"
+                                           class="btn btn-outline-secondary btn-sm"
+                                           onclick="return confirm('Bạn có chắc chắn muốn gửi yêu cầu đóng phiên này cho khách hàng?')">
+                                            <i class="fa-solid fa-circle-check"></i> Đóng
+                                        </a>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

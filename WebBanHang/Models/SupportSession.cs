@@ -12,23 +12,21 @@ namespace WebBanHang.Models
     using System;
     using System.Collections.Generic;
     
-    public partial class ImportReceipt
+    public partial class SupportSession
     {
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2214:DoNotCallOverridableMethodsInConstructors")]
-        public ImportReceipt()
+        public SupportSession()
         {
-            this.ImportReceiptDetails = new HashSet<ImportReceiptDetail>();
+            this.SupportMessages = new HashSet<SupportMessage>();
         }
     
-        public int ReceiptID { get; set; }
-        public Nullable<int> POID { get; set; }
-        public System.DateTime ReceivedDate { get; set; }
-        public decimal TotalAmount { get; set; }
-        public string ReceivedBy { get; set; }
-        public string Note { get; set; }
+        public int SessionID { get; set; }
+        public int CustomerID { get; set; }
+        public System.DateTime StartTime { get; set; }
+        public int Status { get; set; }
     
+        public virtual Customer Customer { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
-        public virtual ICollection<ImportReceiptDetail> ImportReceiptDetails { get; set; }
-        public virtual PurchaseOrder PurchaseOrder { get; set; }
+        public virtual ICollection<SupportMessage> SupportMessages { get; set; }
     }
 }

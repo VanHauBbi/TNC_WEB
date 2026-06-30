@@ -33,6 +33,10 @@
         <AssociationConnector Association="MyStoreModel.FK_ProductReview_Product" ManuallyRouted="false" />
         <AssociationConnector Association="MyStoreModel.FK_ProductVariant_Product" ManuallyRouted="false" />
         <AssociationConnector Association="MyStoreModel.CouponProduct" ManuallyRouted="false" />
+        <EntityTypeShape EntityType="MyStoreModel.SupportMessage" Width="1.5" PointX="5.25" PointY="18.125" />
+        <EntityTypeShape EntityType="MyStoreModel.SupportSession" Width="1.5" PointX="3" PointY="18.125" />
+        <AssociationConnector Association="MyStoreModel.FK_SupportSession_Customer" />
+        <AssociationConnector Association="MyStoreModel.FK_SupportMessage_Session" />
       </Diagram>
     </edmx:Diagrams>
   </edmx:Designer>

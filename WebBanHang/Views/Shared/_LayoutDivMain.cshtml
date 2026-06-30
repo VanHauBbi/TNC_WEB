@@ -116,19 +116,19 @@
                         </li>
                     }
 
-                <li class="nav-item-sale">
-                    @{
-                        // Trích xuất thông tin Controller và Action hiện tại
-                        string currentController = ViewContext.RouteData.Values["controller"]?.ToString();
-                        string currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+                    <li class="nav-item-sale">
+                        @{
+                            // Trích xuất thông tin Controller và Action hiện tại
+                            string currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+                            string currentAction = ViewContext.RouteData.Values["action"]?.ToString();
 
-                        // Cấu trúc URL dựa trên ngữ cảnh
-                        string promoUrl = (currentController == "Home" && currentAction == "Index")
-                                          ? "#khuyen-mai-section"
-                                          : Url.Action("Index", "Home") + "#khuyen-mai-section";
-                    }
-                    <a href="@promoUrl"><i class="fa-solid fa-tag"></i> Khuyến Mãi <span class="badge">SALE</span></a>
-                </li>
+                            // Cấu trúc URL dựa trên ngữ cảnh
+                            string promoUrl = (currentController == "Home" && currentAction == "Index")
+                                              ? "#khuyen-mai-section"
+                                              : Url.Action("Index", "Home") + "#khuyen-mai-section";
+                        }
+                        <a href="@promoUrl"><i class="fa-solid fa-tag"></i> Khuyến Mãi <span class="badge">SALE</span></a>
+                    </li>
                 </ul>
             </div>
         </nav>
@@ -365,5 +365,469 @@
 
     @RenderSection("Scripts", required: false)
 
+    <button id="chatbot-toggle-btn" type="button" style="background: linear-gradient(135deg, #ff7eb3, #b983ff); border: none; color: white; width: 60px; height: 60px; border-radius: 50%; box-shadow: 0 4px 12px rgba(0,0,0,0.15); position: fixed; bottom: 20px; right: 20px; z-index: 9999; cursor: pointer;">
+        <i class="fa-solid fa-robot fs-3" style="pointer-events: none;"></i>
+    </button>
+
+    <div id="chatbot-box" style="display: none; position: fixed; bottom: 100px; right: 30px; width: 350px; height: 500px; background: white; border-radius: 12px; box-shadow: 0 5px 25px rgba(0,0,0,0.2); z-index: 9999; flex-direction: column; border: 1px solid #ddd; overflow: hidden;">
+
+        <div class="chat-header" style="background: linear-gradient(135deg, #ff7eb3, #b983ff); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; position: relative;">
+            <span id="chat-title" class="fw-bold"><i class="fa-solid fa-robot me-2"></i> Trợ Lý Ảo TNC</span>
+            <div>
+                <span style="cursor: pointer; margin-right: 12px;" onclick="toggleHistoryPanel()" title="Lịch sử hỗ trợ"><i class="fa-solid fa-ellipsis-vertical fs-5"></i></span>
+                <span style="cursor: pointer;" onclick="toggleChat()"><i class="fa-solid fa-xmark fs-5"></i></span>
+            </div>
+        </div>
+
+        <div id="chatbot-messages" style="flex: 1; padding: 15px; overflow-y: auto; background: #f8f9fa;">
+        </div>
+
+        <div id="chat-history-panel" style="display: none; position: absolute; top: 54px; left: 0; right: 0; bottom: 0; background: white; z-index: 10; flex-direction: column;">
+            <div style="padding: 10px; background: #f1f1f1; font-weight: bold; text-align: center; border-bottom: 1px solid #ddd; font-size: 0.9rem;">
+                Lịch sử hỗ trợ <i class="fa-solid fa-clock-rotate-left ms-1"></i>
+            </div>
+            <div id="chat-history-list" style="flex: 1; overflow-y: auto; padding: 10px;">
+                <div class="text-center text-muted mt-4"><i class="fa-solid fa-spinner fa-spin me-2"></i>Đang tải dữ liệu...</div>
+            </div>
+        </div>
+
+        <div class="chat-input-area" style="padding: 10px; border-top: 1px solid #ddd; background: white; display: flex; align-items: center;">
+            <input type="text" id="chatbot-input" placeholder="Nhập tin nhắn..." style="flex: 1; border: 1px solid #ccc; border-radius: 20px; padding: 8px 15px; outline: none;" onkeypress="if(event.keyCode===13) sendUserMessage()" autocomplete="off" />
+            <button onclick="sendUserMessage()" style="background: none; border: none; color: #0d6efd; margin-left: 10px; cursor: pointer;"><i class="fa-solid fa-paper-plane fs-4"></i></button>
+        </div>
+    </div>
+
+    <script src="~/Scripts/jquery.signalR-2.4.3.min.js"></script>
+    <script src="~/signalr/hubs"></script>
+
+    <script>
+    var isLiveChatMode = false;
+    var currentSessionId = 0;
+    var chatHub = null;
+    var chatTimeout = null;
+
+    // ==========================================
+    // 1. KHỞI TẠO & LOAD DỮ LIỆU KHI VÀO TRANG
+    // ==========================================
+    $(document).ready(function() {
+        // Ẩn hiện khung chat
+        document.getElementById('chatbot-toggle-btn').addEventListener('click', toggleChat);
+
+        // Lấy dữ liệu phiên hiện tại (AI hoặc Admin)
+        fetch('@Url.Action("GetActiveChatData", "Chat")')
+        .then(res => res.json())
+        .then(data => {
+            if (data.messages && data.messages.length > 0) {
+                document.getElementById('chatbot-messages').innerHTML = '';
+                data.messages.forEach(msg => {
+                    let isMe = (msg.Sender === "Bạn");
+                    appendMessage(msg.Sender, msg.Content, isMe);
+                });
+            } else {
+                showWelcomeMessage();
+            }
+
+            if (data.isLiveChat) {
+                isLiveChatMode = true;
+                currentSessionId = data.sessionId;
+                switchToAdminUI();
+                startSignalR(currentSessionId);
+
+                if (data.pendingConfirm || sessionStorage.getItem('TNC_Confirm_' + currentSessionId) === 'true') {
+                    renderConfirmBox();
+                }
+            } else {
+                resetChatTimeout(); // Bắt đầu đếm ngược 3 phút cho AI
+            }
+        });
+    });
+
+    // ==========================================
+    // 2. GIAO DIỆN & UI CƠ BẢN
+    // ==========================================
+    function toggleChat() {
+        var box = document.getElementById('chatbot-box');
+        box.style.display = box.style.display === 'none' || box.style.display === '' ? 'flex' : 'none';
+    }
+
+    function showWelcomeMessage() {
+        document.getElementById('chatbot-messages').innerHTML = '';
+        appendMessage('TNC Store', 'Xin chào! Chúng tôi có thể giúp gì cho bạn trong việc tìm kiếm linh kiện hoặc Build PC hôm nay?', false);
+        let qrHtml = `
+        <div id="initial-quick-replies" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;">
+            <button onclick="sendQuickReply('Tôi muốn Build PC')" style="background: white; border: 1px solid #ff7eb3; color: #ff7eb3; padding: 5px 12px; border-radius: 15px; font-size: 0.85rem; cursor: pointer;">🖥️ Build PC</button>
+            <button onclick="sendQuickReply('Tôi muốn gặp Admin')" style="background: white; border: 1px solid #198754; color: #198754; padding: 5px 12px; border-radius: 15px; font-size: 0.85rem; cursor: pointer;">👨‍💻 Gặp Admin</button>
+        </div>`;
+        document.getElementById('chatbot-messages').innerHTML += qrHtml;
+    }
+
+    function switchToAdminUI() {
+        document.getElementById('chat-title').innerHTML = '<i class="fa-solid fa-headset me-2"></i> Hỗ Trợ Viên TNC';
+        document.querySelector('.chat-header').style.background = 'linear-gradient(135deg, #ff9900 0%, #ff5500 100%)';
+    }
+
+    function switchToAIUI() {
+        document.getElementById('chat-title').innerHTML = '<i class="fa-solid fa-robot me-2"></i> Trợ Lý Ảo TNC';
+        document.querySelector('.chat-header').style.background = 'linear-gradient(135deg, #00c6ff 0%, #0072ff 100%)';
+    }
+
+    // ==========================================
+    // 3. XỬ LÝ LOGIC TIMEOUT AI (3 PHÚT)
+    // ==========================================
+    function resetChatTimeout() {
+        clearTimeout(chatTimeout);
+        if (!isLiveChatMode) {
+            chatTimeout = setTimeout(function() {
+                // Sau 3 phút không thao tác, xóa lịch sử AI
+                fetch('@Url.Action("ClearAITempSession", "Chat")', { method: 'POST' }).then(() => {
+                    document.getElementById('chatbot-messages').innerHTML = '<div class="text-center text-muted my-4" style="font-size: 0.8rem;">Phiên trò chuyện đã được làm mới do quá thời gian chờ.</div>';
+                    setTimeout(showWelcomeMessage, 2000);
+                });
+            }, 180000); // 180000 = 3 phút
+        }
+    }
+
+    // ==========================================
+    // 4. GỬI TIN NHẮN
+    // ==========================================
+    function sendQuickReply(text) {
+        var qrBox = document.getElementById('initial-quick-replies');
+        if(qrBox) qrBox.style.display = 'none';
+        document.getElementById('chatbot-input').value = text;
+        sendUserMessage();
+    }
+
+    function sendUserMessage() {
+        var input = document.getElementById('chatbot-input');
+        var msg = input.value.trim();
+        if(!msg) return;
+
+        appendMessage('Bạn', msg, true);
+        input.value = '';
+        resetChatTimeout(); // Reset đồng hồ đếm ngược mỗi khi gõ
+
+        if(isLiveChatMode) {
+            if(chatHub != null) chatHub.server.sendMessage(currentSessionId, "Khách hàng", msg, false);
+        }
+        else {
+            var loadingId = appendLoading();
+            var formData = new FormData();
+            formData.append('userMessage', msg);
+
+            fetch('@Url.Action("SendMessage", "Chat")', { method: 'POST', body: formData })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById(loadingId)?.remove();
+
+                if(data.isLiveChat) {
+                    isLiveChatMode = true;
+                    currentSessionId = data.sessionId;
+                    switchToAdminUI();
+                    appendMessage('Hệ thống', data.reply, false, 'text-success fw-bold');
+                    startSignalR(currentSessionId);
+                } else {
+                    appendMessage('AI', data.reply, false);
+                }
+            }).catch(err => {
+                document.getElementById(loadingId)?.remove();
+            });
+        }
+    }
+
+    // ==========================================
+    // 5. SIGNALR VÀ XÁC NHẬN ĐÓNG PHIÊN
+    // ==========================================
+        function startSignalR(sessionId) {
+            if ($.connection === undefined) return;
+            chatHub = $.connection.chatHub;
+
+            // BẮT TÍN HIỆU TIN NHẮN MỚI TỪ ADMIN
+            chatHub.client.broadcastMessage = function (senderName, message, isAdmin, time) {
+                if (isAdmin) {
+                    // Kiểm tra xem User có đang ở giao diện Lịch sử không
+                    let chatTitle = document.getElementById('chat-title').innerText;
+
+                    if (chatTitle.includes("Lịch sử")) {
+                        // Đang xem lịch sử mà Admin nhắn -> Ép quay về màn hình Live Chat
+                        // Vì Server đã lưu tin nhắn vào DB trước khi phát đi, nên gọi resumeCurrentChat() sẽ tự động tải ra tin nhắn mới nhất.
+                        resumeCurrentChat();
+                    } else {
+                        // Đang ở đúng màn hình Live Chat -> In tin nhắn ra luôn
+                        appendMessage(senderName, message, false);
+                    }
+                }
+            };
+
+            // BẮT TÍN HIỆU HỎI XÁC NHẬN TỪ ADMIN
+            chatHub.client.askForConfirmation = function () {
+                triggerConfirmationUI();
+            };
+
+            $.connection.hub.start().done(function () {
+                chatHub.server.joinSession(sessionId);
+            });
+        }
+
+        function triggerConfirmationUI() {
+        // 1. Tắt panel danh sách lịch sử nếu nó đang mở che màn hình
+        document.getElementById('chat-history-panel').style.display = 'none';
+
+        // 2. Kiểm tra xem User có đang ở trong giao diện "Lịch sử" không
+        let chatTitle = document.getElementById('chat-title').innerText;
+
+        if (chatTitle.includes("Lịch sử")) {
+            // Nếu đang xem lịch sử -> Ép load lại màn hình chat Live hiện tại
+            document.getElementById('chatbot-input').disabled = false;
+            switchToAdminUI();
+
+            // Hiển thị trạng thái đang tải
+            document.getElementById('chatbot-messages').innerHTML = '<div class="text-center mt-4 text-muted"><i class="fa-solid fa-spinner fa-spin me-2"></i>Đang đồng bộ lại phiên...</div>';
+
+            // Gọi API để lấy lại toàn bộ tin nhắn của phiên Live
+            fetch('@Url.Action("GetSessionMessages", "Chat")?sessionId=' + currentSessionId)
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('chatbot-messages').innerHTML = '';
+                if(data.success) {
+                    data.messages.forEach(msg => {
+                        let isMe = (msg.Sender === "Bạn");
+                        appendMessage(msg.Sender, msg.Content, isMe);
+                    });
+                }
+                // CHỐT: Sau khi load lại xong tin nhắn gốc thì mới gọi hộp Confirm
+                renderConfirmBox();
+            });
+        } else {
+            // Nếu đang ở đúng màn hình chat hiện tại rồi thì hiện luôn hộp Confirm
+            renderConfirmBox();
+        }
+    }
+
+    // Hàm phụ trợ chuyên dùng để vẽ hộp Confirm (chống lặp code)
+    function renderConfirmBox() {
+        if (document.getElementById('confirm-box')) return;
+
+            // BỘ NHỚ TẠM: Ghi nhớ rằng phiên này đang chờ xác nhận (sống sót qua cả F5)
+        sessionStorage.setItem('TNC_Confirm_' + currentSessionId, 'true');
+
+        let confirmHtml = `
+        <div id="confirm-box" class="chat-bubble text-center my-3 p-3 shadow-sm border" style="background: #ffffff; border-radius: 10px; width: 100%;">
+            <p class="mb-2 fw-bold text-dark" style="font-size:0.85rem;">Vấn đề của bạn đã được giải quyết chưa?</p>
+            <button class="btn btn-success btn-sm m-1" onclick="submitConfirmation(true)">Rồi, tuyệt vời</button>
+            <button class="btn btn-danger btn-sm m-1" onclick="submitConfirmation(false)">Chưa, hỗ trợ thêm</button>
+        </div>`;
+
+        document.getElementById('chatbot-messages').innerHTML += confirmHtml;
+        document.getElementById('chatbot-messages').scrollTop = document.getElementById('chatbot-messages').scrollHeight;
+        document.getElementById('chatbot-input').disabled = true;
+    }
+
+    function submitConfirmation(isResolved) {
+        let confirmBox = document.getElementById('confirm-box');
+        if(confirmBox) {
+            confirmBox.remove();
+        }
+
+        sessionStorage.removeItem('TNC_Confirm_' + currentSessionId);
+
+        $.post('@Url.Action("ConfirmResolution", "Chat")', { sessionId: currentSessionId, isResolved: isResolved }, function(res) {
+            document.getElementById('chatbot-input').disabled = false;
+            if(res.success) {
+                if(isResolved) {
+                    isLiveChatMode = false; currentSessionId = 0;
+                    switchToAIUI(); showWelcomeMessage();
+                } else {
+                    appendMessage('Hệ thống', 'Admin sẽ tiếp tục hỗ trợ ngay.', false);
+                }
+            }
+        });
+    }
+
+    // ==========================================
+    // 6. GIAO DIỆN IN CHỮ RA MÀN HÌNH
+    // ==========================================
+        function appendMessage(sender, text, isMe) {
+            if (sender === 'Hệ thống') {
+                let systemHtml = `
+            <div class="text-center my-3">
+                <span style="font-size: 0.75rem; color: #6c757d; font-style: italic; padding: 2px 10px; background: transparent;">
+                    ${text}
+                </span>
+            </div>`;
+                document.getElementById('chatbot-messages').innerHTML += systemHtml;
+                document.getElementById('chatbot-messages').scrollTop = document.getElementById('chatbot-messages').scrollHeight;
+                return; // Dừng hàm tại đây, không chạy xuống code tạo bong bóng chat bên dưới
+            }
+
+            let align = '', bgColor = '', textColor = '';
+
+            // 1. Nếu là AI (TNC Store) -> Nằm bên TRÁI, nền xanh nhạt
+            if (sender === 'TNC Store' || sender === 'AI') {
+                align = 'margin-right: auto;'; // Đẩy sang trái
+                bgColor = '#e3f2fd'; // Nền xanh nhạt
+                textColor = '#0d47a1'; // Chữ xanh đậm
+                sender = 'TNC Store'; // Ép tên hiển thị
+            }
+            // 2. Nếu là Admin hoặc Hệ thống -> Nằm bên TRÁI, nền cam
+            else if (sender === 'Admin' || sender === 'Hệ thống') {
+                align = 'margin-right: auto;'; // Đẩy sang trái
+                bgColor = '#ff9900'; // Nền cam
+                textColor = 'white'; // Chữ trắng
+            }
+            // 3. Nếu là Bạn (Khách hàng) -> Nằm bên PHẢI, nền xanh dương đậm
+            else {
+                align = 'margin-left: auto;'; // Đẩy sang phải
+                bgColor = '#0d6efd';
+                textColor = 'white';
+            }
+
+            let html = `<div class="chat-bubble shadow-sm" style="padding: 10px 15px; border-radius: 15px; margin-bottom: 10px; width: fit-content; max-width: 85%; ${align} background: ${bgColor}; color: ${textColor};"><small style="font-size: 0.65rem; display:block; opacity: 0.8; margin-bottom: 3px; font-weight: bold;">${sender}</small>${text}</div>`;
+            document.getElementById('chatbot-messages').innerHTML += html;
+            document.getElementById('chatbot-messages').scrollTop = document.getElementById('chatbot-messages').scrollHeight;
+        }
+
+    function appendLoading() {
+        var id = 'loading-' + Date.now();
+        var html = `<div id="${id}" style="padding: 10px 15px; border-radius: 15px; margin-bottom: 10px; width: fit-content; background: #e9ecef; color: #6c757d;"><i class="fa-solid fa-spinner fa-spin me-2"></i>Đang suy nghĩ...</div>`;
+        var container = document.getElementById('chatbot-messages');
+        container.innerHTML += html;
+        container.scrollTop = container.scrollHeight;
+        return id;
+    }
+
+    // ==========================================
+    // 7. LỊCH SỬ CHAT (XEM CÁC PHIÊN ĐÃ ĐÓNG)
+    // ==========================================
+    function toggleHistoryPanel() {
+        let panel = document.getElementById('chat-history-panel');
+
+        if (panel.style.display === 'none') {
+            panel.style.display = 'flex';
+            // Gọi API lấy danh sách
+            fetch('@Url.Action("GetUserHistory", "Chat")')
+            .then(res => res.text())
+            .then(html => {
+                document.getElementById('chat-history-list').innerHTML = html;
+            });
+        } else {
+            panel.style.display = 'none';
+        }
+    }
+    // ==========================================
+    // 8. XEM CHI TIẾT 1 PHIÊN LỊCH SỬ
+    // ==========================================
+    function viewHistoryDetail(sessionId) {
+        console.log("1. Đã nhận lệnh mở lịch sử phòng số: " + sessionId);
+
+        // Ẩn panel lịch sử đi
+        document.getElementById('chat-history-panel').style.display = 'none';
+
+        console.log("2. Đang kéo dữ liệu tin nhắn từ Server...");
+
+        fetch('@Url.Action("GetSessionMessages", "Chat")?sessionId=' + sessionId)
+        .then(res => {
+            if (!res.ok) throw new Error("Mạng lỗi hoặc Controller không phản hồi");
+            return res.json();
+        })
+        .then(data => {
+            console.log("3. Dữ liệu Server trả về: ", data);
+
+            if(data.success) {
+                document.getElementById('chatbot-messages').innerHTML = '';
+
+                // In tin nhắn
+                data.messages.forEach(msg => {
+                    let isMe = (msg.Sender === "Bạn");
+                    appendMessage(msg.Sender, msg.Content, isMe);
+                });
+
+                // Đổi UI sang chế độ xem lại
+                document.getElementById('chat-title').innerHTML = '<i class="fa-solid fa-clock-rotate-left me-2"></i> Lịch sử #' + sessionId;
+                document.querySelector('.chat-header').style.background = '#6c757d';
+                document.getElementById('chatbot-input').disabled = true;
+
+                // --- XỬ LÝ NÚT BẤM (QUAY LẠI & BẮT ĐẦU MỚI) ---
+                let actionBtns = `<div class="text-center mt-3 mb-2 d-flex justify-content-center gap-2">`;
+
+                // Luôn luôn hiển thị nút Quay Lại
+                actionBtns += `<button class="btn btn-sm btn-secondary shadow-sm" onclick="resumeCurrentChat()" style="border-radius: 20px;"><i class="fa-solid fa-arrow-left me-1"></i> Quay lại</button>`;
+
+                // Chỉ hiện nút Bắt đầu mới khi KHÔNG có phiên Live Chat đang mở
+                if (!isLiveChatMode) {
+                    actionBtns += `<button class="btn btn-sm btn-outline-primary shadow-sm" onclick="startNewAIChat()" style="border-radius: 20px;"><i class="fa-solid fa-plus me-1"></i> Bắt đầu mới</button>`;
+                }
+
+                actionBtns += `</div>`;
+                document.getElementById('chatbot-messages').innerHTML += actionBtns;
+
+                document.getElementById('chatbot-messages').scrollTop = document.getElementById('chatbot-messages').scrollHeight;
+                console.log("4. Hiển thị lịch sử thành công!");
+            } else {
+                alert("Hệ thống báo: Không lấy được tin nhắn của phiên này!");
+            }
+        })
+        .catch(err => {
+            console.error("LỖI NGHIÊM TRỌNG: ", err);
+            alert("Có lỗi xảy ra khi xem lịch sử. Hãy bật F12 (Console) để xem chi tiết.");
+        });
+    }
+
+    // ==========================================
+    // 9. HÀM QUAY LẠI PHIÊN CHAT HIỆN TẠI
+    // ==========================================
+    function resumeCurrentChat() {
+        document.getElementById('chatbot-input').disabled = false;
+
+        if (isLiveChatMode && currentSessionId > 0) {
+            switchToAdminUI();
+            document.getElementById('chatbot-messages').innerHTML = '';
+
+            // Show a loading indicator while fetching
+            document.getElementById('chatbot-messages').innerHTML = '<div class="text-center mt-4 text-muted"><i class="fa-solid fa-spinner fa-spin me-2"></i>Đang tải lại phiên...</div>';
+
+            fetch('@Url.Action("GetSessionMessages", "Chat")?sessionId=' + currentSessionId)
+            .then(res => res.json())
+            .then(data => {
+                // Clear the loading indicator
+                document.getElementById('chatbot-messages').innerHTML = '';
+
+                if(data.success) {
+                    data.messages.forEach(msg => {
+                        let isMe = (msg.Sender === "Bạn");
+                        appendMessage(msg.Sender, msg.Content, isMe);
+                    });
+                }
+
+                // CRITICAL FIX: Check memory and render the box AFTER all messages are loaded
+                if (sessionStorage.getItem('TNC_Confirm_' + currentSessionId) === 'true') {
+                    // Use a slight timeout to ensure the DOM has updated with the messages first
+                    setTimeout(function() {
+                        renderConfirmBox();
+                    }, 50);
+                }
+            });
+        } else {
+            switchToAIUI();
+            showWelcomeMessage();
+        }
+    }
+
+    function startNewAIChat() {
+        // CHỐT CHẶN: Nếu đang chat với Admin thì không cho tạo phòng AI mới
+        if (isLiveChatMode) {
+            alert("Bạn đang có một phiên hỗ trợ trực tiếp. Vui lòng hoàn tất hoặc chờ Admin đóng phiên hiện tại trước khi bắt đầu mới!");
+            return;
+        }
+
+        var input = document.getElementById('chatbot-input');
+        input.disabled = false;
+        input.placeholder = "Nhập tin nhắn...";
+
+        document.getElementById('chatbot-messages').innerHTML = '';
+        switchToAIUI();
+        showWelcomeMessage();
+        resetChatTimeout();
+    }
+    </script>
 </body>
 </html>

@@ -1,0 +1,201 @@
+﻿@model WebBanHang.Models.SupportSession
+
+@{
+    ViewBag.Title = "Phòng Chat #" + Model.SessionID;
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+<div class="row mt-3">
+    <div class="col-12 mb-3">
+        <a href="@Url.Action("Index", "AdminSupport")" class="btn btn-secondary btn-sm shadow-sm">
+            <i class="fa-solid fa-arrow-left me-1"></i> Quay lại danh sách
+        </a>
+    </div>
+</div>
+        <div class="row mt-3">
+            <div class="col-md-4">
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-white py-3 border-bottom-0">
+                        <h6 class="mb-0 fw-bold text-dark"><i class="fa-solid fa-user text-primary me-2"></i> Thông tin khách hàng</h6>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Tên khách hàng:</strong> @Model.Customer.CustomerName</p>
+                        <p><strong>Số điện thoại:</strong> @Model.Customer.CustomerPhone</p>
+                        <p>
+                            <strong>Trạng thái:</strong>
+                            <span class="badge bg-success">Đang Online</span>
+                        </p>
+                        <hr />
+                        <a href="@Url.Action("EndSession", "AdminSupport", new { id = Model.SessionID })"
+                           class="btn btn-outline-danger w-100"
+                           onclick="return confirm('Bạn có chắc chắn muốn kết thúc phiên hỗ trợ này?');">
+                            <i class="fa-solid fa-circle-check"></i> Đánh dấu đã giải quyết
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-8">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-3">
+                        <h6 class="mb-0 fw-bold"><i class="fa-regular fa-comments me-2"></i> Trò chuyện trực tiếp</h6>
+                        <span class="badge bg-light text-primary">Mã phòng: #@Model.SessionID</span>
+                    </div>
+
+                    <div class="card-body" id="chatWindow" style="height: 500px; overflow-y: auto; background-color: #f8f9fa;">
+                        <ul id="discussion" class="list-unstyled mb-0">
+                            @foreach (var msg in Model.SupportMessages.OrderBy(m => m.SendTime))
+                            {
+                                // Xác định định danh
+                                bool isAI = msg.MessageContent.StartsWith("AI: ");
+                                bool isRightSide = msg.IsAdmin || isAI; // Cả Admin và AI đều nằm bên phải
+
+                                string senderName = msg.IsAdmin ? "Admin (Bạn)" : (isAI ? "🤖 Trợ lý AI" : Model.Customer.CustomerName);
+                                string cleanContent = isAI ? msg.MessageContent.Substring(4) : msg.MessageContent;
+
+                                // Thiết lập màu sắc để phân biệt
+                                string bgColor = "";
+                                string textColor = "";
+
+                                if (msg.IsAdmin)
+                                {
+                                    bgColor = "#0d6efd"; // Xanh dương cho Admin
+                                    textColor = "white";
+                                }
+                                else if (isAI)
+                                {
+                                    bgColor = "linear-gradient(135deg, #20c997, #17a2b8)"; // Xanh ngọc Gradient cho AI
+                                    textColor = "white";
+                                }
+                                else
+                                {
+                                    bgColor = "#ffffff"; // Trắng cho Khách hàng
+                                    textColor = "#333333";
+                                }
+
+                                <div class="d-flex mb-3 @(isRightSide ? "justify-content-end" : "justify-content-start")">
+                                    <div class="p-2 rounded-3 shadow-sm"
+                                         style="max-width: 75%; background: @bgColor; color: @textColor; border: 1px solid #e2e3e5;">
+                                        <small class="d-block fw-bold mb-1" style="opacity: 0.85;">@senderName</small>
+                                        <span>@cleanContent</span>
+                                        <small class="d-block mt-1 text-end" style="font-size: 0.65rem; opacity: 0.7;">
+                                            @msg.SendTime.ToString("HH:mm")
+                                        </small>
+                                    </div>
+                                </div>
+                            }
+                        </ul>
+                    </div>
+
+                    <div class="card-footer bg-white py-3">
+                        <div class="input-group">
+                            <input type="text" id="messageInput" class="form-control" placeholder="Nhập câu trả lời của bạn..." autocomplete="off" />
+                            <button class="btn btn-primary px-4 fw-bold" id="btnSend" type="button">
+                                <i class="fa-solid fa-paper-plane me-1"></i> Gửi
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @section scripts {
+            <script src="~/Scripts/jquery.signalR-2.4.3.min.js"></script>
+            <script src="~/signalr/hubs"></script>
+
+            <script type="text/javascript">
+        $(function () {
+            // Tự động cuộn khung chat xuống dưới cùng khi mới load
+            var chatWindow = $('#chatWindow');
+            chatWindow.scrollTop(chatWindow[0].scrollHeight);
+
+            // 1. Khởi tạo đối tượng chat từ Hub
+            var chat = $.connection.chatHub;
+            var sessionId = @Model.SessionID;
+            var customerName = "@Model.Customer.CustomerName";
+
+            // 2. Định nghĩa hàm nhận tin nhắn từ Server (Client Method)
+            chat.client.broadcastMessage = function (senderName, message, isAdmin, time) {
+                // 1. Kiểm tra xem tin nhắn có phải của AI không
+                var isAI = message.startsWith("AI: ");
+
+                // Cả Admin và AI đều hiển thị bên phải
+                var isRightSide = isAdmin || isAI;
+
+                var alignmentClass = isRightSide ? "justify-content-end" : "justify-content-start";
+                var borderClass = isRightSide ? "border-0" : "border";
+
+                // 2. Lọc bỏ chữ "AI: " nếu có để nội dung hiển thị đẹp hơn
+                var cleanMessage = isAI ? message.substring(4) : message;
+
+                // 3. Đặt tên hiển thị
+                var displayName = isAdmin ? "Admin (Bạn)" : (isAI ? "🤖 Trợ lý AI" : customerName);
+
+                // 4. XỬ LÝ ĐỔI MÀU Ở ĐÂY
+                var bgColor = "";
+                var textColor = "";
+
+                if (isAdmin) {
+                    bgColor = "#0d6efd"; // Màu nền của Admin (Xanh dương)
+                    textColor = "#ffffff"; // Chữ màu trắng
+                }
+                else if (isAI) {
+                    bgColor = "#20c997"; // Xanh ngọc đơn sắc
+                    textColor = "white";
+                }
+                else {
+                    bgColor = "#ffffff"; // Màu nền của Khách hàng (Trắng)
+                    textColor = "#212529"; // Chữ màu đen
+                }
+
+                // 5. CHỈ RENDER VÀ APPEND DUY NHẤT 1 LẦN
+                var messageHtml = ` 
+                <li class="mb-3 d-flex ${alignmentClass}">
+                    <div class="p-2 rounded-3 shadow-sm ${borderClass}" style="max-width: 75%; background: ${bgColor}; color: ${textColor};">
+                        <small class="d-block fw-bold mb-1">${displayName}</small>
+                        <span>${cleanMessage}</span>
+                        <small class="d-block text-end mt-1" style="font-size: 0.7rem; opacity: 0.8;">${time}</small>
+                    </div>
+                </li>`;
+
+                $('#discussion').append(messageHtml);
+                chatWindow.animate({ scrollTop: chatWindow[0].scrollHeight }, 300);
+            };
+
+            chat.client.errorMessage = function (error) {
+                alert("Lỗi: " + error);
+            };
+
+            // 3. Khởi động SignalR và bắt sự kiện Gửi
+            $.connection.hub.start().done(function () {
+                // Admin đăng nhập vào đúng phòng (Group) của khách hàng
+                chat.server.joinSession(sessionId);
+
+                // Sự kiện Click nút Gửi
+                $('#btnSend').click(function () {
+                    sendMessage();
+                });
+
+                // Sự kiện nhấn phím Enter
+                $('#messageInput').keypress(function (e) {
+                    if (e.which == 13) {
+                        sendMessage();
+                    }
+                });
+
+                function sendMessage() {
+                    var currentStatus = @Model.Status;
+                    if (currentStatus == 2) {
+                        alert("Phiên này đã đóng, bạn không thể nhắn tin tiếp!");
+                        return;
+                    }
+                    var msg = $('#messageInput').val().trim();
+                    if (msg.length > 0) {
+                        // Gửi tin nhắn lên Server. Chú ý tham số cuối (isAdmin) là TRUE
+                        chat.server.sendMessage(sessionId, "Admin", msg, true);
+                        $('#messageInput').val('').focus();
+                    }
+                }
+            });
+        });
+            </script>
+        }

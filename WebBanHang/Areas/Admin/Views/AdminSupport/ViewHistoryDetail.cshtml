@@ -1,0 +1,55 @@
+﻿@model WebBanHang.Models.SupportSession
+
+@{
+    ViewBag.Title = "Chi Tiết Lịch Sử #" + Model.SessionID;
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+<div class="row mt-3">
+    <div class="col-md-10 offset-md-1">
+        <div class="mb-3">
+            <a href="@Url.Action("Index", "AdminSupport")" class="btn btn-secondary btn-sm shadow-sm">
+                <i class="fa-solid fa-arrow-left me-1"></i> Quay lại danh sách
+            </a>
+        </div>
+
+        <div class="card shadow-sm border-0 border-top border-secondary border-3">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                <h6 class="mb-0 fw-bold text-secondary">
+                    <i class="fa-solid fa-box-archive me-2"></i> Lịch sử trò chuyện: <span class="text-primary">@Model.Customer.CustomerName</span>
+                </h6>
+                <span class="badge bg-secondary">Mã phòng: #@Model.SessionID</span>
+            </div>
+
+            <div class="card-body" style="height: 500px; overflow-y: auto; background-color: #f8f9fa;">
+                <ul class="list-unstyled mb-0">
+                    @if (Model.SupportMessages == null || !Model.SupportMessages.Any())
+                    {
+                        <li class="text-center text-muted my-5">Phiên này chưa có tin nhắn nào.</li>
+                    }
+                    else
+                    {
+                        foreach (var msg in Model.SupportMessages.OrderBy(m => m.SendTime))
+                        {
+                            bool isAdmin = msg.IsAdmin;
+                            <li class="mb-3 d-flex @(isAdmin ? "justify-content-end" : "justify-content-start")">
+                                <div class="p-2 rounded-3 shadow-sm"
+                                     style="max-width: 75%; background-color: @(isAdmin ? "#e2e3e5" : "#ffffff"); border: 1px solid #dee2e6;">
+                                    <small class="d-block fw-bold mb-1 text-secondary">@(isAdmin ? "Admin (Đã trả lời)" : Model.Customer.CustomerName)</small>
+                                    <span class="text-dark">@msg.MessageContent</span>
+                                    <small class="d-block text-end mt-1 text-muted" style="font-size: 0.7rem;">@msg.SendTime.ToString("dd/MM/yyyy HH:mm")</small>
+                                </div>
+                            </li>
+                        }
+                    }
+                </ul>
+            </div>
+
+            <div class="card-footer bg-light text-center py-3">
+                <div class="text-danger fw-bold">
+                    <i class="fa-solid fa-lock me-1"></i> Phiên hỗ trợ này đã được đóng và lưu trữ.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
