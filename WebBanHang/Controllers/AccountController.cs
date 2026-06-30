@@ -10,7 +10,7 @@ using System.Data.Entity;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace _23DH110809_MyStore.Controllers
+namespace WebBanHang.Controllers
 {
     public class AccountController : Controller
     {
@@ -151,15 +151,16 @@ namespace _23DH110809_MyStore.Controllers
         // ==========================================================
 
         // Get: Account/Login
-        public ActionResult Login()
+        public ActionResult Login(string returnUrl)
         {
+            ViewBag.ReturnUrl = returnUrl;
             return View(new LoginVM());
         }
 
         // POST: Account/Login
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Login(LoginVM model)
+        public ActionResult Login(LoginVM model, string returnUrl)
         {
             if (ModelState.IsValid)
             {
@@ -232,7 +233,13 @@ namespace _23DH110809_MyStore.Controllers
                         return RedirectToAction("Index", "Home", new { Area = "Admin" });
                     }
 
-                    // Test Case Login001 & Login016: Vai trò Khách hàng
+                    // FIX: Xử lý returnUrl để quay lại trang cũ
+                    if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                    {
+                        return Redirect(returnUrl);
+                    }
+
+                    // Test Case Login001 & Login016: Vai trò Khách hàng (mặc định)
                     return RedirectToAction("Index", "Home");
                 }
                 else

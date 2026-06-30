@@ -33,13 +33,19 @@
             </div>
         </div>
 
-        <div class="mt-5">
+        <div class="mt-5 text-center w-100">
             <a href="@Url.Action("Index", "Home")" class="btn btn-outline-primary btn-lg me-3">
                 <i class="fa-solid fa-arrow-left"></i> Về trang chủ
             </a>
 
             <a href="@Url.Action("Details", "Orders", new { id = Model.OrderID })" class="btn btn-primary btn-lg">
                 Xem chi tiết đơn hàng
+            </a>
+
+            <hr class="w-50 mx-auto text-muted mb-4" /> <a href="@Url.Action("Tracking", "Orders", new { id = Model.OrderID })"
+                                                           class="btn btn-warning fw-bold text-white shadow px-5 py-3 rounded-pill"
+                                                           style="font-size: 1.1rem; letter-spacing: 0.5px; transition: all 0.3s ease;">
+                <i class="fa-solid fa-map-location-dot fs-5 me-2"></i> THEO DÕI TIẾN ĐỘ ĐƠN HÀNG
             </a>
         </div>
 

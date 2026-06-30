@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="TNCStore" />
     <meta name="keywords" content="TNC, TNCStore, TNCStoreGaming" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -10,16 +10,16 @@
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
 
     <link href="~/Content/bootstrap.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
     <link rel="stylesheet" href="~/Content/myStyle/header.css" />
     <link rel="stylesheet" href="~/Content/myStyle/footer.css" />
     <link rel="stylesheet" href="~/Content/myStyle/home.css" />
 
+    <script>
+        var isLoggedIn = @(Session["UserName"] != null ? "true" : "false");
+    </script>
     <title>@ViewBag.Title</title>
-    <style>
-    </style>
 </head>
 <body>
     <header class="site-header new-design">
@@ -31,8 +31,7 @@
                     </a>
                 </div>
 
-                <form class="search-box new-style" action="@Url.Action("ProductSearch", "Home")" method="get">
-
+                <form class="search-box new-style" action="@Url.Action("ProductSearch", "Home", null, Request.Url.Scheme)" method="get" target="_self">
                     <input type="text"
                            placeholder="Tìm kiếm sản phẩm..."
                            name="query"
@@ -102,9 +101,15 @@
                         </div>
                     </li>
 
+                    <li class="nav-item-buildpc">
+                        <a href="@Url.Action("Index", "BuildPC")">
+                            <i class="fa-solid fa-computer"></i> Build PC <span class="badge-hot">HOT</span>
+                        </a>
+                    </li>
+
                     @{
                         var db = new WebBanHang.Models.MyStoreEntities();
-                        var topCategories = db.Categories.Take(6).ToList();
+                        var topCategories = db.Categories.Take(5).ToList();
                     }
 
                     @foreach (var cat in topCategories)
@@ -118,10 +123,20 @@
 
                     <li class="nav-item-sale">
                         @{
+                            string currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+                            string currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+                    <li class="nav-item-sale">
+                        @{
                             // Trích xuất thông tin Controller và Action hiện tại
                             string currentController = ViewContext.RouteData.Values["controller"]?.ToString();
                             string currentAction = ViewContext.RouteData.Values["action"]?.ToString();
 
+                            string promoUrl = (currentController == "Home" && currentAction == "Index")
+                                              ? "#khuyen-mai-section"
+                                              : Url.Action("Index", "Home") + "#khuyen-mai-section";
+                        }
+                        <a href="@promoUrl"><i class="fa-solid fa-tag"></i> Khuyến Mãi <span class="badge">SALE</span></a>
+                    </li>
                             // Cấu trúc URL dựa trên ngữ cảnh
                             string promoUrl = (currentController == "Home" && currentAction == "Index")
                                               ? "#khuyen-mai-section"
@@ -221,144 +236,125 @@
             </div>
         </div>
     </footer>
+
     @if (TempData["ErrorMessage"] != null)
     {
         <div id="tempMessage" class="toast-popup alert alert-danger" role="alert">
             <i class="fas fa-exclamation-triangle me-2"></i> @TempData["ErrorMessage"]
         </div>
     }
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-    // ✅ Kiểm tra đăng nhập từ session
-    var isLoggedIn = '@(Session["UserName"] != null ? "true" : "false")';
+        var isLoggedIn = '@(Session["UserName"] != null ? "true" : "false")';
 
-    // ✅ Bật / tắt dropdown giỏ hàng
-    function toggleCart() {
-        if (isLoggedIn === "false") {
-            alert("⚠️ Vui lòng đăng nhập để xem giỏ hàng!");
-            window.location.href = '@Url.Action("Login", "Account")';
-            return;
+        function toggleCart() {
+            if (isLoggedIn === "false") {
+                alert("⚠️ Vui lòng đăng nhập để xem giỏ hàng!");
+                window.location.href = '@Url.Action("Login", "Account")';
+                return;
+            }
+            $('#cart-dropdown').toggle();
+
+            if ($('#cart-dropdown').is(':visible')) {
+                MiniCart();
+            }
         }
-        $('#cart-dropdown').toggle();
 
-        if ($('#cart-dropdown').is(':visible')) {
-            MiniCart();
-        }
-    }
+        $(document).on('click', '#cartIcon', function (e) {
+            e.stopPropagation();
+            toggleCart();
+        });
 
-    // 🛑 KHẮC PHỤC LỖI SỰ KIỆN LAN TRUYỀN (PROPAGATION FIXES)
+        $(document).on('click', '#close-cart-btn', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            $('#cart-dropdown').hide();
+        });
 
-    // 1. Chỉ click vào icon giỏ hàng mới MỞ/ĐÓNG Mini Cart
-    $(document).on('click', '#cartIcon', function (e) {
-        // Ngăn sự kiện click lan truyền ra ngoài body/window (nếu có sự kiện đóng Mini Cart ở body/window)
-        e.stopPropagation();
-        toggleCart();
-    });
+        $(document).on('click', '#cart-dropdown', function (e) {
+            e.stopPropagation();
+        });
 
-    // 2. Xử lý click cho nút "X" (Close button)
-    $(document).on('click', '#close-cart-btn', function (e) {
-        e.preventDefault();
-        e.stopPropagation(); // RẤT QUAN TRỌNG: Ngăn sự kiện click lan truyền ra #cartIcon
-        $('#cart-dropdown').hide();
-    });
+        $(document).on('click', '#view-cart-btn, #checkout-btn', function (e) {
+            e.stopPropagation();
+        });
 
-    // 3. Đảm bảo Mini Cart không đóng khi click vào NỘI DUNG của nó
-    $(document).on('click', '#cart-dropdown', function (e) {
-        e.stopPropagation();
-    });
-
-    // 4. Xử lý click cho các nút chức năng bên trong Mini Cart
-    $(document).on('click', '#view-cart-btn, #checkout-btn', function (e) {
-        e.stopPropagation(); // Đảm bảo Mini Cart không đóng khi bấm Thanh Toán/Xem Giỏ Hàng
-    });
-
-
-    // ✅ Nút "Xem giỏ hàng"
-    $(document).on('click', '#view-cart-btn', function () {
-        if (isLoggedIn === "false") {
-            window.location.href = '@Url.Action("Login", "Account")';
-        } else {
-            window.location.href = '@Url.Action("Index", "Cart")';
-        }
-    });
-
-    // ✅ Nút "Thanh Toán"
-    $(document).on('click', '#checkout-btn', function () {
-        if (isLoggedIn === "false") {
-            window.location.href = '@Url.Action("Login", "Account")';
-        } else {
-            window.location.href = '@Url.Action("Checkout", "Orders")';
-        }
-    });
-
-    // ✅ Hàm gọi API thêm sản phẩm vào giỏ hàng (Giữ nguyên)
-    function addToCart(productId, quantity) {
-        $.ajax({
-            url: '@Url.Action("AddToCart", "Cart")',
-            type: 'POST',
-            data: { id: productId, quantity: quantity },
-            success: function (res) {
-                if (res.success) {
-                    $('#cart-count').text(res.cartCount);
-                    $('#cart-total').text(res.cartTotal);
-                    MiniCart();
-                    alert(res.message);
-                } else if (res.redirectUrl) {
-                    window.location.href = res.redirectUrl;
-                } else {
-                    alert(res.message);
-                }
-            },
-            error: function () {
-                alert("❌ Không thể thêm sản phẩm vào giỏ hàng.");
+        $(document).on('click', '#view-cart-btn', function () {
+            if (isLoggedIn === "false") {
+                window.location.href = '@Url.Action("Login", "Account")';
+            } else {
+                window.location.href = '@Url.Action("Index", "Cart")';
             }
         });
-    }
 
-    // ✅ Cập nhật mini cart (danh sách + tổng) (Giữ nguyên)
-    function MiniCart() {
-        if (isLoggedIn === "true") {
+        $(document).on('click', '#checkout-btn', function () {
+            if (isLoggedIn === "false") {
+                window.location.href = '@Url.Action("Login", "Account")';
+            } else {
+                window.location.href = '@Url.Action("Checkout", "Orders")';
+            }
+        });
+
+        function addToCart(productId, quantity) {
             $.ajax({
-                url: '@Url.Action("GetMiniCart", "Cart")',
-                type: 'GET',
-                success: function (data) {
-                    $('#cart-items').html(data.html);
-                    $('#cart-total').text(data.total);
-                    $('#cart-count').text(data.count);
+                url: '@Url.Action("AddToCart", "Cart")',
+                type: 'POST',
+                data: { id: productId, quantity: quantity },
+                success: function (res) {
+                    if (res.success) {
+                        $('#cart-count').text(res.cartCount);
+                        $('#cart-total').text(res.cartTotal);
+                        MiniCart();
+                        alert(res.message);
+                    } else if (res.redirectUrl) {
+                        window.location.href = res.redirectUrl;
+                    } else {
+                        alert(res.message);
+                    }
                 },
-                error: function() {
-                     $('#cart-items').html('<p>Không thể tải giỏ hàng.</p>');
+                error: function () {
+                    alert("❌ Không thể thêm sản phẩm vào giỏ hàng.");
                 }
             });
         }
-    }
 
-    // ✅ Khi trang load, cập nhật số lượng giỏ hàng và tải MiniCart lần đầu (Giữ nguyên)
-    $(document).ready(function () {
-        $.ajax({
-            url: '@Url.Action("GetCartCount", "Cart")',
-            type: 'GET',
-            success: function (data) {
-                $('#cart-count').text(data.count);
+        function MiniCart() {
+            if (isLoggedIn === "true") {
+                $.ajax({
+                    url: '@Url.Action("GetMiniCart", "Cart")',
+                    type: 'GET',
+                    success: function (data) {
+                        $('#cart-items').html(data.html);
+                        $('#cart-total').text(data.total);
+                        $('#cart-count').text(data.count);
+                    },
+                    error: function() {
+                         $('#cart-items').html('<p>Không thể tải giỏ hàng.</p>');
+                    }
+                });
             }
-        });
-        MiniCart();
-    });
+        }
 
         $(document).ready(function () {
+            $.ajax({
+                url: '@Url.Action("GetCartCount", "Cart")',
+                type: 'GET',
+                success: function (data) {
+                    $('#cart-count').text(data.count);
+                }
+            });
+            MiniCart();
+
             const messageBox = $('#tempMessage');
             if (messageBox.length) {
-                // Hiển thị popup
                 messageBox.fadeIn(400);
-
-                // Ẩn popup sau 6 giây
                 setTimeout(function () {
                     messageBox.fadeOut(800);
                 }, 6000);
             }
         });
-
     </script>
     <script src="~/Scripts/jquery.validate.min.js"></script>
     <script src="~/Scripts/jquery.validate.unobtrusive.min.js"></script>

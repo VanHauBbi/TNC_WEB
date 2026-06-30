@@ -1,0 +1,225 @@
+﻿@{
+    ViewBag.Title = "Lập Phiếu Nhập Kho";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+    var categories = ViewBag.CategoriesList as List<WebBanHang.Models.Category>;
+}
+
+<div class="card shadow-sm border-0 p-4 mb-4">
+    <h5 class="fw-bold text-primary mb-3">Quy trình chọn sản phẩm cần nhập hàng</h5>
+    <div class="row g-3 bg-light p-3 rounded border">
+        <div class="col-md-4">
+            <label class="form-label fw-bold">Bước 1: Chọn Danh mục</label>
+            <select id="selCategory" class="form-select">
+                <option value="">-- Tất cả danh mục --</option>
+                @if (categories != null)
+                {
+                    foreach (var c in categories)
+                    {
+                        <option value="@c.CategoryID">@c.CategoryName</option>
+                    }
+                }
+            </select>
+        </div>
+
+        <div class="col-md-5">
+            <label class="form-label fw-bold">Bước 2: Chọn sản phẩm cần nhập</label>
+            <div id="productCheckboxContainer" class="border bg-white p-2 rounded" style="height: 200px; overflow-y: auto;">
+                <span class="text-muted small">Vui lòng chọn danh mục ở Bước 1...</span>
+            </div>
+        </div>
+
+        <div class="col-md-3 d-flex flex-column justify-content-end">
+            <label class="form-label fw-bold">Bước 3: Tải giá đối tác</label>
+            <button type="button" id="btnBatchFetch" class="btn btn-warning fw-bold py-2">
+                <i class="fa-solid fa-cloud-arrow-down"></i> Lấy Giá API Hàng Loạt
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-dark text-white fw-bold d-flex justify-content-between">
+        <span>Danh sách chốt phiếu nhập</span>
+        <span>Tổng giá trị: <span id="grandTotal" class="text-danger fw-bold fs-5">0</span> ₫</span>
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0" id="importTable">
+            <thead class="table-light">
+                <tr>
+                    <th>Tên sản phẩm</th>
+                    <th>Mã SKU</th>
+                    <th class="text-end">Đơn giá nhập (Cố định)</th>
+                    <th class="text-center" style="width: 150px;">Số lượng</th>
+                    <th class="text-end">Thành tiền</th>
+                    <th class="text-center">Xóa</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+    <div class="card-footer p-3 bg-white">
+        <button id="btnSubmitReceipt" class="btn btn-primary w-100 fw-bold py-2">XÁC NHẬN CHỐT PHIẾU NHẬP KHO</button>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+    var importItems = [];
+
+    // --- BỔ SUNG SỰ KIỆN BẤM NÚT CHỐT PHIẾU ---
+    $('#btnSubmitReceipt').click(function () {
+        if (importItems.length === 0) {
+            alert("Danh sách nhập kho đang trống, không có gì để lưu!");
+            return;
+        }
+
+        // Quét linh hoạt lấy Người lập và Ghi chú ở 2 ô input trên cùng của bạn
+        var receivedBy = $('#txtReceivedBy').val() || $('input[placeholder*="Người lập"]').val() || "AdminTNC";
+        var note = $('#txtNote').val() || $('input[placeholder*="Ghi chú"]').val() || "Nhập kho qua hệ thống PO";
+
+        var payload = {
+            ReceivedBy: receivedBy,
+            Note: note,
+            Details: importItems.map(function (item) {
+                return {
+                    ProductID: item.ProductID,
+                    Quantity: parseInt(item.Quantity),
+                    ImportPrice: parseFloat(item.ImportPrice)
+                };
+            })
+        };
+
+        if (!confirm("Xác nhận chốt phiếu nhập kho với tổng giá trị: " + $('#grandTotal').text() + " ₫ ?\nSau khi bấm OK, hệ thống sẽ cộng dồn tồn kho vật lý!")) {
+            return;
+        }
+
+        // Khóa tạm nút lại để tránh user bấm đúp gửi 2 phiếu giống nhau
+        var btn = $(this);
+        btn.prop('disabled', true).text("Đang ghi dữ liệu...");
+
+        $.ajax({
+            url: '@Url.Action("SubmitReceipt", "ImportReceipts")',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(payload),
+            success: function (res) {
+                if (res.success) {
+                    var msg = "🎉 LƯU PHIẾU NHẬP KHO THÀNH CÔNG!\nMã chứng từ: #" + res.receiptId;
+
+                    // Nếu hệ thống phát hiện lô này nhập đắt hơn giá bán, in ra cảnh báo
+                    if (res.alerts && res.alerts.length > 0) {
+                        msg += "\n\n⚠️ CẢNH BÁO KINH DOANH:\n" + res.alerts.join("\n");
+                    }
+
+                    alert(msg);
+                    window.location.href = '@Url.Action("Index", "ImportReceipts")';
+                } else {
+                    alert("❌ TỪ CHỐI LƯU: " + res.message);
+                    btn.prop('disabled', false).text("XÁC NHẬN CHỐT PHIẾU NHẬP KHO");
+                }
+            },
+            error: function (err) {
+                alert("❌ Lỗi nghiêm trọng: Không thể kết nối đến Action SubmitReceipt!");
+                console.error(err);
+                btn.prop('disabled', false).text("XÁC NHẬN CHỐT PHIẾU NHẬP KHO");
+            }
+        });
+    });
+
+    // Lọc sản phẩm theo Danh mục
+    $('#selCategory').change(function () {
+        var catId = $(this).val();
+        var container = $('#productCheckboxContainer');
+        container.empty();
+
+        if (!catId) { container.html('<span class="text-muted small">Vui lòng chọn danh mục...</span>'); return; }
+
+        $.get('@Url.Action("GetProductsByCategory", "ImportReceipts")', { categoryId: catId }, function (data) {
+            if (data.length === 0) { container.html('<span class="text-danger small">Danh mục này trống.</span>'); return; }
+
+            data.forEach(function (p) {
+                container.append(`
+                    <div class="form-check border-bottom py-1">
+                        <input class="form-check-input chk-product" type="checkbox" value="${p.ProductID}" data-name="${p.ProductName}" data-sku="${p.SKU}" id="chk_${p.ProductID}">
+                        <label class="form-check-label small d-block cursor-pointer" for="chk_${p.ProductID}">
+                            ${p.ProductName} <br><small class="text-primary fw-bold">[${p.SKU}]</small>
+                        </label>
+                    </div>
+                `);
+            });
+        });
+    });
+
+    // Truy Xuất Giá API Hàng Loạt
+    $('#btnBatchFetch').click(function () {
+        var selectedChecked = $('.chk-product:checked');
+        if (selectedChecked.length === 0) { alert("Vui lòng tick chọn ít nhất 1 sản phẩm!"); return; }
+
+        var skuList = [];
+        selectedChecked.each(function () { skuList.push($(this).data('sku')); });
+
+        $.ajax({
+            url: '@Url.Action("FetchBatchSupplierPrices", "ImportReceipts")',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ skuList: skuList }),
+            success: function (res) {
+                if (res.success) {
+                    var fetchedData = res.data;
+                    selectedChecked.each(function () {
+                        var pid = parseInt($(this).val());
+                        var pname = $(this).data('name');
+                        var psku = $(this).data('sku');
+
+                        var apiMatch = fetchedData.find(sp => sp.SKU === psku);
+                        if (apiMatch) {
+                            var existing = importItems.find(i => i.ProductID === pid);
+                            if (!existing) {
+                                importItems.push({ ProductID: pid, ProductName: pname, SKU: psku, ImportPrice: apiMatch.UnitPrice, Quantity: 1 });
+                            }
+                        } else {
+                            alert(`Mặt hàng [${pname}] không tìm thấy báo giá trên GitHub đối tác.`);
+                        }
+                    });
+                    RenderTable();
+                    $('.chk-product').prop('checked', false); // Reset tick
+                } else { alert(res.message); }
+            }
+        });
+    });
+
+    function RenderTable() {
+        var tbody = $('#importTable tbody');
+        tbody.empty();
+        var grandTotal = 0;
+
+        importItems.forEach(function (item, idx) {
+            var totalLine = item.ImportPrice * item.Quantity;
+            grandTotal += totalLine;
+
+            tbody.append(`
+                <tr>
+                    <td class="fw-bold">${item.ProductName}</td>
+                    <td class="text-primary fw-bold">${item.SKU}</td>
+                    <td class="text-end text-danger fw-bold">${item.ImportPrice.toLocaleString('vi-VN')} ₫</td>
+                    <td class="text-center">
+                        <input type="number" class="form-control text-center" value="${item.Quantity}" min="1" onchange="UpdateQty(${idx}, this.value)">
+                    </td>
+                    <td class="text-end fw-bold text-danger">${totalLine.toLocaleString('vi-VN')} ₫</td>
+                    <td class="text-center"><button class="btn btn-sm btn-outline-danger" onclick="RemoveItem(${idx})"><i class="fa-solid fa-trash"></i></button></td>
+                </tr>
+            `);
+        });
+        $('#grandTotal').text(grandTotal.toLocaleString('vi-VN'));
+    }
+
+    window.UpdateQty = function (idx, val) {
+        var newQty = parseInt(val);
+        if (isNaN(newQty) || newQty <= 0) return;
+        importItems[idx].Quantity = newQty;
+        RenderTable();
+    }
+
+    window.RemoveItem = function (idx) { importItems.splice(idx, 1); RenderTable(); }
+    </script>
+}

@@ -18,5 +18,10 @@ namespace WebBanHang.Models.ViewModel
         // Dữ liệu cho Biểu đồ Chart.js
         public List<string> ChartLabels { get; set; }
         public List<decimal> ChartData { get; set; }
+        // Bổ sung các trường chi tiết để phục vụ khi bấm vào Card
+        public int PendingOrders { get; set; } // Chờ xác nhận
+        public int FailedOrders { get; set; }  // Đã hủy/Thất bại
+        public decimal TotalShippingFee { get; set; } // Doanh thu từ phí vận chuyển
+        public decimal TotalVoucherDiscount { get; set; } // Tổng tiền giảm giá (voucher)
     }
 }

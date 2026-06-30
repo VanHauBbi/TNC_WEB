@@ -38,6 +38,10 @@ namespace WebBanHang.Models
         public virtual DbSet<ProductReview> ProductReviews { get; set; }
         public virtual DbSet<ProductVariant> ProductVariants { get; set; }
         public virtual DbSet<User> Users { get; set; }
+        public virtual DbSet<ImportReceipt> ImportReceipts { get; set; }
+        public virtual DbSet<ImportReceiptDetail> ImportReceiptDetails { get; set; }
+        public virtual DbSet<PurchaseOrder> PurchaseOrders { get; set; }
+        public virtual DbSet<PurchaseOrderDetail> PurchaseOrderDetails { get; set; }
         public virtual DbSet<SupportMessage> SupportMessages { get; set; }
         public virtual DbSet<SupportSession> SupportSessions { get; set; }
     }

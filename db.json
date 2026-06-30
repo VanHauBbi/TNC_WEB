@@ -1,0 +1,139 @@
+{
+  "Products": [
+    {
+      "SKU": "SKU-PC-GAMING-BREUNOR",
+      "ProductName": "PC GAMING - BREUNOR COOLWAVE Ryzen 5 7600 + RTX 5070 12GB",
+      "UnitPrice": 23500000
+    },
+    {
+      "SKU": "SKU-PC-GAMING-CORE",
+      "ProductName": "PC Gaming Core I5 14600KF | RTX 3060 12G | RAM 16G | NVME 512G",
+      "UnitPrice": 16800000
+    },
+    {
+      "SKU": "SKU-BO-PC-GAMING",
+      "ProductName": "Bộ PC Gaming i5-12400F, RAM 16GB, RTX 3060 Ultra White 12GB OC ✓ Giá tốt",
+      "UnitPrice": 14200000
+    },
+    {
+      "SKU": "SKU-MAN-HINH-GAMING",
+      "ProductName": "Màn hình Gaming Gigabyte G27F 2 (27 inch - FHD - IPS - 165Hz)",
+      "UnitPrice": 3600000
+    },
+    {
+      "SKU": "SKU-MAN-HINH-GAMING-1",
+      "ProductName": "Màn hình Gaming ASUS ROG STRIX XG27WQ",
+      "UnitPrice": 5800000
+    },
+    {
+      "SKU": "SKU-MAN-HINH-MAY",
+      "ProductName": "Màn Hình Máy Tính Gaming KOORUI Chính Hãng Giá Rẻ",
+      "UnitPrice": 2100000
+    },
+    {
+      "SKU": "SKU-CLOUD-ALPHA-WIRELESS",
+      "ProductName": "Cloud Alpha Wireless – DTS – Tai nghe chơi game",
+      "UnitPrice": 2800000
+    },
+    {
+      "SKU": "SKU-PLAYSTATION-TAY-CAM",
+      "ProductName": "PlayStation - Tay Cầm Chơi Game ROG Xbox Ally",
+      "UnitPrice": 1650000
+    },
+    {
+      "SKU": "SKU-BAN-PHIM-CO",
+      "ProductName": "Bàn phím cơ E-DRA EK375 V2 Beta Blue Black",
+      "UnitPrice": 550000
+    },
+    {
+      "SKU": "SKU-CPU-AMD-RYZEN",
+      "ProductName": "CPU AMD Ryzen 7 7800X3D (Tray)",
+      "UnitPrice": 8800000
+    },
+    {
+      "SKU": "SKU-CPU-INTEL-CORE",
+      "ProductName": "CPU Intel Core Ultra 7 265K",
+      "UnitPrice": 10500000
+    },
+    {
+      "SKU": "SKU-CPU-AMD-ATHLON",
+      "ProductName": "CPU AMD Athlon 3000G",
+      "UnitPrice": 1100000
+    },
+    {
+      "SKU": "SKU-RAM-PNY-XLR8",
+      "ProductName": "RAM PNY XLR8 DDR4 3200MHz Heatsink RGB 8GB",
+      "UnitPrice": 420000
+    },
+    {
+      "SKU": "SKU-RAM-PC-ADATA",
+      "ProductName": "Ram PC ADATA XPG LANCER RGB 16GB (1x16GB) 6000MHz DDR5",
+      "UnitPrice": 1450000
+    },
+    {
+      "SKU": "SKU-RAM-PC-ADATA-1",
+      "ProductName": "RAM PC ADATA XPG D60 RGB 8GB (1x8GB) 3200MHz DDR4",
+      "UnitPrice": 520000
+    },
+    {
+      "SKU": "SKU-VGA-MSI-GEFORCE",
+      "ProductName": "VGA MSI Geforce RTX 5090 32G Gaming Trio OC",
+      "UnitPrice": 48000000
+    },
+    {
+      "SKU": "SKU-VGA-ASUS-DUAL",
+      "ProductName": "VGA Asus Dual Radeon RX 6500 XT OC 4GB DUAL-RX6500XT-O4G-V2",
+      "UnitPrice": 3800000
+    },
+    {
+      "SKU": "SKU-VGA-GIGABYTE-GEFORCE",
+      "ProductName": "VGA Gigabyte GeForce RTX™ 4070 Ti SUPER GAMING OC 16G",
+      "UnitPrice": 21500000
+    },
+    {
+      "SKU": "SKU-MAINBOARD-ASROCK-B760M",
+      "ProductName": "Mainboard Asrock B760M Pro RS/D4 Wifi",
+      "UnitPrice": 2850000
+    },
+    {
+      "SKU": "SKU-MAINBOARD-GIGABYTE-B760M",
+      "ProductName": "Mainboard Gigabyte B760M Pro RS/D4 Wifi",
+      "UnitPrice": 2450000
+    },
+    {
+      "SKU": "SKU-MAINBOARD-MSI-B760M",
+      "ProductName": "Mainboard MSI B760M GAMING PLUS WIFI",
+      "UnitPrice": 3100000
+    },
+    {
+      "SKU": "SKU-O-CUNG-SSD",
+      "ProductName": "Ổ cứng SSD Kingston SKC3000 M2 PCIe NVME Gen 4 1TB",
+      "UnitPrice": 1650000
+    },
+    {
+      "SKU": "SKU-O-CUNG-SSD-1",
+      "ProductName": "Ổ cứng SSD MSI SPATIUM M450 M.2 PCIe Gen 4 NVMe 500GB",
+      "UnitPrice": 850000
+    },
+    {
+      "SKU": "SKU-O-CUNG-HDD",
+      "ProductName": "Ổ Cứng HDD Western Red 4TB PLUS NAS",
+      "UnitPrice": 2100000
+    },
+    {
+      "SKU": "SKU-CPU-INTEL-CORE-1",
+      "ProductName": "CPU Intel Core i5-13400F (Tray)",
+      "UnitPrice": 4100000
+    },
+    {
+      "SKU": "SKU-RAM-KINGSTON-FURY",
+      "ProductName": "RAM Kingston Fury Beast 16GB (2x8GB) DDR4 3200MHz",
+      "UnitPrice": 850000
+    },
+    {
+      "SKU": "SKU-VGA-GIGABYTE-RTX",
+      "ProductName": "VGA Gigabyte RTX 3060 Windforce OC 12G",
+      "UnitPrice": 6800000
+    }
+  ]
+}

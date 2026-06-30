@@ -45,7 +45,6 @@
     </style>
 </head>
 <body>
-
     <div class="auth-page">
         <div class="auth-container">
             <h2>Đăng nhập</h2>
@@ -54,6 +53,8 @@
             {
                 @Html.AntiForgeryToken()
 
+                <!-- Thêm hidden field để truyền returnUrl -->
+                <input type="hidden" name="returnUrl" value="@ViewBag.ReturnUrl" />
 
                 <div class="form-group">
                     @Html.LabelFor(m => m.UserName)
@@ -63,7 +64,7 @@
 
                 <div class="form-group">
                     @Html.LabelFor(m => m.Password)
-                    @Html.PasswordFor(m => m.Password, new { @class = "form-control"})
+                    @Html.PasswordFor(m => m.Password, new { @class = "form-control" })
                     @Html.ValidationMessageFor(m => m.Password, "", new { @class = "text-danger" })
                 </div>
 
@@ -80,7 +81,7 @@
                     <a href="@Url.Action("ForgotPassword", "Account")">Quên mật khẩu?</a>
                 </div>
             }
-        </div>
+            </div>
     </div>
 
     @* KHỐI POPUP HIỂN THỊ THÔNG BÁO THÀNH CÔNG (Sau khi đăng ký) *@

@@ -17,19 +17,33 @@ namespace WebBanHang.Controllers
         public ActionResult Index(string searchTerm, int? page)
         {
             var model = new HomeProductVM();
-            var products = db.Products.Include(p => p.Coupons).AsQueryable();
-            
+
+            var baseQuery = db.Products
+                .Include(p => p.Category)
+                .Include(p => p.OrderDetails)
+                .Include(p => p.Coupons)
+                .Where(p => p.Status != 2)
+                .AsQueryable();
+
             if (!string.IsNullOrEmpty(searchTerm))
             {
                 model.SearchTerm = searchTerm;
-                products = products.Where(p => p.ProductName.Contains(searchTerm) ||
-                                               p.ProductDescription.Contains(searchTerm) ||
-                                               p.Category.CategoryName.Contains(searchTerm));
+                baseQuery = baseQuery.Where(p => p.ProductName.Contains(searchTerm) ||
+                                                 p.ProductDescription.Contains(searchTerm) ||
+                                                 p.Category.CategoryName.Contains(searchTerm));
             }
 
-            // Lấy toàn bộ để hiển thị theo từng khối
-            model.FeaturedProducts = products.OrderByDescending(p => p.OrderDetails.Count()).ToList();
-            model.NewProducts = products.OrderByDescending(p => p.ProductID).ToList();
+            // 2. Tải Sản phẩm nổi bật (Lấy Top 8 món bán chạy nhất)
+            model.FeaturedProducts = baseQuery
+                .OrderByDescending(p => p.OrderDetails.Count())
+                .Take(8)
+                .ToList();
+
+            // 3. Tải Sản phẩm mới nhất (Lấy Top 8 món có ID lớn nhất)
+            model.NewProducts = baseQuery
+                .OrderByDescending(p => p.ProductID)
+                .Take(8)
+                .ToList();
 
             return View(model);
         }
@@ -185,55 +199,68 @@ namespace WebBanHang.Controllers
                 return HttpNotFound();
             }
 
-            // 1. Lấy sản phẩm
-            var products = db.Products.Include(p => p.Coupons).Where(p => p.CategoryID == id.Value).AsQueryable();
-
-            // 2. Lọc theo Khoảng giá (logic cũ giữ nguyên)
-            switch (priceRange)
+            try
             {
-                case "duoi-5":
-                    products = products.Where(p => p.ProductPrice < 5000000);
-                    break;
-                case "5-10":
-                    products = products.Where(p => p.ProductPrice >= 5000000 && p.ProductPrice <= 10000000);
-                    break;
-                case "tren-10":
-                    products = products.Where(p => p.ProductPrice > 10000000);
-                    break;
-            }
+                // 1. Lấy sản phẩm
+                var products = db.Products
+                    .Include(p => p.Coupons)
+                    .Include(p => p.OrderDetails)
+                    .Where(p => p.CategoryID == id.Value && p.Status != 2)
+                    .AsQueryable();
+                // 2. Lọc theo Khoảng giá (logic cũ giữ nguyên)
+                switch (priceRange)
+                {
+                    case "duoi-5":
+                        products = products.Where(p => p.ProductPrice < 5000000);
+                        break;
+                    case "5-10":
+                        products = products.Where(p => p.ProductPrice >= 5000000 && p.ProductPrice <= 10000000);
+                        break;
+                    case "tren-10":
+                        products = products.Where(p => p.ProductPrice > 10000000);
+                        break;
+                }
 
-            // 3. SẮP XẾP (Đã cập nhật logic)
-            switch (sortBy)
+                // 3. SẮP XẾP (Đã cập nhật logic)
+                switch (sortBy)
+                {
+                    case "price-asc": // Giá Thấp - Cao
+                        products = products.OrderBy(p => p.ProductPrice);
+                        break;
+                    case "price-desc": // Giá Cao - Thấp
+                        products = products.OrderByDescending(p => p.ProductPrice);
+                        break;
+                    case "name-asc": // Tên: A-Z
+                        products = products.OrderBy(p => p.ProductName);
+                        break;
+                    case "name-desc": // Tên: Z-A
+                        products = products.OrderByDescending(p => p.ProductName);
+                        break;
+                    default: // Mặc định: Mới nhất
+                        products = products.OrderByDescending(p => p.ProductID);
+                        break;
+                }
+
+                // 4. Lưu lựa chọn lọc vào ViewBag
+                ViewBag.CategoryName = category.CategoryName;
+                ViewBag.CategoryId = id.Value;
+                ViewBag.CurrentPriceRange = priceRange;
+                ViewBag.CurrentSortBy = sortBy; // THÊM MỚI: Truyền sortBy ra View
+
+                // 5. Phân trang
+                int pageSize = 9;
+                int pageNumber = (page ?? 1);
+                var pagedProducts = products.ToPagedList(pageNumber, pageSize);
+
+                return View(pagedProducts);
+            }
+            catch (Exception ex)
             {
-                case "price-asc": // Giá Thấp - Cao
-                    products = products.OrderBy(p => p.ProductPrice);
-                    break;
-                case "price-desc": // Giá Cao - Thấp
-                    products = products.OrderByDescending(p => p.ProductPrice);
-                    break;
-                case "name-asc": // Tên: A-Z
-                    products = products.OrderBy(p => p.ProductName);
-                    break;
-                case "name-desc": // Tên: Z-A
-                    products = products.OrderByDescending(p => p.ProductName);
-                    break;
-                default: // Mặc định: Mới nhất
-                    products = products.OrderByDescending(p => p.ProductID);
-                    break;
+                // Log error
+                System.Diagnostics.Debug.WriteLine("Lỗi: " + ex.Message);
+                TempData["ErrorMessage"] = "Có lỗi xảy ra. Vui lòng thử lại.";
+                return RedirectToAction("Index");
             }
-
-            // 4. Lưu lựa chọn lọc vào ViewBag
-            ViewBag.CategoryName = category.CategoryName;
-            ViewBag.CategoryId = id.Value;
-            ViewBag.CurrentPriceRange = priceRange;
-            ViewBag.CurrentSortBy = sortBy; // THÊM MỚI: Truyền sortBy ra View
-
-            // 5. Phân trang
-            int pageSize = 9;
-            int pageNumber = (page ?? 1);
-            var pagedProducts = products.ToPagedList(pageNumber, pageSize);
-
-            return View(pagedProducts);
         }
 
     }

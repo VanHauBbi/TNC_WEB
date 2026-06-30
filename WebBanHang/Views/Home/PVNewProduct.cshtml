@@ -1,4 +1,5 @@
 ﻿@using WebBanHang.Utilities
+@using WebBanHang.Models
 @model WebBanHang.Models.ViewModel.HomeProductVM
 @using PagedList.Mvc
 
@@ -12,50 +13,83 @@
         <div class="feature-container">
             @foreach (var product in Model.NewProducts)
             {
-                <div class="lproduct-item">
+                string cardState = product.GetStatusLabel();
+
+                <div class="lproduct-item d-flex flex-column justify-content-between p-2 h-100">
                     <div>
                         <a href="@Url.Action("ProductDetail", "Home", new { id = product.ProductID })">
-                            <img src="@product.ProductImage" />
+                            <img src="@product.ProductImage" alt="@product.ProductName" class="img-fluid mb-2" />
                         </a>
                     </div>
-                    <div>
-                        @* --- BẮT ĐẦU KHỐI GỌI HÀM TÍNH GIÁ ĐỘNG --- *@
+
+                    <div class="product-info-block flex-grow-1 d-flex flex-column justify-content-between">
                         @{
-                            decimal discountPercent;
+                            decimal discountPercent = 0m;
                             decimal discountedPrice = PriceHelper.GetDiscountedPrice(product, out discountPercent);
-                            bool isDiscounted = discountedPrice < product.ProductPrice;
+                            bool isDiscounted = (discountedPrice < product.ProductPrice && cardState == "AVAILABLE");
                         }
 
-                        <div class="prodPrice" style="line-height: 1.2; margin-bottom: 8px;">
-                            @if (isDiscounted)
+                        <div class="prodPrice my-1">
+                            @if (cardState == "COMING_SOON")
                             {
-                                <span class="text-muted text-decoration-line-through me-1" style="font-size:0.85em; color: #888;">@product.ProductPrice.ToString("N0") ₫</span>
-                                <span class="badge bg-warning text-danger px-1" style="background-color: #ffc107; color: #dc3545; font-size:0.75em; border-radius: 3px;">-@discountPercent.ToString("0")%</span>
+                                <span class="text-warning fw-bold small">Giá: Đang cập nhật</span>
+                            }
+                            else if (isDiscounted)
+                            {
+                                <span class="text-muted text-decoration-line-through small me-1">@product.ProductPrice.ToString("N0") ₫</span>
+                                <span class="badge bg-warning text-danger small">-@discountPercent.ToString("0")%</span>
                                 <br />
-                                <span class="text-danger fw-bold" style="font-size:1.15em; color: #dc3545;">@discountedPrice.ToString("N0") ₫</span>
+                                <span class="text-danger fw-bold fs-6">@discountedPrice.ToString("N0") ₫</span>
                             }
                             else
                             {
-                                <span class="text-danger fw-bold" style="font-size:1.15em; color: #dc3545;">@product.ProductPrice.ToString("N0") ₫</span>
+                                <span class="text-danger fw-bold fs-6">@product.ProductPrice.ToString("N0") ₫</span>
                             }
                         </div>
-                        @* --- KẾT THÚC KHỐI GIÁ --- *@
 
-                        <div class="prodName">
-                            @product.ProductName
+                        <div class="prodName fw-bold small my-1">
+                            <a href="@Url.Action("ProductDetail", "Home", new { id = product.ProductID })" class="text-decoration-none text-dark">
+                                @product.ProductName
+                            </a>
                         </div>
-                        <p class="prodSale">
-                            Đã bán: &nbsp; @product.OrderDetails.Count
-                        </p>
+
+                        <div class="prodSale text-muted small mb-2">
+                            Đã bán: @(product.OrderDetails?.Count ?? 0)
+                        </div>
+
+                        <div class="card-action-zone mt-auto">
+                            @if (cardState == "AVAILABLE")
+                            {
+                                <button type="button" class="btn btn-primary btn-sm w-100 fw-bold add-to-cart-btn" data-product-id="@product.ProductID">
+                                    <i class="fa-solid fa-cart-shopping me-1"></i> Thêm vào giỏ
+                                </button>
+                            }
+                            else if (cardState == "OUT_OF_STOCK")
+                            {
+                                <span class="badge bg-secondary w-100 py-2 d-block small">Tạm hết hàng</span>
+                            }
+                            else if (cardState == "COMING_SOON")
+                            {
+                                <span class="badge bg-warning text-dark w-100 py-2 d-block small fw-bold">Hàng sắp về</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger w-100 py-2 d-block small">Ngừng bán</span>
+                            }
+                        </div>
                     </div>
                 </div>
             }
         </div>
     </section>
 
-    <div class="pagination-container">
-        @Html.PagedListPager(Model.Products, page => @Url.Action("Index", new { page, searchTerm = Model.SearchTerm }))
-    </div>
+    @* Khối phân trang giữ nguyên theo thiết kế gốc *@
+    if (Model.Products != null)
+    {
+        <div class="pagination-container mt-3">
+            @Html.PagedListPager(Model.Products, page => Url.Action("Index", new { page, searchTerm = Model.SearchTerm }))
+        </div>
+    }
 }
 else
 {

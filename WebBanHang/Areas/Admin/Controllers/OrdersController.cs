@@ -93,6 +93,15 @@ namespace WebBanHang.Areas.Admin.Controllers
             Order order = db.Orders.Include(o => o.OrderDetails).SingleOrDefault(o => o.OrderID == id);
             if (order == null) return HttpNotFound();
 
+            // =========================================================================
+            // CHỐT CHẶN BẢO MẬT TUYỆT ĐỐI: KHÔNG CHO PHÉP CHẠY CODE NẾU ĐƠN ĐÃ HỎNG
+            // =========================================================================
+            if (order.PaymentStatus == "Thất bại" || order.PaymentStatus == "Đã hủy" || order.OrderStatus == "Đã hủy")
+            {
+                TempData["ErrorMessage"] = "Lỗi bảo mật: Đơn hàng này đã bị hủy hoặc thanh toán thất bại, không thể thao tác thêm!";
+                return RedirectToAction("Process", new { id = order.OrderID });
+            }
+
             using (var transaction = db.Database.BeginTransaction())
             {
                 try
@@ -110,7 +119,6 @@ namespace WebBanHang.Areas.Admin.Controllers
                     else if (actionType == "Complete")
                     {
                         order.OrderStatus = "Đã giao";
-                        // Tự động ghi nhận thanh toán nếu là phương thức Tiền mặt (COD)
                         if (order.PaymentMethod == "Tiền mặt")
                         {
                             order.PaymentStatus = "Đã thanh toán";
@@ -127,13 +135,31 @@ namespace WebBanHang.Areas.Admin.Controllers
                         if (order.OrderStatus != "Đã hủy")
                         {
                             order.OrderStatus = "Đã hủy";
-                            // Hoàn trả tồn kho
+
+                            // =========================================================================
+                            // HOÀN TRẢ TỒN KHO & KHÔI PHỤC KẾ TOÁN FIFO CHO ĐƠN BỊ ADMIN HỦY
+                            // =========================================================================
                             foreach (var detail in order.OrderDetails)
                             {
                                 var product = db.Products.Find(detail.ProductID);
-                                if (product != null) product.StockQuantity += detail.Quantity;
+                                if (product != null)
+                                {
+                                    // 1. Trả tồn kho bề mặt
+                                    product.StockQuantity += detail.Quantity;
+
+                                    // 2. Trả tồn kho chiều sâu (Lô hàng FIFO)
+                                    var latestBatch = db.ImportReceiptDetails
+                                                        .Where(b => b.ProductID == detail.ProductID)
+                                                        .OrderByDescending(b => b.DetailID)
+                                                        .FirstOrDefault();
+                                    if (latestBatch != null)
+                                    {
+                                        latestBatch.RemainingQuantity += detail.Quantity;
+                                        db.Entry(latestBatch).State = EntityState.Modified;
+                                    }
+                                }
                             }
-                            TempData["SuccessMessage"] = $"Đơn hàng #{id} đã bị HỦY. Đã tự động hoàn trả tồn kho.";
+                            TempData["SuccessMessage"] = $"Đơn hàng #{id} đã bị HỦY. Đã tự động hoàn trả tồn kho đầy đủ.";
                         }
                     }
 
@@ -148,7 +174,7 @@ namespace WebBanHang.Areas.Admin.Controllers
                 }
             }
 
-            return RedirectToAction("Process", new { id = order.OrderID }); // Load lại trang hiện tại thay vì văng ra Index
+            return RedirectToAction("Process", new { id = order.OrderID });
         }
 
         protected override void Dispose(bool disposing)
@@ -156,6 +182,26 @@ namespace WebBanHang.Areas.Admin.Controllers
             if (disposing)
                 db.Dispose();
             base.Dispose(disposing);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult UpdateOrderStatus(int orderId, string newStatus)
+        {
+            var order = db.Orders.Find(orderId);
+            if (order != null)
+            {
+                order.OrderStatus = newStatus;
+                db.SaveChanges();
+                TempData["Message"] = "Cập nhật trạng thái đơn hàng thành công!";
+            }
+            else
+            {
+                TempData["Error"] = "Không tìm thấy đơn hàng!";
+            }
+
+            // Quay lại trang chi tiết đơn hàng của Admin
+            return RedirectToAction("Details", new { id = orderId });
         }
     }
 }

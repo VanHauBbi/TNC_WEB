@@ -131,4 +131,8 @@
         @Html.ActionLink("LỊCH SỬ MUA HÀNG", "PurchaseHistory", "Account", null, new { @class = "btn btn-primary btn-lg me-3" })
         @Html.ActionLink("← VỀ TRANG CHỦ", "Index", "Home", null, new { @class = "btn btn-outline-secondary" })
     </p>
+
+    <a href="@Url.Action("Tracking", "Orders", new { id = Model.OrderID })" class="btn btn-warning fw-bold text-white me-2">
+        <i class="fa-solid fa-map-location-dot"></i> Theo dõi tiến độ
+    </a>
 </div>

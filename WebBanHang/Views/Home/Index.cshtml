@@ -6,6 +6,7 @@
 }
 
 <link rel="stylesheet" href="~/Content/myStyle/home.css" />
+<link href="~/Content/myStyle/chatbot.css" rel="stylesheet" />
 
 <div class="container mt-4">
 
@@ -70,10 +71,11 @@
 
         @foreach (var item in Model.FeaturedProducts)
         {
+            string featState = item.GetStatusLabel();
             string displayClass = (featuredProductIndex >= featuredDisplayCount) ? "d-none extra-featured-product" : "";
             decimal discountPercent;
             decimal discountedPrice = PriceHelper.GetDiscountedPrice(item, out discountPercent);
-            bool isDiscounted = discountedPrice < item.ProductPrice;
+            bool isDiscounted = (discountedPrice < item.ProductPrice && featState == "AVAILABLE" && item.ProductPrice > 0);
 
             <div class="col-xl-3 col-lg-4 col-md-6 col-6 mb-4 @displayClass">
                 <div class="card product-card-modern h-100 border-0 shadow-sm">
@@ -93,7 +95,11 @@
                         </a>
 
                         <div class="price-area mt-auto">
-                            @if (isDiscounted)
+                            @if (featState == "COMING_SOON")
+                            {
+                                <div class="text-warning fw-bold fs-6 mt-3">Giá: Đang cập nhật</div>
+                            }
+                            else if (isDiscounted)
                             {
                                 <div class="text-muted text-decoration-line-through small">@item.ProductPrice.ToString("N0") ₫</div>
                                 <div class="text-danger fw-bold fs-5">@discountedPrice.ToString("N0") ₫</div>
@@ -104,9 +110,26 @@
                             }
                         </div>
 
-                        <button class="btn btn-outline-primary w-100 mt-3 add-to-cart-btn fw-bold btn-cart-modern" data-product-id="@item.ProductID">
-                            <i class="fa-solid fa-cart-plus"></i> Thêm vào giỏ
-                        </button>
+                        <div class="action-zone mt-3">
+                            @if (featState == "AVAILABLE")
+                            {
+                                <button class="btn btn-outline-primary w-100 add-to-cart-btn fw-bold btn-cart-modern" data-product-id="@item.ProductID">
+                                    <i class="fa-solid fa-cart-plus"></i> Thêm vào giỏ
+                                </button>
+                            }
+                            else if (featState == "OUT_OF_STOCK")
+                            {
+                                <span class="badge bg-secondary w-100 py-2 d-block text-center">Tạm hết hàng</span>
+                            }
+                            else if (featState == "COMING_SOON")
+                            {
+                                <span class="badge bg-warning text-dark w-100 py-2 d-block text-center fw-bold">Hàng sắp về</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger w-100 py-2 d-block text-center">Ngừng bán</span>
+                            }
+                        </div>
                     </div>
                 </div>
             </div>
@@ -127,16 +150,18 @@
 
     <div class="row">
         @{
-            // Thuật toán: Gom Sản phẩm nổi bật và Mới về lại, sau đó lọc ra những sản phẩm có giá đã giảm < giá gốc
             var saleProducts = new List<WebBanHang.Models.Product>();
             var allProducts = Model.FeaturedProducts.Concat(Model.NewProducts).GroupBy(p => p.ProductID).Select(g => g.First());
 
             foreach (var item in allProducts)
             {
-                decimal tempPercent;
-                if (WebBanHang.Utilities.PriceHelper.GetDiscountedPrice(item, out tempPercent) < item.ProductPrice)
+                if (item.GetStatusLabel() == "AVAILABLE" && item.ProductPrice > 0)
                 {
-                    saleProducts.Add(item);
+                    decimal tempPercent;
+                    if (PriceHelper.GetDiscountedPrice(item, out tempPercent) < item.ProductPrice)
+                    {
+                        saleProducts.Add(item);
+                    }
                 }
             }
         }
@@ -147,10 +172,10 @@
         }
         else
         {
-            foreach (var item in saleProducts.Take(4)) // Lấy 4 sản phẩm hiển thị
+            foreach (var item in saleProducts.Take(4))
             {
                 decimal discountPercent;
-                decimal discountedPrice = WebBanHang.Utilities.PriceHelper.GetDiscountedPrice(item, out discountPercent);
+                decimal discountedPrice = PriceHelper.GetDiscountedPrice(item, out discountPercent);
 
                 <div class="col-xl-3 col-lg-4 col-md-6 col-6 mb-4">
                     <div class="card product-card-modern h-100 border-0 shadow-sm" style="border: 2px solid #ffeeba !important;">
@@ -194,10 +219,11 @@
 
         @foreach (var item in Model.NewProducts)
         {
+            string newState = item.GetStatusLabel();
             string displayClass = (newProductIndex >= newDisplayCount) ? "d-none extra-new-product" : "";
             decimal discountPercent;
             decimal discountedPrice = PriceHelper.GetDiscountedPrice(item, out discountPercent);
-            bool isDiscounted = discountedPrice < item.ProductPrice;
+            bool isDiscounted = (discountedPrice < item.ProductPrice && newState == "AVAILABLE" && item.ProductPrice > 0);
 
             <div class="col-xl-3 col-lg-4 col-md-6 col-6 mb-4 @displayClass">
                 <div class="card product-card-modern h-100 border-0 shadow-sm">
@@ -218,7 +244,11 @@
                         </a>
 
                         <div class="price-area mt-auto">
-                            @if (isDiscounted)
+                            @if (newState == "COMING_SOON")
+                            {
+                                <div class="text-warning fw-bold fs-6 mt-3">Giá: Đang cập nhật</div>
+                            }
+                            else if (isDiscounted)
                             {
                                 <div class="text-muted text-decoration-line-through small">@item.ProductPrice.ToString("N0") ₫</div>
                                 <div class="text-danger fw-bold fs-5">@discountedPrice.ToString("N0") ₫</div>
@@ -229,9 +259,26 @@
                             }
                         </div>
 
-                        <button class="btn btn-outline-success w-100 mt-3 add-to-cart-btn fw-bold btn-cart-modern" data-product-id="@item.ProductID">
-                            <i class="fa-solid fa-cart-plus"></i> Thêm vào giỏ
-                        </button>
+                        <div class="action-zone mt-3">
+                            @if (newState == "AVAILABLE")
+                            {
+                                <button class="btn btn-outline-success w-100 add-to-cart-btn fw-bold btn-cart-modern" data-product-id="@item.ProductID">
+                                    <i class="fa-solid fa-cart-plus"></i> Thêm vào giỏ
+                                </button>
+                            }
+                            else if (newState == "OUT_OF_STOCK")
+                            {
+                                <span class="badge bg-secondary w-100 py-2 d-block text-center">Tạm hết hàng</span>
+                            }
+                            else if (newState == "COMING_SOON")
+                            {
+                                <span class="badge bg-warning text-dark w-100 py-2 d-block text-center fw-bold">Hàng sắp về</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger w-100 py-2 d-block text-center">Ngừng bán</span>
+                            }
+                        </div>
                     </div>
                 </div>
             </div>
@@ -246,6 +293,28 @@
         </div>
     }
 
+</div>
+
+<div id="chatbot-toggle-btn" onclick="toggleChat()">
+    <span class="robot-icon">🤖</span>
+</div>
+
+<div id="chatbot-box">
+    <div class="chat-header">
+        <span>🤖 Trợ Lý Ảo TNC Store</span>
+        <span class="close-btn" onclick="toggleChat()">✕</span>
+    </div>
+
+    <div id="chatbot-messages">
+        <div class="chat-bubble ai-message">
+            Xin chào! Tôi là trợ lý AI của TNC Store. Bạn cần hỗ trợ gì hôm nay?
+        </div>
+    </div>
+
+    <div class="chat-input-area">
+        <input type="text" id="chatbot-input" placeholder="Nhập câu hỏi tại đây..." onkeypress="handleKeyPress(event)" />
+        <button onclick="sendUserMessage()">Gửi</button>
+    </div>
 </div>
 
 @section Scripts {
@@ -286,5 +355,84 @@
                 }
             });
         });
+    </script>
+
+    <script>
+        function toggleChat() {
+            var box = document.getElementById('chatbot-box');
+            box.style.display = (box.style.display === 'none' || box.style.display === '') ? 'flex' : 'none';
+        }
+
+        function handleKeyPress(e) { if (e.keyCode === 13) sendUserMessage(); }
+
+        const menuOptions = [
+            { text: "🖥️ Build PC", val: "Tôi muốn Build PC" },
+            { text: "📦 Tư vấn sản phẩm", val: "Tư vấn sản phẩm" },
+            { text: "💰 Hỏi giá/KM", val: "Hỏi giá và khuyến mãi" },
+            { text: "👨‍💻 Gặp Admin", val: "Tôi muốn gặp Admin" }
+        ];
+
+        function renderMenu() {
+            let container = document.getElementById('chatbot-messages');
+            let html = '<div class="quick-replies" id="initial-quick-replies">';
+            menuOptions.forEach(opt => {
+                html += `<button class="quick-btn" onclick="sendQuickReply('${opt.val}')">${opt.text}</button>`;
+            });
+            html += '</div>';
+            container.innerHTML += html;
+        }
+
+        function sendQuickReply(text) {
+            var repliesBox = document.getElementById('initial-quick-replies');
+            if (repliesBox) repliesBox.style.display = 'none';
+
+            document.getElementById('chatbot-input').value = text;
+            sendUserMessage();
+        }
+
+        var isProcessing = false;
+
+        function sendUserMessage() {
+            if (isProcessing) return;
+
+            var input = document.getElementById('chatbot-input');
+            var msgText = input.value.trim();
+            if (msgText === '') return;
+
+            isProcessing = true;
+            input.disabled = true;
+
+            var messagesDiv = document.getElementById('chatbot-messages');
+            messagesDiv.innerHTML += `<div class="chat-bubble user-message">${msgText}</div>`;
+            input.value = '';
+
+            var loadingId = 'loading-' + Date.now();
+            messagesDiv.innerHTML += `<div id="${loadingId}" class="chat-bubble loading-message"><div class="spinner"></div> Đang suy nghĩ...</div>`;
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+            var formData = new FormData();
+            formData.append('userMessage', msgText);
+
+            fetch('/Chat/SendMessage', { method: 'POST', body: formData })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById(loadingId)?.remove();
+                    var cssClass = data.success ? "chat-bubble ai-message" : "chat-bubble error-message";
+                    messagesDiv.innerHTML += `<div class="${cssClass}">${data.reply}</div>`;
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                })
+                .catch(error => {
+                    document.getElementById(loadingId)?.remove();
+                    messagesDiv.innerHTML += `<div class="chat-bubble error-message">Lỗi kết nối máy chủ.</div>`;
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                })
+                .finally(() => {
+                    isProcessing = false;
+                    input.disabled = false;
+                    input.focus();
+                });
+        }
+
+        renderMenu();
     </script>
 }

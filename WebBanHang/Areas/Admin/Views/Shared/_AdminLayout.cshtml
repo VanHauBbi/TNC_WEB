@@ -68,6 +68,13 @@
                     <i class="fa-solid fa-clock-rotate-left"></i> Truy xuất lịch sử
                 </a>
             </li>
+
+            <li>
+                <a href="@Url.Action("Index", "ImportReceipts", new { area = "Admin" })" class="@GetActiveClass("ImportReceipts")">
+                    <i class="fa-solid fa-truck-loading"></i> Nhập Kho FIFO
+                </a>
+            </li>
+
             <li>
                 <a href="@Url.Action("Index", "AdminSupport")" class="@GetActiveClass("AdminSupport")">
                     <i class="fa-solid fa-headset"></i> Hỗ Trợ Khách Hàng
