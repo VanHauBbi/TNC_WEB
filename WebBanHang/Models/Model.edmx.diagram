@@ -4,20 +4,26 @@
   <edmx:Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
     <!-- Diagram content (shape and connector positions) -->
     <edmx:Diagrams>
-      <Diagram DiagramId="ddb6c8b269d444f997c7cfd229a4db27" Name="Diagram1" ZoomLevel="86">
-        <EntityTypeShape EntityType="MyStoreModel.Cart" Width="1.5" PointX="9" PointY="3.875" IsExpanded="true" />
-        <EntityTypeShape EntityType="MyStoreModel.CartItem" Width="1.5" PointX="11.25" PointY="9.875" IsExpanded="true" />
-        <EntityTypeShape EntityType="MyStoreModel.Category" Width="1.5" PointX="3.75" PointY="6.25" IsExpanded="true" />
-        <EntityTypeShape EntityType="MyStoreModel.Coupon" Width="1.5" PointX="0.75" PointY="9.75" IsExpanded="true" />
-        <EntityTypeShape EntityType="MyStoreModel.Customer" Width="1.5" PointX="0.75" PointY="5.5" IsExpanded="true" />
-        <EntityTypeShape EntityType="MyStoreModel.Order" Width="1.5" PointX="3" PointY="9" IsExpanded="true" />
-        <EntityTypeShape EntityType="MyStoreModel.OrderDetail" Width="1.5" PointX="8.25" PointY="7.625" IsExpanded="true" />
-        <EntityTypeShape EntityType="MyStoreModel.PaymentTransaction" Width="1.5" PointX="5.25" PointY="14.25" IsExpanded="true" />
-        <EntityTypeShape EntityType="MyStoreModel.Product" Width="1.5" PointX="6" PointY="9.125" IsExpanded="true" />
-        <EntityTypeShape EntityType="MyStoreModel.ProductPriceHistory" Width="1.5" PointX="8.25" PointY="11.375" IsExpanded="true" />
-        <EntityTypeShape EntityType="MyStoreModel.ProductReview" Width="1.5" PointX="11.25" PointY="5.75" IsExpanded="true" />
-        <EntityTypeShape EntityType="MyStoreModel.ProductVariant" Width="1.5" PointX="8.25" PointY="17.625" IsExpanded="true" />
-        <EntityTypeShape EntityType="MyStoreModel.User" Width="1.5" PointX="1.5" PointY="1.875" IsExpanded="true" />
+      <Diagram DiagramId="a5576eaaf77f4469b54331c59d95c444" Name="Diagram1" ZoomLevel="19">
+        <EntityTypeShape EntityType="MyStoreModel.Cart" Width="1.5" PointX="6" PointY="21.625" IsExpanded="true" />
+        <EntityTypeShape EntityType="MyStoreModel.CartItem" Width="1.5" PointX="8.25" PointY="13.625" IsExpanded="true" />
+        <EntityTypeShape EntityType="MyStoreModel.Category" Width="1.5" PointX="3.75" PointY="9.875" IsExpanded="true" />
+        <EntityTypeShape EntityType="MyStoreModel.Coupon" Width="1.5" PointX="0.75" PointY="13.375" IsExpanded="true" />
+        <EntityTypeShape EntityType="MyStoreModel.Customer" Width="1.5" PointX="6" PointY="5" IsExpanded="true" />
+        <EntityTypeShape EntityType="MyStoreModel.ImportReceipt" Width="1.5" PointX="9" PointY="1.375" IsExpanded="true" />
+        <EntityTypeShape EntityType="MyStoreModel.ImportReceiptDetail" Width="1.5" PointX="11.25" PointY="13.375" IsExpanded="true" />
+        <EntityTypeShape EntityType="MyStoreModel.Order" Width="1.5" PointX="3" PointY="12.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="MyStoreModel.OrderDetail" Width="1.5" PointX="11.25" PointY="17.25" IsExpanded="true" />
+        <EntityTypeShape EntityType="MyStoreModel.PaymentTransaction" Width="1.5" PointX="5.25" PointY="18.125" IsExpanded="true" />
+        <EntityTypeShape EntityType="MyStoreModel.Product" Width="1.5" PointX="6" PointY="12.25" IsExpanded="true" />
+        <EntityTypeShape EntityType="MyStoreModel.ProductPriceHistory" Width="1.5" PointX="8.25" PointY="18.375" IsExpanded="true" />
+        <EntityTypeShape EntityType="MyStoreModel.ProductReview" Width="1.5" PointX="8.25" PointY="9.375" IsExpanded="true" />
+        <EntityTypeShape EntityType="MyStoreModel.ProductVariant" Width="1.5" PointX="8.25" PointY="24.625" IsExpanded="true" />
+        <EntityTypeShape EntityType="MyStoreModel.PurchaseOrder" Width="1.5" PointX="9" PointY="5.375" IsExpanded="true" />
+        <EntityTypeShape EntityType="MyStoreModel.PurchaseOrderDetail" Width="1.5" PointX="11.25" PointY="9.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="MyStoreModel.SupportMessage" Width="1.5" PointX="10.5" PointY="21.625" IsExpanded="true" />
+        <EntityTypeShape EntityType="MyStoreModel.SupportSession" Width="1.5" PointX="8.25" PointY="21.625" IsExpanded="true" />
+        <EntityTypeShape EntityType="MyStoreModel.User" Width="1.5" PointX="3.75" PointY="5.625" IsExpanded="true" />
         <AssociationConnector Association="MyStoreModel.FK_Cart_Customer" ManuallyRouted="false" />
         <AssociationConnector Association="MyStoreModel.FK_CartItem_Cart" ManuallyRouted="false" />
         <AssociationConnector Association="MyStoreModel.FK_CartItem_Product" ManuallyRouted="false" />
@@ -26,26 +32,20 @@
         <AssociationConnector Association="MyStoreModel.FK_Customer_User" ManuallyRouted="false" />
         <AssociationConnector Association="MyStoreModel.FK_Order_Customer" ManuallyRouted="false" />
         <AssociationConnector Association="MyStoreModel.FK_ProductReview_Customer" ManuallyRouted="false" />
+        <AssociationConnector Association="MyStoreModel.FK_SupportSession_Customer" ManuallyRouted="false" />
+        <AssociationConnector Association="MyStoreModel.FK_ImportDetail_Receipt" ManuallyRouted="false" />
+        <AssociationConnector Association="MyStoreModel.FK_ImportReceipt_PO" ManuallyRouted="false" />
+        <AssociationConnector Association="MyStoreModel.FK_ImportDetail_Product" ManuallyRouted="false" />
         <AssociationConnector Association="MyStoreModel.FK_OrderDetail_Order" ManuallyRouted="false" />
         <AssociationConnector Association="MyStoreModel.FK_PaymentTransaction_Order" ManuallyRouted="false" />
         <AssociationConnector Association="MyStoreModel.FK_OrderDetail_Product" ManuallyRouted="false" />
+        <AssociationConnector Association="MyStoreModel.FK_PODetail_Product" ManuallyRouted="false" />
         <AssociationConnector Association="MyStoreModel.FK_PriceHistory_Product" ManuallyRouted="false" />
         <AssociationConnector Association="MyStoreModel.FK_ProductReview_Product" ManuallyRouted="false" />
         <AssociationConnector Association="MyStoreModel.FK_ProductVariant_Product" ManuallyRouted="false" />
+        <AssociationConnector Association="MyStoreModel.FK_PODetail_PO" ManuallyRouted="false" />
+        <AssociationConnector Association="MyStoreModel.FK_SupportMessage_Session" ManuallyRouted="false" />
         <AssociationConnector Association="MyStoreModel.CouponProduct" ManuallyRouted="false" />
-        <EntityTypeShape EntityType="MyStoreModel.ImportReceipt" Width="1.5" PointX="12" PointY="0.875" />
-        <EntityTypeShape EntityType="MyStoreModel.ImportReceiptDetail" Width="1.5" PointX="14.25" PointY="10.875" />
-        <EntityTypeShape EntityType="MyStoreModel.PurchaseOrder" Width="1.5" PointX="9.75" PointY="0.75" />
-        <EntityTypeShape EntityType="MyStoreModel.PurchaseOrderDetail" Width="1.5" PointX="11.25" PointY="14" />
-        <AssociationConnector Association="MyStoreModel.FK_ImportDetail_Receipt" />
-        <AssociationConnector Association="MyStoreModel.FK_ImportReceipt_PO" />
-        <AssociationConnector Association="MyStoreModel.FK_ImportDetail_Product" />
-        <AssociationConnector Association="MyStoreModel.FK_PODetail_Product" />
-        <AssociationConnector Association="MyStoreModel.FK_PODetail_PO" />
-        <EntityTypeShape EntityType="MyStoreModel.SupportMessage" Width="1.5" PointX="5.25" PointY="18.125" />
-        <EntityTypeShape EntityType="MyStoreModel.SupportSession" Width="1.5" PointX="3" PointY="18.125" />
-        <AssociationConnector Association="MyStoreModel.FK_SupportSession_Customer" />
-        <AssociationConnector Association="MyStoreModel.FK_SupportMessage_Session" />
       </Diagram>
     </edmx:Diagrams>
   </edmx:Designer>

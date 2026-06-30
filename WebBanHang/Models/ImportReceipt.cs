@@ -12,26 +12,23 @@ namespace WebBanHang.Models
     using System;
     using System.Collections.Generic;
     
-    public partial class Coupon
+    public partial class ImportReceipt
     {
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2214:DoNotCallOverridableMethodsInConstructors")]
-        public Coupon()
+        public ImportReceipt()
         {
-            this.Orders = new HashSet<Order>();
-            this.Products = new HashSet<Product>();
+            this.ImportReceiptDetails = new HashSet<ImportReceiptDetail>();
         }
     
-        public int CouponID { get; set; }
-        public string CouponName { get; set; }
-        public string Code { get; set; }
-        public Nullable<decimal> DiscountPercentage { get; set; }
-        public Nullable<decimal> MaxDiscountAmount { get; set; }
-        public System.DateTime ExpiryDate { get; set; }
-        public int UsageLimit { get; set; }
+        public int ReceiptID { get; set; }
+        public Nullable<int> POID { get; set; }
+        public System.DateTime ReceivedDate { get; set; }
+        public decimal TotalAmount { get; set; }
+        public string ReceivedBy { get; set; }
+        public string Note { get; set; }
     
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
-        public virtual ICollection<Order> Orders { get; set; }
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
-        public virtual ICollection<Product> Products { get; set; }
+        public virtual ICollection<ImportReceiptDetail> ImportReceiptDetails { get; set; }
+        public virtual PurchaseOrder PurchaseOrder { get; set; }
     }
 }

@@ -4,7 +4,7 @@
   <edmx:Runtime>
     <!-- SSDL content -->
     <edmx:StorageModels>
-    <Schema Namespace="MyStoreModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+      <Schema Namespace="MyStoreModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
         <EntityType Name="Cart">
           <Key>
             <PropertyRef Name="CartID" />
@@ -140,7 +140,6 @@
           <Property Name="ComponentType" Type="nvarchar" MaxLength="50" />
           <Property Name="SKU" Type="nvarchar" MaxLength="100" Nullable="false" />
           <Property Name="Status" Type="int" Nullable="false" />
-          <Property Name="ComponentType" Type="nvarchar" MaxLength="50" />
         </EntityType>
         <EntityType Name="ProductPriceHistory">
           <Key>
@@ -639,7 +638,8 @@
             <End Role="SupportSession" EntitySet="SupportSession" />
           </AssociationSet>
         </EntityContainer>
-      </Schema></edmx:StorageModels>
+      </Schema>
+    </edmx:StorageModels>
     <!-- CSDL content -->
     <edmx:ConceptualModels>
       <Schema Namespace="MyStoreModel" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
@@ -678,6 +678,7 @@
             <PropertyRef Name="CouponID" />
           </Key>
           <Property Name="CouponID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="CouponName" Type="String" MaxLength="255" FixedLength="false" Unicode="true" Nullable="false" />
           <Property Name="Code" Type="String" MaxLength="50" FixedLength="false" Unicode="true" Nullable="false" />
           <Property Name="DiscountPercentage" Type="Decimal" Precision="5" Scale="2" />
           <Property Name="MaxDiscountAmount" Type="Decimal" Precision="18" Scale="3" />
@@ -685,7 +686,6 @@
           <Property Name="UsageLimit" Type="Int32" Nullable="false" />
           <NavigationProperty Name="Orders" Relationship="Self.FK_Order_Coupon" FromRole="Coupon" ToRole="Order" />
           <NavigationProperty Name="Products" Relationship="Self.CouponProduct" FromRole="Coupon" ToRole="Product" />
-          <Property Name="CouponName" Type="String" Nullable="false" MaxLength="255" FixedLength="false" Unicode="true" />
         </EntityType>
         <EntityType Name="Customer">
           <Key>
@@ -702,7 +702,33 @@
           <NavigationProperty Name="User" Relationship="Self.FK_Customer_User" FromRole="Customer" ToRole="User" />
           <NavigationProperty Name="Orders" Relationship="Self.FK_Order_Customer" FromRole="Customer" ToRole="Order" />
           <NavigationProperty Name="ProductReviews" Relationship="Self.FK_ProductReview_Customer" FromRole="Customer" ToRole="ProductReview" />
-          <NavigationProperty Name="SupportSessions" Relationship="MyStoreModel.FK_SupportSession_Customer" FromRole="Customer" ToRole="SupportSession" />
+          <NavigationProperty Name="SupportSessions" Relationship="Self.FK_SupportSession_Customer" FromRole="Customer" ToRole="SupportSession" />
+        </EntityType>
+        <EntityType Name="ImportReceipt">
+          <Key>
+            <PropertyRef Name="ReceiptID" />
+          </Key>
+          <Property Name="ReceiptID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="POID" Type="Int32" />
+          <Property Name="ReceivedDate" Type="DateTime" Nullable="false" Precision="3" />
+          <Property Name="TotalAmount" Type="Decimal" Precision="18" Scale="3" Nullable="false" />
+          <Property Name="ReceivedBy" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Note" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <NavigationProperty Name="ImportReceiptDetails" Relationship="Self.FK_ImportDetail_Receipt" FromRole="ImportReceipt" ToRole="ImportReceiptDetail" />
+          <NavigationProperty Name="PurchaseOrder" Relationship="Self.FK_ImportReceipt_PO" FromRole="ImportReceipt" ToRole="PurchaseOrder" />
+        </EntityType>
+        <EntityType Name="ImportReceiptDetail">
+          <Key>
+            <PropertyRef Name="DetailID" />
+          </Key>
+          <Property Name="DetailID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="ReceiptID" Type="Int32" Nullable="false" />
+          <Property Name="ProductID" Type="Int32" Nullable="false" />
+          <Property Name="ImportPrice" Type="Decimal" Precision="18" Scale="3" Nullable="false" />
+          <Property Name="ImportQuantity" Type="Int32" Nullable="false" />
+          <Property Name="RemainingQuantity" Type="Int32" Nullable="false" />
+          <NavigationProperty Name="ImportReceipt" Relationship="Self.FK_ImportDetail_Receipt" FromRole="ImportReceiptDetail" ToRole="ImportReceipt" />
+          <NavigationProperty Name="Product" Relationship="Self.FK_ImportDetail_Product" FromRole="ImportReceiptDetail" ToRole="Product" />
         </EntityType>
         <EntityType Name="Order">
           <Key>
@@ -733,11 +759,11 @@
           <Property Name="OrderID" Type="Int32" Nullable="false" />
           <Property Name="Quantity" Type="Int32" Nullable="false" />
           <Property Name="UnitPrice" Type="Decimal" Precision="18" Scale="3" Nullable="false" />
+          <Property Name="ImportPrice" Type="Decimal" Precision="18" Scale="3" Nullable="false" />
           <Property Name="DiscountAmount" Type="Decimal" Precision="18" Scale="3" Nullable="false" />
           <Property Name="TotalPrice" Type="Decimal" Precision="29" Scale="3" annotation:StoreGeneratedPattern="Computed" />
           <NavigationProperty Name="Order" Relationship="Self.FK_OrderDetail_Order" FromRole="OrderDetail" ToRole="Order" />
           <NavigationProperty Name="Product" Relationship="Self.FK_OrderDetail_Product" FromRole="OrderDetail" ToRole="Product" />
-          <Property Name="ImportPrice" Type="Decimal" Nullable="false" Precision="18" Scale="3" />
         </EntityType>
         <EntityType Name="PaymentTransaction">
           <Key>
@@ -761,22 +787,21 @@
           <Property Name="ProductName" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" Nullable="false" />
           <Property Name="ProductDescription" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" Nullable="false" />
           <Property Name="ProductPrice" Type="Decimal" Precision="19" Scale="4" Nullable="false" />
+          <Property Name="ImportPrice" Type="Decimal" Precision="19" Scale="4" Nullable="false" />
           <Property Name="ProductImage" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
           <Property Name="StockQuantity" Type="Int32" Nullable="false" />
+          <Property Name="ComponentType" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="SKU" Type="String" MaxLength="100" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="Status" Type="Int32" Nullable="false" />
           <NavigationProperty Name="CartItems" Relationship="Self.FK_CartItem_Product" FromRole="Product" ToRole="CartItem" />
           <NavigationProperty Name="Category" Relationship="Self.FK_Product_Category" FromRole="Product" ToRole="Category" />
+          <NavigationProperty Name="ImportReceiptDetails" Relationship="Self.FK_ImportDetail_Product" FromRole="Product" ToRole="ImportReceiptDetail" />
           <NavigationProperty Name="OrderDetails" Relationship="Self.FK_OrderDetail_Product" FromRole="Product" ToRole="OrderDetail" />
+          <NavigationProperty Name="PurchaseOrderDetails" Relationship="Self.FK_PODetail_Product" FromRole="Product" ToRole="PurchaseOrderDetail" />
           <NavigationProperty Name="ProductPriceHistories" Relationship="Self.FK_PriceHistory_Product" FromRole="Product" ToRole="ProductPriceHistory" />
           <NavigationProperty Name="ProductReviews" Relationship="Self.FK_ProductReview_Product" FromRole="Product" ToRole="ProductReview" />
           <NavigationProperty Name="ProductVariants" Relationship="Self.FK_ProductVariant_Product" FromRole="Product" ToRole="ProductVariant" />
           <NavigationProperty Name="Coupons" Relationship="Self.CouponProduct" FromRole="Product" ToRole="Coupon" />
-          <Property Name="ImportPrice" Type="Decimal" Nullable="false" Precision="19" Scale="4" />
-          <NavigationProperty Name="ImportReceiptDetails" Relationship="MyStoreModel.FK_ImportDetail_Product" FromRole="Product" ToRole="ImportReceiptDetail" />
-          <NavigationProperty Name="PurchaseOrderDetails" Relationship="MyStoreModel.FK_PODetail_Product" FromRole="Product" ToRole="PurchaseOrderDetail" />
-          <Property Name="ComponentType" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
-          <Property Name="SKU" Type="String" Nullable="false" MaxLength="100" FixedLength="false" Unicode="true" />
-          <Property Name="Status" Type="Int32" Nullable="false" />
-          <Property Name="ComponentType" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
         </EntityType>
         <EntityType Name="ProductPriceHistory">
           <Key>
@@ -813,6 +838,54 @@
           <Property Name="VariantPrice" Type="Decimal" Precision="19" Scale="4" Nullable="false" />
           <Property Name="StockQuantity" Type="Int32" Nullable="false" />
           <NavigationProperty Name="Product" Relationship="Self.FK_ProductVariant_Product" FromRole="ProductVariant" ToRole="Product" />
+        </EntityType>
+        <EntityType Name="PurchaseOrder">
+          <Key>
+            <PropertyRef Name="POID" />
+          </Key>
+          <Property Name="POID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="CreatedDate" Type="DateTime" Nullable="false" Precision="3" />
+          <Property Name="SupplierName" Type="String" MaxLength="255" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="ExpectedDate" Type="DateTime" Precision="3" />
+          <Property Name="Status" Type="String" MaxLength="50" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="CreatedBy" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Note" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <NavigationProperty Name="ImportReceipts" Relationship="Self.FK_ImportReceipt_PO" FromRole="PurchaseOrder" ToRole="ImportReceipt" />
+          <NavigationProperty Name="PurchaseOrderDetails" Relationship="Self.FK_PODetail_PO" FromRole="PurchaseOrder" ToRole="PurchaseOrderDetail" />
+        </EntityType>
+        <EntityType Name="PurchaseOrderDetail">
+          <Key>
+            <PropertyRef Name="PODetailID" />
+          </Key>
+          <Property Name="PODetailID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="POID" Type="Int32" Nullable="false" />
+          <Property Name="ProductID" Type="Int32" Nullable="false" />
+          <Property Name="OrderedQty" Type="Int32" Nullable="false" />
+          <Property Name="EstimatedPrice" Type="Decimal" Precision="18" Scale="3" Nullable="false" />
+          <NavigationProperty Name="Product" Relationship="Self.FK_PODetail_Product" FromRole="PurchaseOrderDetail" ToRole="Product" />
+          <NavigationProperty Name="PurchaseOrder" Relationship="Self.FK_PODetail_PO" FromRole="PurchaseOrderDetail" ToRole="PurchaseOrder" />
+        </EntityType>
+        <EntityType Name="SupportMessage">
+          <Key>
+            <PropertyRef Name="MessageID" />
+          </Key>
+          <Property Name="MessageID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="SessionID" Type="Int32" Nullable="false" />
+          <Property Name="IsAdmin" Type="Boolean" Nullable="false" />
+          <Property Name="MessageContent" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="SendTime" Type="DateTime" Nullable="false" Precision="3" />
+          <NavigationProperty Name="SupportSession" Relationship="Self.FK_SupportMessage_Session" FromRole="SupportMessage" ToRole="SupportSession" />
+        </EntityType>
+        <EntityType Name="SupportSession">
+          <Key>
+            <PropertyRef Name="SessionID" />
+          </Key>
+          <Property Name="SessionID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="CustomerID" Type="Int32" Nullable="false" />
+          <Property Name="StartTime" Type="DateTime" Nullable="false" Precision="3" />
+          <Property Name="Status" Type="Int32" Nullable="false" />
+          <NavigationProperty Name="Customer" Relationship="Self.FK_SupportSession_Customer" FromRole="SupportSession" ToRole="Customer" />
+          <NavigationProperty Name="SupportMessages" Relationship="Self.FK_SupportMessage_Session" FromRole="SupportSession" ToRole="SupportMessage" />
         </EntityType>
         <EntityType Name="User">
           <Key>
@@ -925,6 +998,58 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
+        <Association Name="FK_SupportSession_Customer">
+          <End Role="Customer" Type="Self.Customer" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="SupportSession" Type="Self.SupportSession" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Customer">
+              <PropertyRef Name="CustomerID" />
+            </Principal>
+            <Dependent Role="SupportSession">
+              <PropertyRef Name="CustomerID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_ImportDetail_Receipt">
+          <End Role="ImportReceipt" Type="Self.ImportReceipt" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="ImportReceiptDetail" Type="Self.ImportReceiptDetail" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="ImportReceipt">
+              <PropertyRef Name="ReceiptID" />
+            </Principal>
+            <Dependent Role="ImportReceiptDetail">
+              <PropertyRef Name="ReceiptID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_ImportReceipt_PO">
+          <End Role="PurchaseOrder" Type="Self.PurchaseOrder" Multiplicity="0..1" />
+          <End Role="ImportReceipt" Type="Self.ImportReceipt" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="PurchaseOrder">
+              <PropertyRef Name="POID" />
+            </Principal>
+            <Dependent Role="ImportReceipt">
+              <PropertyRef Name="POID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_ImportDetail_Product">
+          <End Role="Product" Type="Self.Product" Multiplicity="1" />
+          <End Role="ImportReceiptDetail" Type="Self.ImportReceiptDetail" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Product">
+              <PropertyRef Name="ProductID" />
+            </Principal>
+            <Dependent Role="ImportReceiptDetail">
+              <PropertyRef Name="ProductID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
         <Association Name="FK_OrderDetail_Order">
           <End Role="Order" Type="Self.Order" Multiplicity="1">
             <OnDelete Action="Cascade" />
@@ -959,6 +1084,18 @@
               <PropertyRef Name="ProductID" />
             </Principal>
             <Dependent Role="OrderDetail">
+              <PropertyRef Name="ProductID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_PODetail_Product">
+          <End Role="Product" Type="Self.Product" Multiplicity="1" />
+          <End Role="PurchaseOrderDetail" Type="Self.PurchaseOrderDetail" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Product">
+              <PropertyRef Name="ProductID" />
+            </Principal>
+            <Dependent Role="PurchaseOrderDetail">
               <PropertyRef Name="ProductID" />
             </Dependent>
           </ReferentialConstraint>
@@ -1005,16 +1142,46 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
+        <Association Name="FK_PODetail_PO">
+          <End Role="PurchaseOrder" Type="Self.PurchaseOrder" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="PurchaseOrderDetail" Type="Self.PurchaseOrderDetail" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="PurchaseOrder">
+              <PropertyRef Name="POID" />
+            </Principal>
+            <Dependent Role="PurchaseOrderDetail">
+              <PropertyRef Name="POID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_SupportMessage_Session">
+          <End Role="SupportSession" Type="Self.SupportSession" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="SupportMessage" Type="Self.SupportMessage" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="SupportSession">
+              <PropertyRef Name="SessionID" />
+            </Principal>
+            <Dependent Role="SupportMessage">
+              <PropertyRef Name="SessionID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
         <Association Name="CouponProduct">
           <End Role="Coupon" Type="Self.Coupon" Multiplicity="*" />
           <End Role="Product" Type="Self.Product" Multiplicity="*" />
         </Association>
-        <EntityContainer Name="MyStoreEntities" annotation:LazyLoadingEnabled="true">
+        <EntityContainer Name="MyStoreEntities1" annotation:LazyLoadingEnabled="true">
           <EntitySet Name="Carts" EntityType="Self.Cart" />
           <EntitySet Name="CartItems" EntityType="Self.CartItem" />
           <EntitySet Name="Categories" EntityType="Self.Category" />
           <EntitySet Name="Coupons" EntityType="Self.Coupon" />
           <EntitySet Name="Customers" EntityType="Self.Customer" />
+          <EntitySet Name="ImportReceipts" EntityType="Self.ImportReceipt" />
+          <EntitySet Name="ImportReceiptDetails" EntityType="Self.ImportReceiptDetail" />
           <EntitySet Name="Orders" EntityType="Self.Order" />
           <EntitySet Name="OrderDetails" EntityType="Self.OrderDetail" />
           <EntitySet Name="PaymentTransactions" EntityType="Self.PaymentTransaction" />
@@ -1022,6 +1189,10 @@
           <EntitySet Name="ProductPriceHistories" EntityType="Self.ProductPriceHistory" />
           <EntitySet Name="ProductReviews" EntityType="Self.ProductReview" />
           <EntitySet Name="ProductVariants" EntityType="Self.ProductVariant" />
+          <EntitySet Name="PurchaseOrders" EntityType="Self.PurchaseOrder" />
+          <EntitySet Name="PurchaseOrderDetails" EntityType="Self.PurchaseOrderDetail" />
+          <EntitySet Name="SupportMessages" EntityType="Self.SupportMessage" />
+          <EntitySet Name="SupportSessions" EntityType="Self.SupportSession" />
           <EntitySet Name="Users" EntityType="Self.User" />
           <AssociationSet Name="FK_Cart_Customer" Association="Self.FK_Cart_Customer">
             <End Role="Customer" EntitySet="Customers" />
@@ -1055,6 +1226,22 @@
             <End Role="Customer" EntitySet="Customers" />
             <End Role="ProductReview" EntitySet="ProductReviews" />
           </AssociationSet>
+          <AssociationSet Name="FK_SupportSession_Customer" Association="Self.FK_SupportSession_Customer">
+            <End Role="Customer" EntitySet="Customers" />
+            <End Role="SupportSession" EntitySet="SupportSessions" />
+          </AssociationSet>
+          <AssociationSet Name="FK_ImportDetail_Receipt" Association="Self.FK_ImportDetail_Receipt">
+            <End Role="ImportReceipt" EntitySet="ImportReceipts" />
+            <End Role="ImportReceiptDetail" EntitySet="ImportReceiptDetails" />
+          </AssociationSet>
+          <AssociationSet Name="FK_ImportReceipt_PO" Association="Self.FK_ImportReceipt_PO">
+            <End Role="PurchaseOrder" EntitySet="PurchaseOrders" />
+            <End Role="ImportReceipt" EntitySet="ImportReceipts" />
+          </AssociationSet>
+          <AssociationSet Name="FK_ImportDetail_Product" Association="Self.FK_ImportDetail_Product">
+            <End Role="Product" EntitySet="Products" />
+            <End Role="ImportReceiptDetail" EntitySet="ImportReceiptDetails" />
+          </AssociationSet>
           <AssociationSet Name="FK_OrderDetail_Order" Association="Self.FK_OrderDetail_Order">
             <End Role="Order" EntitySet="Orders" />
             <End Role="OrderDetail" EntitySet="OrderDetails" />
@@ -1066,6 +1253,10 @@
           <AssociationSet Name="FK_OrderDetail_Product" Association="Self.FK_OrderDetail_Product">
             <End Role="Product" EntitySet="Products" />
             <End Role="OrderDetail" EntitySet="OrderDetails" />
+          </AssociationSet>
+          <AssociationSet Name="FK_PODetail_Product" Association="Self.FK_PODetail_Product">
+            <End Role="Product" EntitySet="Products" />
+            <End Role="PurchaseOrderDetail" EntitySet="PurchaseOrderDetails" />
           </AssociationSet>
           <AssociationSet Name="FK_PriceHistory_Product" Association="Self.FK_PriceHistory_Product">
             <End Role="Product" EntitySet="Products" />
@@ -1079,217 +1270,25 @@
             <End Role="Product" EntitySet="Products" />
             <End Role="ProductVariant" EntitySet="ProductVariants" />
           </AssociationSet>
+          <AssociationSet Name="FK_PODetail_PO" Association="Self.FK_PODetail_PO">
+            <End Role="PurchaseOrder" EntitySet="PurchaseOrders" />
+            <End Role="PurchaseOrderDetail" EntitySet="PurchaseOrderDetails" />
+          </AssociationSet>
+          <AssociationSet Name="FK_SupportMessage_Session" Association="Self.FK_SupportMessage_Session">
+            <End Role="SupportSession" EntitySet="SupportSessions" />
+            <End Role="SupportMessage" EntitySet="SupportMessages" />
+          </AssociationSet>
           <AssociationSet Name="CouponProduct" Association="Self.CouponProduct">
             <End Role="Coupon" EntitySet="Coupons" />
             <End Role="Product" EntitySet="Products" />
           </AssociationSet>
-          <EntitySet Name="ImportReceipts" EntityType="MyStoreModel.ImportReceipt" />
-          <EntitySet Name="ImportReceiptDetails" EntityType="MyStoreModel.ImportReceiptDetail" />
-          <EntitySet Name="PurchaseOrders" EntityType="MyStoreModel.PurchaseOrder" />
-          <EntitySet Name="PurchaseOrderDetails" EntityType="MyStoreModel.PurchaseOrderDetail" />
-          <AssociationSet Name="FK_ImportDetail_Receipt" Association="MyStoreModel.FK_ImportDetail_Receipt">
-            <End Role="ImportReceipt" EntitySet="ImportReceipts" />
-            <End Role="ImportReceiptDetail" EntitySet="ImportReceiptDetails" />
-          </AssociationSet>
-          <AssociationSet Name="FK_ImportReceipt_PO" Association="MyStoreModel.FK_ImportReceipt_PO">
-            <End Role="PurchaseOrder" EntitySet="PurchaseOrders" />
-            <End Role="ImportReceipt" EntitySet="ImportReceipts" />
-          </AssociationSet>
-          <AssociationSet Name="FK_ImportDetail_Product" Association="MyStoreModel.FK_ImportDetail_Product">
-            <End Role="Product" EntitySet="Products" />
-            <End Role="ImportReceiptDetail" EntitySet="ImportReceiptDetails" />
-          </AssociationSet>
-          <AssociationSet Name="FK_PODetail_Product" Association="MyStoreModel.FK_PODetail_Product">
-            <End Role="Product" EntitySet="Products" />
-            <End Role="PurchaseOrderDetail" EntitySet="PurchaseOrderDetails" />
-          </AssociationSet>
-          <AssociationSet Name="FK_PODetail_PO" Association="MyStoreModel.FK_PODetail_PO">
-            <End Role="PurchaseOrder" EntitySet="PurchaseOrders" />
-            <End Role="PurchaseOrderDetail" EntitySet="PurchaseOrderDetails" />
-          </AssociationSet>
-          <EntitySet Name="SupportMessages" EntityType="MyStoreModel.SupportMessage" />
-          <EntitySet Name="SupportSessions" EntityType="MyStoreModel.SupportSession" />
-          <AssociationSet Name="FK_SupportSession_Customer" Association="MyStoreModel.FK_SupportSession_Customer">
-            <End Role="Customer" EntitySet="Customers" />
-            <End Role="SupportSession" EntitySet="SupportSessions" />
-          </AssociationSet>
-          <AssociationSet Name="FK_SupportMessage_Session" Association="MyStoreModel.FK_SupportMessage_Session">
-            <End Role="SupportSession" EntitySet="SupportSessions" />
-            <End Role="SupportMessage" EntitySet="SupportMessages" />
-          </AssociationSet>
         </EntityContainer>
-        <EntityType Name="ImportReceipt">
-          <Key>
-            <PropertyRef Name="ReceiptID" />
-          </Key>
-          <Property Name="ReceiptID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
-          <Property Name="POID" Type="Int32" />
-          <Property Name="ReceivedDate" Type="DateTime" Nullable="false" Precision="3" />
-          <Property Name="TotalAmount" Type="Decimal" Nullable="false" Precision="18" Scale="3" />
-          <Property Name="ReceivedBy" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
-          <Property Name="Note" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
-          <NavigationProperty Name="ImportReceiptDetails" Relationship="MyStoreModel.FK_ImportDetail_Receipt" FromRole="ImportReceipt" ToRole="ImportReceiptDetail" />
-          <NavigationProperty Name="PurchaseOrder" Relationship="MyStoreModel.FK_ImportReceipt_PO" FromRole="ImportReceipt" ToRole="PurchaseOrder" />
-        </EntityType>
-        <EntityType Name="ImportReceiptDetail">
-          <Key>
-            <PropertyRef Name="DetailID" />
-          </Key>
-          <Property Name="DetailID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
-          <Property Name="ReceiptID" Type="Int32" Nullable="false" />
-          <Property Name="ProductID" Type="Int32" Nullable="false" />
-          <Property Name="ImportPrice" Type="Decimal" Nullable="false" Precision="18" Scale="3" />
-          <Property Name="ImportQuantity" Type="Int32" Nullable="false" />
-          <Property Name="RemainingQuantity" Type="Int32" Nullable="false" />
-          <NavigationProperty Name="ImportReceipt" Relationship="MyStoreModel.FK_ImportDetail_Receipt" FromRole="ImportReceiptDetail" ToRole="ImportReceipt" />
-          <NavigationProperty Name="Product" Relationship="MyStoreModel.FK_ImportDetail_Product" FromRole="ImportReceiptDetail" ToRole="Product" />
-        </EntityType>
-        <EntityType Name="PurchaseOrder">
-          <Key>
-            <PropertyRef Name="POID" />
-          </Key>
-          <Property Name="POID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
-          <Property Name="CreatedDate" Type="DateTime" Nullable="false" Precision="3" />
-          <Property Name="SupplierName" Type="String" Nullable="false" MaxLength="255" FixedLength="false" Unicode="true" />
-          <Property Name="ExpectedDate" Type="DateTime" Precision="3" />
-          <Property Name="Status" Type="String" Nullable="false" MaxLength="50" FixedLength="false" Unicode="true" />
-          <Property Name="CreatedBy" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
-          <Property Name="Note" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
-          <NavigationProperty Name="ImportReceipts" Relationship="MyStoreModel.FK_ImportReceipt_PO" FromRole="PurchaseOrder" ToRole="ImportReceipt" />
-          <NavigationProperty Name="PurchaseOrderDetails" Relationship="MyStoreModel.FK_PODetail_PO" FromRole="PurchaseOrder" ToRole="PurchaseOrderDetail" />
-        </EntityType>
-        <EntityType Name="PurchaseOrderDetail">
-          <Key>
-            <PropertyRef Name="PODetailID" />
-          </Key>
-          <Property Name="PODetailID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
-          <Property Name="POID" Type="Int32" Nullable="false" />
-          <Property Name="ProductID" Type="Int32" Nullable="false" />
-          <Property Name="OrderedQty" Type="Int32" Nullable="false" />
-          <Property Name="EstimatedPrice" Type="Decimal" Nullable="false" Precision="18" Scale="3" />
-          <NavigationProperty Name="Product" Relationship="MyStoreModel.FK_PODetail_Product" FromRole="PurchaseOrderDetail" ToRole="Product" />
-          <NavigationProperty Name="PurchaseOrder" Relationship="MyStoreModel.FK_PODetail_PO" FromRole="PurchaseOrderDetail" ToRole="PurchaseOrder" />
-        </EntityType>
-        <Association Name="FK_ImportDetail_Receipt">
-          <End Type="MyStoreModel.ImportReceipt" Role="ImportReceipt" Multiplicity="1">
-            <OnDelete Action="Cascade" />
-          </End>
-          <End Type="MyStoreModel.ImportReceiptDetail" Role="ImportReceiptDetail" Multiplicity="*" />
-          <ReferentialConstraint>
-            <Principal Role="ImportReceipt">
-              <PropertyRef Name="ReceiptID" />
-            </Principal>
-            <Dependent Role="ImportReceiptDetail">
-              <PropertyRef Name="ReceiptID" />
-            </Dependent>
-          </ReferentialConstraint>
-        </Association>
-        <Association Name="FK_ImportReceipt_PO">
-          <End Type="MyStoreModel.PurchaseOrder" Role="PurchaseOrder" Multiplicity="0..1" />
-          <End Type="MyStoreModel.ImportReceipt" Role="ImportReceipt" Multiplicity="*" />
-          <ReferentialConstraint>
-            <Principal Role="PurchaseOrder">
-              <PropertyRef Name="POID" />
-            </Principal>
-            <Dependent Role="ImportReceipt">
-              <PropertyRef Name="POID" />
-            </Dependent>
-          </ReferentialConstraint>
-        </Association>
-        <Association Name="FK_ImportDetail_Product">
-          <End Type="MyStoreModel.Product" Role="Product" Multiplicity="1" />
-          <End Type="MyStoreModel.ImportReceiptDetail" Role="ImportReceiptDetail" Multiplicity="*" />
-          <ReferentialConstraint>
-            <Principal Role="Product">
-              <PropertyRef Name="ProductID" />
-            </Principal>
-            <Dependent Role="ImportReceiptDetail">
-              <PropertyRef Name="ProductID" />
-            </Dependent>
-          </ReferentialConstraint>
-        </Association>
-        <Association Name="FK_PODetail_Product">
-          <End Type="MyStoreModel.Product" Role="Product" Multiplicity="1" />
-          <End Type="MyStoreModel.PurchaseOrderDetail" Role="PurchaseOrderDetail" Multiplicity="*" />
-          <ReferentialConstraint>
-            <Principal Role="Product">
-              <PropertyRef Name="ProductID" />
-            </Principal>
-            <Dependent Role="PurchaseOrderDetail">
-              <PropertyRef Name="ProductID" />
-            </Dependent>
-          </ReferentialConstraint>
-        </Association>
-        <Association Name="FK_PODetail_PO">
-          <End Type="MyStoreModel.PurchaseOrder" Role="PurchaseOrder" Multiplicity="1">
-            <OnDelete Action="Cascade" />
-          </End>
-          <End Type="MyStoreModel.PurchaseOrderDetail" Role="PurchaseOrderDetail" Multiplicity="*" />
-          <ReferentialConstraint>
-            <Principal Role="PurchaseOrder">
-              <PropertyRef Name="POID" />
-            </Principal>
-            <Dependent Role="PurchaseOrderDetail">
-              <PropertyRef Name="POID" />
-            </Dependent>
-          </ReferentialConstraint>
-        </Association>
-        <EntityType Name="SupportMessage">
-          <Key>
-            <PropertyRef Name="MessageID" />
-          </Key>
-          <Property Name="MessageID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
-          <Property Name="SessionID" Type="Int32" Nullable="false" />
-          <Property Name="IsAdmin" Type="Boolean" Nullable="false" />
-          <Property Name="MessageContent" Type="String" Nullable="false" MaxLength="Max" FixedLength="false" Unicode="true" />
-          <Property Name="SendTime" Type="DateTime" Nullable="false" Precision="3" />
-          <NavigationProperty Name="SupportSession" Relationship="MyStoreModel.FK_SupportMessage_Session" FromRole="SupportMessage" ToRole="SupportSession" />
-        </EntityType>
-        <EntityType Name="SupportSession">
-          <Key>
-            <PropertyRef Name="SessionID" />
-          </Key>
-          <Property Name="SessionID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
-          <Property Name="CustomerID" Type="Int32" Nullable="false" />
-          <Property Name="StartTime" Type="DateTime" Nullable="false" Precision="3" />
-          <Property Name="Status" Type="Int32" Nullable="false" />
-          <NavigationProperty Name="Customer" Relationship="MyStoreModel.FK_SupportSession_Customer" FromRole="SupportSession" ToRole="Customer" />
-          <NavigationProperty Name="SupportMessages" Relationship="MyStoreModel.FK_SupportMessage_Session" FromRole="SupportSession" ToRole="SupportMessage" />
-        </EntityType>
-        <Association Name="FK_SupportSession_Customer">
-          <End Type="MyStoreModel.Customer" Role="Customer" Multiplicity="1">
-            <OnDelete Action="Cascade" />
-          </End>
-          <End Type="MyStoreModel.SupportSession" Role="SupportSession" Multiplicity="*" />
-          <ReferentialConstraint>
-            <Principal Role="Customer">
-              <PropertyRef Name="CustomerID" />
-            </Principal>
-            <Dependent Role="SupportSession">
-              <PropertyRef Name="CustomerID" />
-            </Dependent>
-          </ReferentialConstraint>
-        </Association>
-        <Association Name="FK_SupportMessage_Session">
-          <End Type="MyStoreModel.SupportSession" Role="SupportSession" Multiplicity="1">
-            <OnDelete Action="Cascade" />
-          </End>
-          <End Type="MyStoreModel.SupportMessage" Role="SupportMessage" Multiplicity="*" />
-          <ReferentialConstraint>
-            <Principal Role="SupportSession">
-              <PropertyRef Name="SessionID" />
-            </Principal>
-            <Dependent Role="SupportMessage">
-              <PropertyRef Name="SessionID" />
-            </Dependent>
-          </ReferentialConstraint>
-        </Association>
       </Schema>
     </edmx:ConceptualModels>
     <!-- C-S mapping content -->
     <edmx:Mappings>
       <Mapping Space="C-S" xmlns="http://schemas.microsoft.com/ado/2009/11/mapping/cs">
-        <EntityContainerMapping StorageEntityContainer="MyStoreModelStoreContainer" CdmEntityContainer="MyStoreEntities">
+        <EntityContainerMapping StorageEntityContainer="MyStoreModelStoreContainer" CdmEntityContainer="MyStoreEntities1">
           <EntitySetMapping Name="Carts">
             <EntityTypeMapping TypeName="MyStoreModel.Cart">
               <MappingFragment StoreEntitySet="Cart">
@@ -1321,8 +1320,8 @@
           <EntitySetMapping Name="Coupons">
             <EntityTypeMapping TypeName="MyStoreModel.Coupon">
               <MappingFragment StoreEntitySet="Coupon">
-                <ScalarProperty Name="CouponName" ColumnName="CouponName" />
                 <ScalarProperty Name="CouponID" ColumnName="CouponID" />
+                <ScalarProperty Name="CouponName" ColumnName="CouponName" />
                 <ScalarProperty Name="Code" ColumnName="Code" />
                 <ScalarProperty Name="DiscountPercentage" ColumnName="DiscountPercentage" />
                 <ScalarProperty Name="MaxDiscountAmount" ColumnName="MaxDiscountAmount" />
@@ -1341,6 +1340,30 @@
                 <ScalarProperty Name="CustomerAddress" ColumnName="CustomerAddress" />
                 <ScalarProperty Name="Username" ColumnName="Username" />
                 <ScalarProperty Name="IsActive" ColumnName="IsActive" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="ImportReceipts">
+            <EntityTypeMapping TypeName="MyStoreModel.ImportReceipt">
+              <MappingFragment StoreEntitySet="ImportReceipt">
+                <ScalarProperty Name="ReceiptID" ColumnName="ReceiptID" />
+                <ScalarProperty Name="POID" ColumnName="POID" />
+                <ScalarProperty Name="ReceivedDate" ColumnName="ReceivedDate" />
+                <ScalarProperty Name="TotalAmount" ColumnName="TotalAmount" />
+                <ScalarProperty Name="ReceivedBy" ColumnName="ReceivedBy" />
+                <ScalarProperty Name="Note" ColumnName="Note" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="ImportReceiptDetails">
+            <EntityTypeMapping TypeName="MyStoreModel.ImportReceiptDetail">
+              <MappingFragment StoreEntitySet="ImportReceiptDetail">
+                <ScalarProperty Name="DetailID" ColumnName="DetailID" />
+                <ScalarProperty Name="ReceiptID" ColumnName="ReceiptID" />
+                <ScalarProperty Name="ProductID" ColumnName="ProductID" />
+                <ScalarProperty Name="ImportPrice" ColumnName="ImportPrice" />
+                <ScalarProperty Name="ImportQuantity" ColumnName="ImportQuantity" />
+                <ScalarProperty Name="RemainingQuantity" ColumnName="RemainingQuantity" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
@@ -1364,12 +1387,12 @@
           <EntitySetMapping Name="OrderDetails">
             <EntityTypeMapping TypeName="MyStoreModel.OrderDetail">
               <MappingFragment StoreEntitySet="OrderDetail">
-                <ScalarProperty Name="ImportPrice" ColumnName="ImportPrice" />
                 <ScalarProperty Name="ID" ColumnName="ID" />
                 <ScalarProperty Name="ProductID" ColumnName="ProductID" />
                 <ScalarProperty Name="OrderID" ColumnName="OrderID" />
                 <ScalarProperty Name="Quantity" ColumnName="Quantity" />
                 <ScalarProperty Name="UnitPrice" ColumnName="UnitPrice" />
+                <ScalarProperty Name="ImportPrice" ColumnName="ImportPrice" />
                 <ScalarProperty Name="DiscountAmount" ColumnName="DiscountAmount" />
                 <ScalarProperty Name="TotalPrice" ColumnName="TotalPrice" />
               </MappingFragment>
@@ -1391,18 +1414,17 @@
           <EntitySetMapping Name="Products">
             <EntityTypeMapping TypeName="MyStoreModel.Product">
               <MappingFragment StoreEntitySet="Product">
-                <ScalarProperty Name="Status" ColumnName="Status" />
-                <ScalarProperty Name="SKU" ColumnName="SKU" />
-                <ScalarProperty Name="ComponentType" ColumnName="ComponentType" />
-                <ScalarProperty Name="ComponentType" ColumnName="ComponentType" />
-                <ScalarProperty Name="ImportPrice" ColumnName="ImportPrice" />
                 <ScalarProperty Name="ProductID" ColumnName="ProductID" />
                 <ScalarProperty Name="CategoryID" ColumnName="CategoryID" />
                 <ScalarProperty Name="ProductName" ColumnName="ProductName" />
                 <ScalarProperty Name="ProductDescription" ColumnName="ProductDescription" />
                 <ScalarProperty Name="ProductPrice" ColumnName="ProductPrice" />
+                <ScalarProperty Name="ImportPrice" ColumnName="ImportPrice" />
                 <ScalarProperty Name="ProductImage" ColumnName="ProductImage" />
                 <ScalarProperty Name="StockQuantity" ColumnName="StockQuantity" />
+                <ScalarProperty Name="ComponentType" ColumnName="ComponentType" />
+                <ScalarProperty Name="SKU" ColumnName="SKU" />
+                <ScalarProperty Name="Status" ColumnName="Status" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
@@ -1441,6 +1463,51 @@
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
+          <EntitySetMapping Name="PurchaseOrders">
+            <EntityTypeMapping TypeName="MyStoreModel.PurchaseOrder">
+              <MappingFragment StoreEntitySet="PurchaseOrder">
+                <ScalarProperty Name="POID" ColumnName="POID" />
+                <ScalarProperty Name="CreatedDate" ColumnName="CreatedDate" />
+                <ScalarProperty Name="SupplierName" ColumnName="SupplierName" />
+                <ScalarProperty Name="ExpectedDate" ColumnName="ExpectedDate" />
+                <ScalarProperty Name="Status" ColumnName="Status" />
+                <ScalarProperty Name="CreatedBy" ColumnName="CreatedBy" />
+                <ScalarProperty Name="Note" ColumnName="Note" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="PurchaseOrderDetails">
+            <EntityTypeMapping TypeName="MyStoreModel.PurchaseOrderDetail">
+              <MappingFragment StoreEntitySet="PurchaseOrderDetail">
+                <ScalarProperty Name="PODetailID" ColumnName="PODetailID" />
+                <ScalarProperty Name="POID" ColumnName="POID" />
+                <ScalarProperty Name="ProductID" ColumnName="ProductID" />
+                <ScalarProperty Name="OrderedQty" ColumnName="OrderedQty" />
+                <ScalarProperty Name="EstimatedPrice" ColumnName="EstimatedPrice" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="SupportMessages">
+            <EntityTypeMapping TypeName="MyStoreModel.SupportMessage">
+              <MappingFragment StoreEntitySet="SupportMessage">
+                <ScalarProperty Name="MessageID" ColumnName="MessageID" />
+                <ScalarProperty Name="SessionID" ColumnName="SessionID" />
+                <ScalarProperty Name="IsAdmin" ColumnName="IsAdmin" />
+                <ScalarProperty Name="MessageContent" ColumnName="MessageContent" />
+                <ScalarProperty Name="SendTime" ColumnName="SendTime" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="SupportSessions">
+            <EntityTypeMapping TypeName="MyStoreModel.SupportSession">
+              <MappingFragment StoreEntitySet="SupportSession">
+                <ScalarProperty Name="SessionID" ColumnName="SessionID" />
+                <ScalarProperty Name="CustomerID" ColumnName="CustomerID" />
+                <ScalarProperty Name="StartTime" ColumnName="StartTime" />
+                <ScalarProperty Name="Status" ColumnName="Status" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
           <EntitySetMapping Name="Users">
             <EntityTypeMapping TypeName="MyStoreModel.User">
               <MappingFragment StoreEntitySet="User">
@@ -1460,75 +1527,6 @@
               <ScalarProperty Name="ProductID" ColumnName="ProductID" />
             </EndProperty>
           </AssociationSetMapping>
-          <EntitySetMapping Name="ImportReceipts">
-            <EntityTypeMapping TypeName="MyStoreModel.ImportReceipt">
-              <MappingFragment StoreEntitySet="ImportReceipt">
-                <ScalarProperty Name="Note" ColumnName="Note" />
-                <ScalarProperty Name="ReceivedBy" ColumnName="ReceivedBy" />
-                <ScalarProperty Name="TotalAmount" ColumnName="TotalAmount" />
-                <ScalarProperty Name="ReceivedDate" ColumnName="ReceivedDate" />
-                <ScalarProperty Name="POID" ColumnName="POID" />
-                <ScalarProperty Name="ReceiptID" ColumnName="ReceiptID" />
-              </MappingFragment>
-            </EntityTypeMapping>
-          </EntitySetMapping>
-          <EntitySetMapping Name="ImportReceiptDetails">
-            <EntityTypeMapping TypeName="MyStoreModel.ImportReceiptDetail">
-              <MappingFragment StoreEntitySet="ImportReceiptDetail">
-                <ScalarProperty Name="RemainingQuantity" ColumnName="RemainingQuantity" />
-                <ScalarProperty Name="ImportQuantity" ColumnName="ImportQuantity" />
-                <ScalarProperty Name="ImportPrice" ColumnName="ImportPrice" />
-                <ScalarProperty Name="ProductID" ColumnName="ProductID" />
-                <ScalarProperty Name="ReceiptID" ColumnName="ReceiptID" />
-                <ScalarProperty Name="DetailID" ColumnName="DetailID" />
-              </MappingFragment>
-            </EntityTypeMapping>
-          </EntitySetMapping>
-          <EntitySetMapping Name="PurchaseOrders">
-            <EntityTypeMapping TypeName="MyStoreModel.PurchaseOrder">
-              <MappingFragment StoreEntitySet="PurchaseOrder">
-                <ScalarProperty Name="Note" ColumnName="Note" />
-                <ScalarProperty Name="CreatedBy" ColumnName="CreatedBy" />
-                <ScalarProperty Name="Status" ColumnName="Status" />
-                <ScalarProperty Name="ExpectedDate" ColumnName="ExpectedDate" />
-                <ScalarProperty Name="SupplierName" ColumnName="SupplierName" />
-                <ScalarProperty Name="CreatedDate" ColumnName="CreatedDate" />
-                <ScalarProperty Name="POID" ColumnName="POID" />
-              </MappingFragment>
-            </EntityTypeMapping>
-          </EntitySetMapping>
-          <EntitySetMapping Name="PurchaseOrderDetails">
-            <EntityTypeMapping TypeName="MyStoreModel.PurchaseOrderDetail">
-              <MappingFragment StoreEntitySet="PurchaseOrderDetail">
-                <ScalarProperty Name="EstimatedPrice" ColumnName="EstimatedPrice" />
-                <ScalarProperty Name="OrderedQty" ColumnName="OrderedQty" />
-                <ScalarProperty Name="ProductID" ColumnName="ProductID" />
-                <ScalarProperty Name="POID" ColumnName="POID" />
-                <ScalarProperty Name="PODetailID" ColumnName="PODetailID" />
-              </MappingFragment>
-            </EntityTypeMapping>
-          </EntitySetMapping>
-          <EntitySetMapping Name="SupportMessages">
-            <EntityTypeMapping TypeName="MyStoreModel.SupportMessage">
-              <MappingFragment StoreEntitySet="SupportMessage">
-                <ScalarProperty Name="SendTime" ColumnName="SendTime" />
-                <ScalarProperty Name="MessageContent" ColumnName="MessageContent" />
-                <ScalarProperty Name="IsAdmin" ColumnName="IsAdmin" />
-                <ScalarProperty Name="SessionID" ColumnName="SessionID" />
-                <ScalarProperty Name="MessageID" ColumnName="MessageID" />
-              </MappingFragment>
-            </EntityTypeMapping>
-          </EntitySetMapping>
-          <EntitySetMapping Name="SupportSessions">
-            <EntityTypeMapping TypeName="MyStoreModel.SupportSession">
-              <MappingFragment StoreEntitySet="SupportSession">
-                <ScalarProperty Name="Status" ColumnName="Status" />
-                <ScalarProperty Name="StartTime" ColumnName="StartTime" />
-                <ScalarProperty Name="CustomerID" ColumnName="CustomerID" />
-                <ScalarProperty Name="SessionID" ColumnName="SessionID" />
-              </MappingFragment>
-            </EntityTypeMapping>
-          </EntitySetMapping>
         </EntityContainerMapping>
       </Mapping>
     </edmx:Mappings>

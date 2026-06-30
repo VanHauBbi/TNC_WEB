@@ -12,18 +12,16 @@ namespace WebBanHang.Models
     using System;
     using System.Collections.Generic;
     
-    public partial class OrderDetail
+    public partial class ImportReceiptDetail
     {
-        public int ID { get; set; }
+        public int DetailID { get; set; }
+        public int ReceiptID { get; set; }
         public int ProductID { get; set; }
-        public int OrderID { get; set; }
-        public int Quantity { get; set; }
-        public decimal UnitPrice { get; set; }
         public decimal ImportPrice { get; set; }
-        public decimal DiscountAmount { get; set; }
-        public Nullable<decimal> TotalPrice { get; set; }
+        public int ImportQuantity { get; set; }
+        public int RemainingQuantity { get; set; }
     
-        public virtual Order Order { get; set; }
+        public virtual ImportReceipt ImportReceipt { get; set; }
         public virtual Product Product { get; set; }
     }
 }
