@@ -298,17 +298,10 @@ namespace WebBanHang.Controllers
                     // ----- CODE MỚI: XỬ LÝ CỘNG TIỀN PHÍ SHIP -----
                     decimal shippingFee = 0;
                     // Dựa vào hình ảnh UI của bạn, mình bắt chuỗi để tính phí
-                    if (!string.IsNullOrEmpty(model.ShippingMethod))
+                    if (model.TotalAmount > actualTotalOrderAmount)
                     {
-                        if (model.ShippingMethod.Contains("nhanh"))
-                        {
-                            shippingFee = 30000;
-                        }
-                        else if (model.ShippingMethod.Contains("tiết kiệm"))
-                        {
-                            shippingFee = 15000;
-                        }
-                        // (Nếu Model CheckoutVM của bạn đã có sẵn trường model.ShippingFee thì chỉ cần gán: shippingFee = model.ShippingFee;)
+                        // Phí ship chính là phần chênh lệch giữa Tổng tiền Front-end (đã có ship) và Tiền hàng thực tế
+                        shippingFee = model.TotalAmount - actualTotalOrderAmount;
                     }
 
                     // Cộng tiền ship vào tổng tiền cuối cùng
@@ -338,7 +331,7 @@ namespace WebBanHang.Controllers
                         vnpay.AddRequestData("vnp_Command", "pay");
                         vnpay.AddRequestData("vnp_TmnCode", vnp_TmnCode);
 
-                        long tAmount = Convert.ToInt64(order.TotalAmount * 100);
+                        long tAmount = Convert.ToInt64(actualTotalOrderAmount * 100);
                         vnpay.AddRequestData("vnp_Amount", tAmount.ToString());
 
                         vnpay.AddRequestData("vnp_CreateDate", DateTime.Now.ToString("yyyyMMddHHmmss"));
@@ -465,12 +458,13 @@ namespace WebBanHang.Controllers
                             order.PaymentStatus = "Thất bại";
                             order.OrderStatus = "Đã hủy";
 
-                            // 2. HOÀN TRẢ TỒN KHO & FIFO
+                            // 2. HOÀN TRẢ TỒN KHO & FIFO (Chỉ lặp 1 lần duy nhất)
                             foreach (var detail in order.OrderDetails)
                             {
                                 var productInDb = db.Products.Find(detail.ProductID);
                                 if (productInDb != null)
                                 {
+                                    // Trả lại chính xác số lượng vào kho
                                     productInDb.StockQuantity += detail.Quantity;
                                     db.Entry(productInDb).State = EntityState.Modified; // Bắt buộc báo EF cần update
 
@@ -488,31 +482,14 @@ namespace WebBanHang.Controllers
 
                             // 3. LƯU THAY ĐỔI VÀO DB
                             db.Entry(order).State = EntityState.Modified; // Báo EF lưu trạng thái đơn
-
-                            foreach (var detail in order.OrderDetails)
-                            {
-                                var productInDb = db.Products.Find(detail.ProductID);
-                                if (productInDb != null)
-                                {
-                                    // Trả lại số lượng vào kho
-                                    productInDb.StockQuantity += detail.Quantity;
-                                }
-                            }
-
                             db.SaveChanges();
 
-                            // 4. PHỤC HỒI GIỎ HÀNG (Nếu có BuyNowTempCart)
+                            // 4. PHỤC HỒI GIỎ HÀNG (Khôi phục nguyên trạng biến dự phòng, không AddItem cộng dồn)
                             var tempCart = Session["BuyNowTempCart"] as WebBanHang.Models.ViewModel.Cart;
                             if (tempCart != null)
                             {
                                 Session["Cart"] = tempCart;
                                 Session.Remove("BuyNowTempCart");
-                            }
-                            else
-                            {
-                                // ✅ FIX: Xóa giỏ hàng hiện tại khi thanh toán thất bại
-                                Session.Remove("Cart");
-                                Session.Remove("VoucherDiscount");
                             }
 
                             TempData["Error"] = "Giao dịch thất bại. Đơn hàng đã tự động hủy. Mã lỗi: " + vnp_ResponseCode;

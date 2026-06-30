@@ -48,6 +48,7 @@
                     <input type="hidden" id="hdnProvinceId" name="GHNProvinceId" />
                     <input type="hidden" id="hdnDistrictId" name="GHNDistrictId" />
                     <input type="hidden" id="hdnWardCode" name="GHNWardCode" />
+                    <input type="hidden" id="HiddenShippingFee" name="ShippingFee" value="0" />
                     <div class="shipping-options-group mt-4">
                         <h4 class="option-group-title">Phương thức giao hàng</h4>
                         <div class="radio-option">
@@ -411,6 +412,7 @@
                             if (res.success) {
                                 currentShippingFee = res.fee;
                                 updateOrderSummary();
+                                $('#HiddenShippingFee').val(res.fee);
                             } else {
                                 alert("Không thể lấy phí vận chuyển từ GHN: " + res.error);
                                 currentShippingFee = 0;
