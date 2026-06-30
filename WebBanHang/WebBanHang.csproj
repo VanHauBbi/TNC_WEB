@@ -225,7 +225,7 @@
       <DependentUpon>Model.tt</DependentUpon>
     </Compile>
     <Compile Include="Models\Product_Metadata.cs" />
-    <Compile Include="Models\PurchaseOrder.cs">
+    <Compile Include="Models\PurchaseOrder.cs" />
     <Compile Include="Models\SupportMessage.cs">
       <DependentUpon>Model.tt</DependentUpon>
     </Compile>
