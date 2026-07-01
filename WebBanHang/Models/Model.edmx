@@ -99,6 +99,7 @@
           <Property Name="ShippingMethod" Type="nvarchar" MaxLength="50" />
           <Property Name="PaymentMethod" Type="nvarchar" MaxLength="50" />
           <Property Name="OrderStatus" Type="nvarchar" MaxLength="50" />
+          <Property Name="IsMarginViolated" Type="bit" Nullable="false" />
         </EntityType>
         <EntityType Name="OrderDetail">
           <Key>
@@ -124,6 +125,18 @@
           <Property Name="Amount" Type="decimal" Precision="18" Scale="3" Nullable="false" />
           <Property Name="ResponseCode" Type="nvarchar" MaxLength="50" />
           <Property Name="TransactionDate" Type="datetime" Nullable="false" />
+        </EntityType>
+        <EntityType Name="PriceExceptionLog">
+          <Key>
+            <PropertyRef Name="LogID" />
+          </Key>
+          <Property Name="LogID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="OrderID" Type="int" Nullable="false" />
+          <Property Name="ProductID" Type="int" Nullable="false" />
+          <Property Name="TotalRevenue" Type="decimal" Precision="18" Scale="3" Nullable="false" />
+          <Property Name="TotalCOGS" Type="decimal" Precision="18" Scale="3" Nullable="false" />
+          <Property Name="MarginPercentage" Type="decimal" Precision="5" Scale="2" Nullable="false" />
+          <Property Name="CreatedAt" Type="datetime" Nullable="false" />
         </EntityType>
         <EntityType Name="Product">
           <Key>
@@ -428,6 +441,32 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
+        <Association Name="FK_PriceException_Order">
+          <End Role="Order" Type="Self.Order" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="PriceExceptionLog" Type="Self.PriceExceptionLog" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Order">
+              <PropertyRef Name="OrderID" />
+            </Principal>
+            <Dependent Role="PriceExceptionLog">
+              <PropertyRef Name="OrderID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_PriceException_Product">
+          <End Role="Product" Type="Self.Product" Multiplicity="1" />
+          <End Role="PriceExceptionLog" Type="Self.PriceExceptionLog" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Product">
+              <PropertyRef Name="ProductID" />
+            </Principal>
+            <Dependent Role="PriceExceptionLog">
+              <PropertyRef Name="ProductID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
         <Association Name="FK_PriceHistory_Product">
           <End Role="Product" Type="Self.Product" Multiplicity="1">
             <OnDelete Action="Cascade" />
@@ -536,6 +575,7 @@
           <EntitySet Name="Order" EntityType="Self.Order" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="OrderDetail" EntityType="Self.OrderDetail" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="PaymentTransaction" EntityType="Self.PaymentTransaction" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="PriceExceptionLog" EntityType="Self.PriceExceptionLog" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Product" EntityType="Self.Product" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="ProductPriceHistory" EntityType="Self.ProductPriceHistory" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="ProductReview" EntityType="Self.ProductReview" Schema="dbo" store:Type="Tables" />
@@ -608,6 +648,14 @@
           <AssociationSet Name="FK_PODetail_Product" Association="Self.FK_PODetail_Product">
             <End Role="Product" EntitySet="Product" />
             <End Role="PurchaseOrderDetail" EntitySet="PurchaseOrderDetail" />
+          </AssociationSet>
+          <AssociationSet Name="FK_PriceException_Order" Association="Self.FK_PriceException_Order">
+            <End Role="Order" EntitySet="Order" />
+            <End Role="PriceExceptionLog" EntitySet="PriceExceptionLog" />
+          </AssociationSet>
+          <AssociationSet Name="FK_PriceException_Product" Association="Self.FK_PriceException_Product">
+            <End Role="Product" EntitySet="Product" />
+            <End Role="PriceExceptionLog" EntitySet="PriceExceptionLog" />
           </AssociationSet>
           <AssociationSet Name="FK_PriceHistory_Product" Association="Self.FK_PriceHistory_Product">
             <End Role="Product" EntitySet="Product" />
@@ -745,10 +793,12 @@
           <Property Name="ShippingMethod" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
           <Property Name="PaymentMethod" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
           <Property Name="OrderStatus" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="IsMarginViolated" Type="Boolean" Nullable="false" />
           <NavigationProperty Name="Coupon" Relationship="Self.FK_Order_Coupon" FromRole="Order" ToRole="Coupon" />
           <NavigationProperty Name="Customer" Relationship="Self.FK_Order_Customer" FromRole="Order" ToRole="Customer" />
           <NavigationProperty Name="OrderDetails" Relationship="Self.FK_OrderDetail_Order" FromRole="Order" ToRole="OrderDetail" />
           <NavigationProperty Name="PaymentTransactions" Relationship="Self.FK_PaymentTransaction_Order" FromRole="Order" ToRole="PaymentTransaction" />
+          <NavigationProperty Name="PriceExceptionLogs" Relationship="Self.FK_PriceException_Order" FromRole="Order" ToRole="PriceExceptionLog" />
         </EntityType>
         <EntityType Name="OrderDetail">
           <Key>
@@ -778,6 +828,20 @@
           <Property Name="TransactionDate" Type="DateTime" Nullable="false" Precision="3" />
           <NavigationProperty Name="Order" Relationship="Self.FK_PaymentTransaction_Order" FromRole="PaymentTransaction" ToRole="Order" />
         </EntityType>
+        <EntityType Name="PriceExceptionLog">
+          <Key>
+            <PropertyRef Name="LogID" />
+          </Key>
+          <Property Name="LogID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="OrderID" Type="Int32" Nullable="false" />
+          <Property Name="ProductID" Type="Int32" Nullable="false" />
+          <Property Name="TotalRevenue" Type="Decimal" Precision="18" Scale="3" Nullable="false" />
+          <Property Name="TotalCOGS" Type="Decimal" Precision="18" Scale="3" Nullable="false" />
+          <Property Name="MarginPercentage" Type="Decimal" Precision="5" Scale="2" Nullable="false" />
+          <Property Name="CreatedAt" Type="DateTime" Nullable="false" Precision="3" />
+          <NavigationProperty Name="Order" Relationship="Self.FK_PriceException_Order" FromRole="PriceExceptionLog" ToRole="Order" />
+          <NavigationProperty Name="Product" Relationship="Self.FK_PriceException_Product" FromRole="PriceExceptionLog" ToRole="Product" />
+        </EntityType>
         <EntityType Name="Product">
           <Key>
             <PropertyRef Name="ProductID" />
@@ -797,6 +861,7 @@
           <NavigationProperty Name="Category" Relationship="Self.FK_Product_Category" FromRole="Product" ToRole="Category" />
           <NavigationProperty Name="ImportReceiptDetails" Relationship="Self.FK_ImportDetail_Product" FromRole="Product" ToRole="ImportReceiptDetail" />
           <NavigationProperty Name="OrderDetails" Relationship="Self.FK_OrderDetail_Product" FromRole="Product" ToRole="OrderDetail" />
+          <NavigationProperty Name="PriceExceptionLogs" Relationship="Self.FK_PriceException_Product" FromRole="Product" ToRole="PriceExceptionLog" />
           <NavigationProperty Name="PurchaseOrderDetails" Relationship="Self.FK_PODetail_Product" FromRole="Product" ToRole="PurchaseOrderDetail" />
           <NavigationProperty Name="ProductPriceHistories" Relationship="Self.FK_PriceHistory_Product" FromRole="Product" ToRole="ProductPriceHistory" />
           <NavigationProperty Name="ProductReviews" Relationship="Self.FK_ProductReview_Product" FromRole="Product" ToRole="ProductReview" />
@@ -1076,6 +1141,20 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
+        <Association Name="FK_PriceException_Order">
+          <End Role="Order" Type="Self.Order" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="PriceExceptionLog" Type="Self.PriceExceptionLog" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Order">
+              <PropertyRef Name="OrderID" />
+            </Principal>
+            <Dependent Role="PriceExceptionLog">
+              <PropertyRef Name="OrderID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
         <Association Name="FK_OrderDetail_Product">
           <End Role="Product" Type="Self.Product" Multiplicity="1" />
           <End Role="OrderDetail" Type="Self.OrderDetail" Multiplicity="*" />
@@ -1084,6 +1163,18 @@
               <PropertyRef Name="ProductID" />
             </Principal>
             <Dependent Role="OrderDetail">
+              <PropertyRef Name="ProductID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_PriceException_Product">
+          <End Role="Product" Type="Self.Product" Multiplicity="1" />
+          <End Role="PriceExceptionLog" Type="Self.PriceExceptionLog" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Product">
+              <PropertyRef Name="ProductID" />
+            </Principal>
+            <Dependent Role="PriceExceptionLog">
               <PropertyRef Name="ProductID" />
             </Dependent>
           </ReferentialConstraint>
@@ -1174,7 +1265,7 @@
           <End Role="Coupon" Type="Self.Coupon" Multiplicity="*" />
           <End Role="Product" Type="Self.Product" Multiplicity="*" />
         </Association>
-        <EntityContainer Name="MyStoreEntities1" annotation:LazyLoadingEnabled="true">
+        <EntityContainer Name="MyStoreEntities" annotation:LazyLoadingEnabled="true">
           <EntitySet Name="Carts" EntityType="Self.Cart" />
           <EntitySet Name="CartItems" EntityType="Self.CartItem" />
           <EntitySet Name="Categories" EntityType="Self.Category" />
@@ -1185,6 +1276,7 @@
           <EntitySet Name="Orders" EntityType="Self.Order" />
           <EntitySet Name="OrderDetails" EntityType="Self.OrderDetail" />
           <EntitySet Name="PaymentTransactions" EntityType="Self.PaymentTransaction" />
+          <EntitySet Name="PriceExceptionLogs" EntityType="Self.PriceExceptionLog" />
           <EntitySet Name="Products" EntityType="Self.Product" />
           <EntitySet Name="ProductPriceHistories" EntityType="Self.ProductPriceHistory" />
           <EntitySet Name="ProductReviews" EntityType="Self.ProductReview" />
@@ -1250,9 +1342,17 @@
             <End Role="Order" EntitySet="Orders" />
             <End Role="PaymentTransaction" EntitySet="PaymentTransactions" />
           </AssociationSet>
+          <AssociationSet Name="FK_PriceException_Order" Association="Self.FK_PriceException_Order">
+            <End Role="Order" EntitySet="Orders" />
+            <End Role="PriceExceptionLog" EntitySet="PriceExceptionLogs" />
+          </AssociationSet>
           <AssociationSet Name="FK_OrderDetail_Product" Association="Self.FK_OrderDetail_Product">
             <End Role="Product" EntitySet="Products" />
             <End Role="OrderDetail" EntitySet="OrderDetails" />
+          </AssociationSet>
+          <AssociationSet Name="FK_PriceException_Product" Association="Self.FK_PriceException_Product">
+            <End Role="Product" EntitySet="Products" />
+            <End Role="PriceExceptionLog" EntitySet="PriceExceptionLogs" />
           </AssociationSet>
           <AssociationSet Name="FK_PODetail_Product" Association="Self.FK_PODetail_Product">
             <End Role="Product" EntitySet="Products" />
@@ -1288,7 +1388,7 @@
     <!-- C-S mapping content -->
     <edmx:Mappings>
       <Mapping Space="C-S" xmlns="http://schemas.microsoft.com/ado/2009/11/mapping/cs">
-        <EntityContainerMapping StorageEntityContainer="MyStoreModelStoreContainer" CdmEntityContainer="MyStoreEntities1">
+        <EntityContainerMapping StorageEntityContainer="MyStoreModelStoreContainer" CdmEntityContainer="MyStoreEntities">
           <EntitySetMapping Name="Carts">
             <EntityTypeMapping TypeName="MyStoreModel.Cart">
               <MappingFragment StoreEntitySet="Cart">
@@ -1381,6 +1481,7 @@
                 <ScalarProperty Name="ShippingMethod" ColumnName="ShippingMethod" />
                 <ScalarProperty Name="PaymentMethod" ColumnName="PaymentMethod" />
                 <ScalarProperty Name="OrderStatus" ColumnName="OrderStatus" />
+                <ScalarProperty Name="IsMarginViolated" ColumnName="IsMarginViolated" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
@@ -1408,6 +1509,19 @@
                 <ScalarProperty Name="Amount" ColumnName="Amount" />
                 <ScalarProperty Name="ResponseCode" ColumnName="ResponseCode" />
                 <ScalarProperty Name="TransactionDate" ColumnName="TransactionDate" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="PriceExceptionLogs">
+            <EntityTypeMapping TypeName="MyStoreModel.PriceExceptionLog">
+              <MappingFragment StoreEntitySet="PriceExceptionLog">
+                <ScalarProperty Name="LogID" ColumnName="LogID" />
+                <ScalarProperty Name="OrderID" ColumnName="OrderID" />
+                <ScalarProperty Name="ProductID" ColumnName="ProductID" />
+                <ScalarProperty Name="TotalRevenue" ColumnName="TotalRevenue" />
+                <ScalarProperty Name="TotalCOGS" ColumnName="TotalCOGS" />
+                <ScalarProperty Name="MarginPercentage" ColumnName="MarginPercentage" />
+                <ScalarProperty Name="CreatedAt" ColumnName="CreatedAt" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>

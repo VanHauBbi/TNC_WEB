@@ -35,6 +35,7 @@ namespace WebBanHang.Models
         public virtual DbSet<Order> Orders { get; set; }
         public virtual DbSet<OrderDetail> OrderDetails { get; set; }
         public virtual DbSet<PaymentTransaction> PaymentTransactions { get; set; }
+        public virtual DbSet<PriceExceptionLog> PriceExceptionLogs { get; set; }
         public virtual DbSet<Product> Products { get; set; }
         public virtual DbSet<ProductPriceHistory> ProductPriceHistories { get; set; }
         public virtual DbSet<ProductReview> ProductReviews { get; set; }
