@@ -95,6 +95,17 @@ namespace WebBanHang.Controllers
                 return HttpNotFound();
             }
 
+            // --- THÊM ĐOẠN NÀY ĐỂ LẤY SẢN PHẨM GỢI Ý (APRIORI) ---
+            var recommendedProducts = db.ProductRecommendations
+                .Where(r => r.ProductID_A == id)
+                .OrderByDescending(r => r.Confidence)
+                .Take(4)
+                .Select(r => r.Product1) // Lấy thông tin Sản phẩm B
+                .ToList();
+
+            ViewBag.RecommendedProducts = recommendedProducts;
+            // -----------------------------------------------------
+
             // Tạo ViewModel (ProductDetailsVM) mà View của bạn đang dùng
             var viewModel = new ProductDetailsVM
             {
@@ -262,6 +273,24 @@ namespace WebBanHang.Controllers
                 return RedirectToAction("Index");
             }
         }
+        // ==========================================================
+        // GỢI Ý MUA HÀNG (APRIORI)
+        // ==========================================================
+        // GET: Products/GetRecommendations/5
+        [ChildActionOnly] // Thuộc tính này chặn người dùng gõ trực tiếp URL, chỉ cho phép gọi ngầm từ View
+        public ActionResult GetRecommendations(int productId)
+        {
+            // Tìm các luật gợi ý có ProductID_A (Sản phẩm đang xem) khớp với productId truyền vào
+            // Lấy Top 4 sản phẩm có tỷ lệ Confidence (độ tin cậy) cao nhất
+            var recommendedProducts = db.ProductRecommendations
+                .Where(r => r.ProductID_A == productId)
+                .OrderByDescending(r => r.Confidence)
+                .Take(4)
+                .Select(r => r.Product1) // Kéo luôn thông tin của Sản phẩm B (Product1) ra
+                .ToList();
 
+            // Trả về một Partial View kèm danh sách sản phẩm
+            return PartialView("_Recommendations", recommendedProducts);
+        }
     }
 }

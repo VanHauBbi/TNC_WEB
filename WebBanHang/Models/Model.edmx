@@ -151,6 +151,17 @@
           <Property Name="NewPrice" Type="money" Nullable="false" />
           <Property Name="ChangeDate" Type="datetime" Nullable="false" />
         </EntityType>
+        <EntityType Name="ProductRecommendation">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="ProductID_A" Type="int" Nullable="false" />
+          <Property Name="ProductID_B" Type="int" Nullable="false" />
+          <Property Name="Confidence" Type="decimal" Precision="5" Scale="2" Nullable="false" />
+          <Property Name="Support" Type="int" Nullable="false" />
+          <Property Name="UpdateDate" Type="datetime" Nullable="false" />
+        </EntityType>
         <EntityType Name="ProductReview">
           <Key>
             <PropertyRef Name="ReviewID" />
@@ -496,6 +507,32 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
+        <Association Name="FK_Recommendation_ProductA">
+          <End Role="Product" Type="Self.Product" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="ProductRecommendation" Type="Self.ProductRecommendation" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Product">
+              <PropertyRef Name="ProductID" />
+            </Principal>
+            <Dependent Role="ProductRecommendation">
+              <PropertyRef Name="ProductID_A" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Recommendation_ProductB">
+          <End Role="Product" Type="Self.Product" Multiplicity="1" />
+          <End Role="ProductRecommendation" Type="Self.ProductRecommendation" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Product">
+              <PropertyRef Name="ProductID" />
+            </Principal>
+            <Dependent Role="ProductRecommendation">
+              <PropertyRef Name="ProductID_B" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
         <Association Name="FK_SupportMessage_Session">
           <End Role="SupportSession" Type="Self.SupportSession" Multiplicity="1">
             <OnDelete Action="Cascade" />
@@ -538,6 +575,7 @@
           <EntitySet Name="PaymentTransaction" EntityType="Self.PaymentTransaction" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Product" EntityType="Self.Product" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="ProductPriceHistory" EntityType="Self.ProductPriceHistory" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="ProductRecommendation" EntityType="Self.ProductRecommendation" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="ProductReview" EntityType="Self.ProductReview" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="ProductVariant" EntityType="Self.ProductVariant" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="PurchaseOrder" EntityType="Self.PurchaseOrder" Schema="dbo" store:Type="Tables" />
@@ -628,6 +666,14 @@
           <AssociationSet Name="FK_ProductVariant_Product" Association="Self.FK_ProductVariant_Product">
             <End Role="Product" EntitySet="Product" />
             <End Role="ProductVariant" EntitySet="ProductVariant" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Recommendation_ProductA" Association="Self.FK_Recommendation_ProductA">
+            <End Role="Product" EntitySet="Product" />
+            <End Role="ProductRecommendation" EntitySet="ProductRecommendation" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Recommendation_ProductB" Association="Self.FK_Recommendation_ProductB">
+            <End Role="Product" EntitySet="Product" />
+            <End Role="ProductRecommendation" EntitySet="ProductRecommendation" />
           </AssociationSet>
           <AssociationSet Name="FK_SupportMessage_Session" Association="Self.FK_SupportMessage_Session">
             <End Role="SupportSession" EntitySet="SupportSession" />
@@ -801,6 +847,8 @@
           <NavigationProperty Name="ProductPriceHistories" Relationship="Self.FK_PriceHistory_Product" FromRole="Product" ToRole="ProductPriceHistory" />
           <NavigationProperty Name="ProductReviews" Relationship="Self.FK_ProductReview_Product" FromRole="Product" ToRole="ProductReview" />
           <NavigationProperty Name="ProductVariants" Relationship="Self.FK_ProductVariant_Product" FromRole="Product" ToRole="ProductVariant" />
+          <NavigationProperty Name="ProductRecommendations" Relationship="Self.FK_Recommendation_ProductA" FromRole="Product" ToRole="ProductRecommendation" />
+          <NavigationProperty Name="ProductRecommendations1" Relationship="Self.FK_Recommendation_ProductB" FromRole="Product" ToRole="ProductRecommendation" />
           <NavigationProperty Name="Coupons" Relationship="Self.CouponProduct" FromRole="Product" ToRole="Coupon" />
         </EntityType>
         <EntityType Name="ProductPriceHistory">
@@ -813,6 +861,19 @@
           <Property Name="NewPrice" Type="Decimal" Precision="19" Scale="4" Nullable="false" />
           <Property Name="ChangeDate" Type="DateTime" Nullable="false" Precision="3" />
           <NavigationProperty Name="Product" Relationship="Self.FK_PriceHistory_Product" FromRole="ProductPriceHistory" ToRole="Product" />
+        </EntityType>
+        <EntityType Name="ProductRecommendation">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="ProductID_A" Type="Int32" Nullable="false" />
+          <Property Name="ProductID_B" Type="Int32" Nullable="false" />
+          <Property Name="Confidence" Type="Decimal" Precision="5" Scale="2" Nullable="false" />
+          <Property Name="Support" Type="Int32" Nullable="false" />
+          <Property Name="UpdateDate" Type="DateTime" Nullable="false" Precision="3" />
+          <NavigationProperty Name="Product" Relationship="Self.FK_Recommendation_ProductA" FromRole="ProductRecommendation" ToRole="Product" />
+          <NavigationProperty Name="Product1" Relationship="Self.FK_Recommendation_ProductB" FromRole="ProductRecommendation" ToRole="Product" />
         </EntityType>
         <EntityType Name="ProductReview">
           <Key>
@@ -1142,6 +1203,32 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
+        <Association Name="FK_Recommendation_ProductA">
+          <End Role="Product" Type="Self.Product" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="ProductRecommendation" Type="Self.ProductRecommendation" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Product">
+              <PropertyRef Name="ProductID" />
+            </Principal>
+            <Dependent Role="ProductRecommendation">
+              <PropertyRef Name="ProductID_A" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Recommendation_ProductB">
+          <End Role="Product" Type="Self.Product" Multiplicity="1" />
+          <End Role="ProductRecommendation" Type="Self.ProductRecommendation" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Product">
+              <PropertyRef Name="ProductID" />
+            </Principal>
+            <Dependent Role="ProductRecommendation">
+              <PropertyRef Name="ProductID_B" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
         <Association Name="FK_PODetail_PO">
           <End Role="PurchaseOrder" Type="Self.PurchaseOrder" Multiplicity="1">
             <OnDelete Action="Cascade" />
@@ -1174,7 +1261,7 @@
           <End Role="Coupon" Type="Self.Coupon" Multiplicity="*" />
           <End Role="Product" Type="Self.Product" Multiplicity="*" />
         </Association>
-        <EntityContainer Name="MyStoreEntities1" annotation:LazyLoadingEnabled="true">
+        <EntityContainer Name="MyStoreEntities" annotation:LazyLoadingEnabled="true">
           <EntitySet Name="Carts" EntityType="Self.Cart" />
           <EntitySet Name="CartItems" EntityType="Self.CartItem" />
           <EntitySet Name="Categories" EntityType="Self.Category" />
@@ -1187,6 +1274,7 @@
           <EntitySet Name="PaymentTransactions" EntityType="Self.PaymentTransaction" />
           <EntitySet Name="Products" EntityType="Self.Product" />
           <EntitySet Name="ProductPriceHistories" EntityType="Self.ProductPriceHistory" />
+          <EntitySet Name="ProductRecommendations" EntityType="Self.ProductRecommendation" />
           <EntitySet Name="ProductReviews" EntityType="Self.ProductReview" />
           <EntitySet Name="ProductVariants" EntityType="Self.ProductVariant" />
           <EntitySet Name="PurchaseOrders" EntityType="Self.PurchaseOrder" />
@@ -1270,6 +1358,14 @@
             <End Role="Product" EntitySet="Products" />
             <End Role="ProductVariant" EntitySet="ProductVariants" />
           </AssociationSet>
+          <AssociationSet Name="FK_Recommendation_ProductA" Association="Self.FK_Recommendation_ProductA">
+            <End Role="Product" EntitySet="Products" />
+            <End Role="ProductRecommendation" EntitySet="ProductRecommendations" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Recommendation_ProductB" Association="Self.FK_Recommendation_ProductB">
+            <End Role="Product" EntitySet="Products" />
+            <End Role="ProductRecommendation" EntitySet="ProductRecommendations" />
+          </AssociationSet>
           <AssociationSet Name="FK_PODetail_PO" Association="Self.FK_PODetail_PO">
             <End Role="PurchaseOrder" EntitySet="PurchaseOrders" />
             <End Role="PurchaseOrderDetail" EntitySet="PurchaseOrderDetails" />
@@ -1288,7 +1384,7 @@
     <!-- C-S mapping content -->
     <edmx:Mappings>
       <Mapping Space="C-S" xmlns="http://schemas.microsoft.com/ado/2009/11/mapping/cs">
-        <EntityContainerMapping StorageEntityContainer="MyStoreModelStoreContainer" CdmEntityContainer="MyStoreEntities1">
+        <EntityContainerMapping StorageEntityContainer="MyStoreModelStoreContainer" CdmEntityContainer="MyStoreEntities">
           <EntitySetMapping Name="Carts">
             <EntityTypeMapping TypeName="MyStoreModel.Cart">
               <MappingFragment StoreEntitySet="Cart">
@@ -1436,6 +1532,18 @@
                 <ScalarProperty Name="OldPrice" ColumnName="OldPrice" />
                 <ScalarProperty Name="NewPrice" ColumnName="NewPrice" />
                 <ScalarProperty Name="ChangeDate" ColumnName="ChangeDate" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="ProductRecommendations">
+            <EntityTypeMapping TypeName="MyStoreModel.ProductRecommendation">
+              <MappingFragment StoreEntitySet="ProductRecommendation">
+                <ScalarProperty Name="Id" ColumnName="Id" />
+                <ScalarProperty Name="ProductID_A" ColumnName="ProductID_A" />
+                <ScalarProperty Name="ProductID_B" ColumnName="ProductID_B" />
+                <ScalarProperty Name="Confidence" ColumnName="Confidence" />
+                <ScalarProperty Name="Support" ColumnName="Support" />
+                <ScalarProperty Name="UpdateDate" ColumnName="UpdateDate" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
