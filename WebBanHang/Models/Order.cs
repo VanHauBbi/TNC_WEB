@@ -19,6 +19,7 @@ namespace WebBanHang.Models
         {
             this.OrderDetails = new HashSet<OrderDetail>();
             this.PaymentTransactions = new HashSet<PaymentTransaction>();
+            this.PriceExceptionLogs = new HashSet<PriceExceptionLog>();
         }
     
         public int OrderID { get; set; }
@@ -32,6 +33,7 @@ namespace WebBanHang.Models
         public string ShippingMethod { get; set; }
         public string PaymentMethod { get; set; }
         public string OrderStatus { get; set; }
+        public bool IsMarginViolated { get; set; }
     
         public virtual Coupon Coupon { get; set; }
         public virtual Customer Customer { get; set; }
@@ -39,5 +41,7 @@ namespace WebBanHang.Models
         public virtual ICollection<OrderDetail> OrderDetails { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<PaymentTransaction> PaymentTransactions { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        public virtual ICollection<PriceExceptionLog> PriceExceptionLogs { get; set; }
     }
 }

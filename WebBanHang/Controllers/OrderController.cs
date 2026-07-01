@@ -158,6 +158,18 @@ namespace WebBanHang.Controllers
 
             int customerId = (int)Session["CustomerID"];
 
+            // =========================================================================
+            // [MỚI] 1.5. ORDER COST SIMULATION: MÔ PHỎNG GIÁ VỐN & CẢNH BÁO LỢI NHUẬN
+            // =========================================================================
+            var simulationService = new WebBanHang.Services.OrderCostSimulationService();
+            var simResult = simulationService.SimulateCartCost(cart, db);
+
+            if (simResult.IsViolatingMargin)
+            {
+               // TempData["MarginWarning"] = "Ghi chú hệ thống: Đơn hàng này có xuất hiện sản phẩm bán dưới giá vốn định mức (Lỗ > 5% do biến động FIFO).";
+            }
+            // =========================================================================
+
             using (var transaction = db.Database.BeginTransaction())
             {
                 try
@@ -171,10 +183,30 @@ namespace WebBanHang.Controllers
                         ShippingAddress = model.ShippingAddress,
                         ShippingMethod = model.ShippingMethod,
                         PaymentMethod = model.PaymentMethod,
-                        TotalAmount = model.TotalAmount
+                        TotalAmount = model.TotalAmount,
+                        IsMarginViolated = simResult.IsViolatingMargin // Gắn cờ vi phạm
                     };
                     db.Orders.Add(order);
-                    db.SaveChanges(); // Lưu để EF sinh ra order.OrderID
+                    db.SaveChanges(); // Lấy ID của hóa đơn vừa tạo
+
+                    // Khởi tạo các bản ghi ngoại lệ (Post-Audit Log)
+                    if (simResult.IsViolatingMargin)
+                    {
+                        foreach (var violation in simResult.Violations)
+                        {
+                            var exceptionLog = new PriceExceptionLog
+                            {
+                                OrderID = order.OrderID,
+                                ProductID = violation.ProductID,
+                                TotalRevenue = violation.TotalRevenue,
+                                TotalCOGS = violation.TotalCOGS,
+                                MarginPercentage = violation.MarginPercentage,
+                                CreatedAt = DateTime.Now
+                            };
+                            db.PriceExceptionLogs.Add(exceptionLog);
+                        }
+                        db.SaveChanges();
+                    }
 
                     decimal actualTotalOrderAmount = 0;
 

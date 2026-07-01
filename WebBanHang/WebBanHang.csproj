@@ -219,6 +219,9 @@
     <Compile Include="Models\PaymentTransaction.cs">
       <DependentUpon>Model.tt</DependentUpon>
     </Compile>
+    <Compile Include="Models\PriceExceptionLog.cs">
+      <DependentUpon>Model.tt</DependentUpon>
+    </Compile>
     <Compile Include="Models\Product.cs">
       <DependentUpon>Model.tt</DependentUpon>
     </Compile>
@@ -267,6 +270,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Services\AprioriService.cs" />
     <Compile Include="Services\GHNService.cs" />
+    <Compile Include="Services\OrderCostSimulationService.cs" />
     <Compile Include="Startup.cs" />
     <Compile Include="Utilities\PriceHelper.cs" />
     <Compile Include="Utilities\VnPayLibrary.cs" />
@@ -601,6 +605,7 @@
     <Folder Include="Content\image\" />
     <Folder Include="Data\" />
     <Folder Include="Font\" />
+    <Folder Include="Views\OrderCostSimulationService\" />
     <Folder Include="Views\TrangSanPham\" />
   </ItemGroup>
   <ItemGroup>
