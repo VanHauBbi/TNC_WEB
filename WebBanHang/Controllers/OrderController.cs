@@ -363,7 +363,7 @@ namespace WebBanHang.Controllers
                         vnpay.AddRequestData("vnp_Command", "pay");
                         vnpay.AddRequestData("vnp_TmnCode", vnp_TmnCode);
 
-                        long tAmount = Convert.ToInt64(actualTotalOrderAmount * 100);
+                        long tAmount = Convert.ToInt64(model.TotalAmount * 100);
                         vnpay.AddRequestData("vnp_Amount", tAmount.ToString());
 
                         vnpay.AddRequestData("vnp_CreateDate", DateTime.Now.ToString("yyyyMMddHHmmss"));
