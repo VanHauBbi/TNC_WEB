@@ -1,0 +1,94 @@
+﻿@model IEnumerable<WebBanHang.Models.ProductRecommendation>
+
+@{
+    ViewBag.Title = "Quản lý Hệ thống Gợi ý (Apriori)";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="card shadow mb-4 border-0">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="m-0 fw-bold text-primary"><i class="fa-solid fa-brain"></i> Kết quả huấn luyện Khai phá dữ liệu</h5>
+
+        @using (Html.BeginForm("RunAlgorithm", "Recommendations", FormMethod.Post, new { @class = "d-inline" }))
+        {
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-warning fw-bold shadow-sm" onclick="return confirm('Quá trình này sẽ quét toàn bộ lịch sử đơn hàng. Bạn có chắc chắn muốn tiến hành?');">
+                <i class="fa-solid fa-rotate"></i> Cập nhật & Huấn luyện lại AI
+            </button>
+        }
+    </div>
+
+    <div class="card-body">
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fa-solid fa-circle-check"></i> @TempData["SuccessMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fa-solid fa-triangle-exclamation"></i> @TempData["ErrorMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
+        <div class="table-responsive mt-3">
+            <table class="table table-bordered table-hover align-middle" width="100%" cellspacing="0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="text-center">STT</th>
+                        <th>Khách xem sản phẩm (A)</th>
+                        <th><i class="fa-solid fa-arrow-right text-success"></i> Sẽ gợi ý mua kèm (B)</th>
+                        <th class="text-center">Độ tin cậy (Confidence)</th>
+                        <th class="text-center">Tần suất mua chung</th>
+                        <th class="text-center">Cập nhật lần cuối</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        int stt = 1;
+                        foreach (var item in Model)
+                        {
+                            <tr>
+                                <td class="text-center fw-bold text-muted">@stt</td>
+
+                                <td class="fw-bold">@item.Product.ProductName</td>
+                                <td class="text-primary fw-bold">@item.Product1.ProductName</td>
+
+                                <td class="text-center">
+                                    @{
+                                        var confPercent = item.Confidence * 100;
+                                        string badgeColor = confPercent >= 50 ? "bg-success" : (confPercent >= 30 ? "bg-warning text-dark" : "bg-secondary");
+                                    }
+                                    <span class="badge @badgeColor px-3 py-2 fs-6">@confPercent.ToString("0.##")%</span>
+                                </td>
+
+                                <td class="text-center">
+                                    <span class="fw-bold">@item.Support</span> lần
+                                </td>
+
+                                <td class="text-center small text-muted">
+                                    @item.UpdateDate.ToString("dd/MM/yyyy HH:mm")
+                                </td>
+                            </tr>
+                            stt++;
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center py-5 text-muted">
+                                <i class="fa-solid fa-box-open fs-1 mb-3 text-light"></i><br />
+                                Chưa có luật gợi ý nào được tạo trong hệ thống.<br />
+                                Hãy nhấn nút <b>"Cập nhật & Huấn luyện lại AI"</b> ở góc trên bên phải để bắt đầu.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

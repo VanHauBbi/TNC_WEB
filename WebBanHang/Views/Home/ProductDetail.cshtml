@@ -25,132 +25,132 @@
         </div>
 
         @* === CỘT PHẢI: THÔNG TIN SẢN PHẨM VÀ TƯƠNG TÁC (Col-md-5) === *@
-    <div class="col-md-5 product-summary-col">
-        <h1 class="product-name">@Html.DisplayFor(model => model.product.ProductName)</h1>
+        <div class="col-md-5 product-summary-col">
+            <h1 class="product-name">@Html.DisplayFor(model => model.product.ProductName)</h1>
 
-        @* Meta Data: Category & Sold Count *@
-        <div class="product-meta">
-            <span class="category-name">Danh mục: <a href="#"><strong>@Model.product.Category.CategoryName</strong></a></span>
-            <span class="separator-dot"></span>
-            <span class="sold-count"><i class="fa-solid fa-fire"></i> Đã bán: **@Model.product.OrderDetails.Count** sản phẩm</span>
-        </div>
+            @* Meta Data: Category & Sold Count *@
+            <div class="product-meta">
+                <span class="category-name">Danh mục: <a href="#"><strong>@Model.product.Category.CategoryName</strong></a></span>
+                <span class="separator-dot"></span>
+                <span class="sold-count"><i class="fa-solid fa-fire"></i> Đã bán: **@Model.product.OrderDetails.Count** sản phẩm</span>
+            </div>
 
-        @* Price Section *@
-        @{
-            decimal discountPercent;
-            decimal discountedPrice = PriceHelper.GetDiscountedPrice(Model.product, out discountPercent);
-            bool isDiscounted = discountedPrice < Model.product.ProductPrice;
-        }
-
-        <div class="price-section mb-3 p-3 bg-light rounded border border-warning border-opacity-25">
-            @if (isDiscounted)
-            {
-                <div class="d-flex align-items-center mb-1">
-                    <span class="text-muted text-decoration-line-through me-2 fs-5">@Model.product.ProductPrice.ToString("N0") VNĐ</span>
-                    <span class="badge bg-warning text-danger fw-bold fs-6 px-2 py-1"><i class="fa-solid fa-bolt"></i> Giảm @discountPercent.ToString("0")%</span>
-                </div>
-                <div class="current-price text-danger fw-bold" style="font-size: 2.2rem;">
-                    @discountedPrice.ToString("N0") <span class="fs-4">VNĐ</span>
-                </div>
+            @* Price Section *@
+            @{
+                decimal discountPercent;
+                decimal discountedPrice = PriceHelper.GetDiscountedPrice(Model.product, out discountPercent);
+                bool isDiscounted = discountedPrice < Model.product.ProductPrice;
             }
-            else
-            {
-                <div class="current-price text-danger fw-bold" style="font-size: 2.2rem;">
-                    @Model.product.ProductPrice.ToString("N0") <span class="fs-4">VNĐ</span>
-                </div>
-            }
-        </div>
 
-        <div class="stock-status-section my-3" style="font-size: 16px;">
-            <span class="fw-bold" style="color: #333;">Tình trạng:</span>
-            @if (Model.product.StockQuantity > 0)
-            {
-                <span style="color: #28a745; font-weight: 500; margin-left: 5px;">
-                    <i class="fa-solid fa-circle-check"></i> Còn hàng (@Model.product.StockQuantity sản phẩm)
-                </span>
-            }
-            else
-            {
-                <span style="color: #dc3545; font-weight: 500; margin-left: 5px;">
-                    <i class="fa-solid fa-circle-xmark"></i> Tạm hết hàng
-                </span>
-            }
-        </div>
-
-        <hr class="section-divider" />
-
-        @* --- KHỐI ĐIỀU HƯỚNG NÚT MUA HÀNG THÔNG MINH --- *@
-        @{ string commercialState = Model.product.GetStatusLabel(); }
-
-        @switch (commercialState)
-        {
-            case "AVAILABLE":
-                using (Html.BeginForm("AddToCart", "Cart", FormMethod.Post, new { @id = "addToCartForm", @class = "cart-interaction-form" }))
+            <div class="price-section mb-3 p-3 bg-light rounded border border-warning border-opacity-25">
+                @if (isDiscounted)
                 {
-                    <input type="hidden" name="id" value="@Model.product.ProductID" />
-
-                    <div class="form-group-qty">
-                        <label for="quantity-input" class="qty-label">Số lượng:</label>
-                        <div class="quantity-control-wrapper">
-                            <button type="button" class="btn-qty-control minus-btn"><i class="fa-solid fa-minus"></i></button>
-                            @Html.TextBoxFor(model => model.quantity, new { @class = "form-control quantity-input", @id = "quantity-input", @type = "number", @min = 1, @max = Model.product.StockQuantity, @name = "quantity", @value = 1 })
-                            <button type="button" class="btn-qty-control plus-btn"><i class="fa-solid fa-plus"></i></button>
-                        </div>
+                    <div class="d-flex align-items-center mb-1">
+                        <span class="text-muted text-decoration-line-through me-2 fs-5">@Model.product.ProductPrice.ToString("N0") VNĐ</span>
+                        <span class="badge bg-warning text-danger fw-bold fs-6 px-2 py-1"><i class="fa-solid fa-bolt"></i> Giảm @discountPercent.ToString("0")%</span>
                     </div>
-
-                    <div class="price-summary-row">
-                        <span class="summary-label">Tạm tính:</span>
-                        <span class="calculated-price" id="estimatedPrice">@discountedPrice.ToString("N0") VNĐ</span>
-                    </div>
-
-                    <div class="action-buttons-group d-flex gap-2">
-                        <button type="submit" id="addToCartBtn" class="btn-add-to-cart flex-fill">
-                            <i class="fa-solid fa-cart-shopping"></i> THÊM VÀO GIỎ HÀNG
-                        </button>
-                        <a href="@Url.Action("BuyNow", "Cart", new { id = Model.product.ProductID })" class="btn-buy-now flex-fill text-center text-decoration-none d-flex align-items-center justify-content-center">
-                            <i class="fa-solid fa-bolt me-1"></i> MUA NGAY
-                        </a>
+                    <div class="current-price text-danger fw-bold" style="font-size: 2.2rem;">
+                        @discountedPrice.ToString("N0") <span class="fs-4">VNĐ</span>
                     </div>
                 }
-                break;
-
-            case "OUT_OF_STOCK":
-                <button type="button" class="btn btn-secondary btn-lg w-100 fw-bold mb-3 py-3" disabled style="background-color: #6c757d; border: none;">
-                    <i class="fa-solid fa-box-open me-2"></i> TẠM THỜI HẾT HÀNG
-                </button>
-                <div class="card bg-light border p-3">
-                    <label class="form-label small fw-bold text-muted mb-1">Nhận thông báo khi lô hàng mới về:</label>
-                    <div class="input-group">
-                        <input type="email" id="subEmail_@Model.product.ProductID" class="form-control form-control-sm" placeholder="Nhập email của bạn...">
-                        <button class="btn btn-dark btn-sm fw-bold action-subscribe-restock" data-id="@Model.product.ProductID" type="button">Gửi</button>
+                else
+                {
+                    <div class="current-price text-danger fw-bold" style="font-size: 2.2rem;">
+                        @Model.product.ProductPrice.ToString("N0") <span class="fs-4">VNĐ</span>
                     </div>
-                </div>
-                break;
-
-            case "COMING_SOON":
-                <button type="button" class="btn btn-warning btn-lg w-100 fw-bold text-dark py-3" disabled style="background-color: #ffc107; border: none;">
-                    <i class="fa-solid fa-truck-fast me-2"></i> HÀNG SẮP VỀ (CHUẨN BỊ MỞ BÁN)
-                </button>
-                break;
-
-            default:
-                <button type="button" class="btn btn-outline-danger btn-lg w-100 fw-bold py-3" disabled>
-                    NGỪNG KINH DOANH
-                </button>
-                break;
-        }
-
-        <hr class="section-divider" />
-
-        @* Product Description - Mobile/Tablet Only *@
-        <div class="product-description-block d-block d-md-none">
-            <h4 class="description-heading">Mô tả sản phẩm</h4>
-            <div class="description-content">
-                <p>@Html.Raw(Model.product.ProductDescription)</p>
+                }
             </div>
-        </div>
 
-    </div>
+            <div class="stock-status-section my-3" style="font-size: 16px;">
+                <span class="fw-bold" style="color: #333;">Tình trạng:</span>
+                @if (Model.product.StockQuantity > 0)
+                {
+                    <span style="color: #28a745; font-weight: 500; margin-left: 5px;">
+                        <i class="fa-solid fa-circle-check"></i> Còn hàng (@Model.product.StockQuantity sản phẩm)
+                    </span>
+                }
+                else
+                {
+                    <span style="color: #dc3545; font-weight: 500; margin-left: 5px;">
+                        <i class="fa-solid fa-circle-xmark"></i> Tạm hết hàng
+                    </span>
+                }
+            </div>
+
+            <hr class="section-divider" />
+
+            @* --- KHỐI ĐIỀU HƯỚNG NÚT MUA HÀNG THÔNG MINH --- *@
+            @{ string commercialState = Model.product.GetStatusLabel(); }
+
+            @switch (commercialState)
+            {
+                case "AVAILABLE":
+                    using (Html.BeginForm("AddToCart", "Cart", FormMethod.Post, new { @id = "addToCartForm", @class = "cart-interaction-form" }))
+                    {
+                        <input type="hidden" name="id" value="@Model.product.ProductID" />
+
+                        <div class="form-group-qty">
+                            <label for="quantity-input" class="qty-label">Số lượng:</label>
+                            <div class="quantity-control-wrapper">
+                                <button type="button" class="btn-qty-control minus-btn"><i class="fa-solid fa-minus"></i></button>
+                                @Html.TextBoxFor(model => model.quantity, new { @class = "form-control quantity-input", @id = "quantity-input", @type = "number", @min = 1, @max = Model.product.StockQuantity, @name = "quantity", @value = 1 })
+                                <button type="button" class="btn-qty-control plus-btn"><i class="fa-solid fa-plus"></i></button>
+                            </div>
+                        </div>
+
+                        <div class="price-summary-row">
+                            <span class="summary-label">Tạm tính:</span>
+                            <span class="calculated-price" id="estimatedPrice">@discountedPrice.ToString("N0") VNĐ</span>
+                        </div>
+
+                        <div class="action-buttons-group d-flex gap-2">
+                            <button type="submit" id="addToCartBtn" class="btn-add-to-cart flex-fill">
+                                <i class="fa-solid fa-cart-shopping"></i> THÊM VÀO GIỎ HÀNG
+                            </button>
+                            <a href="@Url.Action("BuyNow", "Cart", new { id = Model.product.ProductID })" class="btn-buy-now flex-fill text-center text-decoration-none d-flex align-items-center justify-content-center">
+                                <i class="fa-solid fa-bolt me-1"></i> MUA NGAY
+                            </a>
+                        </div>
+                    }
+                    break;
+
+                case "OUT_OF_STOCK":
+                    <button type="button" class="btn btn-secondary btn-lg w-100 fw-bold mb-3 py-3" disabled style="background-color: #6c757d; border: none;">
+                        <i class="fa-solid fa-box-open me-2"></i> TẠM THỜI HẾT HÀNG
+                    </button>
+                    <div class="card bg-light border p-3">
+                        <label class="form-label small fw-bold text-muted mb-1">Nhận thông báo khi lô hàng mới về:</label>
+                        <div class="input-group">
+                            <input type="email" id="subEmail_@Model.product.ProductID" class="form-control form-control-sm" placeholder="Nhập email của bạn...">
+                            <button class="btn btn-dark btn-sm fw-bold action-subscribe-restock" data-id="@Model.product.ProductID" type="button">Gửi</button>
+                        </div>
+                    </div>
+                    break;
+
+                case "COMING_SOON":
+                    <button type="button" class="btn btn-warning btn-lg w-100 fw-bold text-dark py-3" disabled style="background-color: #ffc107; border: none;">
+                        <i class="fa-solid fa-truck-fast me-2"></i> HÀNG SẮP VỀ (CHUẨN BỊ MỞ BÁN)
+                    </button>
+                    break;
+
+                default:
+                    <button type="button" class="btn btn-outline-danger btn-lg w-100 fw-bold py-3" disabled>
+                        NGỪNG KINH DOANH
+                    </button>
+                    break;
+            }
+
+            <hr class="section-divider" />
+
+            @* Product Description - Mobile/Tablet Only *@
+            <div class="product-description-block d-block d-md-none">
+                <h4 class="description-heading">Mô tả sản phẩm</h4>
+                <div class="description-content">
+                    <p>@Html.Raw(Model.product.ProductDescription)</p>
+                </div>
+            </div>
+
+        </div>
     </div>
 
     @* --- PHẦN CHI TIẾT DÀI (CHỈ DESKTOP) --- *@
@@ -172,6 +172,59 @@
         @Html.Partial("PVTopProduct", Model)
     </div>
 </div>
+
+@* --- KHỐI SẢN PHẨM GỢI Ý MUA KÈM (APRIORI) --- *@
+@{
+    var recommendedList = ViewBag.RecommendedProducts as List<WebBanHang.Models.Product>;
+}
+
+@if (recommendedList != null && recommendedList.Any())
+{
+    <div class="container mt-5 mb-5">
+        <h4 class="fw-bold mb-4 border-bottom pb-2">
+            <i class="fa-solid fa-thumbs-up text-warning"></i> Khách hàng mua sản phẩm này cũng mua thêm
+        </h4>
+
+        <div class="row">
+            @foreach (var item in recommendedList)
+            {
+                <div class="col-md-3 col-sm-6 mb-4">
+                    <div class="card h-100 shadow-sm border-0 product-card">
+                        <a href="@Url.Action("ProductDetail", "Home", new { id = item.ProductID })">
+                            <img src="@item.ProductImage" class="card-img-top p-2" alt="@item.ProductName" style="height: 200px; object-fit: contain;">
+                        </a>
+                        <div class="card-body d-flex flex-column">
+                            <h6 class="card-title" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 40px;">
+                                <a href="@Url.Action("ProductDetail", "Home", new { id = item.ProductID })" class="text-decoration-none text-dark fw-bold">
+                                    @item.ProductName
+                                </a>
+                            </h6>
+
+                            <p class="card-text text-danger fw-bold mt-auto fs-5">
+                                @String.Format("{0:N0} ₫", item.ProductPrice)
+                            </p>
+
+                            <a href="@Url.Action("AddToCart", "Cart", new { id = item.ProductID })" class="btn btn-outline-primary w-100 mt-2">
+                                <i class="fa-solid fa-cart-plus"></i> Thêm giỏ hàng
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <style>
+        .product-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+            .product-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+            }
+    </style>
+}
 
 @section Scripts {
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>

@@ -911,6 +911,8 @@
           <NavigationProperty Name="ProductPriceHistories" Relationship="Self.FK_PriceHistory_Product" FromRole="Product" ToRole="ProductPriceHistory" />
           <NavigationProperty Name="ProductReviews" Relationship="Self.FK_ProductReview_Product" FromRole="Product" ToRole="ProductReview" />
           <NavigationProperty Name="ProductVariants" Relationship="Self.FK_ProductVariant_Product" FromRole="Product" ToRole="ProductVariant" />
+          <NavigationProperty Name="ProductRecommendations" Relationship="Self.FK_Recommendation_ProductA" FromRole="Product" ToRole="ProductRecommendation" />
+          <NavigationProperty Name="ProductRecommendations1" Relationship="Self.FK_Recommendation_ProductB" FromRole="Product" ToRole="ProductRecommendation" />
           <NavigationProperty Name="Coupons" Relationship="Self.CouponProduct" FromRole="Product" ToRole="Coupon" />
           <NavigationProperty Name="ProductRecommendations" Relationship="MyStoreModel.FK_Recommendation_ProductA" FromRole="Product" ToRole="ProductRecommendation" />
           <NavigationProperty Name="ProductRecommendations1" Relationship="MyStoreModel.FK_Recommendation_ProductB" FromRole="Product" ToRole="ProductRecommendation" />
@@ -925,6 +927,19 @@
           <Property Name="NewPrice" Type="Decimal" Precision="19" Scale="4" Nullable="false" />
           <Property Name="ChangeDate" Type="DateTime" Nullable="false" Precision="3" />
           <NavigationProperty Name="Product" Relationship="Self.FK_PriceHistory_Product" FromRole="ProductPriceHistory" ToRole="Product" />
+        </EntityType>
+        <EntityType Name="ProductRecommendation">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="ProductID_A" Type="Int32" Nullable="false" />
+          <Property Name="ProductID_B" Type="Int32" Nullable="false" />
+          <Property Name="Confidence" Type="Decimal" Precision="5" Scale="2" Nullable="false" />
+          <Property Name="Support" Type="Int32" Nullable="false" />
+          <Property Name="UpdateDate" Type="DateTime" Nullable="false" Precision="3" />
+          <NavigationProperty Name="Product" Relationship="Self.FK_Recommendation_ProductA" FromRole="ProductRecommendation" ToRole="Product" />
+          <NavigationProperty Name="Product1" Relationship="Self.FK_Recommendation_ProductB" FromRole="ProductRecommendation" ToRole="Product" />
         </EntityType>
         <EntityType Name="ProductReview">
           <Key>
@@ -1280,6 +1295,32 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
+        <Association Name="FK_Recommendation_ProductA">
+          <End Role="Product" Type="Self.Product" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="ProductRecommendation" Type="Self.ProductRecommendation" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Product">
+              <PropertyRef Name="ProductID" />
+            </Principal>
+            <Dependent Role="ProductRecommendation">
+              <PropertyRef Name="ProductID_A" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Recommendation_ProductB">
+          <End Role="Product" Type="Self.Product" Multiplicity="1" />
+          <End Role="ProductRecommendation" Type="Self.ProductRecommendation" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Product">
+              <PropertyRef Name="ProductID" />
+            </Principal>
+            <Dependent Role="ProductRecommendation">
+              <PropertyRef Name="ProductID_B" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
         <Association Name="FK_PODetail_PO">
           <End Role="PurchaseOrder" Type="Self.PurchaseOrder" Multiplicity="1">
             <OnDelete Action="Cascade" />
@@ -1326,6 +1367,7 @@
           <EntitySet Name="PriceExceptionLogs" EntityType="Self.PriceExceptionLog" />
           <EntitySet Name="Products" EntityType="Self.Product" />
           <EntitySet Name="ProductPriceHistories" EntityType="Self.ProductPriceHistory" />
+          <EntitySet Name="ProductRecommendations" EntityType="Self.ProductRecommendation" />
           <EntitySet Name="ProductReviews" EntityType="Self.ProductReview" />
           <EntitySet Name="ProductVariants" EntityType="Self.ProductVariant" />
           <EntitySet Name="PurchaseOrders" EntityType="Self.PurchaseOrder" />
@@ -1416,6 +1458,14 @@
           <AssociationSet Name="FK_ProductVariant_Product" Association="Self.FK_ProductVariant_Product">
             <End Role="Product" EntitySet="Products" />
             <End Role="ProductVariant" EntitySet="ProductVariants" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Recommendation_ProductA" Association="Self.FK_Recommendation_ProductA">
+            <End Role="Product" EntitySet="Products" />
+            <End Role="ProductRecommendation" EntitySet="ProductRecommendations" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Recommendation_ProductB" Association="Self.FK_Recommendation_ProductB">
+            <End Role="Product" EntitySet="Products" />
+            <End Role="ProductRecommendation" EntitySet="ProductRecommendations" />
           </AssociationSet>
           <AssociationSet Name="FK_PODetail_PO" Association="Self.FK_PODetail_PO">
             <End Role="PurchaseOrder" EntitySet="PurchaseOrders" />
@@ -1645,6 +1695,18 @@
                 <ScalarProperty Name="OldPrice" ColumnName="OldPrice" />
                 <ScalarProperty Name="NewPrice" ColumnName="NewPrice" />
                 <ScalarProperty Name="ChangeDate" ColumnName="ChangeDate" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="ProductRecommendations">
+            <EntityTypeMapping TypeName="MyStoreModel.ProductRecommendation">
+              <MappingFragment StoreEntitySet="ProductRecommendation">
+                <ScalarProperty Name="Id" ColumnName="Id" />
+                <ScalarProperty Name="ProductID_A" ColumnName="ProductID_A" />
+                <ScalarProperty Name="ProductID_B" ColumnName="ProductID_B" />
+                <ScalarProperty Name="Confidence" ColumnName="Confidence" />
+                <ScalarProperty Name="Support" ColumnName="Support" />
+                <ScalarProperty Name="UpdateDate" ColumnName="UpdateDate" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
