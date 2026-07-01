@@ -4,7 +4,7 @@
   <edmx:Runtime>
     <!-- SSDL content -->
     <edmx:StorageModels>
-      <Schema Namespace="MyStoreModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+    <Schema Namespace="MyStoreModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
         <EntityType Name="Cart">
           <Key>
             <PropertyRef Name="CartID" />
@@ -163,6 +163,17 @@
           <Property Name="OldPrice" Type="money" Nullable="false" />
           <Property Name="NewPrice" Type="money" Nullable="false" />
           <Property Name="ChangeDate" Type="datetime" Nullable="false" />
+        </EntityType>
+        <EntityType Name="ProductRecommendation">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="ProductID_A" Type="int" Nullable="false" />
+          <Property Name="ProductID_B" Type="int" Nullable="false" />
+          <Property Name="Confidence" Type="decimal" Precision="5" Scale="2" Nullable="false" />
+          <Property Name="Support" Type="int" Nullable="false" />
+          <Property Name="UpdateDate" Type="datetime" Nullable="false" />
         </EntityType>
         <EntityType Name="ProductReview">
           <Key>
@@ -535,6 +546,32 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
+        <Association Name="FK_Recommendation_ProductA">
+          <End Role="Product" Type="Self.Product" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="ProductRecommendation" Type="Self.ProductRecommendation" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Product">
+              <PropertyRef Name="ProductID" />
+            </Principal>
+            <Dependent Role="ProductRecommendation">
+              <PropertyRef Name="ProductID_A" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Recommendation_ProductB">
+          <End Role="Product" Type="Self.Product" Multiplicity="1" />
+          <End Role="ProductRecommendation" Type="Self.ProductRecommendation" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Product">
+              <PropertyRef Name="ProductID" />
+            </Principal>
+            <Dependent Role="ProductRecommendation">
+              <PropertyRef Name="ProductID_B" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
         <Association Name="FK_SupportMessage_Session">
           <End Role="SupportSession" Type="Self.SupportSession" Multiplicity="1">
             <OnDelete Action="Cascade" />
@@ -578,6 +615,7 @@
           <EntitySet Name="PriceExceptionLog" EntityType="Self.PriceExceptionLog" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Product" EntityType="Self.Product" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="ProductPriceHistory" EntityType="Self.ProductPriceHistory" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="ProductRecommendation" EntityType="Self.ProductRecommendation" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="ProductReview" EntityType="Self.ProductReview" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="ProductVariant" EntityType="Self.ProductVariant" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="PurchaseOrder" EntityType="Self.PurchaseOrder" Schema="dbo" store:Type="Tables" />
@@ -677,6 +715,14 @@
             <End Role="Product" EntitySet="Product" />
             <End Role="ProductVariant" EntitySet="ProductVariant" />
           </AssociationSet>
+          <AssociationSet Name="FK_Recommendation_ProductA" Association="Self.FK_Recommendation_ProductA">
+            <End Role="Product" EntitySet="Product" />
+            <End Role="ProductRecommendation" EntitySet="ProductRecommendation" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Recommendation_ProductB" Association="Self.FK_Recommendation_ProductB">
+            <End Role="Product" EntitySet="Product" />
+            <End Role="ProductRecommendation" EntitySet="ProductRecommendation" />
+          </AssociationSet>
           <AssociationSet Name="FK_SupportMessage_Session" Association="Self.FK_SupportMessage_Session">
             <End Role="SupportSession" EntitySet="SupportSession" />
             <End Role="SupportMessage" EntitySet="SupportMessage" />
@@ -686,8 +732,7 @@
             <End Role="SupportSession" EntitySet="SupportSession" />
           </AssociationSet>
         </EntityContainer>
-      </Schema>
-    </edmx:StorageModels>
+      </Schema></edmx:StorageModels>
     <!-- CSDL content -->
     <edmx:ConceptualModels>
       <Schema Namespace="MyStoreModel" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
@@ -867,6 +912,8 @@
           <NavigationProperty Name="ProductReviews" Relationship="Self.FK_ProductReview_Product" FromRole="Product" ToRole="ProductReview" />
           <NavigationProperty Name="ProductVariants" Relationship="Self.FK_ProductVariant_Product" FromRole="Product" ToRole="ProductVariant" />
           <NavigationProperty Name="Coupons" Relationship="Self.CouponProduct" FromRole="Product" ToRole="Coupon" />
+          <NavigationProperty Name="ProductRecommendations" Relationship="MyStoreModel.FK_Recommendation_ProductA" FromRole="Product" ToRole="ProductRecommendation" />
+          <NavigationProperty Name="ProductRecommendations1" Relationship="MyStoreModel.FK_Recommendation_ProductB" FromRole="Product" ToRole="ProductRecommendation" />
         </EntityType>
         <EntityType Name="ProductPriceHistory">
           <Key>
@@ -1382,7 +1429,55 @@
             <End Role="Coupon" EntitySet="Coupons" />
             <End Role="Product" EntitySet="Products" />
           </AssociationSet>
+          <EntitySet Name="ProductRecommendations" EntityType="MyStoreModel.ProductRecommendation" />
+          <AssociationSet Name="FK_Recommendation_ProductA" Association="MyStoreModel.FK_Recommendation_ProductA">
+            <End Role="Product" EntitySet="Products" />
+            <End Role="ProductRecommendation" EntitySet="ProductRecommendations" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Recommendation_ProductB" Association="MyStoreModel.FK_Recommendation_ProductB">
+            <End Role="Product" EntitySet="Products" />
+            <End Role="ProductRecommendation" EntitySet="ProductRecommendations" />
+          </AssociationSet>
         </EntityContainer>
+        <EntityType Name="ProductRecommendation">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="ProductID_A" Type="Int32" Nullable="false" />
+          <Property Name="ProductID_B" Type="Int32" Nullable="false" />
+          <Property Name="Confidence" Type="Decimal" Nullable="false" Precision="5" Scale="2" />
+          <Property Name="Support" Type="Int32" Nullable="false" />
+          <Property Name="UpdateDate" Type="DateTime" Nullable="false" Precision="3" />
+          <NavigationProperty Name="Product" Relationship="MyStoreModel.FK_Recommendation_ProductA" FromRole="ProductRecommendation" ToRole="Product" />
+          <NavigationProperty Name="Product1" Relationship="MyStoreModel.FK_Recommendation_ProductB" FromRole="ProductRecommendation" ToRole="Product" />
+        </EntityType>
+        <Association Name="FK_Recommendation_ProductA">
+          <End Type="MyStoreModel.Product" Role="Product" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Type="MyStoreModel.ProductRecommendation" Role="ProductRecommendation" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Product">
+              <PropertyRef Name="ProductID" />
+            </Principal>
+            <Dependent Role="ProductRecommendation">
+              <PropertyRef Name="ProductID_A" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Recommendation_ProductB">
+          <End Type="MyStoreModel.Product" Role="Product" Multiplicity="1" />
+          <End Type="MyStoreModel.ProductRecommendation" Role="ProductRecommendation" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Product">
+              <PropertyRef Name="ProductID" />
+            </Principal>
+            <Dependent Role="ProductRecommendation">
+              <PropertyRef Name="ProductID_B" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
       </Schema>
     </edmx:ConceptualModels>
     <!-- C-S mapping content -->
@@ -1641,6 +1736,18 @@
               <ScalarProperty Name="ProductID" ColumnName="ProductID" />
             </EndProperty>
           </AssociationSetMapping>
+          <EntitySetMapping Name="ProductRecommendations">
+            <EntityTypeMapping TypeName="MyStoreModel.ProductRecommendation">
+              <MappingFragment StoreEntitySet="ProductRecommendation">
+                <ScalarProperty Name="UpdateDate" ColumnName="UpdateDate" />
+                <ScalarProperty Name="Support" ColumnName="Support" />
+                <ScalarProperty Name="Confidence" ColumnName="Confidence" />
+                <ScalarProperty Name="ProductID_B" ColumnName="ProductID_B" />
+                <ScalarProperty Name="ProductID_A" ColumnName="ProductID_A" />
+                <ScalarProperty Name="Id" ColumnName="Id" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
         </EntityContainerMapping>
       </Mapping>
     </edmx:Mappings>

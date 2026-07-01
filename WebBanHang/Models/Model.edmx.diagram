@@ -49,6 +49,9 @@
         <AssociationConnector Association="MyStoreModel.FK_PODetail_PO" ManuallyRouted="false" />
         <AssociationConnector Association="MyStoreModel.FK_SupportMessage_Session" ManuallyRouted="false" />
         <AssociationConnector Association="MyStoreModel.CouponProduct" ManuallyRouted="false" />
+        <EntityTypeShape EntityType="MyStoreModel.ProductRecommendation" Width="1.5" PointX="8.25" PointY="2.625" />
+        <AssociationConnector Association="MyStoreModel.FK_Recommendation_ProductA" />
+        <AssociationConnector Association="MyStoreModel.FK_Recommendation_ProductB" />
       </Diagram>
     </edmx:Diagrams>
   </edmx:Designer>

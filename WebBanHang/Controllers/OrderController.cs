@@ -6,7 +6,7 @@ using System.Linq;
 using System.Net;
 using System.Web;
 using System.Web.Mvc;
-using System.Threading.Tasks; 
+using System.Threading.Tasks;
 using WebBanHang.Models;
 using WebBanHang.Models.ViewModel;
 using WebBanHang.Services;
@@ -60,7 +60,6 @@ namespace WebBanHang.Controllers
 
             using (var tempDb = new WebBanHang.Models.MyStoreEntities())
             {
-                // BỘ ĐỆM THEO DÕI VOUCHER (Memory Tracker) ĐỂ CHỐNG TRỪ DƯ LƯỢT
                 var couponTracker = new Dictionary<int, int>();
 
                 foreach (var item in cart.Items)
@@ -77,27 +76,22 @@ namespace WebBanHang.Controllers
 
                             if (activeCoupon != null)
                             {
-                                // 1. Nếu mã này chưa có trong sổ nháp, chép số lượt thực tế từ DB vào
                                 if (!couponTracker.ContainsKey(activeCoupon.CouponID))
                                 {
                                     couponTracker[activeCoupon.CouponID] = activeCoupon.UsageLimit;
                                 }
 
-                                // 2. Lấy số lượt còn lại từ Sổ nháp (thay vì DB)
                                 int availableLimit = couponTracker[activeCoupon.CouponID];
 
                                 if (availableLimit > 0)
                                 {
-                                    // 3. Tính số lượng được giảm và Ghi đè lại sổ nháp
                                     int appliedQty = Math.Min(item.Quantity, availableLimit);
                                     item.DiscountableQuantity = appliedQty;
-
-                                    // Trừ đi số lượt vừa nháp để sản phẩm sau không xài lố
                                     couponTracker[activeCoupon.CouponID] -= appliedQty;
                                 }
                                 else
                                 {
-                                    item.DiscountableQuantity = 0; // Sổ nháp báo đã hết lượt
+                                    item.DiscountableQuantity = 0;
                                 }
                             }
                             else
@@ -116,7 +110,7 @@ namespace WebBanHang.Controllers
             var model = new CheckoutVM
             {
                 CartItems = cart.Items.ToList(),
-                TotalAmount = cart.TotalValue(), // Lúc này TotalValue sẽ tính chính xác dựa trên sổ nháp
+                TotalAmount = cart.TotalValue(),
                 OrderDate = DateTime.Now,
                 PaymentStatus = "Chưa thanh toán",
                 AvailableCoupons = db.Coupons.Where(c => !c.Products.Any()).OrderByDescending(c => c.CouponID).ToList()
@@ -158,17 +152,9 @@ namespace WebBanHang.Controllers
 
             int customerId = (int)Session["CustomerID"];
 
-            // =========================================================================
-            // [MỚI] 1.5. ORDER COST SIMULATION: MÔ PHỎNG GIÁ VỐN & CẢNH BÁO LỢI NHUẬN
-            // =========================================================================
+            // MÔ PHỎNG GIÁ VỐN & CẢNH BÁO LỢI NHUẬN (Không hiển thị ra View)
             var simulationService = new WebBanHang.Services.OrderCostSimulationService();
             var simResult = simulationService.SimulateCartCost(cart, db);
-
-            if (simResult.IsViolatingMargin)
-            {
-               // TempData["MarginWarning"] = "Ghi chú hệ thống: Đơn hàng này có xuất hiện sản phẩm bán dưới giá vốn định mức (Lỗ > 5% do biến động FIFO).";
-            }
-            // =========================================================================
 
             using (var transaction = db.Database.BeginTransaction())
             {
@@ -183,18 +169,18 @@ namespace WebBanHang.Controllers
                         ShippingAddress = model.ShippingAddress,
                         ShippingMethod = model.ShippingMethod,
                         PaymentMethod = model.PaymentMethod,
-                        TotalAmount = model.TotalAmount,
-                        IsMarginViolated = simResult.IsViolatingMargin // Gắn cờ vi phạm
+                        TotalAmount = 0, // Sẽ cập nhật lại ở dưới
+                        IsMarginViolated = simResult.IsViolatingMargin
                     };
                     db.Orders.Add(order);
-                    db.SaveChanges(); // Lấy ID của hóa đơn vừa tạo
+                    db.SaveChanges();
 
                     // Khởi tạo các bản ghi ngoại lệ (Post-Audit Log)
                     if (simResult.IsViolatingMargin)
                     {
                         foreach (var violation in simResult.Violations)
                         {
-                            var exceptionLog = new PriceExceptionLog
+                            db.PriceExceptionLogs.Add(new PriceExceptionLog
                             {
                                 OrderID = order.OrderID,
                                 ProductID = violation.ProductID,
@@ -202,154 +188,125 @@ namespace WebBanHang.Controllers
                                 TotalCOGS = violation.TotalCOGS,
                                 MarginPercentage = violation.MarginPercentage,
                                 CreatedAt = DateTime.Now
-                            };
-                            db.PriceExceptionLogs.Add(exceptionLog);
+                            });
                         }
                         db.SaveChanges();
                     }
 
-                    decimal actualTotalOrderAmount = 0;
+                    decimal actualTotalOrderAmount = 0m;
 
-                    // 2. TÁCH DÒNG CHI TIẾT, TRỪ VOUCHER ĐA LƯỢNG & [HẠCH TOÁN FIFO]
+                    // 2. TÁCH DÒNG CHI TIẾT & HẠCH TOÁN FIFO
                     foreach (var item in cart.Items)
                     {
                         var productInDb = db.Products.Include(p => p.Coupons).SingleOrDefault(p => p.ProductID == item.ProductID);
-                        if (productInDb != null)
+                        if (productInDb == null) continue;
+
+                        productInDb.StockQuantity -= item.Quantity;
+                        if (productInDb.StockQuantity < 0) productInDb.StockQuantity = 0;
+
+                        int needed = item.Quantity;
+                        decimal totalFifoCost = 0m;
+
+                        var batches = db.ImportReceiptDetails
+                                        .Where(b => b.ProductID == item.ProductID && b.RemainingQuantity > 0)
+                                        .OrderBy(b => b.DetailID)
+                                        .ToList();
+
+                        foreach (var batch in batches)
                         {
-                            productInDb.StockQuantity -= item.Quantity;
-                            if (productInDb.StockQuantity < 0) productInDb.StockQuantity = 0;
-
-                            // =========================================================================
-                            // [LÕI KẾ TOÁN FIFO]: TRỪ LÙI KHO LÔ VÀ BÓC TÁCH GIÁ VỐN GIA QUYỀN
-                            // =========================================================================
-                            int totalQtyNeededForFifo = item.Quantity; // Ví dụ: Mua 5 cái
-                            decimal totalFifoCostForThisItem = 0;      // Gom tổng vốn của 5 cái này
-
-                            // Quét các lô hàng cũ nhất còn tồn của sản phẩm này
-                            var availableBatches = db.ImportReceiptDetails
-                                                     .Where(b => b.ProductID == item.ProductID && b.RemainingQuantity > 0)
-                                                     .OrderBy(b => b.DetailID)
-                                                     .ToList();
-
-                            foreach (var batch in availableBatches)
+                            if (needed <= 0) break;
+                            if (batch.RemainingQuantity >= needed)
                             {
-                                if (totalQtyNeededForFifo <= 0) break;
-
-                                if (batch.RemainingQuantity >= totalQtyNeededForFifo)
-                                {
-                                    // Lô này gánh hết
-                                    batch.RemainingQuantity -= totalQtyNeededForFifo;
-                                    totalFifoCostForThisItem += (totalQtyNeededForFifo * batch.ImportPrice);
-                                    totalQtyNeededForFifo = 0;
-                                }
-                                else
-                                {
-                                    // Vét sạch lô này rồi đi tìm lô tiếp theo
-                                    int qtyTakenFromThisBatch = batch.RemainingQuantity;
-                                    totalFifoCostForThisItem += (qtyTakenFromThisBatch * batch.ImportPrice);
-                                    totalQtyNeededForFifo -= qtyTakenFromThisBatch;
-                                    batch.RemainingQuantity = 0;
-                                }
-                                db.Entry(batch).State = EntityState.Modified;
+                                batch.RemainingQuantity -= needed;
+                                totalFifoCost += needed * batch.ImportPrice;
+                                needed = 0;
                             }
-
-                            // Cứu cánh: Nếu kho lô bị hụt (do trước đây từng sửa tay), lấy mỏ neo ImportPrice bù vào
-                            if (totalQtyNeededForFifo > 0)
+                            else
                             {
-                                decimal fallbackCost = productInDb.ImportPrice;
-                                totalFifoCostForThisItem += (totalQtyNeededForFifo * fallbackCost);
+                                int take = batch.RemainingQuantity;
+                                totalFifoCost += take * batch.ImportPrice;
+                                needed -= take;
+                                batch.RemainingQuantity = 0;
                             }
+                            db.Entry(batch).State = EntityState.Modified;
+                        }
 
-                            // Ra được Giá vốn bình quân 1 sản phẩm của riêng giao dịch này
-                            decimal lockedUnitImportCost = item.Quantity > 0 ? (totalFifoCostForThisItem / item.Quantity) : 0;
-                            // =========================================================================
+                        if (needed > 0)
+                        {
+                            totalFifoCost += needed * productInDb.ImportPrice;
+                        }
 
+                        decimal lockedUnitImportCost = item.Quantity > 0 ? (totalFifoCost / item.Quantity) : 0m;
 
-                            // --- Xử lý tách dòng Voucher ---
-                            int applicableQty = 0;
-                            int remainingQty = item.Quantity;
+                        int applicableQty = 0;
+                        int remainingQty = item.Quantity;
 
-                            if (item.OriginalPrice > item.UnitPrice)
+                        if (item.OriginalPrice > item.UnitPrice)
+                        {
+                            var appliedCoupon = productInDb.Coupons
+                                .Where(c => c.ExpiryDate > DateTime.Now && c.UsageLimit > 0)
+                                .OrderByDescending(c => c.DiscountPercentage ?? (c.MaxDiscountAmount ?? 0))
+                                .FirstOrDefault();
+
+                            if (appliedCoupon != null)
                             {
-                                var appliedCoupon = productInDb.Coupons
-                                    .Where(c => c.ExpiryDate > DateTime.Now && c.UsageLimit > 0)
-                                    .OrderByDescending(c => c.DiscountPercentage ?? (c.MaxDiscountAmount ?? 0))
-                                    .FirstOrDefault();
-
-                                if (appliedCoupon != null)
-                                {
-                                    applicableQty = Math.Min(item.Quantity, appliedCoupon.UsageLimit);
-                                    remainingQty = item.Quantity - applicableQty;
-                                    appliedCoupon.UsageLimit -= applicableQty;
-                                }
+                                applicableQty = Math.Min(item.Quantity, appliedCoupon.UsageLimit);
+                                remainingQty = item.Quantity - applicableQty;
+                                appliedCoupon.UsageLimit -= applicableQty;
                             }
+                        }
 
-                            // DÒNG 1: Nhóm sản phẩm được áp giá giảm
-                            if (applicableQty > 0)
+                        if (applicableQty > 0)
+                        {
+                            db.OrderDetails.Add(new OrderDetail
                             {
-                                db.OrderDetails.Add(new OrderDetail
-                                {
-                                    OrderID = order.OrderID,
-                                    ProductID = item.ProductID,
-                                    Quantity = applicableQty,
-                                    UnitPrice = item.UnitPrice,
-                                    // [CHỐT HẠ]: Khóa giá vốn FIFO vào dòng này
-                                    ImportPrice = lockedUnitImportCost
-                                });
-                                actualTotalOrderAmount += (applicableQty * item.UnitPrice);
-                            }
+                                OrderID = order.OrderID,
+                                ProductID = item.ProductID,
+                                Quantity = applicableQty,
+                                UnitPrice = item.UnitPrice,
+                                ImportPrice = lockedUnitImportCost
+                            });
+                            actualTotalOrderAmount += applicableQty * item.UnitPrice;
+                        }
 
-                            // DÒNG 2: Nhóm sản phẩm rớt lại giá gốc do vượt giới hạn voucher
-                            if (remainingQty > 0)
+                        if (remainingQty > 0)
+                        {
+                            db.OrderDetails.Add(new OrderDetail
                             {
-                                db.OrderDetails.Add(new OrderDetail
-                                {
-                                    OrderID = order.OrderID,
-                                    ProductID = item.ProductID,
-                                    Quantity = remainingQty,
-                                    UnitPrice = item.OriginalPrice,
-                                    // [CHỐT HẠ]: Khóa giá vốn FIFO vào dòng này
-                                    ImportPrice = lockedUnitImportCost
-                                });
-                                actualTotalOrderAmount += (remainingQty * item.OriginalPrice);
-                            }
+                                OrderID = order.OrderID,
+                                ProductID = item.ProductID,
+                                Quantity = remainingQty,
+                                UnitPrice = item.OriginalPrice,
+                                ImportPrice = lockedUnitImportCost
+                            });
+                            actualTotalOrderAmount += remainingQty * item.OriginalPrice;
                         }
                     }
 
-                    // 3. Xử lý Voucher TOÀN ĐƠN
+                    // ✅ FIX LỖI 5: Validate Coupon Toàn đơn chặt chẽ (Check ExpiryDate)
                     if (!string.IsNullOrEmpty(model.AppliedVoucherCode))
                     {
                         var globalCoupon = db.Coupons.SingleOrDefault(c => c.Code == model.AppliedVoucherCode);
-                        if (globalCoupon != null && globalCoupon.UsageLimit > 0)
+                        if (globalCoupon != null && globalCoupon.UsageLimit > 0 && globalCoupon.ExpiryDate >= DateTime.Now)
                         {
                             globalCoupon.UsageLimit -= 1;
                             actualTotalOrderAmount -= Convert.ToDecimal(Session["VoucherDiscount"] ?? 0);
                         }
                     }
 
-                    // ----- CODE MỚI: XỬ LÝ CỘNG TIỀN PHÍ SHIP -----
-                    decimal shippingFee = 0;
-                    // Dựa vào hình ảnh UI của bạn, mình bắt chuỗi để tính phí
-                    if (model.TotalAmount > actualTotalOrderAmount)
+                    // ✅ FIX LỖI 2: Lấy phí ship từ Server-side (Session) thay vì từ Client gửi lên
+                    decimal shippingFee = 0m;
+                    if (Session["ShippingFee"] != null)
                     {
-                        // Phí ship chính là phần chênh lệch giữa Tổng tiền Front-end (đã có ship) và Tiền hàng thực tế
-                        shippingFee = model.TotalAmount - actualTotalOrderAmount;
+                        shippingFee = Convert.ToDecimal(Session["ShippingFee"]);
                     }
-
-                    // Cộng tiền ship vào tổng tiền cuối cùng
                     actualTotalOrderAmount += shippingFee;
-                    // ----------------------------------------------
 
-                    // Chốt tổng tiền (đã bao gồm Ship) an toàn 100% vào DB
                     order.TotalAmount = actualTotalOrderAmount;
                     db.SaveChanges();
                     transaction.Commit();
 
-                    bool isCommitted = true;
-
-                    // ==========================================================
-                    // NHÁNH 1: THANH TOÁN VNPAY (Tuyệt đối không xóa giỏ hàng ở đây)
-                    // ==========================================================
+                    // Xử lý VNPAY
                     if (model.PaymentMethod == "VNPAY")
                     {
                         string vnp_Url = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
@@ -358,17 +315,16 @@ namespace WebBanHang.Controllers
                         string vnp_Returnurl = "https://localhost:44329/Orders/PaymentCallback";
 
                         WebBanHang.Utilities.VnPayLibrary vnpay = new WebBanHang.Utilities.VnPayLibrary();
-
                         vnpay.AddRequestData("vnp_Version", "2.1.0");
                         vnpay.AddRequestData("vnp_Command", "pay");
                         vnpay.AddRequestData("vnp_TmnCode", vnp_TmnCode);
 
-                        long tAmount = Convert.ToInt64(model.TotalAmount * 100);
+                        long tAmount = Convert.ToInt64(actualTotalOrderAmount * 100);
                         vnpay.AddRequestData("vnp_Amount", tAmount.ToString());
 
                         vnpay.AddRequestData("vnp_CreateDate", DateTime.Now.ToString("yyyyMMddHHmmss"));
                         vnpay.AddRequestData("vnp_CurrCode", "VND");
-                        vnpay.AddRequestData("vnp_IpAddr", "127.0.0.1");
+                        vnpay.AddRequestData("vnp_IpAddr", Request.UserHostAddress ?? "127.0.0.1");
 
                         vnpay.AddRequestData("vnp_Locale", "vn");
                         vnpay.AddRequestData("vnp_OrderInfo", "ThanhToanDonHang_" + order.OrderID.ToString());
@@ -380,9 +336,7 @@ namespace WebBanHang.Controllers
                         return Redirect(paymentUrl);
                     }
 
-                    // ==========================================================
-                    // NHÁNH 2: THANH TOÁN TIỀN MẶT (COD) -> XÓA GIỎ HÀNG NGAY LẬP TỨC
-                    // ==========================================================
+                    // ✅ FIX LỖI 1: Xử lý Session Giỏ hàng chuẩn cho COD (Không bị null đè)
                     var tempCart = Session["BuyNowTempCart"] as WebBanHang.Models.ViewModel.Cart;
                     if (tempCart != null)
                     {
@@ -394,17 +348,18 @@ namespace WebBanHang.Controllers
                         Session.Remove("Cart");
                         Session.Remove("VoucherDiscount");
                     }
+                    // Đã xóa dòng Session["Cart"] = null gây lỗi;
 
-                    Session["Cart"] = null;
+                    // Xóa Session ShippingFee sau khi đặt hàng xong
+                    Session.Remove("ShippingFee");
 
                     return RedirectToAction("OrderSuccess", new { id = order.OrderID });
                 }
                 catch (Exception ex)
                 {
-                    if (transaction.UnderlyingTransaction.Connection != null)
-                    {
-                        transaction.Rollback();
-                    }
+                    // ✅ FIX LỖI 4: Try-catch khi Rollback để tránh sập web nếu Connection chết
+                    try { transaction.Rollback(); } catch { /* ignore */ }
+
                     ModelState.AddModelError("", "Lỗi hệ thống: " + ex.Message);
                     model.AvailableCoupons = db.Coupons.Where(c => !c.Products.Any()).ToList();
                     return View(model);
@@ -415,28 +370,19 @@ namespace WebBanHang.Controllers
         // GET: Orders/OrderSuccess/5
         public ActionResult OrderSuccess(int? id)
         {
-            if (id == null)
-            {
-                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
-            }
+            if (id == null) return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
 
-            // Giả định Order là Entity Model chứa thông tin đơn hàng
             var order = db.Orders.Include("OrderDetails.Product").SingleOrDefault(o => o.OrderID == id);
+            if (order == null) return HttpNotFound();
 
-            if (order == null)
-            {
-                return HttpNotFound();
-            }
-
-            // Trả về View với đối tượng Order đã tìm thấy
             return View(order);
         }
+
         public ActionResult PaymentCallback()
         {
             if (Request.QueryString.AllKeys.Length > 0)
             {
                 string vnp_HashSecret = "HASY7LN7TINZAOCJ1JJZHLBTEQK1JQ4H";
-
                 var vnpayData = Request.QueryString;
                 WebBanHang.Utilities.VnPayLibrary vnpay = new WebBanHang.Utilities.VnPayLibrary();
 
@@ -455,50 +401,35 @@ namespace WebBanHang.Controllers
                 bool checkSignature = vnpay.ValidateSignature(vnp_SecureHash, vnp_HashSecret);
                 if (checkSignature)
                 {
-                    // FIX LỖI 1: Phải dùng Include để gọi kèm OrderDetails ra, nếu không vòng lặp foreach sẽ bị Crash
                     var order = db.Orders.Include(o => o.OrderDetails).SingleOrDefault(o => o.OrderID == orderId);
-
                     if (order != null)
                     {
-                        // ==========================================================
-                        // NHÁNH THÀNH CÔNG: KHÁCH ĐÃ TRẢ TIỀN -> XÓA GIỎ
-                        // ==========================================================
                         if (vnp_ResponseCode == "00")
                         {
                             order.PaymentStatus = "Đã thanh toán";
                             db.SaveChanges();
 
-                            // --- DỌN DẸP GIỎ HÀNG TẠI ĐÂY ---
-                            // ✅ FIX: Luôn xóa giỏ hàng và session khi thanh toán thành công
                             Session.Remove("Cart");
                             Session.Remove("VoucherDiscount");
                             Session.Remove("BuyNowTempCart");
+                            Session.Remove("ShippingFee");
 
+                            // ✅ FIX LỖI 3: Loại bỏ TempData thông báo trùng lặp
                             TempData["Message"] = "Thanh toán đơn hàng qua cổng VNPay thành công!";
-                            Session["Cart"] = null;
-
-                            TempData["Message"] = "Thanh toán đơn hàng linh kiện qua cổng VNPay thành công!";
                             return RedirectToAction("OrderSuccess", new { id = orderId });
                         }
-
-                        // ==========================================================
-                        // NHÁNH THẤT BẠI: HỦY ĐƠN HÀNG & HOÀN TRẢ TỒN KHO (FIFO)
-                        // ==========================================================
                         else
                         {
-                            // 1. Cập nhật trạng thái thanh toán và DUYỆT
                             order.PaymentStatus = "Thất bại";
                             order.OrderStatus = "Đã hủy";
 
-                            // 2. HOÀN TRẢ TỒN KHO & FIFO (Chỉ lặp 1 lần duy nhất)
                             foreach (var detail in order.OrderDetails)
                             {
                                 var productInDb = db.Products.Find(detail.ProductID);
                                 if (productInDb != null)
                                 {
-                                    // Trả lại chính xác số lượng vào kho
                                     productInDb.StockQuantity += detail.Quantity;
-                                    db.Entry(productInDb).State = EntityState.Modified; // Bắt buộc báo EF cần update
+                                    db.Entry(productInDb).State = EntityState.Modified;
 
                                     var latestBatch = db.ImportReceiptDetails
                                                         .Where(b => b.ProductID == detail.ProductID)
@@ -512,16 +443,19 @@ namespace WebBanHang.Controllers
                                 }
                             }
 
-                            // 3. LƯU THAY ĐỔI VÀO DB
-                            db.Entry(order).State = EntityState.Modified; // Báo EF lưu trạng thái đơn
+                            db.Entry(order).State = EntityState.Modified;
                             db.SaveChanges();
 
-                            // 4. PHỤC HỒI GIỎ HÀNG (Khôi phục nguyên trạng biến dự phòng, không AddItem cộng dồn)
                             var tempCart = Session["BuyNowTempCart"] as WebBanHang.Models.ViewModel.Cart;
                             if (tempCart != null)
                             {
                                 Session["Cart"] = tempCart;
                                 Session.Remove("BuyNowTempCart");
+                            }
+                            else
+                            {
+                                Session.Remove("Cart");
+                                Session.Remove("VoucherDiscount");
                             }
 
                             TempData["Error"] = "Giao dịch thất bại. Đơn hàng đã tự động hủy. Mã lỗi: " + vnp_ResponseCode;
@@ -540,12 +474,11 @@ namespace WebBanHang.Controllers
         // ==========================================================
 
         [HttpGet]
-        public async Task<ActionResult> GetProvinces() // Đổi JsonResult thành ActionResult
+        public async Task<ActionResult> GetProvinces()
         {
             try
             {
                 var provinces = await _ghnService.GetProvincesAsync();
-                // Trả về Content kiểu application/json để tránh bị mã hóa kép
                 return Content(provinces.ToString(), "application/json");
             }
             catch (Exception ex)
@@ -587,11 +520,13 @@ namespace WebBanHang.Controllers
         {
             try
             {
-                // Tính khối lượng bưu kiện giả định: 500g * số lượng mặt hàng
                 int totalWeightInGrams = totalQuantity * 500;
                 if (totalWeightInGrams <= 0) totalWeightInGrams = 1000;
 
                 decimal fee = await _ghnService.CalculateFeeAsync(districtId, wardCode, totalWeightInGrams);
+
+                // ✅ LƯU PHÍ SHIP VÀO SESSION NGAY TẠI ĐÂY
+                Session["ShippingFee"] = fee;
 
                 return Json(new { success = true, fee = fee });
             }
@@ -609,7 +544,6 @@ namespace WebBanHang.Controllers
             var order = db.Orders.Include(o => o.OrderDetails.Select(od => od.Product)).SingleOrDefault(o => o.OrderID == id);
             if (order == null) return HttpNotFound();
 
-            // Nếu lúc thanh toán bạn lưu là rỗng, thì gán mặc định là Chờ duyệt để code không bị lỗi
             if (string.IsNullOrEmpty(order.OrderStatus))
             {
                 order.OrderStatus = "Chờ duyệt";

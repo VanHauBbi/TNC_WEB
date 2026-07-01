@@ -227,6 +227,9 @@
     <Compile Include="Models\ProductPriceHistory.cs">
       <DependentUpon>Model.tt</DependentUpon>
     </Compile>
+    <Compile Include="Models\ProductRecommendation.cs">
+      <DependentUpon>Model.tt</DependentUpon>
+    </Compile>
     <Compile Include="Models\ProductReview.cs">
       <DependentUpon>Model.tt</DependentUpon>
     </Compile>
