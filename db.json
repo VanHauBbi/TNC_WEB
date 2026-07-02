@@ -96,14 +96,14 @@
       "UnitPrice": 2850000
     },
     {
-      "SKU": "SKU-MAINBOARD-GIGABYTE-B760M",
-      "ProductName": "Mainboard Gigabyte B760M Pro RS/D4 Wifi",
-      "UnitPrice": 2450000
+      "SKU": "SKU-MAINBOARD-GIGABYTE-B860M",
+      "ProductName": "Mainboard Gigabyte B860M K DDR5",
+      "UnitPrice": 2900000
     },
     {
-      "SKU": "SKU-MAINBOARD-MSI-B760M",
-      "ProductName": "Mainboard MSI B760M GAMING PLUS WIFI",
-      "UnitPrice": 3100000
+      "SKU": "SKU-MAINBOARD-GIGABYTE-B760M",
+      "ProductName": "Mainboard Gigabyte B760M Gaming DDR4",
+      "UnitPrice": 2450000
     },
     {
       "SKU": "SKU-O-CUNG-SSD",
@@ -121,19 +121,284 @@
       "UnitPrice": 2100000
     },
     {
-      "SKU": "SKU-CPU-INTEL-CORE-1",
-      "ProductName": "CPU Intel Core i5-13400F (Tray)",
+      "SKU": "SKU-PSU-NGUON-MAY",
+      "ProductName": "PSU - NGUỒN MÁY TÍNH CENTAUR 450W 80 PLUS BRONZE",
+      "UnitPrice": 500000
+    },
+    {
+      "SKU": "SKU-PSU-NGUON-MAY-1",
+      "ProductName": "PSU - NGUỒN MÁY TÍNH CENTAUR 550W 80 PLUS BRONZE",
+      "UnitPrice": 650000
+    },
+    {
+      "SKU": "SKU-POWER-GOLD-NOTE",
+      "ProductName": "POWER GOLD NOTE PSU-1000/1250 – Alpha Audio",
+      "UnitPrice": 18000000
+    },
+    {
+      "SKU": "SKU-MAN-HINH-GAMING-2",
+      "ProductName": "Màn hình Gaming ASUS TUF VG27AQ5A 27 inch",
+      "UnitPrice": 5800000
+    },
+    {
+      "SKU": "SKU-MAN-HINH-GAMING-3",
+      "ProductName": "Màn hình gaming Lenovo Legion R27S 68CCGAC1VN 27 inch",
       "UnitPrice": 4100000
     },
     {
-      "SKU": "SKU-RAM-KINGSTON-FURY",
-      "ProductName": "RAM Kingston Fury Beast 16GB (2x8GB) DDR4 3200MHz",
+      "SKU": "SKU-MAN-HINH-GAMING-4",
+      "ProductName": "Màn hình Gaming LG UltraGear 27G411A-B 27 inch",
+      "UnitPrice": 3500000
+    },
+    {
+      "SKU": "SKU-MAN-HINH-GAMING-5",
+      "ProductName": "Màn hình Gaming ViewSonic VX2479A-HD-PRO 240Hz 24 inch",
+      "UnitPrice": 2800000
+    },
+    {
+      "SKU": "SKU-MAN-HINH-GAMING-6",
+      "ProductName": "Màn hình Gaming MSI MAG 245F X24 24 inch",
+      "UnitPrice": 2900000
+    },
+    {
+      "SKU": "SKU-MAN-HINH-GAMING-7",
+      "ProductName": "Màn hình Gaming LG UltraGear 27G610A-B 27 inch",
+      "UnitPrice": 4200000
+    },
+    {
+      "SKU": "SKU-MAN-HINH-GAMING-8",
+      "ProductName": "Màn hình Gaming ASUS TUF VG259Q5A 25 inch",
+      "UnitPrice": 3800000
+    },
+    {
+      "SKU": "SKU-MAN-HINH-MSI",
+      "ProductName": "Màn hình MSI MPG 491CQPX QD-OLED 49 inch",
+      "UnitPrice": 24000000
+    },
+    {
+      "SKU": "SKU-MAN-HINH-GAMING-9",
+      "ProductName": "Màn hình Gaming AOC 24G50Z 24 inch",
+      "UnitPrice": 2500000
+    },
+    {
+      "SKU": "SKU-MAN-HINH-XIAOMI",
+      "ProductName": "Màn hình Xiaomi A27I 2026 27 inch",
+      "UnitPrice": 1900000
+    },
+    {
+      "SKU": "SKU-CPU-INTEL-CORE-1",
+      "ProductName": "CPU Intel Core i5-12400F (TRAY)",
+      "UnitPrice": 4100000
+    },
+    {
+      "SKU": "SKU-CPU-INTEL-CORE-2",
+      "ProductName": "CPU Intel Core i9 14900",
+      "UnitPrice": 12500000
+    },
+    {
+      "SKU": "SKU-CPU-AMD-RYZEN-1",
+      "ProductName": "CPU AMD Ryzen 5 5500",
+      "UnitPrice": 1800000
+    },
+    {
+      "SKU": "SKU-CPU-INTEL-CORE-3",
+      "ProductName": "CPU Intel Core i7 14700",
+      "UnitPrice": 9500000
+    },
+    {
+      "SKU": "SKU-CPU-AMD-RYZEN-2",
+      "ProductName": "CPU AMD Ryzen 7 5700X (Tray)",
+      "UnitPrice": 3200000
+    },
+    {
+      "SKU": "SKU-CPU-AMD-RYZEN-3",
+      "ProductName": "CPU AMD Ryzen 5 7500F (Tray)",
+      "UnitPrice": 3900000
+    },
+    {
+      "SKU": "SKU-CPU-INTEL-CORE-4",
+      "ProductName": "CPU Intel Core i7 14700K",
+      "UnitPrice": 10500000
+    },
+    {
+      "SKU": "SKU-CPU-AMD-RYZEN-4",
+      "ProductName": "CPU AMD Ryzen 7 9800X3D (WOF)",
+      "UnitPrice": 12500000
+    },
+    {
+      "SKU": "SKU-CPU-INTEL-CORE-5",
+      "ProductName": "CPU Intel Core i5 14600KF",
+      "UnitPrice": 6500000
+    },
+    {
+      "SKU": "SKU-RAM-PC-ADATA-2",
+      "ProductName": "RAM PC ADATA XPG D50 RGB 16GB (1x16GB) 3200MHz DDR4",
       "UnitPrice": 850000
     },
     {
-      "SKU": "SKU-VGA-GIGABYTE-RTX",
-      "ProductName": "VGA Gigabyte RTX 3060 Windforce OC 12G",
-      "UnitPrice": 6800000
+      "SKU": "SKU-RAM-PC-KINGSTON",
+      "ProductName": "RAM PC Kingston Fury Beast DDR4 3200MHz 16GB KF432C16BB1/16WP",
+      "UnitPrice": 750000
+    },
+    {
+      "SKU": "SKU-VGA-MSI-GEFORCE-1",
+      "ProductName": "VGA MSI Geforce RTX 5090 32G Gaming Trio OC",
+      "UnitPrice": 48000000
+    },
+    {
+      "SKU": "SKU-VGA-ASUS-TUF",
+      "ProductName": "VGA Asus Tuf Gaming Geforce RTX 5070 OC 12GB TUF-RTX5070-O12G-GAMING",
+      "UnitPrice": 16500000
+    },
+    {
+      "SKU": "SKU-VGA-ASUS-GEFORCE",
+      "ProductName": "VGA Asus Geforce GT710 2GB GT710-SL-2GD5-BRK-EVO",
+      "UnitPrice": 850000
+    },
+    {
+      "SKU": "SKU-VGA-MSI-GEFORCE-2",
+      "ProductName": "VGA MSI Geforce RTX 5070 Ti 16G Ventus 3X OC",
+      "UnitPrice": 21500000
+    },
+    {
+      "SKU": "SKU-VGA-MSI-GEFORCE-3",
+      "ProductName": "VGA MSI GeForce RTX 5060 8GB VENTUS 2X OC",
+      "UnitPrice": 8500000
+    },
+    {
+      "SKU": "SKU-VGA-MSI-GEFORCE-4",
+      "ProductName": "VGA MSI GeForce RTX 4060 VENTUS 2X Black 8G OC",
+      "UnitPrice": 7500000
+    },
+    {
+      "SKU": "SKU-VGA-ASROCK-INTEL",
+      "ProductName": "VGA Asrock Intel ARC A380 Challenger ITX 6GB OC",
+      "UnitPrice": 2800000
+    },
+    {
+      "SKU": "SKU-VGA-ASUS-DUAL-1",
+      "ProductName": "VGA Asus Dual Radeon RX 6500 XT OC 4GB DUAL-RX6500XT-O4G-V2",
+      "UnitPrice": 3800000
+    },
+    {
+      "SKU": "SKU-VGA-MSI-GEFORCE-5",
+      "ProductName": "VGA MSI Geforce RTX 5060 8GB Shadow 2X OC",
+      "UnitPrice": 8500000
+    },
+    {
+      "SKU": "SKU-VGA-MSI-GEFORCE-6",
+      "ProductName": "VGA MSI GeForce RTX 3050 VENTUS 2X 6G OC",
+      "UnitPrice": 4500000
+    },
+    {
+      "SKU": "SKU-MAINBOARD-ASROCK-A520MHVS",
+      "ProductName": "Mainboard ASRock A520M-HVS D4 AM4",
+      "UnitPrice": 1100000
+    },
+    {
+      "SKU": "SKU-MAINBOARD-ASROCK-H610MHVSM2",
+      "ProductName": "Mainboard ASRock H610M-HVS/M.2 R2.0",
+      "UnitPrice": 1500000
+    },
+    {
+      "SKU": "SKU-MAINBOARD-ASUS-TUF",
+      "ProductName": "Mainboard Asus TUF Gaming B760M-PLUS Wifi D4",
+      "UnitPrice": 3500000
+    },
+    {
+      "SKU": "SKU-MAINBOARD-GIGABYTE-B760M-1",
+      "ProductName": "Mainboard Gigabyte B760M Gaming Plus Wifi D4",
+      "UnitPrice": 3100000
+    },
+    {
+      "SKU": "SKU-MAINBOARD-MSI-PRO",
+      "ProductName": "Mainboard MSI Pro H610M-S DDR4",
+      "UnitPrice": 1550000
+    },
+    {
+      "SKU": "SKU-MAINBOARD-MSI-B760M",
+      "ProductName": "Mainboard MSI B760M Gaming WIFI DDR5",
+      "UnitPrice": 3100000
+    },
+    {
+      "SKU": "SKU-MAINBOARD-ASROCK-A520MAC",
+      "ProductName": "Mainboard ASRock A520M/AC D4 AM4 Wifi",
+      "UnitPrice": 1350000
+    },
+    {
+      "SKU": "SKU-MAINBOARD-MSI-PRO-1",
+      "ProductName": "Mainboard MSI Pro B760M-E DDR4",
+      "UnitPrice": 2100000
+    },
+    {
+      "SKU": "SKU-MAINBOARD-GIGABYTE-H810M",
+      "ProductName": "Mainboard Gigabyte H810M H D5",
+      "UnitPrice": 1900000
+    },
+    {
+      "SKU": "SKU-O-CUNG-SSD-2",
+      "ProductName": "Ổ cứng SSD Kingston NV3 PCIe 4.0 NVMe 500GB",
+      "UnitPrice": 850000
+    },
+    {
+      "SKU": "SKU-O-CUNG-SSD-3",
+      "ProductName": "Ổ cứng SSD Kingston NV3 PCIe 4.0 NVMe 1TB",
+      "UnitPrice": 1400000
+    },
+    {
+      "SKU": "SKU-O-CUNG-SSD-4",
+      "ProductName": "Ổ cứng SSD Samsung 990 PRO PCIE Gen 4.0 X4 NVMe (R 7450/W 6900) 1TB",
+      "UnitPrice": 2600000
+    },
+    {
+      "SKU": "SKU-NGUON-MAY-TINH",
+      "ProductName": "Nguồn máy tính Xigmatek X-Power III 650 600W",
+      "UnitPrice": 600000
+    },
+    {
+      "SKU": "SKU-NGUON-MAY-TINH-1",
+      "ProductName": "Nguồn máy tính MSI Mag A650BNL Đen 650W (80 Plus Bronze)",
+      "UnitPrice": 1100000
+    },
+    {
+      "SKU": "SKU-NGUON-MAY-TINH-2",
+      "ProductName": "Nguồn máy tính MSI Mag A500N-H 500W",
+      "UnitPrice": 700000
+    },
+    {
+      "SKU": "SKU-NGUON-MAY-TINH-3",
+      "ProductName": "Nguồn máy tính Jetek Elite V6 E350 350W",
+      "UnitPrice": 350000
+    },
+    {
+      "SKU": "SKU-NGUON-MAY-TINH-4",
+      "ProductName": "Nguồn máy tính MSI Mag A750BN PCIe5 III 750W (80 Plus Bronze)",
+      "UnitPrice": 1400000
+    },
+    {
+      "SKU": "SKU-NGUON-MAY-TINH-5",
+      "ProductName": "Nguồn máy tính MSI Mag A850GL PCIe5 850W (80 Plus Gold)",
+      "UnitPrice": 2200000
+    },
+    {
+      "SKU": "SKU-NGUON-MAY-TINH-6",
+      "ProductName": "Nguồn máy tính Xigmatek X-Power III 500 450W",
+      "UnitPrice": 450000
+    },
+    {
+      "SKU": "SKU-NGUON-MAY-TINH-7",
+      "ProductName": "Nguồn máy tính Corsair CX650",
+      "UnitPrice": 1350000
+    },
+    {
+      "SKU": "SKU-NGUON-MAY-TINH-8",
+      "ProductName": "Nguồn máy tính Xigmatek X-Power III 450 400W",
+      "UnitPrice": 400000
+    },
+    {
+      "SKU": "SKU-NGUON-MAY-TINH-9",
+      "ProductName": "Nguồn máy tính MSI MAG A750BN PCIE5 750W",
+      "UnitPrice": 1400000
     }
   ]
 }
