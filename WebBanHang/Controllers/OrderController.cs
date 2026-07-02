@@ -138,8 +138,13 @@ namespace WebBanHang.Controllers
                 var checkStock = db.Products.Find(item.ProductID);
                 if (checkStock == null || item.Quantity > checkStock.StockQuantity)
                 {
-                    ModelState.AddModelError("", $"Sản phẩm '{item.ProductName}' chỉ còn {checkStock?.StockQuantity ?? 0} cái trong kho. Vui lòng quay lại giỏ hàng để giảm số lượng.");
+                    ModelState.AddModelError("", $"Sản phẩm '{item.ProductName}' chỉ còn {checkStock?.StockQuantity ?? 0} cái trong kho.");
                     model.AvailableCoupons = db.Coupons.Where(c => !c.Products.Any()).ToList();
+
+                    // --- BẮT BUỘC PHẢI THÊM 2 DÒNG NÀY CHỖ NÀY ---
+                    model.CartItems = cart.Items.ToList();
+                    model.TotalAmount = cart.TotalValue();
+
                     return View(model);
                 }
             }
@@ -147,6 +152,10 @@ namespace WebBanHang.Controllers
             if (!ModelState.IsValid)
             {
                 model.AvailableCoupons = db.Coupons.Where(c => !c.Products.Any()).ToList();
+
+                model.CartItems = cart.Items.ToList();
+                model.TotalAmount = cart.TotalValue();
+
                 return View(model);
             }
 
@@ -357,11 +366,17 @@ namespace WebBanHang.Controllers
                 }
                 catch (Exception ex)
                 {
-                    // ✅ FIX LỖI 4: Try-catch khi Rollback để tránh sập web nếu Connection chết
-                    try { transaction.Rollback(); } catch { /* ignore */ }
+                    try { transaction.Rollback(); } catch {  }
 
                     ModelState.AddModelError("", "Lỗi hệ thống: " + ex.Message);
                     model.AvailableCoupons = db.Coupons.Where(c => !c.Products.Any()).ToList();
+
+                    if (cart != null)
+                    {
+                        model.CartItems = cart.Items.ToList();
+                        model.TotalAmount = cart.TotalValue();
+                    }
+
                     return View(model);
                 }
             }

@@ -26,69 +26,84 @@
 </head>
 <body>
 
-    <div class="sidebar">
+    <!-- SIDEBAR -->
+    <div class="sidebar expanded" id="sidebar">
+        <!-- Toggle Button -->
+        <button class="toggle-sidebar-btn" id="toggleSidebarBtn" type="button" title="Thu/Mở Sidebar">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+
+        <!-- Logo -->
         <div class="admin-logo-box">
             <img src="~/TopIcon/logo-tnc.png" alt="Admin Logo" />
         </div>
 
-        <ul class="sidebar-menu">
+        <!-- Menu - SCROLLABLE -->
+        <ul class="sidebar-menu" id="sidebarMenu">
             <li>
-                @* Dashboard (Controller Home trong Admin Area) *@
-                <a href="@Url.Action("Index", "Home")" class="@GetActiveClass("Home")">
-                    <i class="fa-solid fa-tachometer-alt"></i> Dashboard
+                <a href="@Url.Action("Index", "Home")" class="@GetActiveClass("Home")" data-tooltip="Dashboard">
+                    <i class="fa-solid fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
                 </a>
             </li>
             <li>
-                <a href="@Url.Action("Index", "Products")" class="@GetActiveClass("Products")">
-                    <i class="fa-solid fa-box-open"></i> Quản lý Sản phẩm
+                <a href="@Url.Action("Index", "Products")" class="@GetActiveClass("Products")" data-tooltip="Sản phẩm">
+                    <i class="fa-solid fa-box-open"></i>
+                    <span>Quản lý Sản phẩm</span>
                 </a>
             </li>
             <li>
-                <a href="@Url.Action("Index", "Categories")" class="@GetActiveClass("Categories")">
-                    <i class="fa-solid fa-sitemap"></i> Quản lý Danh mục
+                <a href="@Url.Action("Index", "Categories")" class="@GetActiveClass("Categories")" data-tooltip="Danh mục">
+                    <i class="fa-solid fa-sitemap"></i>
+                    <span>Quản lý Danh mục</span>
                 </a>
             </li>
             <li>
-                <a href="@Url.Action("Index", "Orders")" class="@GetActiveClass("Orders")">
-                    <i class="fa-solid fa-receipt"></i> Quản lý Đơn hàng
+                <a href="@Url.Action("Index", "Orders")" class="@GetActiveClass("Orders")" data-tooltip="Đơn hàng">
+                    <i class="fa-solid fa-receipt"></i>
+                    <span>Quản lý Đơn hàng</span>
                 </a>
             </li>
             <li>
-                <a href="@Url.Action("Index", "Customers")" class="@GetActiveClass("Customers")">
-                    <i class="fa-solid fa-users"></i> Quản lý Khách hàng
+                <a href="@Url.Action("Index", "Customers")" class="@GetActiveClass("Customers")" data-tooltip="Khách hàng">
+                    <i class="fa-solid fa-users"></i>
+                    <span>Quản lý Khách hàng</span>
                 </a>
             </li>
             <li>
-                <a href="@Url.Action("Index", "Coupons")" class="@GetActiveClass("Coupons")">
-                    <i class="fa-solid fa-ticket"></i> Quản lý Mã Giảm Giá
+                <a href="@Url.Action("Index", "Coupons")" class="@GetActiveClass("Coupons")" data-tooltip="Mã giảm giá">
+                    <i class="fa-solid fa-ticket"></i>
+                    <span>Quản lý Mã Giảm Giá</span>
                 </a>
             </li>
             <li>
-                <a href="@Url.Action("Index", "PriceHistory")" class="@GetActiveClass("PriceHistory")">
-                    <i class="fa-solid fa-clock-rotate-left"></i> Truy xuất lịch sử
-                </a>
-            </li>
-
-            <li>
-                <a href="@Url.Action("Index", "ImportReceipts", new { area = "Admin" })" class="@GetActiveClass("ImportReceipts")">
-                    <i class="fa-solid fa-truck-loading"></i> Nhập Kho FIFO
-                </a>
-            </li>
-
-            <li>
-                <a href="@Url.Action("Index", "AdminSupport")" class="@GetActiveClass("AdminSupport")">
-                    <i class="fa-solid fa-headset"></i> Hỗ Trợ Khách Hàng
+                <a href="@Url.Action("Index", "PriceHistory")" class="@GetActiveClass("PriceHistory")" data-tooltip="Lịch sử">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    <span>Truy xuất lịch sử</span>
                 </a>
             </li>
             <li>
-                <a href="@Url.Action("Logout", "Account", new { Area = "" })">
-                    <i class="fa-solid fa-sign-out-alt"></i> Đăng xuất
+                <a href="@Url.Action("Index", "ImportReceipts", new { area = "Admin" })" class="@GetActiveClass("ImportReceipts")" data-tooltip="Nhập kho">
+                    <i class="fa-solid fa-truck-loading"></i>
+                    <span>Nhập Kho FIFO</span>
                 </a>
             </li>
-            <li class="nav-item">
-                <a class="nav-link" href="@Url.Action("Index", "Recommendations", new { area = "Admin" })">
+            <li>
+                <a href="@Url.Action("Index", "AdminSupport")" class="@GetActiveClass("AdminSupport")" data-tooltip="Hỗ trợ">
+                    <i class="fa-solid fa-headset"></i>
+                    <span>Hỗ Trợ Khách Hàng</span>
+                </a>
+            </li>
+            <li>
+                <a href="@Url.Action("Index", "Recommendations", new { area = "Admin" })" class="@GetActiveClass("Recommendations")" data-tooltip="AI">
                     <i class="fa-solid fa-brain"></i>
                     <span>Huấn luyện AI (Apriori)</span>
+                </a>
+            </li>
+            <li>
+                <a href="@Url.Action("Logout", "Account", new { Area = "" })" data-tooltip="Đăng xuất">
+                    <i class="fa-solid fa-sign-out-alt"></i>
+                    <span>Đăng xuất</span>
                 </a>
             </li>
         </ul>
@@ -115,6 +130,16 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     @Scripts.Render("~/bundles/jquery")
     @Scripts.Render("~/bundles/bootstrap")
+
+    <script>
+        $(document).ready(function () {
+            $("#toggleSidebarBtn").on("click", function (e) {
+                e.preventDefault();
+                $("#sidebar").toggleClass("expanded collapsed");
+                $(".main-content").toggleClass("expanded collapsed");
+            });
+        });
+    </script>
     @RenderSection("scripts", required: false)
 </body>
 </html>

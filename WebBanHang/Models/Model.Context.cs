@@ -46,6 +46,5 @@ namespace WebBanHang.Models
         public virtual DbSet<SupportMessage> SupportMessages { get; set; }
         public virtual DbSet<SupportSession> SupportSessions { get; set; }
         public virtual DbSet<User> Users { get; set; }
-        public virtual DbSet<ProductRecommendation> ProductRecommendations { get; set; }
     }
 }

@@ -1,102 +1,212 @@
 ﻿/* home_admin.css */
 
-/* Định nghĩa màu sắc */
-:root {
-    --admin-primary: #007bff; /* Màu xanh chủ đạo */
-    --admin-secondary: #6c757d;
-    --admin-bg: #f8f9fa; /* Nền xám nhạt */
-    --admin-sidebar-bg: #343a40; /* Nền sidebar đen */
-    --admin-text-light: #f8f9fa;
-    --admin-link-hover: #ffc107; /* Vàng nổi bật */
-}
+/* ===== SIDEBAR COLLAPSIBLE (Kiểu YouTube) ===== */
 
-body {
-    font-family: 'Open Sans', sans-serif;
-    background-color: var(--admin-bg);
-    margin: 0;
-    padding: 0;
-    display: flex;
-    min-height: 100vh; /* Chiếm hết chiều cao màn hình */
-}
-
-/* --- SIDEBAR (Thanh điều hướng cố định bên trái) --- */
 .sidebar {
-    width: 250px;
-    background-color: var(--admin-sidebar-bg);
-    color: var(--admin-text-light);
-    position: fixed; /* Cố định vị trí */
-    height: 100%;
-    padding: 20px;
-    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    background: #1a1a1a;
+    color: #fff;
+    transition: all 0.3s ease;
+    overflow-y: auto;
+    overflow-x: hidden;
+    z-index: 1000;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
+/* State: EXPANDED (Mở rộng) */
+.sidebar.expanded {
+    width: 240px;
+    padding: 0;
+}
+
+/* State: COLLAPSED (Thu nhỏ) */
+.sidebar.collapsed {
+    width: 60px;
+}
+
+/* Logo Box */
 .admin-logo-box {
-    text-align: center;
-    padding-bottom: 20px;
-    margin-bottom: 20px;
-    border-bottom: 1px solid #495057;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 15px;
+    border-bottom: 1px solid #333;
+    transition: all 0.3s ease;
 }
 
-    .admin-logo-box img {
-        width: 150px;
-        filter: invert(1); /* Biến logo thành màu trắng cho nền tối */
-    }
+.admin-logo-box img {
+    width: 40px;
+    height: auto;
+    transition: all 0.3s ease;
+}
 
+/* Collapsed: Logo nhỏ hơn */
+.sidebar.collapsed .admin-logo-box img {
+    width: 35px;
+}
+
+/* Toggle Button */
+.toggle-sidebar-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+    background: #0066cc;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    font-size: 20px;
+    transition: all 0.3s ease;
+    border-bottom: 1px solid #333;
+}
+
+.toggle-sidebar-btn:hover {
+    background: #0052a3;
+}
+
+/* Sidebar Menu */
 .sidebar-menu {
     list-style: none;
     padding: 0;
+    margin: 10px 0;
+    flex-grow: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
-    .sidebar-menu a {
-        display: block;
-        color: var(--admin-text-light);
-        padding: 12px 15px;
-        text-decoration: none;
-        border-radius: 4px;
-        margin-bottom: 8px;
-        transition: background-color 0.2s, color 0.2s;
-        font-weight: 500;
-    }
+.sidebar-menu li {
+    margin: 0;
+    padding: 0;
+}
 
-        .sidebar-menu a:hover,
-        .sidebar-menu a.active {
-            background-color: var(--admin-primary);
-            color: #fff;
-        }
+.sidebar-menu a {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    color: #b0b0b0;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    gap: 12px;
+}
 
-        .sidebar-menu a.active {
-            font-weight: 700;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-        }
+.sidebar-menu a:hover {
+    background: #333;
+    color: #fff;
+}
 
-    .sidebar-menu i {
-        margin-right: 10px;
-    }
+.sidebar-menu a.active {
+    background: #0066cc;
+    color: #fff;
+    border-left: 4px solid #00d4ff;
+    padding-left: 11px;
+}
 
+/* Icon */
+.sidebar-menu a i {
+    width: 20px;
+    text-align: center;
+    flex-shrink: 0;
+    font-size: 18px;
+}
 
+/* Text */
+.sidebar-menu a span {
+    display: inline;
+    transition: opacity 0.3s ease;
+}
+
+/* COLLAPSED STATE: Ẩn text, chỉ hiển thị icon */
+.sidebar.collapsed .sidebar-menu a {
+    padding: 12px;
+    justify-content: center;
+}
+
+.sidebar.collapsed .sidebar-menu a span {
+    display: none;
+}
+
+/* Tooltip khi hover ở collapsed state */
+.sidebar.collapsed .sidebar-menu a::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: 65px;
+    background: #333;
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 4px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    font-size: 12px;
+    border: 1px solid #555;
+}
+
+.sidebar.collapsed .sidebar-menu a:hover::after {
+    opacity: 1;
+}
+
+/* Logout Button - Always visible */
+.sidebar-menu li:last-child a {
+    margin-top: auto;
+    border-top: 1px solid #333;
+    position: sticky;
+    bottom: 0;
+    background: #1a1a1a;
+    z-index: 10;
+}
+
+.sidebar-menu::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar-menu::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 4px;
+}
+
+.sidebar-menu::-webkit-scrollbar-track {
+    background: transparent;
+}
 /* --- MAIN CONTENT (Nội dung chính) --- */
 .main-content {
-    margin-left: 250px; /* Bằng với độ rộng sidebar */
-    flex-grow: 1;
-    padding: 20px 30px;
-    width: calc(100% - 250px);
+    margin-left: 240px;
+    transition: all 0.3s ease;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.main-content.expanded {
+    margin-left: 240px;
+}
+
+.main-content.collapsed {
+    margin-left: 60px;
 }
 
 .admin-header {
     background: #fff;
-    padding: 15px 25px;
-    margin-bottom: 30px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    padding: 20px;
+    border-bottom: 1px solid #e0e0e0;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
 .admin-title {
-    font-size: 1.8rem;
-    font-weight: 700;
-    color: var(--admin-primary);
+    margin: 0;
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
 }
 
 /* Footer Admin cơ bản (Chỉ hiển thị dưới cùng của nội dung chính) */
@@ -108,7 +218,6 @@ body {
     color: var(--admin-secondary);
     border-top: 1px solid #dee2e6;
 }
-/* Thêm vào home_admin.css */
 
 /* Style cho khối nội dung chính (Card) */
 .card {
@@ -141,8 +250,6 @@ body {
     .table-admin-data tbody tr:hover {
         background-color: #e9ecef; /* Hiệu ứng hover nhẹ */
     }
-/* Thêm vào home_admin.css */
-
 /* --- Bảng dữ liệu Đơn hàng --- */
 .table-admin-orders {
     width: 100%;
@@ -163,7 +270,6 @@ body {
         font-weight: 700;
         text-transform: uppercase;
     }
-/* Thêm/Sửa trong file CSS Admin của bạn (ví dụ: order_admin.css) */
 
 /* Định nghĩa màu sắc chuẩn cho Trạng thái */
 :root {
@@ -198,4 +304,38 @@ body {
     /* Đảm bảo badge lớn hơn và màu sắc mạnh */
     padding: 10px 15px;
     font-size: 1.1rem !important;
+}
+
+/* Responsive adjustment */
+@media (max-width: 768px) {
+    .sidebar {
+        position: absolute;
+        height: auto;
+        width: 100%;
+        max-height: 100vh;
+        overflow-y: auto;
+    }
+
+    .main-content { 
+        margin-left: 0;
+        padding: 10px;
+    }
+
+    .admin-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .admin-title {
+        font-size: 20px;
+    }
+
+    .sidebar-menu a {
+        padding: 10px 15px;
+        font-size: 14px;
+    }
+
+    .toggle-sidebar-btn {
+        display: none;
+    }
 }

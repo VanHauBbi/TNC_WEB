@@ -273,11 +273,29 @@
 
             function validateAndPrepareSubmit() {
                 var wardCode = $('#ddlWard').val();
-                if(!wardCode) {
+                var street = $('#txtStreetAddress').val().trim(); // Lấy giá trị ô tên đường
+
+                if (!wardCode) {
                     alert("Vui lòng chọn đầy đủ Tỉnh/Thành, Quận/Huyện và Phường/Xã!");
                     return false;
                 }
+
+                // --- BỔ SUNG ĐOẠN NÀY ---
+                if (!street) {
+                    alert("Vui lòng nhập Số nhà, tên đường cụ thể!");
+                    $('#txtStreetAddress').focus(); // Tự động nháy chuột vào ô nhập
+                    return false;
+                }
+                // ------------------------
+
                 buildFullAddressString();
+
+                // Kiểm tra lại lần cuối trước khi submit
+                if (!$('#shippingAddress').val()) {
+                    alert("Lỗi tạo địa chỉ, vui lòng kiểm tra lại thông tin!");
+                    return false;
+                }
+
                 return true;
             }
 
