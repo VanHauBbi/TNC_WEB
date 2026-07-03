@@ -2,7 +2,7 @@
 
 /* ===== SIDEBAR COLLAPSIBLE (Kiểu YouTube) ===== */
 
-.sidebar {
+/*.sidebar {
     position: fixed;
     left: 0;
     top: 0;
@@ -17,21 +17,21 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-}
+}*/
 
 /* State: EXPANDED (Mở rộng) */
-.sidebar.expanded {
+/*.sidebar.expanded {
     width: 240px;
     padding: 0;
-}
+}*/
 
 /* State: COLLAPSED (Thu nhỏ) */
-.sidebar.collapsed {
+/*.sidebar.collapsed {
     width: 60px;
-}
+}*/
 
 /* Logo Box */
-.admin-logo-box {
+/*.admin-logo-box {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -44,15 +44,15 @@
     width: 40px;
     height: auto;
     transition: all 0.3s ease;
-}
+}*/
 
 /* Collapsed: Logo nhỏ hơn */
-.sidebar.collapsed .admin-logo-box img {
+/*.sidebar.collapsed .admin-logo-box img {
     width: 35px;
-}
+}*/
 
 /* Toggle Button */
-.toggle-sidebar-btn {
+/*.toggle-sidebar-btn {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -69,10 +69,10 @@
 
 .toggle-sidebar-btn:hover {
     background: #0052a3;
-}
+}*/
 
 /* Sidebar Menu */
-.sidebar-menu {
+/*.sidebar-menu {
     list-style: none;
     padding: 0;
     margin: 10px 0;
@@ -107,34 +107,34 @@
     color: #fff;
     border-left: 4px solid #00d4ff;
     padding-left: 11px;
-}
+}*/
 
 /* Icon */
-.sidebar-menu a i {
+/*.sidebar-menu a i {
     width: 20px;
     text-align: center;
     flex-shrink: 0;
     font-size: 18px;
-}
+}*/
 
 /* Text */
-.sidebar-menu a span {
+/*.sidebar-menu a span {
     display: inline;
     transition: opacity 0.3s ease;
-}
+}*/
 
 /* COLLAPSED STATE: Ẩn text, chỉ hiển thị icon */
-.sidebar.collapsed .sidebar-menu a {
+/*.sidebar.collapsed .sidebar-menu a {
     padding: 12px;
     justify-content: center;
 }
 
 .sidebar.collapsed .sidebar-menu a span {
     display: none;
-}
+}*/
 
 /* Tooltip khi hover ở collapsed state */
-.sidebar.collapsed .sidebar-menu a::after {
+/*.sidebar.collapsed .sidebar-menu a::after {
     content: attr(data-tooltip);
     position: absolute;
     left: 65px;
@@ -152,10 +152,10 @@
 
 .sidebar.collapsed .sidebar-menu a:hover::after {
     opacity: 1;
-}
+}*/
 
 /* Logout Button - Always visible */
-.sidebar-menu li:last-child a {
+/*.sidebar-menu li:last-child a {
     margin-top: auto;
     border-top: 1px solid #333;
     position: sticky;
@@ -175,9 +175,9 @@
 
 .sidebar-menu::-webkit-scrollbar-track {
     background: transparent;
-}
+}*/
 /* --- MAIN CONTENT (Nội dung chính) --- */
-.main-content {
+/*.main-content {
     margin-left: 240px;
     transition: all 0.3s ease;
     min-height: 100vh;
@@ -207,107 +207,107 @@
     font-size: 24px;
     font-weight: bold;
     color: #333;
-}
+}*/
 
 /* Footer Admin cơ bản (Chỉ hiển thị dưới cùng của nội dung chính) */
-.admin-footer-copyright {
+/*.admin-footer-copyright {
     margin-top: 50px;
     padding-top: 20px;
     text-align: center;
     font-size: 0.85rem;
     color: var(--admin-secondary);
     border-top: 1px solid #dee2e6;
-}
+}*/
 
 /* Style cho khối nội dung chính (Card) */
-.card {
+/*.card {
     border: none;
     border-radius: 8px;
     margin-bottom: 25px;
-}
+}*/
 
 /* Tiêu đề nội dung */
-.admin-content-title {
+/*.admin-content-title {
     font-size: 1.5rem;
     font-weight: 700;
-    color: #343a40; /* Màu chữ đậm */
-    border-bottom: 2px solid #dee2e6;
+    color: #343a40;*/ /* Màu chữ đậm */
+    /*border-bottom: 2px solid #dee2e6;
     padding-bottom: 10px;
-}
+}*/
 
 /* Bảng dữ liệu Admin */
-.table-admin-data {
+/*.table-admin-data {
     font-size: 0.95rem;
 }
 
-    .table-admin-data thead.table-dark th {
+    .table-admin-data thead.table-dark th {*/
         /* Đảm bảo màu nền đậm và chữ trắng cho Admin */
-        background-color: var(--admin-sidebar-bg) !important;
+        /*background-color: var(--admin-sidebar-bg) !important;
         color: var(--admin-text-light);
         border-color: #495057;
     }
 
     .table-admin-data tbody tr:hover {
-        background-color: #e9ecef; /* Hiệu ứng hover nhẹ */
-    }
+        background-color: #e9ecef;*/ /* Hiệu ứng hover nhẹ */
+    /*}*/
 /* --- Bảng dữ liệu Đơn hàng --- */
-.table-admin-orders {
+/*.table-admin-orders {
     width: 100%;
-    font-size: 0.9rem; /* Font nhỏ gọn hơn cho bảng Admin */
-}
+    font-size: 0.9rem;*/ /* Font nhỏ gọn hơn cho bảng Admin */
+/*}*/
 
     /* Căn chỉnh lại padding/margin cho form Xóa */
-    .table-admin-orders .action-col .d-inline {
+    /*.table-admin-orders .action-col .d-inline {
         margin-left: 5px;
     }
 
     .table-admin-orders .btn-sm {
-        padding: 4px 8px; /* Giảm padding nút */
-        font-size: 0.8rem;
+        padding: 4px 8px;*/ /* Giảm padding nút */
+        /*font-size: 0.8rem;
     }
 
     .table-admin-orders thead th {
         font-weight: 700;
         text-transform: uppercase;
-    }
+    }*/
 
 /* Định nghĩa màu sắc chuẩn cho Trạng thái */
-:root {
-    --admin-success: #28a745; /* Hoạt động (Xanh lá) */
-    --admin-danger: #dc3545; /* Bị khóa (Đỏ) */
-    --admin-warning: #ffc107;
-}
+/*:root {
+    --admin-success: #28a745;*/ /* Hoạt động (Xanh lá) */
+    /*--admin-danger: #dc3545;*/ /* Bị khóa (Đỏ) */
+    /*--admin-warning: #ffc107;
+}*/
 
 /* 1. Trạng thái (Index) - Cần đảm bảo badge nổi bật */
-.table-admin-orders .badge {
+/*.table-admin-orders .badge {
     padding: 6px 10px;
     font-size: 0.85rem;
     font-weight: 700;
-    border-radius: 50rem; /* Làm tròn badge */
-}
+    border-radius: 50rem;*/ /* Làm tròn badge */
+/*}*/
 
 /* --- Hoạt động (Active) --- */
-.table-admin-orders .bg-success {
+/*.table-admin-orders .bg-success {
     background-color: var(--admin-success) !important;
     color: white !important;
-}
+}*/
 
 /* --- Bị Khóa (Inactive) --- */
-.table-admin-orders .bg-danger {
+/*.table-admin-orders .bg-danger {
     background-color: var(--admin-danger) !important;
     color: white !important;
-}
+}*/
 
 
 /* 2. Trạng thái trong Trang Edit/Detail */
-.form-group .badge.fs-5 {
+/*.form-group .badge.fs-5 {*/
     /* Đảm bảo badge lớn hơn và màu sắc mạnh */
-    padding: 10px 15px;
+    /*padding: 10px 15px;
     font-size: 1.1rem !important;
-}
+}*/
 
 /* Responsive adjustment */
-@media (max-width: 768px) {
+/*@media (max-width: 768px) {
     .sidebar {
         position: absolute;
         height: auto;
@@ -338,4 +338,844 @@
     .toggle-sidebar-btn {
         display: none;
     }
+}*/
+
+/* home_admin.css - Premium Modern Design */
+/*==================================================================================================
+*/:root {
+    /* Color Palette */
+    --primary-color: #4f46e5;       /* Indigo 600 */
+    --primary-hover: #4338ca;       /* Indigo 700 */
+    
+    --sidebar-bg: #0f172a;          /* Slate 900 */
+    --sidebar-text: #94a3b8;        /* Slate 400 */
+    --sidebar-text-hover: #f8fafc;  /* Slate 50 */
+    --sidebar-active-bg: rgba(79, 70, 229, 0.15);
+    --sidebar-active-color: #818cf8; /* Indigo 400 */
+    
+    --main-bg: #f8fafc;             /* Nền ngoài khối card */
+    --header-bg: rgba(255, 255, 255, 0.85); /* Nền header trong suốt */
+    --card-bg: #ffffff;
+    
+    --text-dark: #0f172a;
+    --text-muted: #64748b;
+    --border-color: #e2e8f0;
+
+    /* Status Colors (Soft tones for modern look) */
+    --success-bg: #dcfce7;
+    --success-text: #166534;
+    --danger-bg: #fee2e2;
+    --danger-text: #991b1b;
+    --warning-bg: #fef3c7;
+    --warning-text: #92400e;
+
+    /* Sizing */
+    --sidebar-width-expanded: 260px;
+    --sidebar-width-collapsed: 80px;
+    --transition-speed: 0.3s;
 }
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--main-bg);
+    color: var(--text-dark);
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+}
+
+/* ================== SIDEBAR ================== */
+.sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    background: var(--sidebar-bg);
+    color: #fff;
+    transition: width var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 4px 0 15px rgba(0, 0, 0, 0.05);
+}
+
+.sidebar.expanded { width: var(--sidebar-width-expanded); }
+.sidebar.collapsed { width: var(--sidebar-width-collapsed); }
+
+/* Logo Box */
+.admin-logo-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 70px; /* Bằng với chiều cao header */
+    padding: 0 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    background-color: #0b1120; /* Tối hơn sidebar một chút để làm điểm nhấn */
+}
+
+.admin-logo-box img {
+    height: 40px;
+    width: auto;
+    transition: all var(--transition-speed) ease;
+}
+
+.sidebar.collapsed .admin-logo-box img {
+    height: 30px;
+}
+
+/* Sidebar Menu */
+.sidebar-menu {
+    list-style: none;
+    padding: 15px 12px;
+    margin: 0;
+    flex-grow: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* Tùy chỉnh thanh cuộn Sidebar */
+.sidebar-menu::-webkit-scrollbar { width: 5px; }
+.sidebar-menu::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+.sidebar-menu::-webkit-scrollbar-track { background: transparent; }
+
+.sidebar-menu li {
+    margin-bottom: 4px;
+}
+
+.sidebar-menu a {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    color: var(--sidebar-text);
+    text-decoration: none;
+    border-radius: 10px;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    gap: 16px;
+    font-weight: 500;
+}
+
+.sidebar-menu a:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--sidebar-text-hover);
+    transform: translateX(4px); /* Hiệu ứng đẩy nhẹ sang phải */
+}
+
+.sidebar-menu a.active {
+    background: var(--sidebar-active-bg);
+    color: var(--sidebar-active-color);
+    box-shadow: inset 3px 0 0 var(--primary-color);
+}
+
+.sidebar-menu a i {
+    width: 22px;
+    font-size: 1.1rem;
+    text-align: center;
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+}
+
+.sidebar-menu a:hover i {
+    transform: scale(1.15); /* Phóng to icon nhẹ khi hover */
+}
+
+.sidebar-menu a span {
+    transition: opacity var(--transition-speed) ease;
+    font-size: 0.95rem;
+}
+
+/* Sidebar Collapsed State */
+.sidebar.collapsed .sidebar-menu a {
+    padding: 12px;
+    justify-content: center;
+}
+.sidebar.collapsed .sidebar-menu a:hover { transform: none; }
+.sidebar.collapsed .sidebar-menu a span { display: none; }
+
+/* Tooltip đẹp mắt khi sidebar thu nhỏ */
+.sidebar.collapsed .sidebar-menu a::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: 80px;
+    background: #1e293b;
+    color: #f8fafc;
+    padding: 6px 12px;
+    border-radius: 6px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.2s ease;
+    font-size: 0.85rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    transform: translateX(-10px);
+    z-index: 1000;
+}
+
+.sidebar.collapsed .sidebar-menu a:hover::after {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* Nút Logout nằm dưới cùng */
+.sidebar-menu li:last-child {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* ================== MAIN CONTENT ================== */
+.main-content {
+    margin-left: var(--sidebar-width-expanded);
+    transition: margin-left var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.main-content.collapsed {
+    margin-left: var(--sidebar-width-collapsed);
+}
+
+/* Header mượt mà (Glassmorphism) */
+.admin-header {
+    background: var(--header-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    height: 70px;
+    padding: 0 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+    position: sticky;
+    top: 0;
+    z-index: 999;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+/* Nút Toggle ở Header */
+.toggle-sidebar-btn {
+    background: #ffffff;
+    color: var(--text-muted);
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.toggle-sidebar-btn:hover {
+    background: var(--primary-color);
+    color: #fff;
+    border-color: var(--primary-color);
+    transform: translateY(-1px);
+}
+
+.admin-title {
+    margin: 0;
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+/* Khung User info có thêm Icon Avatar */
+.admin-user-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.admin-user-info .text-secondary {
+    font-weight: 500;
+    color: var(--text-muted) !important;
+}
+
+.admin-user-info::after {
+    content: '\f2bd'; /* FontAwesome user-circle */
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    font-size: 1.8rem;
+    color: var(--primary-color);
+}
+
+/* Container */
+.container-fluid {
+    padding: 30px 35px !important;
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+.card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
+    margin-bottom: 30px;
+}
+
+    .card .card-body {
+        padding: 0 !important;
+    }
+
+.card:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+}
+
+.admin-content-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-top: 0;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Bảng Dữ Liệu */
+
+.table-responsive {
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-top: 10px;
+}
+
+.table-admin-data,
+.table-admin-orders {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 0 !important; /* Loại bỏ margin thừa dưới đáy bảng */
+}
+
+    /* Tiêu đề bảng */
+    .table-admin-data thead th,
+    .table-admin-orders thead th {
+        background-color: #f8fafc !important;
+        color: #475569;
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        padding: 16px 18px;
+        border-bottom: 1px solid var(--border-color);
+        white-space: nowrap;
+    }
+
+    /* Ô dữ liệu */
+    .table-admin-data tbody td,
+    .table-admin-orders tbody td {
+        padding: 16px 18px;
+        vertical-align: middle;
+        font-size: 0.92rem;
+        color: var(--text-dark);
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    /* Dòng cuối cùng không vẽ đường viền dưới */
+    .table-admin-data tbody tr:last-child td,
+    .table-admin-orders tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    /* Hiệu ứng Hover dòng */
+    .table-admin-data tbody tr,
+    .table-admin-orders tbody tr {
+        transition: background-color 0.15s ease;
+    }
+
+        .table-admin-data tbody tr:hover,
+        .table-admin-orders tbody tr:hover {
+            background-color: #f1f5f9;
+        }
+
+    .table-admin-data td.action-col,
+    .table-admin-orders td.action-col {
+        white-space: nowrap;
+        text-align: right;
+    }
+
+        .table-admin-data td.action-col .btn,
+        .table-admin-orders td.action-col .btn {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            border-radius: 6px;
+            margin-left: 4px;
+        }
+
+/* Thanh lọc dữ liệu (Bộ lọc từ ngày - đến ngày / Tìm kiếm) */
+.filter-bar {
+    background: #f8fafc;
+    padding: 16px;
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+    margin-bottom: 20px;
+}
+
+/* Chuẩn hóa Huy hiệu trạng thái (Badges) */
+.table-admin-data .badge,
+.table-admin-orders .badge {
+    padding: 6px 12px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    border-radius: 30px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.bg-success {
+    background-color: var(--success-bg) !important;
+    color: var(--success-text) !important;
+}
+
+.bg-danger {
+    background-color: var(--danger-bg) !important;
+    color: var(--danger-text) !important;
+}
+
+/*//===================================================================
+*/
+/*.table-admin-data {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.table-admin-data th,
+.table-admin-data td {
+    padding: 16px;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.9rem;
+}
+
+.table-admin-data thead th {
+    background-color: #f1f5f9 !important;*/ /* Xám nhạt thay vì màu đen nặng nề */
+    /*color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+    border-bottom: none;
+}
+
+.table-admin-data tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+.table-admin-data tbody tr:hover {
+    background-color: #f8fafc;
+}*/
+
+/* Badges (Trạng thái mềm mại hơn) */
+/*.table-admin-data .badge, .table-admin-orders .badge {
+    padding: 6px 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 20px;
+    letter-spacing: 0.3px;
+    border: none;
+}*/
+
+/*==============================================================================================*/
+/*:root {
+    --primary-color: #4f46e5;
+    --primary-hover: #4338ca;
+    --sidebar-bg: #0f172a;
+    --sidebar-text: #94a3b8;
+    --sidebar-text-hover: #f8fafc;
+    --sidebar-active-bg: rgba(79, 70, 229, 0.15);
+    --sidebar-active-color: #818cf8;
+    --main-bg: #f8fafc;
+    --header-bg: rgba(255, 255, 255, 0.85);
+    --card-bg: #ffffff;
+    --text-dark: #0f172a;
+    --text-muted: #64748b;
+    --border-color: #e2e8f0;
+    --admin-success: #166534;
+    --admin-danger: #991b1b;
+    --admin-warning: #92400e;
+    --success-bg: #dcfce7;
+    --danger-bg: #fee2e2;
+    --warning-bg: #fef3c7;
+    --sidebar-width-expanded: 240px;
+    --sidebar-width-collapsed: 60px;
+    --transition-speed: 0.3s;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--main-bg);
+    color: var(--text-dark);
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+}*/
+
+/* ================== SIDEBAR ================== */
+/*.sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    background: var(--sidebar-bg);
+    color: #fff;
+    transition: width var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 4px 0 15px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+}
+
+    .sidebar.expanded {
+        width: var(--sidebar-width-expanded);
+    }
+
+    .sidebar.collapsed {
+        width: var(--sidebar-width-collapsed);
+    }
+
+.admin-logo-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 70px;
+    padding: 0 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    background-color: #0b1120;
+}
+
+    .admin-logo-box img {
+        width: 40px;
+        height: auto;
+        transition: all var(--transition-speed) ease;
+    }
+
+.sidebar.collapsed .admin-logo-box img {
+    width: 32px;
+}
+
+.toggle-sidebar-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 50px;
+    background: transparent;
+    color: var(--sidebar-text);
+    border: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: all 0.2s ease;
+}
+
+    .toggle-sidebar-btn:hover {
+        background: rgba(255, 255, 255, 0.05);
+        color: #fff;
+    }
+
+.sidebar-menu {
+    list-style: none;
+    padding: 15px 10px;
+    margin: 0;
+    flex-grow: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+    .sidebar-menu::-webkit-scrollbar {
+        width: 5px;
+    }
+
+    .sidebar-menu::-webkit-scrollbar-thumb {
+        background: #334155;
+        border-radius: 10px;
+    }
+
+    .sidebar-menu::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .sidebar-menu li {
+        margin-bottom: 4px;
+    }
+
+    .sidebar-menu a {
+        display: flex;
+        align-items: center;
+        padding: 12px 14px;
+        color: var(--sidebar-text);
+        text-decoration: none;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+        gap: 14px;
+        font-weight: 500;
+    }
+
+        .sidebar-menu a:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--sidebar-text-hover);
+            transform: translateX(4px);
+        }
+
+        .sidebar-menu a.active {
+            background: var(--sidebar-active-bg);
+            color: var(--sidebar-active-color);
+            border-left: 3px solid var(--primary-color);
+        }
+
+        .sidebar-menu a i {
+            width: 20px;
+            font-size: 1.1rem;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .sidebar-menu a span {
+            transition: opacity var(--transition-speed) ease;
+            font-size: 0.92rem;
+        }
+
+.sidebar.collapsed .sidebar-menu a {
+    padding: 12px;
+    justify-content: center;
+}
+
+    .sidebar.collapsed .sidebar-menu a:hover {
+        transform: none;
+    }
+
+    .sidebar.collapsed .sidebar-menu a span {
+        display: none;
+    }
+
+    .sidebar.collapsed .sidebar-menu a::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        left: 70px;
+        background: #1e293b;
+        color: #f8fafc;
+        padding: 6px 12px;
+        border-radius: 6px;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: all 0.2s ease;
+        font-size: 0.82rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+    }
+
+    .sidebar.collapsed .sidebar-menu a:hover::after {
+        opacity: 1;
+    }
+
+.sidebar-menu li:last-child {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}*/
+
+/* ================== MAIN CONTENT & HEADER ================== */
+/*.main-content {
+    margin-left: var(--sidebar-width-expanded);
+    transition: margin-left var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+    .main-content.collapsed {
+        margin-left: var(--sidebar-width-collapsed);
+    }
+
+.admin-header {
+    background: var(--header-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    height: 70px;
+    padding: 0 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 999;
+}
+
+.admin-title {
+    margin: 0;
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.admin-footer-copyright {
+    margin-top: auto;
+    padding: 20px;
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border-color);
+}*/
+
+/* ================== CARDS & LAYOUT ================== */
+/*.container-fluid {
+    padding: 25px 30px !important;
+    max-width: 1600px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    padding: 24px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+    margin-bottom: 25px;
+}
+
+    .card .card-body {
+        padding: 0 !important;
+    }
+
+.admin-content-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin: 0 0 20px 0;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}*/
+
+/* ================== TABLES ================== */
+/*.table-responsive {
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 10px;
+}
+
+.table-admin-data,
+.table-admin-orders {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 0 !important;
+}
+
+    .table-admin-data thead th,
+    .table-admin-orders thead th {
+        background-color: #f8fafc !important;
+        color: #475569;
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--border-color);
+        white-space: nowrap;
+    }
+
+    .table-admin-data tbody td,
+    .table-admin-orders tbody td {
+        padding: 14px 16px;
+        vertical-align: middle;
+        font-size: 0.9rem;
+        color: var(--text-dark);
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .table-admin-data tbody tr:last-child td,
+    .table-admin-orders tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .table-admin-data tbody tr:hover,
+    .table-admin-orders tbody tr:hover {
+        background-color: #f8fafc;
+    }
+
+    .table-admin-orders .action-col .d-inline {
+        margin-left: 4px;
+    }
+
+    .table-admin-orders .btn-sm,
+    .table-admin-data .btn-sm {
+        padding: 5px 10px;
+        font-size: 0.8rem;
+        border-radius: 6px;
+    }*/
+
+    /* ================== BADGES & STATUS ================== */
+    /*.table-admin-data .badge,
+    .table-admin-orders .badge {
+        padding: 5px 10px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        border-radius: 20px;
+        display: inline-flex;
+        align-items: center;
+    }
+
+.bg-success {
+    background-color: var(--success-bg) !important;
+    color: var(--admin-success) !important;
+}
+
+.bg-danger {
+    background-color: var(--danger-bg) !important;
+    color: var(--admin-danger) !important;
+}
+
+.form-group .badge.fs-5 {
+    padding: 8px 14px;
+    font-size: 1rem !important;
+}*/
+
+/* ================== RESPONSIVE ================== */
+/*@media (max-width: 768px) {
+    .sidebar {
+        position: absolute;
+        height: auto;
+        width: 100%;
+        max-height: 100vh;
+    }
+
+    .main-content, .main-content.expanded, .main-content.collapsed {
+        margin-left: 0;
+    }
+
+    .admin-header {
+        flex-direction: column;
+        align-items: flex-start;
+        height: auto;
+        padding: 15px;
+    }
+
+    .container-fluid {
+        padding: 15px !important;
+    }
+}*/
