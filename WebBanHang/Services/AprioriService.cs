@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,14 +13,14 @@ namespace WebBanHang.Services
         private MyStoreEntities db = new MyStoreEntities();
 
         /// <summary>
-        /// Hàm chạy thuật toán Apriori
+        /// Hàm chạy thuật toán Apriori (Phiên bản Cập nhật thông minh)
         /// </summary>
-        /// <param name="minConfidence">Tỷ lệ tin cậy tối thiểu (Ví dụ: 0.2 = 20% khách mua A sẽ mua B)</param>
         public void RunAprioriAlgorithm(double minConfidence = 0.2)
         {
-            // 1. Lấy tất cả các hóa đơn (Chỉ lấy các hóa đơn hợp lệ/đã giao nếu cần thiết)
-            // Lấy danh sách ProductID không trùng lặp trong cùng 1 Order
+            // 1. LẤY TẤT CẢ HÓA ĐƠN HỢP LỆ
+            // Đã BỔ SUNG: Loại bỏ những đơn "Đã hủy" hoặc "Thất bại" để AI không học kiến thức rác
             var transactions = db.OrderDetails
+                .Where(od => od.Order.OrderStatus != "Đã hủy" && od.Order.PaymentStatus != "Thất bại")
                 .GroupBy(od => od.OrderID)
                 .Select(g => g.Select(x => x.ProductID).Distinct().ToList())
                 .ToList();
@@ -49,7 +50,7 @@ namespace WebBanHang.Services
                     {
                         if (i != j) // Mua A suy ra mua B (A -> B)
                         {
-                            string pairKey = $"{t[i]}-{t[j]}"; // Format: "IdA-IdB"
+                            string pairKey = $"{t[i]}-{t[j]}";
                             if (!pairFrequencies.ContainsKey(pairKey))
                                 pairFrequencies[pairKey] = 0;
 
@@ -59,43 +60,70 @@ namespace WebBanHang.Services
                 }
             }
 
-            // 4. Xóa sạch dữ liệu gợi ý cũ trong Database để làm mới
-            var oldRecords = db.ProductRecommendations.ToList();
-            db.ProductRecommendations.RemoveRange(oldRecords);
-            db.SaveChanges();
-
-            // 5. Tính toán tỷ lệ Confidence và lưu vào DB những cặp đạt chuẩn
-            var newRules = new List<ProductRecommendation>();
+            // 4. Tính toán tỷ lệ Confidence và giữ lại những cặp đạt chuẩn
+            var newRulesCalculated = new List<ProductRecommendation>();
             foreach (var pair in pairFrequencies)
             {
                 var keys = pair.Key.Split('-');
                 int itemA = int.Parse(keys[0]);
                 int itemB = int.Parse(keys[1]);
-                int countAB = pair.Value; // Số lần mua chung A và B
-                int countA = itemFrequencies[itemA]; // Số lần mua A
+                int countAB = pair.Value;
+                int countA = itemFrequencies[itemA];
 
-                // Tính Confidence: Tỷ lệ khách mua A sẽ tiếp tục mua B
-                double confidence = (double)countAB / countA;
+                double rawConfidence = (double)countAB / countA;
+                decimal roundedConfidence = Math.Round((decimal)rawConfidence, 2);
 
-                if (confidence >= minConfidence)
+                if (rawConfidence >= minConfidence)
                 {
-                    newRules.Add(new ProductRecommendation
+                    newRulesCalculated.Add(new ProductRecommendation
                     {
                         ProductID_A = itemA,
                         ProductID_B = itemB,
-                        Confidence = (decimal)confidence,
+                        Confidence = roundedConfidence,
                         Support = countAB,
                         UpdateDate = DateTime.Now
                     });
                 }
             }
 
-            // Lưu toàn bộ luật mới vào CSDL
-            if (newRules.Any())
+            // ==========================================================
+            // 5. LOGIC UPSERT: CHỈ CẬP NHẬT GIỜ KHI CÓ SỰ THAY ĐỔI
+            // ==========================================================
+
+            // Lấy danh sách các luật hiện đang có trong Database
+            var oldRules = db.ProductRecommendations.ToList();
+
+            // A. Xóa những luật cũ không còn đạt chuẩn
+            var rulesToRemove = oldRules.Where(o => !newRulesCalculated.Any(n => n.ProductID_A == o.ProductID_A && n.ProductID_B == o.ProductID_B)).ToList();
+            if (rulesToRemove.Any())
             {
-                db.ProductRecommendations.AddRange(newRules);
-                db.SaveChanges();
+                db.ProductRecommendations.RemoveRange(rulesToRemove);
             }
+
+            // B. Thêm mới hoặc Cập nhật luật hiện có
+            foreach (var newRule in newRulesCalculated)
+            {
+                var existingRule = oldRules.FirstOrDefault(o => o.ProductID_A == newRule.ProductID_A && o.ProductID_B == newRule.ProductID_B);
+
+                if (existingRule != null)
+                {
+                    // Đảm bảo chỉ Update giờ nếu Độ tin cậy hoặc Tần suất có thay đổi
+                    if (existingRule.Confidence != newRule.Confidence || existingRule.Support != newRule.Support)
+                    {
+                        existingRule.Confidence = newRule.Confidence;
+                        existingRule.Support = newRule.Support;
+                        existingRule.UpdateDate = DateTime.Now;
+
+                        db.Entry(existingRule).State = EntityState.Modified;
+                    }
+                }
+                else
+                {
+                    // Thêm mới
+                    db.ProductRecommendations.Add(newRule);
+                }
+            }
+            db.SaveChanges();
         }
     }
 }
