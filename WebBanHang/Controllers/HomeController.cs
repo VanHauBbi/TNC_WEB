@@ -152,15 +152,12 @@ namespace WebBanHang.Controllers
         // ==========================================================
         public ActionResult ProductSearch(string query)
         {
-            // Test Case ProductDT07: Để trống
-            // Xử lý server-side (dù client đã có 'required')
             if (string.IsNullOrWhiteSpace(query))
             {
                 TempData["ErrorMessage"] = "Vui lòng nhập từ khóa";
-                return RedirectToAction("Index"); // Redirect về trang chủ và hiển thị lỗi
+                return RedirectToAction("Index");
             }
 
-            // Test Case ProductDT08: Vượt quá độ dài
             const int MAX_LENGTH = 100;
             if (query.Length > MAX_LENGTH)
             {
@@ -168,11 +165,8 @@ namespace WebBanHang.Controllers
                 return RedirectToAction("Index");
             }
 
-            // --- CẢI TIẾN LOGIC TÌM KIẾM ---
             string searchQuery = query.ToLower().Trim();
 
-            // ProductDT03, DT04: Tìm kiếm (case-insensitive) trên nhiều trường
-            // Giống hệt logic ở action Index của bạn để nhất quán
             var searchResults = db.Products
                 .Include(p => p.Category)
                 .Include(p => p.Coupons)
@@ -183,12 +177,72 @@ namespace WebBanHang.Controllers
                 )
                 .ToList();
 
-            ViewBag.SearchQuery = query; // Giữ lại từ khóa gốc để hiển thị
+            ViewBag.SearchQuery = query;
 
-            // ProductDT06 (Không tồn tại) sẽ được xử lý bởi View "SearchResults.cshtml"
-            // (File SearchResults.cshtml của bạn đã xử lý tốt phần này)
+            if (searchResults.Count == 0)
+            {
+                // Bước 1: Tách từ khóa để tìm "Hạt giống"
+                var keywords = searchQuery.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
+                // Bước 2: DÙNG CONTENT-BASED FILTERING VÀ CHẤM ĐIỂM TƯƠNG ĐỒNG
+                var seedProducts = db.Products
+                    .Include(p => p.Category)
+                    .Where(p => p.Status != 2)
+                    .ToList() // Kéo về RAM để xử lý LINQ tính toán
+                    .Select(p => new
+                    {
+                        Product = p,
+                        // Chấm điểm: Đếm xem tên sản phẩm hoặc danh mục chứa bao nhiêu từ khóa
+                        MatchScore = keywords.Count(k =>
+                            p.ProductName.ToLower().Contains(k) ||
+                            p.Category.CategoryName.ToLower().Contains(k))
+                    })
+                    .Where(x => x.MatchScore > 0) // Phải có ít nhất 1 từ khớp
+                    .OrderByDescending(x => x.MatchScore) // ƯU TIÊN THẰNG ĐIỂM CAO NHẤT LÊN ĐẦU
+                    .Select(x => x.Product)
+                    .ToList();
+
+                var seedProductIds = seedProducts.Select(p => p.ProductID).ToList();
+
+                // Nếu từ khóa quá lạ (0 điểm), lấy 5 sản phẩm bán chạy nhất làm Hạt giống
+                if (!seedProductIds.Any())
+                {
+                    seedProductIds = db.OrderDetails
+                        .GroupBy(od => od.ProductID)
+                        .OrderByDescending(g => g.Count())
+                        .Take(5)
+                        .Select(g => g.Key)
+                        .ToList();
+                }
+
+                // Bước 3: ĐƯA HẠT GIỐNG VÀO APRIORI ĐỂ TÌM ĐỒ MUA KÈM
+                var aprioriSuggestedIds = db.ProductRecommendations
+                    .Where(r => seedProductIds.Contains(r.ProductID_A))
+                    .OrderByDescending(r => r.Confidence)
+                    .ThenByDescending(r => r.Support)
+                    .Select(r => r.ProductID_B)
+                    .Distinct()
+                    .Take(4)
+                    .ToList();
+
+                // Bước 4: QUYẾT ĐỊNH HIỂN THỊ (HYBRID LOGIC)
+                if (aprioriSuggestedIds.Any())
+                {
+                    ViewBag.AprioriSuggestions = db.Products
+                        .Include(p => p.Category)
+                        .Where(p => aprioriSuggestedIds.Contains(p.ProductID) && p.Status != 2)
+                        .ToList();
+                }
+                else
+                {
+                    // Trả về Hạt Giống (Đã được xếp hạng từ giống nhất đến ít giống nhất)
+                    ViewBag.AprioriSuggestions = seedProducts.Take(4).ToList();
+                }
+            }
+
             return View("SearchResults", searchResults);
         }
+
 
         // (Nhớ giữ lại: using PagedList; và using System.Data.Entity;)
 
