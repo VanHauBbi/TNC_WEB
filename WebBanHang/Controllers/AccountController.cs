@@ -201,10 +201,35 @@ namespace WebBanHang.Controllers
                     customerData = db.Customers.SingleOrDefault(c => c.Username == user.Username);
 
                     // Test Case Login015: Tài khoản bị Admin khóa
-                    if (customerData == null || customerData.IsActive == false)
+                    if (customerData != null)
                     {
-                        TempData["ErrorMessage"] = "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ Admin để được hỗ trợ!";
-                        return View(model);
+                        Session["CustomerID"] = customerData.CustomerID;
+
+                        // =========================================================================
+                        // NÂNG CẤP: KHÔI PHỤC GIỎ HÀNG TỪ DATABASE KHI ĐĂNG NHẬP
+                        // =========================================================================
+                        var dbCart = db.Carts.Include(c => c.CartItems).SingleOrDefault(c => c.CustomerID == customerData.CustomerID);
+                        var sessionCart = new WebBanHang.Models.ViewModel.Cart();
+
+                        if (dbCart != null && dbCart.CartItems.Any())
+                        {
+                            foreach (var dbItem in dbCart.CartItems)
+                            {
+                                // Lấy thông tin sản phẩm từ DB để map ngược lại vào cấu trúc giỏ hàng Session
+                                var product = db.Products.Include(p => p.Category).Include(p => p.Coupons)
+                                                .SingleOrDefault(p => p.ProductID == dbItem.ProductID);
+                                if (product != null)
+                                {
+                                    decimal discountPercent;
+                                    decimal finalUnitPrice = WebBanHang.Utilities.PriceHelper.GetDiscountedPrice(product, out discountPercent);
+                                    if (finalUnitPrice < 0) finalUnitPrice = 0;
+
+                                    sessionCart.AddItem(product.ProductID, product.ProductImage, product.ProductName,
+                                                        finalUnitPrice, product.ProductPrice, dbItem.Quantity, product.Category?.CategoryName);
+                                }
+                            }
+                        }
+                        Session["Cart"] = sessionCart; // Đưa giỏ hàng cũ vào Session hoạt động hiện tại
                     }
                 }
 

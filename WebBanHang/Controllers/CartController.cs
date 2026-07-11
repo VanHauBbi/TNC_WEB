@@ -98,6 +98,8 @@ namespace WebBanHang.Controllers
 
                 Session["Cart"] = cart;
 
+                SyncCartToDatabase();
+
                 var total = cart.Items.Sum(x => x.TotalPrice);
                 var count = cart.Items.Sum(x => x.Quantity);
 
@@ -133,6 +135,7 @@ namespace WebBanHang.Controllers
                 }
             }
             Session["Cart"] = cart;
+            SyncCartToDatabase();
             return Json(new { success = true });
         }
 
@@ -169,14 +172,24 @@ namespace WebBanHang.Controllers
         public ActionResult RemoveFromCart(int id)
         {
             var cartService = GetCartService();
-            cartService.GetCart().RemoveItem(id);
+            var cart = cartService.GetCart();
+            cart.RemoveItem(id);
+            Session["Cart"] = cart; // Cập nhật lại Session công khai
+
+            // NÂNG CẤP: Đồng bộ thao tác xóa món hàng vào DB
+            SyncCartToDatabase();
             return RedirectToAction("Index");
         }
         [HttpPost]
         public ActionResult UpdateQuantity(int id, int quantity)
         {
             var cartService = GetCartService();
-            cartService.GetCart().UpdateQuantity(id, quantity);
+            var cart = cartService.GetCart();
+            cart.UpdateQuantity(id, quantity);
+            Session["Cart"] = cart; // Cập nhật lại Session công khai
+
+            // NÂNG CẤP: Đồng bộ số lượng mới vào DB
+            SyncCartToDatabase();
             return RedirectToAction("Index");
         }
 
@@ -378,6 +391,51 @@ namespace WebBanHang.Controllers
             Session["Cart"] = checkoutCart;
 
             return Json(new { success = true, redirectUrl = Url.Action("Checkout", "Orders") });
+        }
+        private void SyncCartToDatabase()
+        {
+            if (Session["CustomerID"] == null) return;
+            int customerId = (int)Session["CustomerID"];
+
+            var sessionCart = Session["Cart"] as WebBanHang.Models.ViewModel.Cart;
+            if (sessionCart == null) return;
+
+            // 1. Kiểm tra tài khoản này đã có giỏ hàng (Cart) trong DB chưa
+            var dbCart = db.Carts.FirstOrDefault(c => c.CustomerID == customerId);
+            if (dbCart == null)
+            {
+                // Nếu chưa có, tiến hành tạo mới 1 dòng Cart đầu tiên
+                dbCart = new WebBanHang.Models.Cart
+                {
+                    CustomerID = customerId,
+                    CreatedAt = DateTime.Now
+                };
+                db.Carts.Add(dbCart);
+                db.SaveChanges(); // Lưu tạm để lấy CartID Identity tự tăng
+            }
+            else
+            {
+                dbCart.UpdatedAt = DateTime.Now;
+
+                // 2. Để tránh trùng dữ liệu, xóa sạch các chi tiết cũ của giỏ hàng này trong DB trước khi cập nhật mới
+                var oldItems = db.CartItems.Where(ci => ci.CartID == dbCart.CartID).ToList();
+                if (oldItems.Any())
+                {
+                    db.CartItems.RemoveRange(oldItems);
+                }
+            }
+
+            // 3. Đọc dữ liệu từ Giỏ hàng Session hiện tại, nạp mới hoàn toàn vào Database
+            foreach (var item in sessionCart.Items)
+            {
+                db.CartItems.Add(new WebBanHang.Models.CartItem
+                {
+                    CartID = dbCart.CartID,
+                    ProductID = item.ProductID,
+                    Quantity = item.Quantity
+                });
+            }
+            db.SaveChanges(); // Hoàn tất đồng bộ xuống SQL Server
         }
     }
 }

@@ -53,7 +53,7 @@ namespace WebBanHang.Areas.Admin.Controllers
         }
 
         // =====================================================================
-        // 3. API LẤY GIÁ TỪ NHÀ CUNG CẤP (GITHUB MOCK API)
+        // 3. API LẤY GIÁ TỪ NHÀ CUNG CẤP (ĐỌC TRỰC TIẾP GITHUB RAW)
         // =====================================================================
         [HttpGet]
         public async Task<ActionResult> FetchSupplierPrice(string sku)
@@ -63,32 +63,39 @@ namespace WebBanHang.Areas.Admin.Controllers
                 return Json(new { success = false, message = "Vui lòng nhập mã SKU" }, JsonRequestBehavior.AllowGet);
             }
 
-            // Ép hệ thống dùng chuẩn bảo mật TLS 1.2
             System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
 
             using (var client = new HttpClient())
             {
-                // Nhớ đổi 'VanHauBbi' thành tên Github của bạn nếu cần
-                string apiUrl = $"https://my-json-server.typicode.com/VanHauBbi/TNC_WEB/Products?SKU={sku}";
+                // Gọi thẳng file RAW từ Github (Bỏ qua my-json-server)
+                string apiUrl = "https://raw.githubusercontent.com/VanHauBbi/TNC_WEB/master/db.json";
 
                 try
                 {
-                    var response = await client.GetAsync(apiUrl);
+                    // Chống Github cache bằng cách thêm tham số thời gian ngẫu nhiên
+                    var response = await client.GetAsync(apiUrl + "?t=" + DateTime.Now.Ticks);
+
                     if (response.IsSuccessStatusCode)
                     {
                         var jsonString = await response.Content.ReadAsStringAsync();
 
-                        var productList = JsonConvert.DeserializeObject<List<SupplierProductVM>>(jsonString);
-                        var productInfo = productList?.FirstOrDefault();
+                        // Tạo một lớp tạm để hứng cấu trúc root của db.json { "Products": [ ... ] }
+                        var rootData = JsonConvert.DeserializeAnonymousType(jsonString, new { Products = new List<SupplierProductVM>() });
 
-                        if (productInfo != null)
+                        if (rootData != null && rootData.Products != null)
                         {
-                            return Json(new
+                            // Dùng LINQ để tự tìm SKU trong danh sách tải về
+                            var productInfo = rootData.Products.FirstOrDefault(p => p.SKU == sku);
+
+                            if (productInfo != null)
                             {
-                                success = true,
-                                price = productInfo.UnitPrice,
-                                name = productInfo.ProductName
-                            }, JsonRequestBehavior.AllowGet);
+                                return Json(new
+                                {
+                                    success = true,
+                                    price = productInfo.UnitPrice,
+                                    name = productInfo.ProductName
+                                }, JsonRequestBehavior.AllowGet);
+                            }
                         }
                     }
                     return Json(new { success = false, message = "Không tìm thấy báo giá cho mã SKU này trên hệ thống nhà cung cấp." }, JsonRequestBehavior.AllowGet);
@@ -231,7 +238,9 @@ namespace WebBanHang.Areas.Admin.Controllers
             return Json(products, JsonRequestBehavior.AllowGet);
         }
 
-        // 2. Action truy xuất báo giá hàng loạt cho danh sách SKU
+        // =====================================================================
+        // 2. Action truy xuất báo giá hàng loạt cho danh sách SKU (ĐỌC TRỰC TIẾP RAW)
+        // =====================================================================
         [HttpPost]
         public async Task<JsonResult> FetchBatchSupplierPrices(List<string> skuList)
         {
@@ -243,30 +252,38 @@ namespace WebBanHang.Areas.Admin.Controllers
 
             using (var client = new HttpClient())
             {
-                // Tải toàn bộ danh mục từ GitHub đối tác về để đối chiếu hàng loạt
-                string apiUrl = "https://my-json-server.typicode.com/VanHauBbi/TNC_WEB/Products";
+                // Gọi thẳng file RAW từ Github (Bỏ qua my-json-server)
+                string apiUrl = "https://raw.githubusercontent.com/VanHauBbi/TNC_WEB/master/db.json";
+
                 try
                 {
-                    var response = await client.GetAsync(apiUrl);
+                    // Chống Github cache bằng cách thêm tham số thời gian ngẫu nhiên
+                    var response = await client.GetAsync(apiUrl + "?t=" + DateTime.Now.Ticks);
+
                     if (response.IsSuccessStatusCode)
                     {
                         var jsonString = await response.Content.ReadAsStringAsync();
-                        var allSupplierProducts = JsonConvert.DeserializeObject<List<SupplierProductVM>>(jsonString);
 
-                        // Đối chiếu các SKU được tick chọn với kho dữ liệu GitHub
-                        matchedProducts = allSupplierProducts
-                            .Where(sp => skuList.Contains(sp.SKU))
-                            .ToList();
+                        // Tạo một lớp tạm để hứng cấu trúc root của db.json { "Products": [ ... ] }
+                        var rootData = JsonConvert.DeserializeAnonymousType(jsonString, new { Products = new List<SupplierProductVM>() });
 
-                        return Json(new { success = true, data = matchedProducts });
+                        if (rootData != null && rootData.Products != null)
+                        {
+                            // Đối chiếu các SKU được tick chọn với kho dữ liệu tải về
+                            matchedProducts = rootData.Products
+                                .Where(sp => skuList.Contains(sp.SKU))
+                                .ToList();
+
+                            return Json(new { success = true, data = matchedProducts });
+                        }
                     }
+                    return Json(new { success = false, message = "Không thể phân tích dữ liệu từ nhà cung cấp." });
                 }
                 catch (Exception ex)
                 {
-                    return Json(new { success = false, message = ex.Message });
+                    return Json(new { success = false, message = "Lỗi kết nối API: " + ex.Message });
                 }
             }
-            return Json(new { success = false, message = "Không thể kết nối API đối tác." });
         }
     }
 }

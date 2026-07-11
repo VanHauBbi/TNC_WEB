@@ -479,19 +479,45 @@ namespace WebBanHang.Controllers
                             db.Entry(order).State = EntityState.Modified;
                             db.SaveChanges();
 
+                            // =====================================================================
+                            // FIX LỖI: KHÔI PHỤC GIỎ HÀNG KHI HỦY VNPAY
+                            // =====================================================================
                             // ✅ Cập nhật lại AI để hệ thống KHÔNG học dữ liệu rác từ đơn hàng bị hủy do lỗi thanh toán
                             try { new WebBanHang.Services.SmartRecommendationService().RunHybridAlgorithm(0.2, 1, 100000m); } catch { }
 
                             var tempCart = Session["BuyNowTempCart"] as WebBanHang.Models.ViewModel.Cart;
+
+                            // Trường hợp 1: Khách dùng nút "Mua Ngay" hoặc "Chọn vài món"
                             if (tempCart != null)
                             {
-                                Session["Cart"] = tempCart;
-                                Session.Remove("BuyNowTempCart");
+                                Session["Cart"] = tempCart; // Trả lại giỏ hàng gốc
+                                Session.Remove("BuyNowTempCart"); // Xóa Session tạm
                             }
-                            else
+                            // Trường hợp 2: Giỏ hàng bị rớt mất Session, ta gọi lại từ Database
+                            else if (Session["Cart"] == null && Session["CustomerID"] != null)
                             {
-                                Session.Remove("Cart");
-                                Session.Remove("VoucherDiscount");
+                                int custId = (int)Session["CustomerID"];
+                                var dbCart = db.Carts.Include(c => c.CartItems).SingleOrDefault(c => c.CustomerID == custId);
+
+                                if (dbCart != null && dbCart.CartItems.Any())
+                                {
+                                    var sessionCart = new WebBanHang.Models.ViewModel.Cart();
+                                    foreach (var dbItem in dbCart.CartItems)
+                                    {
+                                        var product = db.Products.Include(p => p.Category).Include(p => p.Coupons)
+                                                        .SingleOrDefault(p => p.ProductID == dbItem.ProductID);
+                                        if (product != null)
+                                        {
+                                            decimal discountPercent;
+                                            decimal finalUnitPrice = WebBanHang.Utilities.PriceHelper.GetDiscountedPrice(product, out discountPercent);
+                                            if (finalUnitPrice < 0) finalUnitPrice = 0;
+
+                                            sessionCart.AddItem(product.ProductID, product.ProductImage, product.ProductName,
+                                                                finalUnitPrice, product.ProductPrice, dbItem.Quantity, product.Category?.CategoryName);
+                                        }
+                                    }
+                                    Session["Cart"] = sessionCart;
+                                }
                             }
 
                             TempData["Error"] = "Giao dịch thất bại. Đơn hàng đã tự động hủy. Mã lỗi: " + vnp_ResponseCode;
