@@ -315,6 +315,21 @@ namespace WebBanHang.Controllers
                     db.SaveChanges();
                     transaction.Commit();
 
+                    // ==========================================================
+                    // CHẠY ĐỒNG BỘ: TỰ ĐỘNG HUẤN LUYỆN LẠI AI (HYBRID MODEL)
+                    // ==========================================================
+                    try
+                    {
+                        var hybridService = new WebBanHang.Services.SmartRecommendationService();
+                        // Chạy với cấu hình: Tin cậy > 20%, Support > 1, Utility > 100k
+                        hybridService.RunHybridAlgorithm(0.2, 1, 100000m);
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine("Lỗi AI: " + ex.Message);
+                    }
+                    // ==========================================================
+
                     // Xử lý VNPAY
                     if (model.PaymentMethod == "VNPAY")
                     {
@@ -366,7 +381,7 @@ namespace WebBanHang.Controllers
                 }
                 catch (Exception ex)
                 {
-                    try { transaction.Rollback(); } catch {  }
+                    try { transaction.Rollback(); } catch { }
 
                     ModelState.AddModelError("", "Lỗi hệ thống: " + ex.Message);
                     model.AvailableCoupons = db.Coupons.Where(c => !c.Products.Any()).ToList();
@@ -424,6 +439,9 @@ namespace WebBanHang.Controllers
                             order.PaymentStatus = "Đã thanh toán";
                             db.SaveChanges();
 
+                            // ✅ Cập nhật AI khi đơn VNPay thanh toán thành công
+                            try { new WebBanHang.Services.SmartRecommendationService().RunHybridAlgorithm(0.2, 1, 100000m); } catch { }
+
                             Session.Remove("Cart");
                             Session.Remove("VoucherDiscount");
                             Session.Remove("BuyNowTempCart");
@@ -460,6 +478,9 @@ namespace WebBanHang.Controllers
 
                             db.Entry(order).State = EntityState.Modified;
                             db.SaveChanges();
+
+                            // ✅ Cập nhật lại AI để hệ thống KHÔNG học dữ liệu rác từ đơn hàng bị hủy do lỗi thanh toán
+                            try { new WebBanHang.Services.SmartRecommendationService().RunHybridAlgorithm(0.2, 1, 100000m); } catch { }
 
                             var tempCart = Session["BuyNowTempCart"] as WebBanHang.Models.ViewModel.Cart;
                             if (tempCart != null)

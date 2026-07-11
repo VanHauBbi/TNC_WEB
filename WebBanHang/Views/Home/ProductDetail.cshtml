@@ -165,30 +165,45 @@
         </div>
     </div>
 
-    @* --- SẢN PHẨM LIÊN QUAN (Partial View) --- *@
+    @* --- SẢN PHẨM LIÊN QUAN (Cùng danh mục) --- *@
     <div class="related-products-section">
         <h3 class="related-products-title"><i class="fa-solid fa-box-open"></i> SẢN PHẨM CÓ THỂ BẠN QUAN TÂM</h3>
-        @* Tên Partial View bạn đang sử dụng *@
         @Html.Partial("PVTopProduct", Model)
     </div>
 </div>
 
-@* --- KHỐI SẢN PHẨM GỢI Ý MUA KÈM (APRIORI) --- *@
+@* ========================================================================= *@
+@* KHU VỰC GỢI Ý THÔNG MINH (AI LAI - ĐÃ GỘP CHUNG THÀNH 1 BOX) *@
+@* ========================================================================= *@
 @{
-    var recommendedList = ViewBag.RecommendedProducts as List<WebBanHang.Models.Product>;
+    var twoPhaseList = ViewBag.TwoPhaseProducts as List<WebBanHang.Models.Product> ?? new List<WebBanHang.Models.Product>();
+    var aprioriList = ViewBag.AprioriProducts as List<WebBanHang.Models.Product> ?? new List<WebBanHang.Models.Product>();
+
+    // BƯỚC 1: Ưu tiên lấy tối đa 4 sản phẩm Two-Phase lên hàng đầu.
+    var finalTwoPhase = twoPhaseList.Take(4).ToList();
+
+    // BƯỚC 2: Lấy thêm Apriori (đảm bảo không trùng lặp với Two-Phase) để lấp đầy (tối đa 8 sản phẩm).
+    var finalApriori = aprioriList.Where(p => !finalTwoPhase.Any(tp => tp.ProductID == p.ProductID)).Take(8).ToList();
+
+    // BƯỚC 3: Nối danh sách lại để ra tập kết quả cuối cùng (tối đa 12 món).
+    var combinedRecommendations = finalTwoPhase.Concat(finalApriori).ToList();
 }
 
-@if (recommendedList != null && recommendedList.Any())
+@if (combinedRecommendations != null && combinedRecommendations.Any())
 {
-    <div class="container mt-5 mb-5">
+    <div class="container mt-4 mb-5">
         <h4 class="fw-bold mb-4 border-bottom pb-2">
-            <i class="fa-solid fa-thumbs-up text-warning"></i> Khách hàng mua sản phẩm này cũng mua thêm
+            <i class="fa-solid fa-thumbs-up text-primary"></i> Khách hàng mua sản phẩm này cũng mua thêm
         </h4>
 
-        <div class="row">
-            @foreach (var item in recommendedList)
+        <div class="row" id="smart-recommendations-container">
+            @{ int recIndex = 0; }
+            @foreach (var item in combinedRecommendations)
             {
-                <div class="col-md-3 col-sm-6 mb-4">
+                // Mặc định ẩn các sản phẩm từ vị trí thứ 5 trở đi (index >= 4)
+                string displayClass = (recIndex >= 4) ? "d-none extra-smart-product" : "";
+
+                <div class="col-md-3 col-sm-6 mb-4 @displayClass">
                     <div class="card h-100 shadow-sm border-0 product-card">
                         <a href="@Url.Action("ProductDetail", "Home", new { id = item.ProductID })">
                             <img src="@item.ProductImage" class="card-img-top p-2" alt="@item.ProductName" style="height: 200px; object-fit: contain;">
@@ -199,32 +214,50 @@
                                     @item.ProductName
                                 </a>
                             </h6>
-
                             <p class="card-text text-danger fw-bold mt-auto fs-5">
                                 @String.Format("{0:N0} ₫", item.ProductPrice)
                             </p>
-
                             <a href="@Url.Action("AddToCart", "Cart", new { id = item.ProductID })" class="btn btn-outline-primary w-100 mt-2">
                                 <i class="fa-solid fa-cart-plus"></i> Thêm giỏ hàng
                             </a>
                         </div>
                     </div>
                 </div>
+                recIndex++;
             }
         </div>
-    </div>
 
-    <style>
-        .product-card {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        @* Chỉ hiển thị nút Xem thêm nếu có nhiều hơn 4 sản phẩm *@
+        @if (combinedRecommendations.Count > 4)
+        {
+            <div class="text-center mt-2 mb-5">
+                <button class="btn btn-light border shadow-sm px-5 fw-bold text-primary btn-hover-scale" id="toggleSmartProducts" style="border-radius: 25px;">
+                    Xem thêm sản phẩm <i class="fa-solid fa-angle-down"></i>
+                </button>
+            </div>
+        }
+    </div>
+}
+
+<style>
+    .product-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
         }
 
-            .product-card:hover {
-                transform: translateY(-5px);
-                box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
-            }
-    </style>
-}
+    .btn-hover-scale {
+        transition: transform 0.2s ease, background-color 0.2s ease;
+    }
+
+        .btn-hover-scale:hover {
+            transform: scale(1.05);
+            background-color: #f8f9fa;
+        }
+</style>
 
 @section Scripts {
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -244,6 +277,34 @@
         $(document).ready(function () {
             const $qtyInput = $('#quantity-input');
             const $estimatedPrice = $('#estimatedPrice');
+
+            // --- JAVASCRIPT CHO NÚT "XEM THÊM SẢN PHẨM / THU GỌN" ---
+            function setupProductToggle(buttonId, productClass) {
+                const toggleBtn = document.getElementById(buttonId);
+                if (!toggleBtn) return;
+
+                const productContainers = document.querySelectorAll(productClass);
+                let showAll = false;
+
+                toggleBtn.addEventListener("click", function () {
+                    showAll = !showAll;
+
+                    productContainers.forEach(p => {
+                        if (showAll) {
+                            p.classList.remove('d-none');
+                            p.style.display = '';
+                        } else {
+                            p.classList.add('d-none');
+                        }
+                    });
+
+                    toggleBtn.innerHTML = showAll ? 'Thu gọn <i class="fa-solid fa-angle-up"></i>' : 'Xem thêm sản phẩm <i class="fa-solid fa-angle-down"></i>';
+                });
+            }
+
+            // Kích hoạt hàm Toggle cho danh sách sản phẩm AI
+            setupProductToggle("toggleSmartProducts", ".extra-smart-product");
+            // --------------------------------------------------------
 
             // Cập nhật giá Tạm tính dựa trên số lượng và kiểm tra giới hạn
             function updatePrice() {

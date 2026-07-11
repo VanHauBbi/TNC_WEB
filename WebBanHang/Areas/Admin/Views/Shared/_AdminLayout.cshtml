@@ -92,10 +92,24 @@
                     <span>Hỗ Trợ Khách Hàng</span>
                 </a>
             </li>
-            <li>
-                <a href="@Url.Action("Index", "Recommendations", new { area = "Admin" })" class="@GetActiveClass("Recommendations")" data-tooltip="AI">
-                    <i class="fa-solid fa-brain"></i>
-                    <span>Huấn luyện AI (Apriori)</span>
+                @*<li>
+                    <a href="@Url.Action("Index", "Recommendations", new { area = "Admin" })" class="@GetActiveClass("Recommendations")" data-tooltip="AI">
+                        <i class="fa-solid fa-brain"></i>
+                        <span>Huấn luyện AI (Apriori)</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="@Url.Action("Index", "TwoPhase", new { area = "Admin" })">
+                        <i class="fa-solid fa-sack-dollar text-success"></i>
+                        <span>Khai phá Lợi Nhuận (Two-Phase)</span>
+                    </a>
+                </li>*@
+            <li style="border-top: 1px solid #333; margin-top: 10px; padding-top: 10px;">
+                <a href="@Url.Action("Index", "SmartRecommendation", new { area = "Admin" })"
+                   class="@GetActiveClass("SmartRecommendation")"
+                   data-tooltip="Smart Recommendation">
+                    <i class="fa-solid fa-wand-magic-sparkles" style="color: #f1c40f;"></i>
+                    <span>Gợi ý Thông minh</span>
                 </a>
             </li>
             <li>

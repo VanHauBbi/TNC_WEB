@@ -12,13 +12,15 @@ namespace WebBanHang.Models
     using System;
     using System.Collections.Generic;
     
-    public partial class ProductRecommendation
+    public partial class SmartRecommendation
     {
         public int Id { get; set; }
         public int ProductID_A { get; set; }
         public int ProductID_B { get; set; }
         public decimal Confidence { get; set; }
         public int Support { get; set; }
+        public decimal ActualUtility { get; set; }
+        public decimal TWU { get; set; }
         public System.DateTime UpdateDate { get; set; }
     
         public virtual Product Product { get; set; }

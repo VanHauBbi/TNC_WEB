@@ -80,9 +80,6 @@ namespace WebBanHang.Controllers
             }
 
             // Dùng Include() để tải thông tin Category và OrderDetails
-            // View "ProductDetail.cshtml" của bạn cần 2 thông tin này:
-            // 1. @Model.product.Category.CategoryName
-            // 2. @Model.product.OrderDetails.Count
             Product product = db.Products
                             .Include(p => p.Category)
                             .Include(p => p.OrderDetails)
@@ -95,15 +92,53 @@ namespace WebBanHang.Controllers
                 return HttpNotFound();
             }
 
-            // --- THÊM ĐOẠN NÀY ĐỂ LẤY SẢN PHẨM GỢI Ý (APRIORI) ---
-            var recommendedProducts = db.ProductRecommendations
-                .Where(r => r.ProductID_A == id)
-                .OrderByDescending(r => r.Confidence)
-                .Take(4)
-                .Select(r => r.Product1) // Lấy thông tin Sản phẩm B
+            // --- CẬP NHẬT ĐỂ LẤY SẢN PHẨM GỢI Ý (SMART HYBRID AI) KÈM LỌC ĐA DẠNG DANH MỤC ---
+            var queryRecommendations = db.SmartRecommendations.Where(r => r.ProductID_A == id);
+
+            // BƯỚC 1: Lấy danh sách thô (Lấy 15 sản phẩm để có đủ data chạy bộ lọc Đa dạng)
+            var rawTwoPhase = queryRecommendations
+                .OrderByDescending(r => r.ActualUtility)
+                .Take(15)
+                .Select(r => r.Product1)
                 .ToList();
 
-            ViewBag.RecommendedProducts = recommendedProducts;
+            var rawApriori = queryRecommendations
+                .OrderByDescending(r => r.Confidence)
+                .ThenByDescending(r => r.Support)
+                .Take(15)
+                .Select(r => r.Product1)
+                .ToList();
+
+            // BƯỚC 2: Lọc đảm bảo tính ĐA DẠNG (Không cho phép 4 sản phẩm cùng 1 danh mục/nhãn)
+            // BOX 1: Lọc cho Two-Phase
+            var twoPhaseProducts = new List<Product>();
+            foreach (var item in rawTwoPhase)
+            {
+                if (twoPhaseProducts.Count >= 4) break; // Đủ 4 món thì dừng
+
+                string itemType = item.ComponentType ?? ""; // Gom nhóm PC (rỗng) và các linh kiện khác
+
+                // Nếu trong hộp đã có 3 món CÙNG LOẠI này rồi -> Bỏ qua, nhường 1 slot cuối cho loại khác
+                if (twoPhaseProducts.Count(x => (x.ComponentType ?? "") == itemType) >= 3) continue;
+
+                twoPhaseProducts.Add(item);
+            }
+
+            // BOX 2: Lọc cho Apriori
+            var aprioriProducts = new List<Product>();
+            foreach (var item in rawApriori)
+            {
+                if (aprioriProducts.Count >= 8) break;
+
+                string itemType = item.ComponentType ?? "";
+                if (aprioriProducts.Count(x => (x.ComponentType ?? "") == itemType) >= 3) continue;
+
+                aprioriProducts.Add(item);
+            }
+
+            // Truyền cả 2 danh sách ra View
+            ViewBag.TwoPhaseProducts = twoPhaseProducts;
+            ViewBag.AprioriProducts = aprioriProducts;
             // -----------------------------------------------------
 
             // Tạo ViewModel (ProductDetailsVM) mà View của bạn đang dùng
@@ -112,13 +147,10 @@ namespace WebBanHang.Controllers
                 product = product,
                 quantity = 1, // Số lượng mặc định là 1
 
-                // Lấy các sản phẩm liên quan (ví dụ: 4 sản phẩm cùng danh mục)
-                // View của bạn gọi @Html.Partial("PVTopProduct", Model)
-                // Tôi sẽ điền vào 'RelatedProducts' để làm mẫu
                 RelatedProducts = db.Products
                                     .Where(p => p.CategoryID == product.CategoryID && p.ProductID != id)
-                                    .OrderByDescending(p => p.ProductID) // Sắp xếp tuỳ ý
-                                    .ToPagedList(1, 4) // Lấy 4 sản phẩm ở trang 1
+                                    .OrderByDescending(p => p.ProductID)
+                                    .ToPagedList(1, 4)
             };
 
             // Trả về View "ProductDetail.cshtml" với ViewModel đã tạo
@@ -148,19 +180,16 @@ namespace WebBanHang.Controllers
         }
 
         // ==========================================================
-        // TÌM KIẾM SẢN PHẨM (ACTION ĐÃ CẬP NHẬT)
+        // TÌM KIẾM SẢN PHẨM
         // ==========================================================
         public ActionResult ProductSearch(string query)
         {
-            // Test Case ProductDT07: Để trống
-            // Xử lý server-side (dù client đã có 'required')
             if (string.IsNullOrWhiteSpace(query))
             {
                 TempData["ErrorMessage"] = "Vui lòng nhập từ khóa";
-                return RedirectToAction("Index"); // Redirect về trang chủ và hiển thị lỗi
+                return RedirectToAction("Index");
             }
 
-            // Test Case ProductDT08: Vượt quá độ dài
             const int MAX_LENGTH = 100;
             if (query.Length > MAX_LENGTH)
             {
@@ -168,11 +197,8 @@ namespace WebBanHang.Controllers
                 return RedirectToAction("Index");
             }
 
-            // --- CẢI TIẾN LOGIC TÌM KIẾM ---
             string searchQuery = query.ToLower().Trim();
 
-            // ProductDT03, DT04: Tìm kiếm (case-insensitive) trên nhiều trường
-            // Giống hệt logic ở action Index của bạn để nhất quán
             var searchResults = db.Products
                 .Include(p => p.Category)
                 .Include(p => p.Coupons)
@@ -183,14 +209,9 @@ namespace WebBanHang.Controllers
                 )
                 .ToList();
 
-            ViewBag.SearchQuery = query; // Giữ lại từ khóa gốc để hiển thị
-
-            // ProductDT06 (Không tồn tại) sẽ được xử lý bởi View "SearchResults.cshtml"
-            // (File SearchResults.cshtml của bạn đã xử lý tốt phần này)
+            ViewBag.SearchQuery = query;
             return View("SearchResults", searchResults);
         }
-
-        // (Nhớ giữ lại: using PagedList; và using System.Data.Entity;)
 
         public ActionResult DanhMucSanPham(
             int? id,           // ID Danh mục
@@ -218,7 +239,7 @@ namespace WebBanHang.Controllers
                     .Include(p => p.OrderDetails)
                     .Where(p => p.CategoryID == id.Value && p.Status != 2)
                     .AsQueryable();
-                // 2. Lọc theo Khoảng giá (logic cũ giữ nguyên)
+                // 2. Lọc theo Khoảng giá
                 switch (priceRange)
                 {
                     case "duoi-5":
@@ -232,22 +253,22 @@ namespace WebBanHang.Controllers
                         break;
                 }
 
-                // 3. SẮP XẾP (Đã cập nhật logic)
+                // 3. SẮP XẾP
                 switch (sortBy)
                 {
-                    case "price-asc": // Giá Thấp - Cao
+                    case "price-asc":
                         products = products.OrderBy(p => p.ProductPrice);
                         break;
-                    case "price-desc": // Giá Cao - Thấp
+                    case "price-desc":
                         products = products.OrderByDescending(p => p.ProductPrice);
                         break;
-                    case "name-asc": // Tên: A-Z
+                    case "name-asc":
                         products = products.OrderBy(p => p.ProductName);
                         break;
-                    case "name-desc": // Tên: Z-A
+                    case "name-desc":
                         products = products.OrderByDescending(p => p.ProductName);
                         break;
-                    default: // Mặc định: Mới nhất
+                    default:
                         products = products.OrderByDescending(p => p.ProductID);
                         break;
                 }
@@ -256,7 +277,7 @@ namespace WebBanHang.Controllers
                 ViewBag.CategoryName = category.CategoryName;
                 ViewBag.CategoryId = id.Value;
                 ViewBag.CurrentPriceRange = priceRange;
-                ViewBag.CurrentSortBy = sortBy; // THÊM MỚI: Truyền sortBy ra View
+                ViewBag.CurrentSortBy = sortBy;
 
                 // 5. Phân trang
                 int pageSize = 9;
@@ -267,30 +288,52 @@ namespace WebBanHang.Controllers
             }
             catch (Exception ex)
             {
-                // Log error
                 System.Diagnostics.Debug.WriteLine("Lỗi: " + ex.Message);
                 TempData["ErrorMessage"] = "Có lỗi xảy ra. Vui lòng thử lại.";
                 return RedirectToAction("Index");
             }
         }
+
         // ==========================================================
-        // GỢI Ý MUA HÀNG (APRIORI)
+        // GỢI Ý MUA HÀNG (SMART HYBRID AI) - DÀNH CHO PARTIAL VIEW
         // ==========================================================
-        // GET: Products/GetRecommendations/5
-        [ChildActionOnly] // Thuộc tính này chặn người dùng gõ trực tiếp URL, chỉ cho phép gọi ngầm từ View
+        [ChildActionOnly]
         public ActionResult GetRecommendations(int productId)
         {
-            // Tìm các luật gợi ý có ProductID_A (Sản phẩm đang xem) khớp với productId truyền vào
-            // Lấy Top 4 sản phẩm có tỷ lệ Confidence (độ tin cậy) cao nhất
-            var recommendedProducts = db.ProductRecommendations
-                .Where(r => r.ProductID_A == productId)
-                .OrderByDescending(r => r.Confidence)
-                .Take(4)
-                .Select(r => r.Product1) // Kéo luôn thông tin của Sản phẩm B (Product1) ra
-                .ToList();
+            var product = db.Products.Find(productId);
+            var query = db.SmartRecommendations.Where(r => r.ProductID_A == productId);
 
-            // Trả về một Partial View kèm danh sách sản phẩm
-            return PartialView("_Recommendations", recommendedProducts);
+            // BƯỚC 1: Lấy nhiều dữ liệu thô (15 items)
+            var rawTwoPhase = query
+                .OrderByDescending(r => r.ActualUtility)
+                .Take(15).Select(r => r.Product1).ToList();
+
+            var rawApriori = query
+                .OrderByDescending(r => r.Confidence).ThenByDescending(r => r.Support)
+                .Take(15).Select(r => r.Product1).ToList();
+
+            // BƯỚC 2: Bộ lọc ĐA DẠNG HÓA GIỎ HÀNG (Tối đa 3 sản phẩm trùng danh mục)
+            var twoPhaseProducts = new List<Product>();
+            foreach (var item in rawTwoPhase)
+            {
+                if (twoPhaseProducts.Count >= 4) break;
+                string itemType = item.ComponentType ?? "";
+                if (twoPhaseProducts.Count(x => (x.ComponentType ?? "") == itemType) >= 3) continue;
+                twoPhaseProducts.Add(item);
+            }
+
+            var aprioriProducts = new List<Product>();
+            foreach (var item in rawApriori)
+            {
+                if (aprioriProducts.Count >= 8) break;
+                string itemType = item.ComponentType ?? "";
+                if (aprioriProducts.Count(x => (x.ComponentType ?? "") == itemType) >= 3) continue;
+                aprioriProducts.Add(item);
+            }
+
+            // Gói 2 danh sách vào Tuple để truyền ra Partial View nếu dùng
+            var model = new Tuple<List<Product>, List<Product>>(twoPhaseProducts, aprioriProducts);
+            return PartialView("_Recommendations", model);
         }
     }
 }
