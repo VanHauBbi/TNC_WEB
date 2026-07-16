@@ -4,7 +4,7 @@
   <edmx:Runtime>
     <!-- SSDL content -->
     <edmx:StorageModels>
-      <Schema Namespace="MyStoreModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+    <Schema Namespace="MyStoreModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
         <EntityType Name="Cart">
           <Key>
             <PropertyRef Name="CartID" />
@@ -164,17 +164,6 @@
           <Property Name="NewPrice" Type="money" Nullable="false" />
           <Property Name="ChangeDate" Type="datetime" Nullable="false" />
         </EntityType>
-        <EntityType Name="ProductRecommendation">
-          <Key>
-            <PropertyRef Name="Id" />
-          </Key>
-          <Property Name="Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
-          <Property Name="ProductID_A" Type="int" Nullable="false" />
-          <Property Name="ProductID_B" Type="int" Nullable="false" />
-          <Property Name="Confidence" Type="decimal" Precision="5" Scale="2" Nullable="false" />
-          <Property Name="Support" Type="int" Nullable="false" />
-          <Property Name="UpdateDate" Type="datetime" Nullable="false" />
-        </EntityType>
         <EntityType Name="ProductReview">
           <Key>
             <PropertyRef Name="ReviewID" />
@@ -219,6 +208,19 @@
           <Property Name="OrderedQty" Type="int" Nullable="false" />
           <Property Name="EstimatedPrice" Type="decimal" Precision="18" Scale="3" Nullable="false" />
         </EntityType>
+        <EntityType Name="SmartRecommendation">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="ProductID_A" Type="int" Nullable="false" />
+          <Property Name="ProductID_B" Type="int" Nullable="false" />
+          <Property Name="Confidence" Type="decimal" Precision="5" Scale="2" Nullable="false" />
+          <Property Name="Support" Type="int" Nullable="false" />
+          <Property Name="ActualUtility" Type="decimal" Precision="18" Scale="3" Nullable="false" />
+          <Property Name="TWU" Type="decimal" Precision="18" Scale="3" Nullable="false" />
+          <Property Name="UpdateDate" Type="datetime" Nullable="false" />
+        </EntityType>
         <EntityType Name="SupportMessage">
           <Key>
             <PropertyRef Name="MessageID" />
@@ -247,6 +249,19 @@
           <Property Name="UserRole" Type="nchar" MaxLength="1" Nullable="false" />
           <Property Name="ResetPasswordToken" Type="nvarchar" MaxLength="200" />
           <Property Name="ResetTokenExpiry" Type="datetime" />
+        </EntityType>
+        <EntityType Name="UserBehaviorLogs">
+          <Key>
+            <PropertyRef Name="LogID" />
+          </Key>
+          <Property Name="LogID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="SessionID" Type="nvarchar" MaxLength="255" />
+          <Property Name="CustomerID" Type="int" />
+          <Property Name="ProductID" Type="int" />
+          <Property Name="ActionType" Type="nvarchar" MaxLength="50" Nullable="false" />
+          <Property Name="ActionWeight" Type="int" Nullable="false" />
+          <Property Name="CreatedAt" Type="datetime" Nullable="false" />
+          <Property Name="SearchKeyword" Type="nvarchar" MaxLength="255" />
         </EntityType>
         <Association Name="FK_Cart_Customer">
           <End Role="Customer" Type="Self.Customer" Multiplicity="1" />
@@ -546,28 +561,28 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="FK_Recommendation_ProductA">
+        <Association Name="FK_SmartRec_ProductA">
           <End Role="Product" Type="Self.Product" Multiplicity="1">
             <OnDelete Action="Cascade" />
           </End>
-          <End Role="ProductRecommendation" Type="Self.ProductRecommendation" Multiplicity="*" />
+          <End Role="SmartRecommendation" Type="Self.SmartRecommendation" Multiplicity="*" />
           <ReferentialConstraint>
             <Principal Role="Product">
               <PropertyRef Name="ProductID" />
             </Principal>
-            <Dependent Role="ProductRecommendation">
+            <Dependent Role="SmartRecommendation">
               <PropertyRef Name="ProductID_A" />
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="FK_Recommendation_ProductB">
+        <Association Name="FK_SmartRec_ProductB">
           <End Role="Product" Type="Self.Product" Multiplicity="1" />
-          <End Role="ProductRecommendation" Type="Self.ProductRecommendation" Multiplicity="*" />
+          <End Role="SmartRecommendation" Type="Self.SmartRecommendation" Multiplicity="*" />
           <ReferentialConstraint>
             <Principal Role="Product">
               <PropertyRef Name="ProductID" />
             </Principal>
-            <Dependent Role="ProductRecommendation">
+            <Dependent Role="SmartRecommendation">
               <PropertyRef Name="ProductID_B" />
             </Dependent>
           </ReferentialConstraint>
@@ -600,6 +615,20 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
+        <Association Name="FK_UserBehaviorLogs_Product">
+          <End Role="Product" Type="Self.Product" Multiplicity="0..1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="UserBehaviorLogs" Type="Self.UserBehaviorLogs" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Product">
+              <PropertyRef Name="ProductID" />
+            </Principal>
+            <Dependent Role="UserBehaviorLogs">
+              <PropertyRef Name="ProductID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
         <EntityContainer Name="MyStoreModelStoreContainer">
           <EntitySet Name="Cart" EntityType="Self.Cart" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="CartItem" EntityType="Self.CartItem" Schema="dbo" store:Type="Tables" />
@@ -615,14 +644,15 @@
           <EntitySet Name="PriceExceptionLog" EntityType="Self.PriceExceptionLog" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Product" EntityType="Self.Product" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="ProductPriceHistory" EntityType="Self.ProductPriceHistory" Schema="dbo" store:Type="Tables" />
-          <EntitySet Name="ProductRecommendation" EntityType="Self.ProductRecommendation" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="ProductReview" EntityType="Self.ProductReview" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="ProductVariant" EntityType="Self.ProductVariant" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="PurchaseOrder" EntityType="Self.PurchaseOrder" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="PurchaseOrderDetail" EntityType="Self.PurchaseOrderDetail" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="SmartRecommendation" EntityType="Self.SmartRecommendation" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="SupportMessage" EntityType="Self.SupportMessage" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="SupportSession" EntityType="Self.SupportSession" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="User" EntityType="Self.User" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="UserBehaviorLogs" EntityType="Self.UserBehaviorLogs" Schema="dbo" store:Type="Tables" />
           <AssociationSet Name="FK_Cart_Customer" Association="Self.FK_Cart_Customer">
             <End Role="Customer" EntitySet="Customer" />
             <End Role="Cart" EntitySet="Cart" />
@@ -715,13 +745,13 @@
             <End Role="Product" EntitySet="Product" />
             <End Role="ProductVariant" EntitySet="ProductVariant" />
           </AssociationSet>
-          <AssociationSet Name="FK_Recommendation_ProductA" Association="Self.FK_Recommendation_ProductA">
+          <AssociationSet Name="FK_SmartRec_ProductA" Association="Self.FK_SmartRec_ProductA">
             <End Role="Product" EntitySet="Product" />
-            <End Role="ProductRecommendation" EntitySet="ProductRecommendation" />
+            <End Role="SmartRecommendation" EntitySet="SmartRecommendation" />
           </AssociationSet>
-          <AssociationSet Name="FK_Recommendation_ProductB" Association="Self.FK_Recommendation_ProductB">
+          <AssociationSet Name="FK_SmartRec_ProductB" Association="Self.FK_SmartRec_ProductB">
             <End Role="Product" EntitySet="Product" />
-            <End Role="ProductRecommendation" EntitySet="ProductRecommendation" />
+            <End Role="SmartRecommendation" EntitySet="SmartRecommendation" />
           </AssociationSet>
           <AssociationSet Name="FK_SupportMessage_Session" Association="Self.FK_SupportMessage_Session">
             <End Role="SupportSession" EntitySet="SupportSession" />
@@ -731,9 +761,12 @@
             <End Role="Customer" EntitySet="Customer" />
             <End Role="SupportSession" EntitySet="SupportSession" />
           </AssociationSet>
+          <AssociationSet Name="FK_UserBehaviorLogs_Product" Association="Self.FK_UserBehaviorLogs_Product">
+            <End Role="Product" EntitySet="Product" />
+            <End Role="UserBehaviorLogs" EntitySet="UserBehaviorLogs" />
+          </AssociationSet>
         </EntityContainer>
-      </Schema>
-    </edmx:StorageModels>
+      </Schema></edmx:StorageModels>
     <!-- CSDL content -->
     <edmx:ConceptualModels>
       <Schema Namespace="MyStoreModel" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
@@ -912,9 +945,10 @@
           <NavigationProperty Name="ProductPriceHistories" Relationship="Self.FK_PriceHistory_Product" FromRole="Product" ToRole="ProductPriceHistory" />
           <NavigationProperty Name="ProductReviews" Relationship="Self.FK_ProductReview_Product" FromRole="Product" ToRole="ProductReview" />
           <NavigationProperty Name="ProductVariants" Relationship="Self.FK_ProductVariant_Product" FromRole="Product" ToRole="ProductVariant" />
-          <NavigationProperty Name="ProductRecommendations" Relationship="Self.FK_Recommendation_ProductA" FromRole="Product" ToRole="ProductRecommendation" />
-          <NavigationProperty Name="ProductRecommendations1" Relationship="Self.FK_Recommendation_ProductB" FromRole="Product" ToRole="ProductRecommendation" />
+          <NavigationProperty Name="SmartRecommendations" Relationship="Self.FK_SmartRec_ProductA" FromRole="Product" ToRole="SmartRecommendation" />
+          <NavigationProperty Name="SmartRecommendations1" Relationship="Self.FK_SmartRec_ProductB" FromRole="Product" ToRole="SmartRecommendation" />
           <NavigationProperty Name="Coupons" Relationship="Self.CouponProduct" FromRole="Product" ToRole="Coupon" />
+          <NavigationProperty Name="UserBehaviorLogs" Relationship="MyStoreModel.FK_UserBehaviorLogs_Product" FromRole="Product" ToRole="UserBehaviorLog" />
         </EntityType>
         <EntityType Name="ProductPriceHistory">
           <Key>
@@ -926,19 +960,6 @@
           <Property Name="NewPrice" Type="Decimal" Precision="19" Scale="4" Nullable="false" />
           <Property Name="ChangeDate" Type="DateTime" Nullable="false" Precision="3" />
           <NavigationProperty Name="Product" Relationship="Self.FK_PriceHistory_Product" FromRole="ProductPriceHistory" ToRole="Product" />
-        </EntityType>
-        <EntityType Name="ProductRecommendation">
-          <Key>
-            <PropertyRef Name="Id" />
-          </Key>
-          <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
-          <Property Name="ProductID_A" Type="Int32" Nullable="false" />
-          <Property Name="ProductID_B" Type="Int32" Nullable="false" />
-          <Property Name="Confidence" Type="Decimal" Precision="5" Scale="2" Nullable="false" />
-          <Property Name="Support" Type="Int32" Nullable="false" />
-          <Property Name="UpdateDate" Type="DateTime" Nullable="false" Precision="3" />
-          <NavigationProperty Name="Product" Relationship="Self.FK_Recommendation_ProductA" FromRole="ProductRecommendation" ToRole="Product" />
-          <NavigationProperty Name="Product1" Relationship="Self.FK_Recommendation_ProductB" FromRole="ProductRecommendation" ToRole="Product" />
         </EntityType>
         <EntityType Name="ProductReview">
           <Key>
@@ -990,6 +1011,21 @@
           <Property Name="EstimatedPrice" Type="Decimal" Precision="18" Scale="3" Nullable="false" />
           <NavigationProperty Name="Product" Relationship="Self.FK_PODetail_Product" FromRole="PurchaseOrderDetail" ToRole="Product" />
           <NavigationProperty Name="PurchaseOrder" Relationship="Self.FK_PODetail_PO" FromRole="PurchaseOrderDetail" ToRole="PurchaseOrder" />
+        </EntityType>
+        <EntityType Name="SmartRecommendation">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="ProductID_A" Type="Int32" Nullable="false" />
+          <Property Name="ProductID_B" Type="Int32" Nullable="false" />
+          <Property Name="Confidence" Type="Decimal" Precision="5" Scale="2" Nullable="false" />
+          <Property Name="Support" Type="Int32" Nullable="false" />
+          <Property Name="ActualUtility" Type="Decimal" Precision="18" Scale="3" Nullable="false" />
+          <Property Name="TWU" Type="Decimal" Precision="18" Scale="3" Nullable="false" />
+          <Property Name="UpdateDate" Type="DateTime" Nullable="false" Precision="3" />
+          <NavigationProperty Name="Product" Relationship="Self.FK_SmartRec_ProductA" FromRole="SmartRecommendation" ToRole="Product" />
+          <NavigationProperty Name="Product1" Relationship="Self.FK_SmartRec_ProductB" FromRole="SmartRecommendation" ToRole="Product" />
         </EntityType>
         <EntityType Name="SupportMessage">
           <Key>
@@ -1294,28 +1330,28 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="FK_Recommendation_ProductA">
+        <Association Name="FK_SmartRec_ProductA">
           <End Role="Product" Type="Self.Product" Multiplicity="1">
             <OnDelete Action="Cascade" />
           </End>
-          <End Role="ProductRecommendation" Type="Self.ProductRecommendation" Multiplicity="*" />
+          <End Role="SmartRecommendation" Type="Self.SmartRecommendation" Multiplicity="*" />
           <ReferentialConstraint>
             <Principal Role="Product">
               <PropertyRef Name="ProductID" />
             </Principal>
-            <Dependent Role="ProductRecommendation">
+            <Dependent Role="SmartRecommendation">
               <PropertyRef Name="ProductID_A" />
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="FK_Recommendation_ProductB">
+        <Association Name="FK_SmartRec_ProductB">
           <End Role="Product" Type="Self.Product" Multiplicity="1" />
-          <End Role="ProductRecommendation" Type="Self.ProductRecommendation" Multiplicity="*" />
+          <End Role="SmartRecommendation" Type="Self.SmartRecommendation" Multiplicity="*" />
           <ReferentialConstraint>
             <Principal Role="Product">
               <PropertyRef Name="ProductID" />
             </Principal>
-            <Dependent Role="ProductRecommendation">
+            <Dependent Role="SmartRecommendation">
               <PropertyRef Name="ProductID_B" />
             </Dependent>
           </ReferentialConstraint>
@@ -1366,11 +1402,11 @@
           <EntitySet Name="PriceExceptionLogs" EntityType="Self.PriceExceptionLog" />
           <EntitySet Name="Products" EntityType="Self.Product" />
           <EntitySet Name="ProductPriceHistories" EntityType="Self.ProductPriceHistory" />
-          <EntitySet Name="ProductRecommendations" EntityType="Self.ProductRecommendation" />
           <EntitySet Name="ProductReviews" EntityType="Self.ProductReview" />
           <EntitySet Name="ProductVariants" EntityType="Self.ProductVariant" />
           <EntitySet Name="PurchaseOrders" EntityType="Self.PurchaseOrder" />
           <EntitySet Name="PurchaseOrderDetails" EntityType="Self.PurchaseOrderDetail" />
+          <EntitySet Name="SmartRecommendations" EntityType="Self.SmartRecommendation" />
           <EntitySet Name="SupportMessages" EntityType="Self.SupportMessage" />
           <EntitySet Name="SupportSessions" EntityType="Self.SupportSession" />
           <EntitySet Name="Users" EntityType="Self.User" />
@@ -1458,13 +1494,13 @@
             <End Role="Product" EntitySet="Products" />
             <End Role="ProductVariant" EntitySet="ProductVariants" />
           </AssociationSet>
-          <AssociationSet Name="FK_Recommendation_ProductA" Association="Self.FK_Recommendation_ProductA">
+          <AssociationSet Name="FK_SmartRec_ProductA" Association="Self.FK_SmartRec_ProductA">
             <End Role="Product" EntitySet="Products" />
-            <End Role="ProductRecommendation" EntitySet="ProductRecommendations" />
+            <End Role="SmartRecommendation" EntitySet="SmartRecommendations" />
           </AssociationSet>
-          <AssociationSet Name="FK_Recommendation_ProductB" Association="Self.FK_Recommendation_ProductB">
+          <AssociationSet Name="FK_SmartRec_ProductB" Association="Self.FK_SmartRec_ProductB">
             <End Role="Product" EntitySet="Products" />
-            <End Role="ProductRecommendation" EntitySet="ProductRecommendations" />
+            <End Role="SmartRecommendation" EntitySet="SmartRecommendations" />
           </AssociationSet>
           <AssociationSet Name="FK_PODetail_PO" Association="Self.FK_PODetail_PO">
             <End Role="PurchaseOrder" EntitySet="PurchaseOrders" />
@@ -1478,7 +1514,40 @@
             <End Role="Coupon" EntitySet="Coupons" />
             <End Role="Product" EntitySet="Products" />
           </AssociationSet>
+          <EntitySet Name="UserBehaviorLogs" EntityType="MyStoreModel.UserBehaviorLog" />
+          <AssociationSet Name="FK_UserBehaviorLogs_Product" Association="MyStoreModel.FK_UserBehaviorLogs_Product">
+            <End Role="Product" EntitySet="Products" />
+            <End Role="UserBehaviorLog" EntitySet="UserBehaviorLogs" />
+          </AssociationSet>
         </EntityContainer>
+        <EntityType Name="UserBehaviorLog">
+          <Key>
+            <PropertyRef Name="LogID" />
+          </Key>
+          <Property Name="LogID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="SessionID" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
+          <Property Name="CustomerID" Type="Int32" />
+          <Property Name="ProductID" Type="Int32" />
+          <Property Name="ActionType" Type="String" Nullable="false" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="ActionWeight" Type="Int32" Nullable="false" />
+          <Property Name="CreatedAt" Type="DateTime" Nullable="false" Precision="3" />
+          <Property Name="SearchKeyword" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
+          <NavigationProperty Name="Product" Relationship="MyStoreModel.FK_UserBehaviorLogs_Product" FromRole="UserBehaviorLog" ToRole="Product" />
+        </EntityType>
+        <Association Name="FK_UserBehaviorLogs_Product">
+          <End Type="MyStoreModel.Product" Role="Product" Multiplicity="0..1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Type="MyStoreModel.UserBehaviorLog" Role="UserBehaviorLog" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Product">
+              <PropertyRef Name="ProductID" />
+            </Principal>
+            <Dependent Role="UserBehaviorLog">
+              <PropertyRef Name="ProductID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
       </Schema>
     </edmx:ConceptualModels>
     <!-- C-S mapping content -->
@@ -1649,18 +1718,6 @@
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
-          <EntitySetMapping Name="ProductRecommendations">
-            <EntityTypeMapping TypeName="MyStoreModel.ProductRecommendation">
-              <MappingFragment StoreEntitySet="ProductRecommendation">
-                <ScalarProperty Name="Id" ColumnName="Id" />
-                <ScalarProperty Name="ProductID_A" ColumnName="ProductID_A" />
-                <ScalarProperty Name="ProductID_B" ColumnName="ProductID_B" />
-                <ScalarProperty Name="Confidence" ColumnName="Confidence" />
-                <ScalarProperty Name="Support" ColumnName="Support" />
-                <ScalarProperty Name="UpdateDate" ColumnName="UpdateDate" />
-              </MappingFragment>
-            </EntityTypeMapping>
-          </EntitySetMapping>
           <EntitySetMapping Name="ProductReviews">
             <EntityTypeMapping TypeName="MyStoreModel.ProductReview">
               <MappingFragment StoreEntitySet="ProductReview">
@@ -1709,6 +1766,20 @@
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
+          <EntitySetMapping Name="SmartRecommendations">
+            <EntityTypeMapping TypeName="MyStoreModel.SmartRecommendation">
+              <MappingFragment StoreEntitySet="SmartRecommendation">
+                <ScalarProperty Name="Id" ColumnName="Id" />
+                <ScalarProperty Name="ProductID_A" ColumnName="ProductID_A" />
+                <ScalarProperty Name="ProductID_B" ColumnName="ProductID_B" />
+                <ScalarProperty Name="Confidence" ColumnName="Confidence" />
+                <ScalarProperty Name="Support" ColumnName="Support" />
+                <ScalarProperty Name="ActualUtility" ColumnName="ActualUtility" />
+                <ScalarProperty Name="TWU" ColumnName="TWU" />
+                <ScalarProperty Name="UpdateDate" ColumnName="UpdateDate" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
           <EntitySetMapping Name="SupportMessages">
             <EntityTypeMapping TypeName="MyStoreModel.SupportMessage">
               <MappingFragment StoreEntitySet="SupportMessage">
@@ -1749,6 +1820,20 @@
               <ScalarProperty Name="ProductID" ColumnName="ProductID" />
             </EndProperty>
           </AssociationSetMapping>
+          <EntitySetMapping Name="UserBehaviorLogs">
+            <EntityTypeMapping TypeName="MyStoreModel.UserBehaviorLog">
+              <MappingFragment StoreEntitySet="UserBehaviorLogs">
+                <ScalarProperty Name="SearchKeyword" ColumnName="SearchKeyword" />
+                <ScalarProperty Name="CreatedAt" ColumnName="CreatedAt" />
+                <ScalarProperty Name="ActionWeight" ColumnName="ActionWeight" />
+                <ScalarProperty Name="ActionType" ColumnName="ActionType" />
+                <ScalarProperty Name="ProductID" ColumnName="ProductID" />
+                <ScalarProperty Name="CustomerID" ColumnName="CustomerID" />
+                <ScalarProperty Name="SessionID" ColumnName="SessionID" />
+                <ScalarProperty Name="LogID" ColumnName="LogID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
         </EntityContainerMapping>
       </Mapping>
     </edmx:Mappings>

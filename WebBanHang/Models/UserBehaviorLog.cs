@@ -12,16 +12,17 @@ namespace WebBanHang.Models
     using System;
     using System.Collections.Generic;
     
-    public partial class ProductRecommendation
+    public partial class UserBehaviorLog
     {
-        public int Id { get; set; }
-        public int ProductID_A { get; set; }
-        public int ProductID_B { get; set; }
-        public decimal Confidence { get; set; }
-        public int Support { get; set; }
-        public System.DateTime UpdateDate { get; set; }
+        public int LogID { get; set; }
+        public string SessionID { get; set; }
+        public Nullable<int> CustomerID { get; set; }
+        public Nullable<int> ProductID { get; set; }
+        public string ActionType { get; set; }
+        public int ActionWeight { get; set; }
+        public System.DateTime CreatedAt { get; set; }
+        public string SearchKeyword { get; set; }
     
         public virtual Product Product { get; set; }
-        public virtual Product Product1 { get; set; }
     }
 }
