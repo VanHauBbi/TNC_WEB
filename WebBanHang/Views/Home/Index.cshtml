@@ -261,12 +261,15 @@
         <h3 class="fw-bold text-uppercase mb-0" style="color: #e44d26;"><i class="fa-solid fa-tags"></i> Đang Giảm Giá Kho Sốc</h3>
     </div>
 
-    <div class="row">
+    <div class="row" id="sale-product-container">
         @{
             var saleProducts = new List<WebBanHang.Models.Product>();
-            var allProducts = Model.FeaturedProducts.Concat(Model.NewProducts).GroupBy(p => p.ProductID).Select(g => g.First());
+            var db = new WebBanHang.Models.MyStoreEntities();
+            var allProductsWithCoupons = db.Products.Include("Coupons")
+                                                    .Where(p => p.Status != 2 && p.Coupons.Any(c => c.ExpiryDate > DateTime.Now))
+                                                    .ToList();
 
-            foreach (var item in allProducts)
+            foreach (var item in allProductsWithCoupons)
             {
                 if (item.GetStatusLabel() == "AVAILABLE" && item.ProductPrice > 0)
                 {
@@ -285,12 +288,17 @@
         }
         else
         {
-            foreach (var item in saleProducts.Take(4))
+            int index = 0;
+            // Hiển thị TẤT CẢ sản phẩm đang sale (bỏ Take(4))
+            foreach (var item in saleProducts)
             {
                 decimal discountPercent;
                 decimal discountedPrice = PriceHelper.GetDiscountedPrice(item, out discountPercent);
 
-                <div class="col-xl-3 col-lg-4 col-md-6 col-6 mb-4">
+                // XÁC ĐỊNH: Từ sản phẩm thứ 5 trở đi sẽ bị gán class 'd-none' (giấu đi) và 'extra-sale' để JS nhận diện
+                string hideClass = index >= 4 ? "d-none extra-sale" : "";
+
+                <div class="col-xl-3 col-lg-4 col-md-6 col-6 mb-4 sale-item @hideClass">
                     <div class="card product-card-modern h-100 border-0 shadow-sm" style="border: 2px solid #ffeeba !important;">
                         <div class="position-relative overflow-hidden product-img-wrapper">
                             <span class="badge bg-danger position-absolute top-0 start-0 m-2 z-1 shadow-sm fs-6">-@discountPercent.ToString("0")%</span>
@@ -309,15 +317,64 @@
                                 <div class="text-danger fw-bold fs-5">@discountedPrice.ToString("N0") ₫</div>
                             </div>
 
-                            <button class="btn btn-danger w-100 mt-3 add-to-cart-btn fw-bold btn-cart-modern track-add-cart" data-product-id="@item.ProductID">
+                            <a href="@Url.Action("BuyNow", "Cart", new { id = item.ProductID })" class="btn btn-danger w-100 mt-3 fw-bold btn-cart-modern d-block">
                                 Mua Ngay Kẻo Lỡ
-                            </button>
+                            </a>
                         </div>
                     </div>
                 </div>
+                index++;
             }
         }
     </div>
+
+    @if (saleProducts.Count > 4)
+    {
+        <div class="text-center mt-2 mb-5">
+            <button id="btn-toggle-sale" class="btn btn-outline-danger rounded-pill px-4 py-2 fw-bold shadow-sm" style="background: white; border: 1px solid #e44d26; color: #e44d26;">
+                <span id="toggle-text-sale">Xem thêm sản phẩm</span>
+                <i id="toggle-icon-sale" class="fa-solid fa-chevron-down ms-1"></i>
+            </button>
+        </div>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                var btnToggle = document.getElementById("btn-toggle-sale");
+                var isExpanded = false; // Biến cờ theo dõi trạng thái
+
+                if (btnToggle) {
+                    btnToggle.addEventListener("click", function () {
+                        var hiddenItems = document.querySelectorAll(".extra-sale");
+                        var textSpan = document.getElementById("toggle-text-sale");
+                        var iconElement = document.getElementById("toggle-icon-sale");
+
+                        if (!isExpanded) {
+                            // Trạng thái: Đang thu gọn -> Bấm để MỞ RỘNG
+                            hiddenItems.forEach(function (item) {
+                                item.classList.remove("d-none");
+                                item.style.animation = "fadeIn 0.5s ease"; // Thêm hiệu ứng hiện mượt mà
+                            });
+                            textSpan.innerText = "Thu gọn";
+                            iconElement.className = "fa-solid fa-chevron-up ms-1";
+                            isExpanded = true;
+                        } else {
+                            // Trạng thái: Đang mở rộng -> Bấm để THU GỌN
+                            hiddenItems.forEach(function (item) {
+                                item.classList.add("d-none");
+                                item.style.animation = ""; // Reset animation
+                            });
+                            textSpan.innerText = "Xem thêm sản phẩm";
+                            iconElement.className = "fa-solid fa-chevron-down ms-1";
+                            isExpanded = false;
+
+                            // Cuộn màn hình nhẹ lên trên một chút để người dùng biết là đã thu gọn
+                            document.getElementById("khuyen-mai-section").scrollIntoView({ behavior: 'smooth' });
+                        }
+                    });
+                }
+            });
+        </script>
+    }
 
     <!-- SẢN PHẨM MỚI VỀ -->
     <div class="d-flex justify-content-between align-items-end mb-4 border-bottom pb-2 mt-5">
