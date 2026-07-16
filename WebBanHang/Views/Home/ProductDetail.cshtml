@@ -21,136 +21,129 @@
             <div class="main-image-wrapper">
                 <img src="@Model.product.ProductImage" alt="@Model.product.ProductName" class="main-product-image" />
             </div>
-            @* Thêm thumbnail gallery nếu có nhiều ảnh *@
         </div>
 
         @* === CỘT PHẢI: THÔNG TIN SẢN PHẨM VÀ TƯƠNG TÁC (Col-md-5) === *@
-        <div class="col-md-5 product-summary-col">
-            <h1 class="product-name">@Html.DisplayFor(model => model.product.ProductName)</h1>
+    <div class="col-md-5 product-summary-col">
+        <h1 class="product-name">@Html.DisplayFor(model => model.product.ProductName)</h1>
 
-            @* Meta Data: Category & Sold Count *@
-            <div class="product-meta">
-                <span class="category-name">Danh mục: <a href="#"><strong>@Model.product.Category.CategoryName</strong></a></span>
-                <span class="separator-dot"></span>
-                <span class="sold-count"><i class="fa-solid fa-fire"></i> Đã bán: **@Model.product.OrderDetails.Count** sản phẩm</span>
-            </div>
-
-            @* Price Section *@
-            @{
-                decimal discountPercent;
-                decimal discountedPrice = PriceHelper.GetDiscountedPrice(Model.product, out discountPercent);
-                bool isDiscounted = discountedPrice < Model.product.ProductPrice;
-            }
-
-            <div class="price-section mb-3 p-3 bg-light rounded border border-warning border-opacity-25">
-                @if (isDiscounted)
-                {
-                    <div class="d-flex align-items-center mb-1">
-                        <span class="text-muted text-decoration-line-through me-2 fs-5">@Model.product.ProductPrice.ToString("N0") VNĐ</span>
-                        <span class="badge bg-warning text-danger fw-bold fs-6 px-2 py-1"><i class="fa-solid fa-bolt"></i> Giảm @discountPercent.ToString("0")%</span>
-                    </div>
-                    <div class="current-price text-danger fw-bold" style="font-size: 2.2rem;">
-                        @discountedPrice.ToString("N0") <span class="fs-4">VNĐ</span>
-                    </div>
-                }
-                else
-                {
-                    <div class="current-price text-danger fw-bold" style="font-size: 2.2rem;">
-                        @Model.product.ProductPrice.ToString("N0") <span class="fs-4">VNĐ</span>
-                    </div>
-                }
-            </div>
-
-            <div class="stock-status-section my-3" style="font-size: 16px;">
-                <span class="fw-bold" style="color: #333;">Tình trạng:</span>
-                @if (Model.product.StockQuantity > 0)
-                {
-                    <span style="color: #28a745; font-weight: 500; margin-left: 5px;">
-                        <i class="fa-solid fa-circle-check"></i> Còn hàng (@Model.product.StockQuantity sản phẩm)
-                    </span>
-                }
-                else
-                {
-                    <span style="color: #dc3545; font-weight: 500; margin-left: 5px;">
-                        <i class="fa-solid fa-circle-xmark"></i> Tạm hết hàng
-                    </span>
-                }
-            </div>
-
-            <hr class="section-divider" />
-
-            @* --- KHỐI ĐIỀU HƯỚNG NÚT MUA HÀNG THÔNG MINH --- *@
-            @{ string commercialState = Model.product.GetStatusLabel(); }
-
-            @switch (commercialState)
-            {
-                case "AVAILABLE":
-                    using (Html.BeginForm("AddToCart", "Cart", FormMethod.Post, new { @id = "addToCartForm", @class = "cart-interaction-form" }))
-                    {
-                        <input type="hidden" name="id" value="@Model.product.ProductID" />
-
-                        <div class="form-group-qty">
-                            <label for="quantity-input" class="qty-label">Số lượng:</label>
-                            <div class="quantity-control-wrapper">
-                                <button type="button" class="btn-qty-control minus-btn"><i class="fa-solid fa-minus"></i></button>
-                                @Html.TextBoxFor(model => model.quantity, new { @class = "form-control quantity-input", @id = "quantity-input", @type = "number", @min = 1, @max = Model.product.StockQuantity, @name = "quantity", @value = 1 })
-                                <button type="button" class="btn-qty-control plus-btn"><i class="fa-solid fa-plus"></i></button>
-                            </div>
-                        </div>
-
-                        <div class="price-summary-row">
-                            <span class="summary-label">Tạm tính:</span>
-                            <span class="calculated-price" id="estimatedPrice">@discountedPrice.ToString("N0") VNĐ</span>
-                        </div>
-
-                        <div class="action-buttons-group d-flex gap-2">
-                            <button type="submit" id="addToCartBtn" class="btn-add-to-cart flex-fill">
-                                <i class="fa-solid fa-cart-shopping"></i> THÊM VÀO GIỎ HÀNG
-                            </button>
-                            <a href="@Url.Action("BuyNow", "Cart", new { id = Model.product.ProductID })" class="btn-buy-now flex-fill text-center text-decoration-none d-flex align-items-center justify-content-center">
-                                <i class="fa-solid fa-bolt me-1"></i> MUA NGAY
-                            </a>
-                        </div>
-                    }
-                    break;
-
-                case "OUT_OF_STOCK":
-                    <button type="button" class="btn btn-secondary btn-lg w-100 fw-bold mb-3 py-3" disabled style="background-color: #6c757d; border: none;">
-                        <i class="fa-solid fa-box-open me-2"></i> TẠM THỜI HẾT HÀNG
-                    </button>
-                    <div class="card bg-light border p-3">
-                        <label class="form-label small fw-bold text-muted mb-1">Nhận thông báo khi lô hàng mới về:</label>
-                        <div class="input-group">
-                            <input type="email" id="subEmail_@Model.product.ProductID" class="form-control form-control-sm" placeholder="Nhập email của bạn...">
-                            <button class="btn btn-dark btn-sm fw-bold action-subscribe-restock" data-id="@Model.product.ProductID" type="button">Gửi</button>
-                        </div>
-                    </div>
-                    break;
-
-                case "COMING_SOON":
-                    <button type="button" class="btn btn-warning btn-lg w-100 fw-bold text-dark py-3" disabled style="background-color: #ffc107; border: none;">
-                        <i class="fa-solid fa-truck-fast me-2"></i> HÀNG SẮP VỀ (CHUẨN BỊ MỞ BÁN)
-                    </button>
-                    break;
-
-                default:
-                    <button type="button" class="btn btn-outline-danger btn-lg w-100 fw-bold py-3" disabled>
-                        NGỪNG KINH DOANH
-                    </button>
-                    break;
-            }
-
-            <hr class="section-divider" />
-
-            @* Product Description - Mobile/Tablet Only *@
-            <div class="product-description-block d-block d-md-none">
-                <h4 class="description-heading">Mô tả sản phẩm</h4>
-                <div class="description-content">
-                    <p>@Html.Raw(Model.product.ProductDescription)</p>
-                </div>
-            </div>
-
+        @* Meta Data: Category & Sold Count *@
+        <div class="product-meta">
+            <span class="category-name">Danh mục: <a href="#"><strong>@Model.product.Category.CategoryName</strong></a></span>
+            <span class="separator-dot"></span>
+            <span class="sold-count"><i class="fa-solid fa-fire"></i> Đã bán: **@Model.product.OrderDetails.Count** sản phẩm</span>
         </div>
+
+        @* Price Section *@
+        @{
+            decimal discountPercent;
+            decimal discountedPrice = PriceHelper.GetDiscountedPrice(Model.product, out discountPercent);
+            bool isDiscounted = discountedPrice < Model.product.ProductPrice;
+        }
+
+        <div class="price-section mb-3 p-3 bg-light rounded border border-warning border-opacity-25">
+            @if (isDiscounted)
+            {
+                <div class="d-flex align-items-center mb-1">
+                    <span class="text-muted text-decoration-line-through me-2 fs-5">@Model.product.ProductPrice.ToString("N0") VNĐ</span>
+                    <span class="badge bg-warning text-danger fw-bold fs-6 px-2 py-1"><i class="fa-solid fa-bolt"></i> Giảm @discountPercent.ToString("0")%</span>
+                </div>
+                <div class="current-price text-danger fw-bold" style="font-size: 2.2rem;">
+                    @discountedPrice.ToString("N0") <span class="fs-4">VNĐ</span>
+                </div>
+            }
+            else
+            {
+                <div class="current-price text-danger fw-bold" style="font-size: 2.2rem;">
+                    @Model.product.ProductPrice.ToString("N0") <span class="fs-4">VNĐ</span>
+                </div>
+            }
+        </div>
+
+        <div class="stock-status-section my-3" style="font-size: 16px;">
+            <span class="fw-bold" style="color: #333;">Tình trạng:</span>
+            @if (Model.product.StockQuantity > 0)
+            {
+                <span style="color: #28a745; font-weight: 500; margin-left: 5px;">
+                    <i class="fa-solid fa-circle-check"></i> Còn hàng (@Model.product.StockQuantity sản phẩm)
+                </span>
+            }
+            else
+            {
+                <span style="color: #dc3545; font-weight: 500; margin-left: 5px;">
+                    <i class="fa-solid fa-circle-xmark"></i> Tạm hết hàng
+                </span>
+            }
+        </div>
+
+        <hr class="section-divider" />
+
+        @* --- KHỐI ĐIỀU HƯỚNG NÚT MUA HÀNG THÔNG MINH --- *@
+        @{ string commercialState = Model.product.GetStatusLabel(); }
+
+        @switch (commercialState)
+        {
+            case "AVAILABLE":
+                using (Html.BeginForm("AddToCart", "Cart", FormMethod.Post, new { @id = "addToCartForm", @class = "cart-interaction-form" }))
+                {
+                    <input type="hidden" name="id" value="@Model.product.ProductID" />
+
+                    <div class="form-group-qty">
+                        <label for="quantity-input" class="qty-label">Số lượng:</label>
+                        <div class="quantity-control-wrapper">
+                            <button type="button" class="btn-qty-control minus-btn"><i class="fa-solid fa-minus"></i></button>
+                            @Html.TextBoxFor(model => model.quantity, new { @class = "form-control quantity-input", @id = "quantity-input", @type = "number", @min = 1, @max = Model.product.StockQuantity, @name = "quantity", @value = 1 })
+                            <button type="button" class="btn-qty-control plus-btn"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                    </div>
+
+                    <div class="price-summary-row">
+                        <span class="summary-label">Tạm tính:</span>
+                        <span class="calculated-price" id="estimatedPrice">@discountedPrice.ToString("N0") VNĐ</span>
+                    </div>
+
+                    <div class="action-buttons-group d-flex gap-2">
+                        @* CẢM BIẾN ADD_CART: Thêm ID product và gắn class 'track-add-cart' *@
+                        <button type="submit" id="addToCartBtn" class="btn-add-to-cart flex-fill">
+                            <i class="fa-solid fa-cart-shopping"></i> THÊM VÀO GIỎ HÀNG
+                        </button>
+                        <a href="@Url.Action("BuyNow", "Cart", new { id = Model.product.ProductID })" class="btn-buy-now flex-fill text-center text-decoration-none d-flex align-items-center justify-content-center">
+                            <i class="fa-solid fa-bolt me-1"></i> MUA NGAY
+                        </a>
+                    </div>
+                }
+                break;
+
+            case "OUT_OF_STOCK":
+                <button type="button" class="btn btn-secondary btn-lg w-100 fw-bold py-3" disabled style="background-color: #6c757d; border: none;">
+                    <i class="fa-solid fa-box-open me-2"></i> TẠM THỜI HẾT HÀNG
+                </button>
+                break;
+
+            case "COMING_SOON":
+                <button type="button" class="btn btn-warning btn-lg w-100 fw-bold text-dark py-3" disabled style="background-color: #ffc107; border: none;">
+                    <i class="fa-solid fa-truck-fast me-2"></i> HÀNG SẮP VỀ (CHUẨN BỊ MỞ BÁN)
+                </button>
+                break;
+
+            default:
+                <button type="button" class="btn btn-outline-danger btn-lg w-100 fw-bold py-3" disabled>
+                    NGỪNG KINH DOANH
+                </button>
+                break;
+        }
+
+        <hr class="section-divider" />
+
+        @* Product Description - Mobile/Tablet Only *@
+        <div class="product-description-block d-block d-md-none">
+            <h4 class="description-heading">Mô tả sản phẩm</h4>
+            <div class="description-content">
+                <p>@Html.Raw(Model.product.ProductDescription)</p>
+            </div>
+        </div>
+
+    </div>
     </div>
 
     @* --- PHẦN CHI TIẾT DÀI (CHỈ DESKTOP) --- *@
@@ -165,30 +158,36 @@
         </div>
     </div>
 
-    @* --- SẢN PHẨM LIÊN QUAN (Partial View) --- *@
+    @* --- SẢN PHẨM LIÊN QUAN (Cùng danh mục) --- *@
     <div class="related-products-section">
         <h3 class="related-products-title"><i class="fa-solid fa-box-open"></i> SẢN PHẨM CÓ THỂ BẠN QUAN TÂM</h3>
-        @* Tên Partial View bạn đang sử dụng *@
         @Html.Partial("PVTopProduct", Model)
     </div>
 </div>
 
-@* --- KHỐI SẢN PHẨM GỢI Ý MUA KÈM (APRIORI) --- *@
+@* ========================================================================= *@
+@* KHU VỰC GỢI Ý THÔNG MINH (3 BOX HYBRID AI LÊN NGÔI) *@
+@* ========================================================================= *@
 @{
-    var recommendedList = ViewBag.RecommendedProducts as List<WebBanHang.Models.Product>;
+    // Nhận trực tiếp mảng lớn 12 ô đã được sắp xếp chuẩn thứ tự từ C# (TwoPhase -> Apriori -> Behavior)
+    var combinedRecommendations = ViewBag.SmartRecommendations as List<WebBanHang.Models.Product> ?? new List<WebBanHang.Models.Product>();
 }
 
-@if (recommendedList != null && recommendedList.Any())
+@if (combinedRecommendations != null && combinedRecommendations.Any())
 {
-    <div class="container mt-5 mb-5">
+    <div class="container mt-4 mb-5">
         <h4 class="fw-bold mb-4 border-bottom pb-2">
-            <i class="fa-solid fa-thumbs-up text-warning"></i> Khách hàng mua sản phẩm này cũng mua thêm
+            <i class="fa-solid fa-star text-warning"></i> Dành riêng cho bạn
         </h4>
 
-        <div class="row">
-            @foreach (var item in recommendedList)
+        <div class="row" id="smart-recommendations-container">
+            @{ int recIndex = 0; }
+            @foreach (var item in combinedRecommendations)
             {
-                <div class="col-md-3 col-sm-6 mb-4">
+                // Mặc định ẩn các sản phẩm từ vị trí thứ 5 trở đi (index >= 4)
+                string displayClass = (recIndex >= 4) ? "d-none extra-smart-product" : "";
+
+                <div class="col-md-3 col-sm-6 mb-4 @displayClass">
                     <div class="card h-100 shadow-sm border-0 product-card">
                         <a href="@Url.Action("ProductDetail", "Home", new { id = item.ProductID })">
                             <img src="@item.ProductImage" class="card-img-top p-2" alt="@item.ProductName" style="height: 200px; object-fit: contain;">
@@ -199,57 +198,161 @@
                                     @item.ProductName
                                 </a>
                             </h6>
-
                             <p class="card-text text-danger fw-bold mt-auto fs-5">
                                 @String.Format("{0:N0} ₫", item.ProductPrice)
                             </p>
+                            @* CẢM BIẾN ADD_CART (CHỜ CHO CÁC MÓN GỢI Ý) *@
+                            @if (item.StockQuantity > 0 && item.GetStatusLabel() == "AVAILABLE")
+                            {
+                                <div class="d-flex gap-2">
+                                    <!-- NÚT 1: THÊM VÀO GIỎ (Màu xanh dương, không icon, giữ nguyên class ngầm) -->
+                                    <button class="btn btn-primary flex-fill add-to-cart-btn btn-cart-modern track-add-cart-ai py-2" data-id="@item.ProductID" style="font-size: 0.85rem; border: none;">
+                                        Thêm vào giỏ
+                                    </button>
 
-                            <a href="@Url.Action("AddToCart", "Cart", new { id = item.ProductID })" class="btn btn-outline-primary w-100 mt-2">
-                                <i class="fa-solid fa-cart-plus"></i> Thêm giỏ hàng
-                            </a>
+                                    <!-- NÚT 2: MUA NGAY (Màu xanh lá) -->
+                                    <a href="@Url.Action("BuyNow", "Cart", new { id = item.ProductID, quantity = 1 })" class="btn btn-success flex-fill py-2 d-flex align-items-center justify-content-center text-white" style="font-size: 0.85rem; border: none; text-decoration: none;">
+                                        Mua ngay
+                                    </a>
+                                </div>
+                            }
+                            else
+                            {
+                                <button type="button" class="btn btn-secondary w-100 mt-2" disabled>
+                                    Hết hàng
+                                </button>
+                            }
                         </div>
                     </div>
                 </div>
+                recIndex++;
             }
         </div>
-    </div>
 
-    <style>
-        .product-card {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        @if (combinedRecommendations.Count > 4)
+        {
+            <div class="text-center mt-2 mb-5">
+                <button class="btn btn-light border shadow-sm px-5 fw-bold text-primary btn-hover-scale" id="toggleSmartProducts" style="border-radius: 25px;">
+                    Xem thêm gợi ý <i class="fa-solid fa-angle-down"></i>
+                </button>
+            </div>
+        }
+    </div>
+}
+
+<style>
+    .product-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
         }
 
-            .product-card:hover {
-                transform: translateY(-5px);
-                box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
-            }
-    </style>
-}
+    .btn-hover-scale {
+        transition: transform 0.2s ease, background-color 0.2s ease;
+    }
+
+        .btn-hover-scale:hover {
+            transform: scale(1.05);
+            background-color: #f8f9fa;
+        }
+</style>
 
 @section Scripts {
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-        // Lấy giá trị gốc (Đã được định dạng C)
         const originalPriceText = '@discountedPrice.ToString("N0")';
-        // Loại bỏ dấu phân cách hàng nghìn
         const originalPrice = parseFloat(originalPriceText.replace(/\./g, '').replace(/,/g, ''));
-        // Khai báo giới hạn tồn kho từ DB
         const stockLimit = @Model.product.StockQuantity;
 
-        // Hàm định dạng tiền tệ VNĐ
         function formatVND(amount) {
             return amount.toLocaleString('vi-VN') + ' VNĐ';
         }
 
         $(document).ready(function () {
+
+            // =================================================================
+            // 🤖 HỆ THỐNG CẢM BIẾN HÀNH VI (BEHAVIOR TRACKING SENSORS) 🤖
+            // =================================================================
+            var currentProductId = '@Model.product.ProductID';
+            var currentSessionId = '@Session.SessionID';
+
+            // 1. CẢM BIẾN VIEW: Kích hoạt ngay khi User load trang thành công
+            if (currentProductId) {
+                $.post('/Tracking/LogBehavior', { productId: currentProductId, actionType: 'VIEW' });
+
+                // 2. CẢM BIẾN DWELL_TIME: Bắt đầu bấm giờ (10 giây gửi 1 lần)
+                setInterval(function () {
+                    $.post('/Tracking/LogTimeOnPage', { productId: currentProductId, sessionId: currentSessionId });
+                }, 10000);
+            }
+
+
+
+            // 4. CẢM BIẾN ADD_CART (Cho các nút gợi ý AI phía dưới)
+            $('.track-add-cart-ai').click(function (e) {
+                e.preventDefault(); // Chặn hành vi click mặc định
+
+                var pId = $(this).attr('data-id');
+                if (pId) {
+                    // 1. Ghi log hành vi cho AI
+                    $.post('/Tracking/LogBehavior', { productId: pId, actionType: 'ADD_CART' });
+
+                    // 2. Thêm vào giỏ bằng AJAX (Đúng chuẩn POST để không bị 404)
+                    $.ajax({
+                        url: '@Url.Action("AddToCart", "Cart")',
+                        type: 'POST',
+                        data: { id: pId, quantity: 1 }, // Mặc định mua 1 cái
+                        success: function (response) {
+                            if (response.success) {
+                                alert("✅ " + response.message);
+                                // Cập nhật lại giỏ hàng nhỏ trên góc (nếu có)
+                                if (typeof MiniCart === "function") {
+                                    MiniCart();
+                                }
+                            } else if (response.redirectUrl) {
+                                window.location.href = response.redirectUrl;
+                            } else {
+                                alert(response.message || "❌ Có lỗi xảy ra khi thêm sản phẩm!");
+                            }
+                        },
+                        error: function () {
+                            alert("⚠️ Lỗi hệ thống! Không thể kết nối tới giỏ hàng.");
+                        }
+                    });
+                }
+            });
+            // =================================================================
+
             const $qtyInput = $('#quantity-input');
             const $estimatedPrice = $('#estimatedPrice');
 
-            // Cập nhật giá Tạm tính dựa trên số lượng và kiểm tra giới hạn
+            function setupProductToggle(buttonId, productClass) {
+                const toggleBtn = document.getElementById(buttonId);
+                if (!toggleBtn) return;
+                const productContainers = document.querySelectorAll(productClass);
+                let showAll = false;
+
+                toggleBtn.addEventListener("click", function () {
+                    showAll = !showAll;
+                    productContainers.forEach(p => {
+                        if (showAll) {
+                            p.classList.remove('d-none');
+                            p.style.display = '';
+                        } else {
+                            p.classList.add('d-none');
+                        }
+                    });
+                    toggleBtn.innerHTML = showAll ? 'Thu gọn <i class="fa-solid fa-angle-up"></i>' : 'Xem thêm gợi ý <i class="fa-solid fa-angle-down"></i>';
+                });
+            }
+
+            setupProductToggle("toggleSmartProducts", ".extra-smart-product");
+
             function updatePrice() {
                 let quantity = parseInt($qtyInput.val()) || 1;
-
-                // Kiểm tra vượt mức tồn kho khi người dùng nhập số trực tiếp
                 if (quantity > stockLimit) {
                     alert("⚠️ Hệ thống từ chối yêu cầu. Giới hạn tồn kho hiện tại là " + stockLimit + " sản phẩm.");
                     quantity = stockLimit;
@@ -258,15 +361,12 @@
                     quantity = 1;
                     $qtyInput.val(1);
                 }
-
                 const newPrice = originalPrice * quantity;
                 $estimatedPrice.text(formatVND(newPrice));
             }
 
-            // Lắng nghe sự kiện thay đổi số lượng
             $qtyInput.on('change keyup', updatePrice);
 
-            // Xử lý nút giảm số lượng
             $('.minus-btn').click(function() {
                 let currentQty = parseInt($qtyInput.val()) || 1;
                 if (currentQty > 1) {
@@ -274,7 +374,6 @@
                 }
             });
 
-            // Xử lý nút tăng số lượng CÓ KIỂM TRA TỒN KHO
             $('.plus-btn').click(function() {
                 let currentQty = parseInt($qtyInput.val()) || 0;
                 if (currentQty >= stockLimit) {
@@ -285,10 +384,8 @@
                 }
             });
 
-            // Xử lý sự kiện submit form (Thêm vào giỏ hàng qua AJAX)
             $('#addToCartForm').submit(function (e) {
                 e.preventDefault();
-
                 var $form = $(this);
                 var url = $form.attr('action') || '@Url.Action("AddToCart", "Cart")';
                 var data = {
@@ -303,10 +400,14 @@
                     success: function (response) {
                         if (response.success) {
                             alert("✅ " + response.message);
+                            $.post('/Tracking/LogBehavior', {
+                                productId: @Model.product.ProductID,
+                                actionType: 'ADD_CART'
+                            });
                             if (typeof MiniCart === "function") {
                                 MiniCart();
                             } else {
-                                console.warn("MiniCart function not found. Please ensure it's defined in your _Layout.");
+                                console.warn("MiniCart function not found.");
                             }
                         } else if (response.redirectUrl) {
                             alert("⚠️ Vui lòng đăng nhập để sử dụng giỏ hàng!");

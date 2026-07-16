@@ -1,0 +1,168 @@
+﻿@model PagedList.IPagedList<WebBanHang.Models.SmartRecommendation>
+@using PagedList.Mvc;
+
+@{
+    ViewBag.Title = "Quản lý Gợi ý Thông minh (Hybrid AI)";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+<!-- Style bắt buộc để CSS của thanh phân trang hiển thị đẹp -->
+<link href="~/Content/PagedList.css" rel="stylesheet" type="text/css" />
+<link href="~/Content/Admin/products_admin.css" rel="stylesheet" />
+
+<!-- KHU VỰC THÔNG BÁO POPUP (TỰ ĐỘNG ẨN SAU 5 GIÂY) -->
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show shadow-lg popup-toast" role="alert" style="position: fixed; top: 30px; right: 30px; z-index: 9999; min-width: 350px; border-left: 5px solid #198754;">
+        <div class="d-flex align-items-center">
+            <i class="fa-solid fa-circle-check fs-4 me-2"></i>
+            <div>
+                <strong>Thành công!</strong><br />
+                <span class="small">@TempData["SuccessMessage"]</span>
+            </div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show shadow-lg popup-toast" role="alert" style="position: fixed; top: 30px; right: 30px; z-index: 9999; min-width: 350px; border-left: 5px solid #dc3545;">
+        <div class="d-flex align-items-center">
+            <i class="fa-solid fa-triangle-exclamation fs-4 me-2"></i>
+            <div>
+                <strong>Có lỗi xảy ra!</strong><br />
+                <span class="small">@TempData["ErrorMessage"]</span>
+            </div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="card shadow mb-4 border-0">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="m-0 fw-bold text-primary d-flex align-items-center">
+            <i class="fa-solid fa-microchip me-2"></i> Kết quả huấn luyện AI (Apriori + Two-Phase)
+        </h5>
+
+        @using (Html.BeginForm("RunAlgorithm", "SmartRecommendation", FormMethod.Post, new { @class = "d-inline", id = "runAlgorithmForm" }))
+        {
+            @Html.AntiForgeryToken()
+            <button type="button" class="btn btn-warning fw-bold shadow-sm" onclick="confirmRunAlgorithm()">
+                <i class="fa-solid fa-rotate"></i> Ép quét lại toàn bộ (Thủ công)
+            </button>
+        }
+    </div>
+
+    <div class="card-body">
+        <div class="table-responsive mt-3">
+            <table class="table table-bordered table-hover align-middle" width="100%" cellspacing="0">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 30%;">Khách xem (A)</th>
+                        <th style="width: 30%;"><i class="fa-solid fa-arrow-right text-success"></i> Sẽ gợi ý mua kèm (B)</th>
+                        <th class="text-center" title="Độ tin cậy mua kèm theo thuật toán Apriori">Tin cậy</th>
+                        <th class="text-center" title="Số lượng đơn hàng đã mua chung cặp này">Tần suất</th>
+                        <th class="text-end" title="Ngưỡng Phase 1 (TWU)">TWU</th>
+                        <th class="text-end text-success" title="Tiền lời thu được khi bán 1 cặp này (Lãi A + Lãi B)">Lợi nhuận 1 Combo</th>
+                        <th class="text-center">Cập nhật</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var item in Model)
+                        {
+                            <tr>
+                                <!-- HIỂN THỊ ẢNH VÀ TÊN SẢN PHẨM A -->
+                                <td>
+                                    <a href="@Url.Action("ProductAIDetails", "SmartRecommendation", new { area = "Admin", id = item.Product.ProductID })" class="text-decoration-none d-flex align-items-center" title="Bấm vào để xem chi tiết các thuật toán của sản phẩm này">
+                                        <img src="@item.Product.ProductImage" alt="Ảnh A" style="width: 50px; height: 50px; object-fit: contain; border: 1px solid #ddd; border-radius: 4px; padding: 2px;" class="me-3 bg-white" />
+                                        <span class="fw-bold text-primary" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 0.95rem; text-decoration: underline;">
+                                            @item.Product.ProductName
+                                        </span>
+                                    </a>
+                                </td>
+
+                                <!-- HIỂN THỊ ẢNH VÀ TÊN SẢN PHẨM B -->
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img src="@item.Product1.ProductImage" alt="Ảnh B" style="width: 50px; height: 50px; object-fit: contain; border: 1px solid #ddd; border-radius: 4px; padding: 2px;" class="me-3 bg-white" />
+                                        <span class="fw-bold text-primary" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 0.95rem;">
+                                            @item.Product1.ProductName
+                                        </span>
+                                    </div>
+                                </td>
+
+                                <td class="text-center">
+                                    @{
+                                        var confPercent = item.Confidence * 100;
+                                        string badgeColor = confPercent >= 50 ? "bg-success" : (confPercent >= 30 ? "bg-warning text-dark" : "bg-secondary");
+                                    }
+                                    <span class="badge @badgeColor px-3 py-2 fs-6">@confPercent.ToString("0.##")%</span>
+                                </td>
+
+                                <td class="text-center"><span class="fw-bold text-danger">@item.Support</span> lần</td>
+
+                                <td class="text-end text-muted small">@item.TWU.ToString("N0") đ</td>
+
+                                <td class="text-end fw-bold text-success bg-success bg-opacity-10 fs-6">
+                                    + @item.ActualUtility.ToString("N0") đ
+                                </td>
+
+                                <td class="text-center small text-muted">
+                                    <i class="fa-regular fa-clock d-block mb-1"></i>
+                                    @item.UpdateDate.ToString("dd/MM/yy")<br />
+                                    @item.UpdateDate.ToString("HH:mm:ss")
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center py-5 text-muted">
+                                <i class="fa-solid fa-robot fs-1 mb-3 text-primary opacity-50"></i><br />
+                                <h5>Chưa có dữ liệu nào được khai phá</h5>
+                                <p class="mb-0">Hệ thống sẽ <b>tự động học</b> khi khách hàng bắt đầu đặt các đơn hàng.</p>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="alert alert-info border-0 bg-opacity-10 bg-info mb-4">
+            <i class="fa-solid fa-graduation-cap me-1"></i> <strong>Sự tối ưu:</strong> Hệ thống lai áp dụng <b>Apriori</b> để đảm bảo tính liên kết (Không gợi ý bừa bãi), và <b>Two-Phase</b> để tối đa hóa <b>Lợi nhuận Combo</b>. Tiền lời được tính chính xác bằng <b>(Lợi nhuận 1 SP A + Lợi nhuận 1 SP B)</b> ở thời điểm hiện tại, đảm bảo luôn ưu tiên hiển thị cặp sản phẩm mang lại biên lợi nhuận lớn nhất!
+        </div>
+
+        <!-- THANH PHÂN TRANG (PAGINATION) -->
+        <div class="pagination-container d-flex justify-content-center mt-4">
+            @if (Model != null && Model.PageCount > 1)
+            {
+                @Html.PagedListPager(Model, page => Url.Action("Index", new { page }), PagedListRenderOptions.ClassicPlusFirstAndLast)
+            }
+        </div>
+
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        // Hàm hiển thị hộp thoại xác nhận khi click nút
+        function confirmRunAlgorithm() {
+            if (confirm('Hệ thống hiện đã TỰ ĐỘNG học mỗi khi có đơn hàng mới.\n\nBạn có chắc chắn vẫn muốn ÉP hệ thống quét lại toàn bộ ngay bây giờ?')) {
+                document.getElementById('runAlgorithmForm').submit();
+            }
+        }
+
+        // Tự động tắt Popup Toast sau 5 giây
+        $(document).ready(function () {
+            if ($(".popup-toast").length > 0) {
+                setTimeout(function () {
+                    $(".popup-toast").fadeOut("slow", function () {
+                        $(this).remove();
+                    });
+                }, 5000);
+            }
+        });
+    </script>
+}

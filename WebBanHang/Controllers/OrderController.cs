@@ -47,16 +47,58 @@ namespace WebBanHang.Controllers
             return View();
         }
 
-        // GET: Orders/Checkout
-        public ActionResult Checkout()
+        [HttpPost]
+        public ActionResult ValidateCartStock()
         {
             var cart = Session["Cart"] as WebBanHang.Models.ViewModel.Cart;
+            if (cart == null || !cart.Items.Any())
+            {
+                return Json(new { success = false, message = "Giỏ hàng của bạn đang trống!" });
+            }
+
+            foreach (var item in cart.Items)
+            {
+                var checkStock = db.Products.Find(item.ProductID);
+                if (checkStock == null || item.Quantity > checkStock.StockQuantity)
+                {
+                    return Json(new
+                    {
+                        success = false,
+                        message = $"Hệ thống từ chối: Sản phẩm '{item.ProductName}' hiện tại đang hết hàng. Vui lòng kiểm tra hoặc thay đổi sản phẩm!"
+                    });
+                }
+            }
+
+            return Json(new { success = true });
+        }
+
+        // GET: Orders/Checkout
+        public ActionResult Checkout(bool isBuyNow = false)
+        {
+            // 1. LẤY ĐÚNG GIỎ HÀNG DỰA VÀO CỜ MUA NGAY
+            var cart = isBuyNow ? Session["BuyNowCart"] as WebBanHang.Models.ViewModel.Cart
+                                : Session["Cart"] as WebBanHang.Models.ViewModel.Cart;
 
             if (cart == null || !cart.Items.Any())
             {
                 TempData["Message"] = "Giỏ hàng của bạn đang trống!";
                 return RedirectToAction("Index", "Cart");
             }
+
+            foreach (var item in cart.Items)
+            {
+                var checkStock = db.Products.Find(item.ProductID);
+                if (checkStock == null || item.Quantity > checkStock.StockQuantity)
+                {
+                    if (isBuyNow) Session.Remove("BuyNowCart");
+
+                    TempData["Error"] = $"Sản phẩm '{item.ProductName}' hiện chỉ còn {checkStock?.StockQuantity ?? 0} cái. Vui lòng cập nhật lại giỏ hàng!";
+                    return RedirectToAction("Index", "Cart");
+                }
+            }
+
+            // 2. Bắn cờ này ra View để nhét vào thẻ input ẩn
+            ViewBag.IsBuyNow = isBuyNow;
 
             using (var tempDb = new WebBanHang.Models.MyStoreEntities())
             {
@@ -122,13 +164,17 @@ namespace WebBanHang.Controllers
         // POST: Orders/Checkout
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Checkout(CheckoutVM model)
+        public ActionResult Checkout(CheckoutVM model, bool isBuyNow = false)
         {
-            var cart = Session["Cart"] as WebBanHang.Models.ViewModel.Cart;
+            var cart = isBuyNow ? Session["BuyNowCart"] as WebBanHang.Models.ViewModel.Cart
+                        : Session["Cart"] as WebBanHang.Models.ViewModel.Cart;
+
             if (cart == null || !cart.Items.Any())
             {
                 ModelState.AddModelError("", "Giỏ hàng của bạn đang trống!");
                 model.AvailableCoupons = db.Coupons.Where(c => !c.Products.Any()).ToList();
+                model.CartItems = new List<WebBanHang.Models.ViewModel.CartItem>();
+                model.TotalAmount = 0;
                 return View(model);
             }
 
@@ -315,6 +361,59 @@ namespace WebBanHang.Controllers
                     db.SaveChanges();
                     transaction.Commit();
 
+                    try
+                    {
+                        string currentSession = Session.SessionID;
+
+                        if (cart != null && cart.Items.Any())
+                        {
+                            foreach (var cartItem in cart.Items)
+                            {
+                                var existingLog = db.UserBehaviorLogs.FirstOrDefault(l =>
+                                    l.ProductID == cartItem.ProductID &&
+                                    l.SessionID == currentSession &&
+                                    l.ActionType == "BUY");
+
+                                if (existingLog != null)
+                                {
+                                    existingLog.ActionWeight += 10;
+                                    existingLog.CreatedAt = DateTime.Now;
+                                }
+                                else
+                                {
+                                    db.UserBehaviorLogs.Add(new UserBehaviorLog
+                                    {
+                                        ProductID = cartItem.ProductID,
+                                        ActionType = "BUY",
+                                        ActionWeight = 10,
+                                        CustomerID = customerId,
+                                        SessionID = currentSession,
+                                        CreatedAt = DateTime.Now
+                                    });
+                                }
+                            }
+                            db.SaveChanges();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine("Lỗi ghi log BUY: " + ex.Message);
+                    }
+
+                    // ==========================================================
+                    // CHẠY ĐỒNG BỘ: TỰ ĐỘNG HUẤN LUYỆN LẠI AI (HYBRID MODEL)
+                    // ==========================================================
+                    try
+                    {
+                        var hybridService = new WebBanHang.Services.SmartRecommendationService();
+                        // Chạy với cấu hình: Tin cậy > 20%, Support > 1, Utility > 100k
+                        hybridService.RunHybridAlgorithm(0.2, 1, 100000m);
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine("Lỗi AI: " + ex.Message);
+                    }
+
                     // Xử lý VNPAY
                     if (model.PaymentMethod == "VNPAY")
                     {
@@ -345,28 +444,23 @@ namespace WebBanHang.Controllers
                         return Redirect(paymentUrl);
                     }
 
-                    // ✅ FIX LỖI 1: Xử lý Session Giỏ hàng chuẩn cho COD (Không bị null đè)
-                    var tempCart = Session["BuyNowTempCart"] as WebBanHang.Models.ViewModel.Cart;
-                    if (tempCart != null)
+                    if (isBuyNow)
                     {
-                        Session["Cart"] = tempCart;
-                        Session.Remove("BuyNowTempCart");
+                        Session.Remove("BuyNowCart"); // Chỉ xóa giỏ phụ
                     }
                     else
                     {
-                        Session.Remove("Cart");
-                        Session.Remove("VoucherDiscount");
+                        Session.Remove("Cart"); // Chỉ xóa giỏ chính
                     }
-                    // Đã xóa dòng Session["Cart"] = null gây lỗi;
 
-                    // Xóa Session ShippingFee sau khi đặt hàng xong
+                    Session.Remove("VoucherDiscount");
                     Session.Remove("ShippingFee");
 
                     return RedirectToAction("OrderSuccess", new { id = order.OrderID });
                 }
                 catch (Exception ex)
                 {
-                    try { transaction.Rollback(); } catch {  }
+                    try { transaction.Rollback(); } catch { }
 
                     ModelState.AddModelError("", "Lỗi hệ thống: " + ex.Message);
                     model.AvailableCoupons = db.Coupons.Where(c => !c.Products.Any()).ToList();
@@ -375,6 +469,12 @@ namespace WebBanHang.Controllers
                     {
                         model.CartItems = cart.Items.ToList();
                         model.TotalAmount = cart.TotalValue();
+                    }
+                    else
+                    {
+                        // ✅ Bảo vệ 2 lớp: Chống Crash View ngay cả khi có lỗi hệ thống văng ra lúc Session đã mất
+                        model.CartItems = new List<WebBanHang.Models.ViewModel.CartItem>();
+                        model.TotalAmount = 0;
                     }
 
                     return View(model);
@@ -424,6 +524,9 @@ namespace WebBanHang.Controllers
                             order.PaymentStatus = "Đã thanh toán";
                             db.SaveChanges();
 
+                            // ✅ Cập nhật AI khi đơn VNPay thanh toán thành công
+                            try { new WebBanHang.Services.SmartRecommendationService().RunHybridAlgorithm(0.2, 1, 100000m); } catch { }
+
                             Session.Remove("Cart");
                             Session.Remove("VoucherDiscount");
                             Session.Remove("BuyNowTempCart");
@@ -437,6 +540,8 @@ namespace WebBanHang.Controllers
                         {
                             order.PaymentStatus = "Thất bại";
                             order.OrderStatus = "Đã hủy";
+
+                            string currentSession = Session.SessionID;
 
                             foreach (var detail in order.OrderDetails)
                             {
@@ -456,6 +561,25 @@ namespace WebBanHang.Controllers
                                         db.Entry(latestBatch).State = EntityState.Modified;
                                     }
                                 }
+
+                                var fakeBuyLog = db.UserBehaviorLogs.FirstOrDefault(l =>
+                                    l.ProductID == detail.ProductID &&
+                                    l.SessionID == currentSession &&
+                                    l.ActionType == "BUY");
+
+                                if (fakeBuyLog != null)
+                                {
+                                    fakeBuyLog.ActionWeight -= 10;
+                                    if (fakeBuyLog.ActionWeight <= 0)
+                                    {
+                                        db.UserBehaviorLogs.Remove(fakeBuyLog); // Trừ về 0 thì dọn rác luôn
+                                    }
+                                    else
+                                    {
+                                        db.Entry(fakeBuyLog).State = EntityState.Modified;
+                                    }
+                                }
+                                // =========================================================
                             }
 
                             db.Entry(order).State = EntityState.Modified;
@@ -464,6 +588,9 @@ namespace WebBanHang.Controllers
                             // =====================================================================
                             // FIX LỖI: KHÔI PHỤC GIỎ HÀNG KHI HỦY VNPAY
                             // =====================================================================
+                            // ✅ Cập nhật lại AI để hệ thống KHÔNG học dữ liệu rác từ đơn hàng bị hủy do lỗi thanh toán
+                            try { new WebBanHang.Services.SmartRecommendationService().RunHybridAlgorithm(0.2, 1, 100000m); } catch { }
+
                             var tempCart = Session["BuyNowTempCart"] as WebBanHang.Models.ViewModel.Cart;
 
                             // Trường hợp 1: Khách dùng nút "Mua Ngay" hoặc "Chọn vài món"

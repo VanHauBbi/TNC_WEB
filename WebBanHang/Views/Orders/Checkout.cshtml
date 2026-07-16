@@ -14,6 +14,8 @@
     {
         @Html.AntiForgeryToken()
 
+        <input type="hidden" name="isBuyNow" value="@(ViewBag.IsBuyNow != null && (bool)ViewBag.IsBuyNow ? "true" : "false")" />
+
         <div class="row">
             <div class="col-md-7 checkout-left-col">
 
@@ -96,6 +98,9 @@
                                     totalOriginalAmount += (item.OriginalPrice * item.Quantity);
                                     <tr class="order-item-row">
                                         <td>
+                                            <!-- Dòng ẩn chứa ID sản phẩm để cảm biến quét -->
+                                            <input type="hidden" class="cart-item-id" value="@item.ProductID" />
+
                                             <img src="@item.ProductImage" alt="@item.ProductName" class="item-thumb" />
                                             <span class="item-name-summary">@item.ProductName</span>
                                         </td>
@@ -165,7 +170,7 @@
                     </div>
 
                     <div class="place-order-action">
-                        <input type="submit" value="HOÀN TẤT ĐẶT HÀNG" class="btn-place-order" />
+                        <input type="submit" value="HOÀN TẤT ĐẶT HÀNG" class="btn-place-order track-buy" />
                     </div>
                 </div>
             </div>

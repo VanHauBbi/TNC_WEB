@@ -947,6 +947,7 @@
           <NavigationProperty Name="ProductVariants" Relationship="Self.FK_ProductVariant_Product" FromRole="Product" ToRole="ProductVariant" />
           <NavigationProperty Name="SmartRecommendations" Relationship="Self.FK_SmartRec_ProductA" FromRole="Product" ToRole="SmartRecommendation" />
           <NavigationProperty Name="SmartRecommendations1" Relationship="Self.FK_SmartRec_ProductB" FromRole="Product" ToRole="SmartRecommendation" />
+          <NavigationProperty Name="UserBehaviorLogs" Relationship="Self.FK_UserBehaviorLogs_Product" FromRole="Product" ToRole="UserBehaviorLogs" />
           <NavigationProperty Name="Coupons" Relationship="Self.CouponProduct" FromRole="Product" ToRole="Coupon" />
           <NavigationProperty Name="UserBehaviorLogs" Relationship="MyStoreModel.FK_UserBehaviorLogs_Product" FromRole="Product" ToRole="UserBehaviorLog" />
         </EntityType>
@@ -1059,6 +1060,20 @@
           <Property Name="ResetPasswordToken" Type="String" MaxLength="200" FixedLength="false" Unicode="true" />
           <Property Name="ResetTokenExpiry" Type="DateTime" Precision="3" />
           <NavigationProperty Name="Customers" Relationship="Self.FK_Customer_User" FromRole="User" ToRole="Customer" />
+        </EntityType>
+        <EntityType Name="UserBehaviorLog">
+          <Key>
+            <PropertyRef Name="LogID" />
+          </Key>
+          <Property Name="LogID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="SessionID" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
+          <Property Name="CustomerID" Type="Int32" />
+          <Property Name="ProductID" Type="Int32" />
+          <Property Name="ActionType" Type="String" MaxLength="50" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="ActionWeight" Type="Int32" Nullable="false" />
+          <Property Name="CreatedAt" Type="DateTime" Nullable="false" Precision="3" />
+          <Property Name="SearchKeyword" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
+          <NavigationProperty Name="Product" Relationship="Self.FK_UserBehaviorLogs_Product" FromRole="UserBehaviorLogs" ToRole="Product" />
         </EntityType>
         <Association Name="FK_Cart_Customer">
           <End Role="Customer" Type="Self.Customer" Multiplicity="1" />
@@ -1356,6 +1371,20 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
+        <Association Name="FK_UserBehaviorLogs_Product">
+          <End Role="Product" Type="Self.Product" Multiplicity="0..1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="UserBehaviorLogs" Type="Self.UserBehaviorLog" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Product">
+              <PropertyRef Name="ProductID" />
+            </Principal>
+            <Dependent Role="UserBehaviorLogs">
+              <PropertyRef Name="ProductID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
         <Association Name="FK_PODetail_PO">
           <End Role="PurchaseOrder" Type="Self.PurchaseOrder" Multiplicity="1">
             <OnDelete Action="Cascade" />
@@ -1410,6 +1439,7 @@
           <EntitySet Name="SupportMessages" EntityType="Self.SupportMessage" />
           <EntitySet Name="SupportSessions" EntityType="Self.SupportSession" />
           <EntitySet Name="Users" EntityType="Self.User" />
+          <EntitySet Name="UserBehaviorLogs" EntityType="Self.UserBehaviorLog" />
           <AssociationSet Name="FK_Cart_Customer" Association="Self.FK_Cart_Customer">
             <End Role="Customer" EntitySet="Customers" />
             <End Role="Cart" EntitySet="Carts" />
@@ -1501,6 +1531,10 @@
           <AssociationSet Name="FK_SmartRec_ProductB" Association="Self.FK_SmartRec_ProductB">
             <End Role="Product" EntitySet="Products" />
             <End Role="SmartRecommendation" EntitySet="SmartRecommendations" />
+          </AssociationSet>
+          <AssociationSet Name="FK_UserBehaviorLogs_Product" Association="Self.FK_UserBehaviorLogs_Product">
+            <End Role="Product" EntitySet="Products" />
+            <End Role="UserBehaviorLogs" EntitySet="UserBehaviorLogs" />
           </AssociationSet>
           <AssociationSet Name="FK_PODetail_PO" Association="Self.FK_PODetail_PO">
             <End Role="PurchaseOrder" EntitySet="PurchaseOrders" />
@@ -1809,6 +1843,20 @@
                 <ScalarProperty Name="UserRole" ColumnName="UserRole" />
                 <ScalarProperty Name="ResetPasswordToken" ColumnName="ResetPasswordToken" />
                 <ScalarProperty Name="ResetTokenExpiry" ColumnName="ResetTokenExpiry" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="UserBehaviorLogs">
+            <EntityTypeMapping TypeName="MyStoreModel.UserBehaviorLog">
+              <MappingFragment StoreEntitySet="UserBehaviorLogs">
+                <ScalarProperty Name="LogID" ColumnName="LogID" />
+                <ScalarProperty Name="SessionID" ColumnName="SessionID" />
+                <ScalarProperty Name="CustomerID" ColumnName="CustomerID" />
+                <ScalarProperty Name="ProductID" ColumnName="ProductID" />
+                <ScalarProperty Name="ActionType" ColumnName="ActionType" />
+                <ScalarProperty Name="ActionWeight" ColumnName="ActionWeight" />
+                <ScalarProperty Name="CreatedAt" ColumnName="CreatedAt" />
+                <ScalarProperty Name="SearchKeyword" ColumnName="SearchKeyword" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
