@@ -51,7 +51,7 @@ namespace WebBanHang.Hubs
                 // Hàm 'broadcastMessage' sẽ được viết bằng Javascript ở phía Giao diện Front-end
                 Clients.Group(groupName).broadcastMessage(senderName, message, isAdmin, DateTime.Now.ToString("HH:mm"));
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Nếu lưu DB lỗi, gửi thông báo lỗi riêng cho người vừa bấm gửi (Caller) biết
                 Clients.Caller.errorMessage("Không thể gửi tin nhắn do lỗi hệ thống!");

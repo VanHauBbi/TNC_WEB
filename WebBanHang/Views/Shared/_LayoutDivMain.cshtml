@@ -266,8 +266,32 @@
             e.stopPropagation();
         });
 
-        $(document).on('click', '#view-cart-btn, #checkout-btn', function (e) {
-            e.stopPropagation();
+        $(document).on('click', '#checkout-btn', function (e) {
+            e.stopPropagation(); // Ngăn dropdown giỏ hàng bị tắt
+
+            // 1. Kiểm tra đăng nhập
+            if (isLoggedIn === "false") {
+                window.location.href = '@Url.Action("Login", "Account")';
+                return;
+            }
+
+            var checkoutUrl = '@Url.Action("Checkout", "Orders")';
+
+            // 2. Chặn chuyển trang và gọi AJAX kiểm tra kho ngầm
+            $.post('/Orders/ValidateCartStock', function (response) {
+                if (response.success) {
+                    // Nếu kho đủ hàng -> Chuyển sang trang Checkout
+                    window.location.href = checkoutUrl;
+                } else {
+                    // Nếu thiếu hàng -> Hiện Popup (Giữ nguyên trang hiện tại)
+                    alert(response.message);
+
+                    // Khi người dùng bấm OK, đá về trang Giỏ hàng
+                    window.location.href = '@Url.Action("Index", "Cart")';
+                }
+            }).fail(function () {
+                alert("Lỗi kết nối đến máy chủ. Vui lòng thử lại!");
+            });
         });
 
         $(document).on('click', '#view-cart-btn', function () {
@@ -297,6 +321,10 @@
                         $('#cart-total').text(res.cartTotal);
                         MiniCart();
                         alert(res.message);
+                        $.post('/Tracking/LogBehavior', {
+                            productId: productId,
+                            actionType: 'ADD_CART'
+                        });
                     } else if (res.redirectUrl) {
                         window.location.href = res.redirectUrl;
                     } else {
@@ -812,7 +840,7 @@
         switchToAIUI();
         showWelcomeMessage();
         resetChatTimeout();
-    }
+        }
     </script>
 </body>
 </html>

@@ -1,0 +1,128 @@
+﻿@model WebBanHang.Models.ViewModel.ProductAIDetailVM
+
+@{
+    ViewBag.Title = "Chi tiết Phân tích AI Sản phẩm";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="card shadow mb-4 border-0">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="m-0 fw-bold text-primary">
+            <i class="fa-solid fa-chart-pie me-2"></i> Chi tiết Gợi ý AI: @Model.ProductInfo.ProductName
+        </h5>
+        <a href="@Url.Action("Index", "SmartRecommendation")" class="btn btn-secondary shadow-sm fw-bold">
+            <i class="fa-solid fa-arrow-left"></i> Quay lại danh sách
+        </a>
+    </div>
+
+    <div class="card-body">
+        @* 1. KHU VỰC THÔNG TIN CƠ BẢN CỦA SẢN PHẨM *@
+        <div class="row mb-5 bg-light p-4 rounded border">
+            <div class="col-md-3 text-center">
+                <img src="@Model.ProductInfo.ProductImage" class="img-fluid bg-white rounded shadow-sm border p-2" style="height: 250px; width: 100%; object-fit: contain;" />
+            </div>
+            <div class="col-md-9">
+                <h4 class="fw-bold text-dark mb-4">@Model.ProductInfo.ProductName</h4>
+                <table class="table table-borderless table-sm fs-6">
+                    <tr>
+                        <td width="20%" class="fw-bold text-muted">Danh mục:</td>
+                        <td><span class="badge bg-secondary fs-6">@(Model.ProductInfo.Category?.CategoryName ?? "Chưa phân loại")</span></td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold text-muted">Giá bán (Đơn giá):</td>
+                        <td class="text-danger fw-bold fs-5">@Model.ProductInfo.ProductPrice.ToString("N0") ₫</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold text-muted">Giá nhập kho (Vốn):</td>
+                        <td class="text-success fw-bold">@(Model.ProductInfo.ImportPrice > 0 ? Model.ProductInfo.ImportPrice.ToString("N0") + " ₫" : "Đang cập nhật")</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold text-muted">Số lượng tồn kho:</td>
+                        <td>
+                            <span class="badge bg-success fs-6 px-3 py-2">@Model.ProductInfo.StockQuantity</span>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <hr />
+
+        @* 2. BẢNG TWO-PHASE (GÓC NHÌN LỢI NHUẬN) *@
+        <h5 class="text-success fw-bold mt-4 mb-3"><i class="fa-solid fa-sack-dollar"></i> Thuật toán Two-Phase (Tối đa hóa Lợi nhuận Utility)</h5>
+        <div class="table-responsive mb-5">
+            <table class="table table-bordered table-hover align-middle">
+                <thead class="table-success">
+                    <tr>
+                        <th style="width: 40%;">Sản phẩm gợi ý mua kèm (B)</th>
+                        <th class="text-center">Tần suất chung</th>
+                        <th class="text-center">Tiền tiện ích (TWU)</th>
+                        <th class="text-center text-success fw-bold">Lợi nhuận dự kiến / Cặp</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.TwoPhaseRecommendations != null && Model.TwoPhaseRecommendations.Any())
+                    {
+                        foreach (var rule in Model.TwoPhaseRecommendations)
+                        {
+                            <tr>
+                                <td class="fw-bold text-dark">
+                                    <img src="@rule.Product1.ProductImage" style="width: 40px; height: 40px; object-fit: contain;" class="me-2 border bg-white p-1" />
+                                    @rule.Product1.ProductName
+                                </td>
+                                <td class="text-center fw-bold">@rule.Support lần</td>
+                                <td class="text-end text-muted">@rule.TWU.ToString("N0") ₫</td>
+                                <td class="text-end text-success fw-bold bg-success bg-opacity-10">+ @rule.ActualUtility.ToString("N0") ₫</td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr><td colspan="4" class="text-center py-4 text-muted">Không có gợi ý lợi nhuận cao cho sản phẩm này.</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @* 3. BẢNG APRIORI (GÓC NHÌN ĐỘ TIN CẬY) *@
+        <h5 class="text-info fw-bold mt-4 mb-3" style="color: #0dcaf0;"><i class="fa-solid fa-link"></i> Thuật toán Apriori (Tối đa hóa Độ tin cậy Confidence)</h5>
+        <div class="table-responsive mb-3">
+            <table class="table table-bordered table-hover align-middle">
+                <thead class="table-info">
+                    <tr>
+                        <th style="width: 40%;">Sản phẩm gợi ý mua kèm (B)</th>
+                        <th class="text-center">Độ hỗ trợ (Support / Tần suất)</th>
+                        <th class="text-center">Độ tin cậy (Confidence)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.AprioriRecommendations != null && Model.AprioriRecommendations.Any())
+                    {
+                        foreach (var rule in Model.AprioriRecommendations)
+                        {
+                            <tr>
+                                <td class="fw-bold text-dark">
+                                    <img src="@rule.Product1.ProductImage" style="width: 40px; height: 40px; object-fit: contain;" class="me-2 border bg-white p-1" />
+                                    @rule.Product1.ProductName
+                                </td>
+                                <td class="text-center">Đã mua chung <span class="fw-bold text-danger">@rule.Support</span> lần</td>
+                                <td class="text-center">
+                                    @{
+                                        var confPercent = rule.Confidence * 100;
+                                        string badgeColor = confPercent >= 50 ? "bg-success" : (confPercent >= 30 ? "bg-warning text-dark" : "bg-secondary");
+                                    }
+                                    <span class="badge @badgeColor px-3 py-2 fs-6">@confPercent.ToString("0.##")%</span>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr><td colspan="3" class="text-center py-4 text-muted">Không có luật kết hợp đủ mạnh cho sản phẩm này.</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</div>

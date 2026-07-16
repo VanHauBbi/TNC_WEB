@@ -78,10 +78,21 @@ namespace WebBanHang.Controllers
                     return Json(new { success = false, message = "Từ chối: Sản phẩm chưa mở bán chính thức hoặc tạm ngừng kinh doanh!" });
                 }
 
-                // [CHỐT CHẶN AN TOÀN 2]: Kiểm tra giới hạn kho vật lý
-                if (product.StockQuantity < quantity)
+                // --- ĐƯA ĐOẠN LẤY GIỎ HÀNG LÊN TRƯỚC ĐỂ KIỂM TRA SỐ LƯỢNG KẾT HỢP ---
+                var cartService = GetCartService();
+                var cart = cartService.GetCart();
+
+                var existingItem = cart.Items.FirstOrDefault(x => x.ProductID == id);
+                int currentQtyInCart = existingItem != null ? existingItem.Quantity : 0;
+                int totalRequestedQty = currentQtyInCart + quantity;
+
+                // [CHỐT CHẶN AN TOÀN 2]: Kiểm tra giới hạn kho vật lý (Kết hợp số lượng đang có trong giỏ)
+                if (product.StockQuantity < totalRequestedQty)
                 {
-                    return Json(new { success = false, message = $"Kho chỉ còn tối đa {product.StockQuantity} sản phẩm!" });
+                    string errorMsg = currentQtyInCart > 0
+                        ? $"Kho còn {product.StockQuantity} cái. Bạn đã có {currentQtyInCart} cái trong giỏ, không thể thêm quá tồn kho!"
+                        : $"Kho chỉ còn tối đa {product.StockQuantity} sản phẩm!";
+                    return Json(new { success = false, message = errorMsg });
                 }
 
                 decimal discountPercent;
@@ -89,9 +100,6 @@ namespace WebBanHang.Controllers
 
                 // [CHỐT CHẶN AN TOÀN 3]: Ngăn chặn lạm dụng mã giảm giá để tạo đơn hàng âm tiền
                 if (finalUnitPrice < 0) finalUnitPrice = 0;
-
-                var cartService = GetCartService();
-                var cart = cartService.GetCart();
 
                 cart.AddItem(product.ProductID, product.ProductImage, product.ProductName,
                     finalUnitPrice, product.ProductPrice, quantity, product.Category?.CategoryName);
@@ -258,7 +266,7 @@ namespace WebBanHang.Controllers
         }
 
         // MUA NGAY
-        public ActionResult BuyNow(int id)
+        public ActionResult BuyNow(int id, int quantity = 1)
         {
             if (Session["CustomerID"] == null)
             {
@@ -268,31 +276,23 @@ namespace WebBanHang.Controllers
 
             var product = db.Products.Include(p => p.Coupons).SingleOrDefault(p => p.ProductID == id);
 
-            // [CHỐT CHẶN]: Chặn truy cập trực tiếp qua thanh địa chỉ trình duyệt
-            if (product == null || product.GetStatusLabel() != "AVAILABLE" || product.StockQuantity < 1)
+            if (product == null || product.GetStatusLabel() != "AVAILABLE" || product.StockQuantity < quantity)
             {
-                TempData["Error"] = "Sản phẩm này hiện không khả dụng để thanh toán nhanh!";
+                TempData["Error"] = "Sản phẩm này hiện không đủ số lượng để thanh toán nhanh!";
                 return RedirectToAction("Index", "Home");
             }
 
-            var currentCart = Session["Cart"] as WebBanHang.Models.ViewModel.Cart;
-            if (currentCart != null && currentCart.Items.Any())
-            {
-                Session["BuyNowTempCart"] = currentCart;
-            }
 
             decimal discountPercent;
             decimal finalUnitPrice = PriceHelper.GetDiscountedPrice(product, out discountPercent);
-            if (finalUnitPrice < 0) finalUnitPrice = 0;
 
             var buyNowCart = new WebBanHang.Models.ViewModel.Cart();
-
             buyNowCart.AddItem(product.ProductID, product.ProductImage, product.ProductName,
-                                finalUnitPrice, product.ProductPrice, 1, product.Category?.CategoryName);
+                                finalUnitPrice, product.ProductPrice, quantity, product.Category?.CategoryName);
 
-            Session["Cart"] = buyNowCart;
+            Session["BuyNowCart"] = buyNowCart;
 
-            return RedirectToAction("Checkout", "Orders");
+            return RedirectToAction("Checkout", "Orders", new { isBuyNow = true });
         }
 
         [HttpPost]

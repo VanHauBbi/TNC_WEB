@@ -75,12 +75,12 @@
                             <tr>
                                 <!-- HIỂN THỊ ẢNH VÀ TÊN SẢN PHẨM A -->
                                 <td>
-                                    <div class="d-flex align-items-center">
+                                    <a href="@Url.Action("ProductAIDetails", "SmartRecommendation", new { area = "Admin", id = item.Product.ProductID })" class="text-decoration-none d-flex align-items-center" title="Bấm vào để xem chi tiết các thuật toán của sản phẩm này">
                                         <img src="@item.Product.ProductImage" alt="Ảnh A" style="width: 50px; height: 50px; object-fit: contain; border: 1px solid #ddd; border-radius: 4px; padding: 2px;" class="me-3 bg-white" />
-                                        <span class="fw-bold text-dark" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 0.95rem;">
+                                        <span class="fw-bold text-primary" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 0.95rem; text-decoration: underline;">
                                             @item.Product.ProductName
                                         </span>
-                                    </div>
+                                    </a>
                                 </td>
 
                                 <!-- HIỂN THỊ ẢNH VÀ TÊN SẢN PHẨM B -->

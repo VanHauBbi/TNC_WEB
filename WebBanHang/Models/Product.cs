@@ -27,6 +27,7 @@ namespace WebBanHang.Models
             this.ProductVariants = new HashSet<ProductVariant>();
             this.SmartRecommendations = new HashSet<SmartRecommendation>();
             this.SmartRecommendations1 = new HashSet<SmartRecommendation>();
+            this.UserBehaviorLogs = new HashSet<UserBehaviorLog>();
             this.Coupons = new HashSet<Coupon>();
         }
     
@@ -63,6 +64,8 @@ namespace WebBanHang.Models
         public virtual ICollection<SmartRecommendation> SmartRecommendations { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<SmartRecommendation> SmartRecommendations1 { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        public virtual ICollection<UserBehaviorLog> UserBehaviorLogs { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<Coupon> Coupons { get; set; }
     }

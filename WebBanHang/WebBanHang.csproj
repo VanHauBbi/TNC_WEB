@@ -170,6 +170,7 @@
     <Compile Include="Controllers\ChatController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\OrderController.cs" />
+    <Compile Include="Controllers\TrackingController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
@@ -252,6 +253,10 @@
     <Compile Include="Models\User.cs">
       <DependentUpon>Model.tt</DependentUpon>
     </Compile>
+    <Compile Include="Models\UserBehaviorLog.cs">
+      <DependentUpon>Model.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\ViewModel\ProductAIDetailVM.cs" />
     <Compile Include="Models\ViewModel\Product_Metadata.cs" />
     <Compile Include="Models\ViewModel\AdminDashboardVM.cs" />
     <Compile Include="Models\ViewModel\Cart.cs" />
@@ -543,6 +548,7 @@
     <Content Include="Content\bootstrap-grid.rtl.css.map" />
     <Content Include="Content\bootstrap-grid.min.css.map" />
     <Content Include="Content\bootstrap-grid.css.map" />
+    <Content Include="Areas\Admin\Views\SmartRecommendation\Index.cshtml" />
     <EntityDeploy Include="Models\Model.edmx">
       <Generator>EntityModelCodeGenerator</Generator>
       <LastGenOutput>Model.Designer.cs</LastGenOutput>
@@ -550,7 +556,7 @@
     <Content Include="Models\Model.edmx.diagram">
       <DependentUpon>Model.edmx</DependentUpon>
     </Content>
-    <Content Include="Areas\Admin\Views\SmartRecommendation\Index.cshtml" />
+    <Content Include="Areas\Admin\Views\SmartRecommendation\ProductAIDetails.cshtml" />
     <None Include="Scripts\jquery-3.7.0.intellisense.js" />
     <Content Include="Scripts\jquery-3.7.0.js" />
     <Content Include="Scripts\jquery-3.7.0.min.js" />
@@ -628,6 +634,7 @@
     <Folder Include="Data\" />
     <Folder Include="Font\" />
     <Folder Include="Views\OrderCostSimulationService\" />
+    <Folder Include="Views\Tracking\" />
     <Folder Include="Views\TrangSanPham\" />
   </ItemGroup>
   <ItemGroup>

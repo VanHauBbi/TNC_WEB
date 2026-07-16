@@ -96,9 +96,21 @@
 
                                 @if (cardState == "AVAILABLE")
                                 {
-                                    <button class="btn btn-outline-primary w-100 add-to-cart-btn" data-product-id="@p.ProductID" style="border-radius: 8px; font-weight: 500;">
-                                        <i class="fa-solid fa-cart-plus"></i> Thêm vào giỏ
-                                    </button>
+                                    <!-- Dùng Row và Col-6 để ép chia đôi ngang 50/50 tuyệt đối -->
+                                    <div class="row g-2" style="margin-left: -4px; margin-right: -4px;">
+                                        <div class="col-6" style="padding-left: 4px; padding-right: 4px;">
+                                            <!-- NÚT 1: THÊM VÀO GIỎ (Màu xanh dương) -->
+                                            <button class="btn btn-primary w-100 add-to-cart-btn track-add-cart py-2" data-product-id="@p.ProductID" style="border-radius: 8px; font-weight: 500; font-size: 0.85rem; border: none;">
+                                                Thêm vào giỏ
+                                            </button>
+                                        </div>
+                                        <div class="col-6" style="padding-left: 4px; padding-right: 4px;">
+                                            <!-- NÚT 2: MUA NGAY (Màu xanh lá) -->
+                                            <a href="@Url.Action("BuyNow", "Cart", new { id = p.ProductID, quantity = 1 })" class="btn btn-success w-100 py-2 d-flex align-items-center justify-content-center text-white" style="border-radius: 8px; font-weight: 500; font-size: 0.85rem; border: none; text-decoration: none;">
+                                                Mua ngay
+                                            </a>
+                                        </div>
+                                    </div>
                                 }
                                 else if (cardState == "OUT_OF_STOCK")
                                 {

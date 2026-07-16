@@ -3,6 +3,8 @@
 @{
     ViewBag.Title = "Trang chủ - TNCStore";
     Layout = "~/Views/Shared/_LayoutDivMain.cshtml";
+
+    var homeRecommendations = ViewBag.SmartRecommendations as List<WebBanHang.Models.Product> ?? new List<WebBanHang.Models.Product>();
 }
 
 <link rel="stylesheet" href="~/Content/myStyle/home.css" />
@@ -10,6 +12,7 @@
 
 <div class="container mt-4">
 
+    <!-- BANNERS -->
     <div class="row mb-5">
         <div class="col-12">
             <div id="mainBannerCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="3000">
@@ -39,6 +42,7 @@
         </div>
     </div>
 
+    <!-- THUMBNAILS -->
     <div class="row mt-3 justify-content-center thumbnail-indicators">
         @{
             var bannerThumbnails = new List<string> {
@@ -58,6 +62,106 @@
         }
     </div>
 
+    <!-- ========================================================================= -->
+    <!-- KHU VỰC GỢI Ý THÔNG MINH TRÊN TRANG CHỦ -->
+    <!-- ========================================================================= -->
+    @if (homeRecommendations.Any())
+    {
+        <div class="d-flex justify-content-between align-items-end mb-4 border-bottom pb-2 mt-5 pt-3">
+            <h3 class="fw-bold text-uppercase mb-0" style="color: #ff5500;">
+                <i class="fa-solid fa-bolt text-warning me-2"></i> Gợi ý hôm nay cho bạn
+            </h3>
+        </div>
+
+        <div class="row" id="ai-recommendations-container">
+            @{
+                int aiDisplayCount = 8; // Mặc định hiện 8 món, 4 món ẩn đi chờ bấm "Xem thêm"
+                int aiProductIndex = 0;
+            }
+
+            @foreach (var item in homeRecommendations)
+            {
+                string aiState = item.GetStatusLabel();
+                string displayClass = (aiProductIndex >= aiDisplayCount) ? "d-none extra-ai-product" : "";
+                decimal discountPercent;
+                decimal discountedPrice = PriceHelper.GetDiscountedPrice(item, out discountPercent);
+                bool isDiscounted = (discountedPrice < item.ProductPrice && aiState == "AVAILABLE" && item.ProductPrice > 0);
+
+                <div class="col-xl-3 col-lg-4 col-md-6 col-6 mb-4 @displayClass">
+                    <div class="card product-card-modern h-100 border-0 shadow-sm" style="border: 1px solid #ffeeba !important;">
+                        <div class="position-relative overflow-hidden product-img-wrapper">
+                            @if (isDiscounted)
+                            {
+                                <span class="badge bg-danger position-absolute top-0 start-0 m-2 z-1 shadow-sm">-@discountPercent.ToString("0")%</span>
+                            }
+                            <a href="@Url.Action("ProductDetail", "Home", new { id = item.ProductID })">
+                                <img src="@item.ProductImage" class="card-img-top p-3" alt="@item.ProductName" />
+                            </a>
+                        </div>
+
+                        <div class="card-body d-flex flex-column px-3 pt-0 pb-3">
+                            <a href="@Url.Action("ProductDetail", "Home", new { id = item.ProductID })" class="text-decoration-none">
+                                <h6 class="card-title product-title-modern text-dark mb-2">@item.ProductName</h6>
+                            </a>
+
+                            <div class="price-area mt-auto">
+                                @if (aiState == "COMING_SOON")
+                                {
+                                    <div class="text-warning fw-bold fs-6 mt-3">Giá: Đang cập nhật</div>
+                                }
+                                else if (isDiscounted)
+                                {
+                                    <div class="text-muted text-decoration-line-through small">@item.ProductPrice.ToString("N0") ₫</div>
+                                    <div class="text-danger fw-bold fs-5">@discountedPrice.ToString("N0") ₫</div>
+                                }
+                                else
+                                {
+                                    <div class="text-danger fw-bold fs-5 mt-3">@item.ProductPrice.ToString("N0") ₫</div>
+                                }
+                            </div>
+
+                            <div class="action-zone mt-3">
+                                @if (aiState == "AVAILABLE")
+                                {
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-primary flex-fill add-to-cart-btn btn-cart-modern track-add-cart py-2" data-product-id="@item.ProductID" style="font-size: 0.85rem; border: none;">
+                                            Thêm vào giỏ
+                                        </button>
+
+                                        <a href="@Url.Action("BuyNow", "Cart", new { id = item.ProductID, quantity = 1 })" class="btn btn-success flex-fill py-2 d-flex align-items-center justify-content-center text-white" style="font-size: 0.85rem; border: none; text-decoration: none;">
+                                            Mua ngay
+                                        </a>
+                                    </div>
+                                }
+                                else if (aiState == "OUT_OF_STOCK")
+                                {
+                                    <span class="badge bg-secondary w-100 py-2 d-block text-center">Tạm hết hàng</span>
+                                }
+                                else if (aiState == "COMING_SOON")
+                                {
+                                    <span class="badge bg-warning text-dark w-100 py-2 d-block text-center fw-bold">Hàng sắp về</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger w-100 py-2 d-block text-center">Ngừng bán</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                aiProductIndex++;
+            }
+        </div>
+
+        if (homeRecommendations.Count > 8)
+        {
+            <div class="text-center mb-5 mt-2">
+                <button class="btn btn-light border shadow-sm px-5 fw-bold text-warning btn-hover-scale" id="toggleAiProducts" data-target="#ai-recommendations-container" style="color: #ff5500 !important;">Xem thêm gợi ý <i class="fa-solid fa-angle-down"></i></button>
+            </div>
+        }
+    }
+    <!-- ========================================================================= -->
+    <!-- SẢN PHẨM NỔI BẬT -->
     <div class="d-flex justify-content-between align-items-end mb-4 border-bottom pb-2 mt-5 pt-5">
         <h3 class="fw-bold text-uppercase mb-0 text-primary"><i class="fa-solid fa-fire text-danger"></i> Sản phẩm nổi bật</h3>
     </div>
@@ -101,7 +205,7 @@
                             }
                             else if (isDiscounted)
                             {
-                                <div class="text-muted text-decoration-line-through small>@item.ProductPrice.ToString("N0") ₫</div>
+                                <div class="text-muted text-decoration-line-through small">@item.ProductPrice.ToString("N0") ₫</div>
                                 <div class="text-danger fw-bold fs-5">@discountedPrice.ToString("N0") ₫</div>
                             }
                             else
@@ -113,9 +217,17 @@
                         <div class="action-zone mt-3">
                             @if (featState == "AVAILABLE")
                             {
-                                <button class="btn btn-outline-primary w-100 add-to-cart-btn fw-bold btn-cart-modern" data-product-id="@item.ProductID">
-                                    <i class="fa-solid fa-cart-plus"></i> Thêm vào giỏ
-                                </button>
+                                <div class="d-flex gap-2">
+                                    <!-- NÚT 1: THÊM VÀO GIỎ (Màu xanh dương, không icon, giữ nguyên class ngầm) -->
+                                    <button class="btn btn-primary flex-fill add-to-cart-btn btn-cart-modern track-add-cart py-2" data-product-id="@item.ProductID" style="font-size: 0.85rem; border: none;">
+                                        Thêm vào giỏ
+                                    </button>
+
+                                    <!-- NÚT 2: MUA NGAY (Màu xanh lá) -->
+                                    <a href="@Url.Action("BuyNow", "Cart", new { id = item.ProductID, quantity = 1 })" class="btn btn-success flex-fill py-2 d-flex align-items-center justify-content-center text-white" style="font-size: 0.85rem; border: none; text-decoration: none;">
+                                        Mua ngay
+                                    </a>
+                                </div>
                             }
                             else if (featState == "OUT_OF_STOCK")
                             {
@@ -144,6 +256,7 @@
         </div>
     }
 
+    <!-- KHUYẾN MÃI -->
     <div id="khuyen-mai-section" class="d-flex justify-content-between align-items-end mb-4 border-bottom pb-2 mt-5 pt-5">
         <h3 class="fw-bold text-uppercase mb-0" style="color: #e44d26;"><i class="fa-solid fa-tags"></i> Đang Giảm Giá Kho Sốc</h3>
     </div>
@@ -192,11 +305,11 @@
                             </a>
 
                             <div class="price-area mt-auto">
-                                <div class="text-muted text-decoration-line-through small>@item.ProductPrice.ToString("N0") ₫</div>
+                                <div class="text-muted text-decoration-line-through small">@item.ProductPrice.ToString("N0") ₫</div>
                                 <div class="text-danger fw-bold fs-5">@discountedPrice.ToString("N0") ₫</div>
                             </div>
 
-                            <button class="btn btn-danger w-100 mt-3 add-to-cart-btn fw-bold btn-cart-modern" data-product-id="@item.ProductID">
+                            <button class="btn btn-danger w-100 mt-3 add-to-cart-btn fw-bold btn-cart-modern track-add-cart" data-product-id="@item.ProductID">
                                 Mua Ngay Kẻo Lỡ
                             </button>
                         </div>
@@ -206,6 +319,7 @@
         }
     </div>
 
+    <!-- SẢN PHẨM MỚI VỀ -->
     <div class="d-flex justify-content-between align-items-end mb-4 border-bottom pb-2 mt-5">
         <h3 class="fw-bold text-uppercase mb-0 text-success"><i class="fa-solid fa-bolt text-warning"></i> Sản phẩm mới về</h3>
     </div>
@@ -250,7 +364,7 @@
                             }
                             else if (isDiscounted)
                             {
-                                <div class="text-muted text-decoration-line-through small>@item.ProductPrice.ToString("N0") ₫</div>
+                                <div class="text-muted text-decoration-line-through small">@item.ProductPrice.ToString("N0") ₫</div>
                                 <div class="text-danger fw-bold fs-5">@discountedPrice.ToString("N0") ₫</div>
                             }
                             else
@@ -262,9 +376,17 @@
                         <div class="action-zone mt-3">
                             @if (newState == "AVAILABLE")
                             {
-                                <button class="btn btn-outline-success w-100 add-to-cart-btn fw-bold btn-cart-modern" data-product-id="@item.ProductID">
-                                    <i class="fa-solid fa-cart-plus"></i> Thêm vào giỏ
-                                </button>
+                                <div class="d-flex gap-2">
+                                    <!-- NÚT 1: THÊM VÀO GIỎ (Màu xanh dương, không icon, giữ nguyên class ngầm) -->
+                                    <button class="btn btn-primary flex-fill add-to-cart-btn btn-cart-modern track-add-cart py-2" data-product-id="@item.ProductID" style="font-size: 0.85rem; border: none;">
+                                        Thêm vào giỏ
+                                    </button>
+
+                                    <!-- NÚT 2: MUA NGAY (Màu xanh lá) -->
+                                    <a href="@Url.Action("BuyNow", "Cart", new { id = item.ProductID, quantity = 1 })" class="btn btn-success flex-fill py-2 d-flex align-items-center justify-content-center text-white" style="font-size: 0.85rem; border: none; text-decoration: none;">
+                                        Mua ngay
+                                    </a>
+                                </div>
                             }
                             else if (newState == "OUT_OF_STOCK")
                             {
@@ -316,12 +438,13 @@
                     }
                 });
 
-                toggleBtn.innerHTML = showAll ? 'Thu gọn <i class="fa-solid fa-angle-up"></i>' : 'Xem thêm sản phẩm <i class="fa-solid fa-angle-down"></i>';
+                toggleBtn.innerHTML = showAll ? 'Thu gọn <i class="fa-solid fa-angle-up"></i>' : 'Xem thêm <i class="fa-solid fa-angle-down"></i>';
             });
         }
 
         setupProductToggle("toggleNewProducts", ".extra-new-product");
         setupProductToggle("toggleFeaturedProducts", ".extra-featured-product");
+        setupProductToggle("toggleAiProducts", ".extra-ai-product");
 
         document.querySelectorAll(".add-to-cart-btn").forEach(button => {
             button.addEventListener("click", function () {
