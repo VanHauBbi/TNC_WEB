@@ -4,7 +4,7 @@
   <edmx:Runtime>
     <!-- SSDL content -->
     <edmx:StorageModels>
-    <Schema Namespace="MyStoreModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+      <Schema Namespace="MyStoreModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
         <EntityType Name="Cart">
           <Key>
             <PropertyRef Name="CartID" />
@@ -766,7 +766,8 @@
             <End Role="UserBehaviorLogs" EntitySet="UserBehaviorLogs" />
           </AssociationSet>
         </EntityContainer>
-      </Schema></edmx:StorageModels>
+      </Schema>
+    </edmx:StorageModels>
     <!-- CSDL content -->
     <edmx:ConceptualModels>
       <Schema Namespace="MyStoreModel" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
@@ -949,7 +950,6 @@
           <NavigationProperty Name="SmartRecommendations1" Relationship="Self.FK_SmartRec_ProductB" FromRole="Product" ToRole="SmartRecommendation" />
           <NavigationProperty Name="UserBehaviorLogs" Relationship="Self.FK_UserBehaviorLogs_Product" FromRole="Product" ToRole="UserBehaviorLogs" />
           <NavigationProperty Name="Coupons" Relationship="Self.CouponProduct" FromRole="Product" ToRole="Coupon" />
-          <NavigationProperty Name="UserBehaviorLogs" Relationship="MyStoreModel.FK_UserBehaviorLogs_Product" FromRole="Product" ToRole="UserBehaviorLog" />
         </EntityType>
         <EntityType Name="ProductPriceHistory">
           <Key>
@@ -1548,40 +1548,7 @@
             <End Role="Coupon" EntitySet="Coupons" />
             <End Role="Product" EntitySet="Products" />
           </AssociationSet>
-          <EntitySet Name="UserBehaviorLogs" EntityType="MyStoreModel.UserBehaviorLog" />
-          <AssociationSet Name="FK_UserBehaviorLogs_Product" Association="MyStoreModel.FK_UserBehaviorLogs_Product">
-            <End Role="Product" EntitySet="Products" />
-            <End Role="UserBehaviorLog" EntitySet="UserBehaviorLogs" />
-          </AssociationSet>
         </EntityContainer>
-        <EntityType Name="UserBehaviorLog">
-          <Key>
-            <PropertyRef Name="LogID" />
-          </Key>
-          <Property Name="LogID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
-          <Property Name="SessionID" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
-          <Property Name="CustomerID" Type="Int32" />
-          <Property Name="ProductID" Type="Int32" />
-          <Property Name="ActionType" Type="String" Nullable="false" MaxLength="50" FixedLength="false" Unicode="true" />
-          <Property Name="ActionWeight" Type="Int32" Nullable="false" />
-          <Property Name="CreatedAt" Type="DateTime" Nullable="false" Precision="3" />
-          <Property Name="SearchKeyword" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
-          <NavigationProperty Name="Product" Relationship="MyStoreModel.FK_UserBehaviorLogs_Product" FromRole="UserBehaviorLog" ToRole="Product" />
-        </EntityType>
-        <Association Name="FK_UserBehaviorLogs_Product">
-          <End Type="MyStoreModel.Product" Role="Product" Multiplicity="0..1">
-            <OnDelete Action="Cascade" />
-          </End>
-          <End Type="MyStoreModel.UserBehaviorLog" Role="UserBehaviorLog" Multiplicity="*" />
-          <ReferentialConstraint>
-            <Principal Role="Product">
-              <PropertyRef Name="ProductID" />
-            </Principal>
-            <Dependent Role="UserBehaviorLog">
-              <PropertyRef Name="ProductID" />
-            </Dependent>
-          </ReferentialConstraint>
-        </Association>
       </Schema>
     </edmx:ConceptualModels>
     <!-- C-S mapping content -->
@@ -1868,20 +1835,6 @@
               <ScalarProperty Name="ProductID" ColumnName="ProductID" />
             </EndProperty>
           </AssociationSetMapping>
-          <EntitySetMapping Name="UserBehaviorLogs">
-            <EntityTypeMapping TypeName="MyStoreModel.UserBehaviorLog">
-              <MappingFragment StoreEntitySet="UserBehaviorLogs">
-                <ScalarProperty Name="SearchKeyword" ColumnName="SearchKeyword" />
-                <ScalarProperty Name="CreatedAt" ColumnName="CreatedAt" />
-                <ScalarProperty Name="ActionWeight" ColumnName="ActionWeight" />
-                <ScalarProperty Name="ActionType" ColumnName="ActionType" />
-                <ScalarProperty Name="ProductID" ColumnName="ProductID" />
-                <ScalarProperty Name="CustomerID" ColumnName="CustomerID" />
-                <ScalarProperty Name="SessionID" ColumnName="SessionID" />
-                <ScalarProperty Name="LogID" ColumnName="LogID" />
-              </MappingFragment>
-            </EntityTypeMapping>
-          </EntitySetMapping>
         </EntityContainerMapping>
       </Mapping>
     </edmx:Mappings>
