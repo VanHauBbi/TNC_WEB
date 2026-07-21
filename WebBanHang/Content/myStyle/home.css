@@ -70,6 +70,7 @@
     align-items: center;
     background-color: #f1f1f1 !important;
 }
+
 .banner-carousel-inner {
     border-radius: 8px; /* Bo góc cho slider */
     overflow: hidden; /* Đảm bảo ảnh không tràn ra ngoài góc bo */
@@ -88,7 +89,6 @@
         height: 200px; /* Giảm chiều cao trên điện thoại */
     }
 }
-/* --- Cập nhật/Thêm vào CSS của bạn (ví dụ: home.css) --- */
 
 /* Cố định chiều cao ảnh */
 .product-image-search {
@@ -128,6 +128,7 @@
     margin-top: 0.5rem;
     margin-bottom: 0.5rem !important;
 }
+
 /* Quick Links */
 .quick-link-box {
     transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -165,6 +166,7 @@
     height: 220px;
     object-fit: contain;
     transition: transform 0.5s ease;
+    position: relative;
 }
 
 .product-card-modern:hover .product-img-wrapper img {
@@ -188,13 +190,10 @@
 
 .btn-cart-modern {
     border-radius: 8px;
-    transition: background-color 0.2s, color 0.2s;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-    .btn-cart-modern:hover {
-        color: #fff !important;
-    }
-
+/* Hiệu ứng Scale cho nút Xem thêm */
 .btn-hover-scale {
     transition: transform 0.2s;
     border-radius: 20px;
@@ -204,6 +203,67 @@
         transform: scale(1.05);
         background-color: #f8f9fa;
     }
+
+/* Cố định mượt mà khi cuộn trang */
 html {
     scroll-behavior: smooth;
 }
+
+/* ========================= */
+/* CSS TÙY CHỈNH NÚT MUA HÀNG*/
+/* ========================= */
+
+.btn-add-cart-custom {
+    background-color: #fff0eb; 
+    color: #ff5500;
+    border: 1px solid #ff5500 !important;
+    font-weight: 600;
+}
+
+    .btn-add-cart-custom:hover {
+        background-color: #ff5500;
+        color: #ffffff !important;
+    }
+
+.btn-buy-now-custom {
+    background: linear-gradient(135deg, #ff5500 0%, #e42e00 100%); 
+    color: #ffffff;
+    border: none !important;
+    font-weight: 600;
+    box-shadow: 0 4px 6px rgba(255, 85, 0, 0.2); 
+    transition: all 0.3s ease;
+}
+
+    .btn-buy-now-custom:hover {
+        transform: translateY(-2px); 
+        box-shadow: 0 6px 12px rgba(255, 85, 0, 0.35); 
+        color: #ffffff !important;
+    }
+
+.badge-sale-overlay {
+    top: 10px;
+    left: 10px;
+    z-index: 10;
+    font-size: 0.8rem;
+    padding: 5px 8px;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    font-weight: bold;
+    letter-spacing: 0.5px;
+}
+
+/* ================================================*/
+/* CSS CHO BOX TIÊU ĐỀ TÌM KIẾM (SEARCH RESULT BOX)*/
+/* =============================================== */
+.search-result-box {
+    display: flex;
+    align-items: center;
+    font-size: 1rem; 
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 1rem; 
+}
+    .search-result-box .text-primary {
+        font-weight: 700; 
+        font-style: italic; 
+    }

@@ -241,18 +241,13 @@ namespace WebBanHang.Controllers
             }
 
             string html = string.Join("", cart.Items.Select(i => $@"
-                <div class='mini-cart-item' style='display: flex; align-items: center; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #eee;'>
-                    <div style='display: flex; align-items: center;'>
-                        <img src='{i.ProductImage}' alt='ảnh' style='width:40px;height:40px;border-radius:5px;margin-right:8px;' />
-                        <div>
-                            <span style='display:block;font-weight:500;'>{i.ProductName}</span>
-                            <span style='color:#666;font-size:13px;'>
-                                {i.Quantity} × 
-                                {(i.OriginalPrice > i.UnitPrice ? $"<del style='color:#999;'>{i.OriginalPrice:N0}</del> " : "")}
-                                <strong style='color:#dc3545;'>{i.UnitPrice:N0} VNĐ</strong>
-                            </span>
-                        </div>
+                <div class='cart-item'>
+                    <img src='{i.ProductImage}' alt='{i.ProductName}'>
+                    <div class='item-info'>
+                        <span class='item-name'>{i.ProductName}</span>
+                        <span class='item-qty-price'>{i.Quantity} x {i.UnitPrice:N0} VNĐ</span>
                     </div>
+                    <strong class='item-total'>{(i.Quantity * i.UnitPrice):N0} đ</strong>
                 </div>
             "));
 

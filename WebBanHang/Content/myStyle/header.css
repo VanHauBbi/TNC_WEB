@@ -17,8 +17,8 @@
 
 /* ----- HEADER MAIN ----- */
 /*.container.header-main {*/
-    /* Đã thêm !important để giải quyết xung đột bố cục */
-    /*display: flex !important;
+/* Đã thêm !important để giải quyết xung đột bố cục */
+/*display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
     padding: 15px 20px;
@@ -35,7 +35,7 @@
     flex: 1;
     display: flex;
     max-width: 700px;*/ /* Tăng chiều rộng để chứa select */
-    /*border: 2px solid #0056b3;
+/*border: 2px solid #0056b3;
     border-radius: 25px;
     overflow: hidden;
     margin: 0 40px;
@@ -57,7 +57,7 @@
         outline: none;
         font-size: 15px;
         background: #fff;*/ /* Nền trắng cho ô input chính */
-    /*}
+/*}
 
     .search-box.new-style button {
         background: #0056b3;
@@ -79,7 +79,7 @@
     display: flex;
     align-items: center;
     gap: 15px;*/ /* Giảm gap khi không còn Hotline */
-    /*position: relative;
+/*position: relative;
 }*/
 
 /* --- ACCOUNT & CART COMMON --- */
@@ -351,12 +351,11 @@ header {
     border-bottom: 1px solid #eee;
 }
 
-/* ----- HEADER MAIN (Bố cục 3 cột) ----- */
+/* ----- HEADER MAIN ----- */
 .container.header-main {
-    /* Sử dụng !important để đảm bảo Flexbox hoạt động */
-    display: flex !important ;
-    align-items: center !important ;
-    justify-content: space-between  !important ;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
     padding: 15px 20px;
     max-width: 1280px;
     margin: 0 auto;
@@ -366,7 +365,7 @@ header {
     height: 60px;
 }
 
-/* --- SEARCH BOX MỚI (Có Select) --- */
+/* --- SEARCH BOX --- */
 .search-box.new-style {
     flex: 1;
     display: flex;
@@ -487,7 +486,7 @@ header {
 
 
 /* --- CART (MiniCart) --- */
-.cart {
+/*.cart {
     position: relative;
 }
 
@@ -568,8 +567,8 @@ header {
 
     .close-button-cart i {
         font-size: 20px;
-        color: #0056b3; /* Đổi màu xanh chủ đạo */
-    }
+        color: #0056b3;*/ /* Đổi màu xanh chủ đạo */
+/*}
 
     .close-button-cart:hover i {
         color: #e44d26;
@@ -581,50 +580,50 @@ header {
     padding-bottom: 10px;
 }
 
-.cart-summary {
-    /* Đảm bảo toàn bộ summary sử dụng Flexbox */
-    display: flex;
-    flex-direction: column; /* Đặt Tổng tiền và khối nút theo chiều dọc */
-    border-top: 1px dashed #ddd;
+.cart-summary {*/
+/* Đảm bảo toàn bộ summary sử dụng Flexbox */
+/*display: flex;
+    flex-direction: column;*/ /* Đặt Tổng tiền và khối nút theo chiều dọc */
+/*border-top: 1px dashed #ddd;
     padding-top: 10px;
     text-align: right;
-    gap: 10px; /* Khoảng cách giữa Tổng tiền và khối nút */
-}
+    gap: 10px;*/ /* Khoảng cách giữa Tổng tiền và khối nút */
+/*}*/
 
 /* Khối chứa hai nút (Thanh Toán & Xem Giỏ Hàng) */
-.cart-actions {
+/*.cart-actions {
     display: flex;
-    justify-content: space-between; /* Đảm bảo hai nút căn đều hai bên */
-    gap: 8px;
+    justify-content: space-between;*/ /* Đảm bảo hai nút căn đều hai bên */
+/*gap: 8px;
     width: 100%;
 }
 
 .cart-summary strong {
     font-size: 16px;
-    color: #e44d26; /* Màu nổi bật cho tổng tiền */
-}
+    color: #e44d26;*/ /* Màu nổi bật cho tổng tiền */
+/*}
 
-.checkout-button, .view-cart-button {
-    /* Thiết lập Flex item để chiếm không gian bằng nhau */
-    flex: 1;
+.checkout-button, .view-cart-button {*/
+/* Thiết lập Flex item để chiếm không gian bằng nhau */
+/*flex: 1;
     text-align: center;
     border: none;
-    padding: 8px 5px; /* Giảm padding ngang để nút vừa hơn */
-    border-radius: 6px;
+    padding: 8px 5px;*/ /* Giảm padding ngang để nút vừa hơn */
+/*border-radius: 6px;
     cursor: pointer;
     font-weight: 600;
     transition: background 0.3s;
-    font-size: 14px; /* Giảm cỡ chữ nút */
-}
+    font-size: 14px;*/ /* Giảm cỡ chữ nút */
+/*}
 
 .checkout-button {
-    background: #e44d26; /* Màu Thanh toán */
-    color: #fff;
+    background: #e44d26;*/ /* Màu Thanh toán */
+/*color: #fff;
 }
 
 .view-cart-button {
-    background: #0056b3; /* Màu Xem Giỏ Hàng */
-    color: #fff;
+    background: #0056b3;*/ /* Màu Xem Giỏ Hàng */
+/*color: #fff;
 }
 
 .checkout-button:hover {
@@ -633,10 +632,207 @@ header {
 
 .view-cart-button:hover {
     background: #00448f;
+}*/
+/* --- CART (MiniCart)--- */
+.cart {
+    position: relative;
+}
+
+.cart-count {
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    background: #ea4c0f;
+    color: #fff;
+    border-radius: 50%;
+    padding: 3px 6px;
+    font-size: 11px;
+    font-weight: bold;
+    min-width: 20px;
+    text-align: center;
+    line-height: 1;
+}
+
+/* Box chứa giỏ hàng xổ xuống */
+.cart-dropdown {
+    position: absolute;
+    right: -10px;
+    top: 55px;
+    background: #ffffff !important;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+    width: 360px;
+    padding: 0;
+    z-index: 9999;
+    border: none;
+    font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+    .cart-dropdown::before,
+    .close-button-cart {
+        display: none;
+    }
+
+/* --- CUỘN SẢN PHẨM --- */
+.cart-items {
+    max-height: 350px;
+    overflow-y: auto;
+    padding: 25px 25px 15px 25px;
+}
+
+    /* Tùy chỉnh thanh cuộn */
+    .cart-items::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    .cart-items::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .cart-items::-webkit-scrollbar-thumb {
+        background: #e0e0e0;
+    }
+
+    /* Ép khung item sản phẩm */
+    .cart-items > div, .cart-item {
+        display: flex;
+        align-items: flex-start !important;
+        border-bottom: none !important; 
+        padding: 0 0 20px 0 !important;
+        position: relative;
+    }
+
+    /* Căn chỉnh ảnh linh kiện */
+    .cart-items img {
+        width: 70px !important;
+        height: 70px !important;
+        object-fit: contain !important;
+        border: 1px solid #f5f5f5 !important;
+        border-radius: 4px !important;
+        padding: 2px !important;
+        background: #fff;
+        margin-right: 15px;
+    }
+
+/* --- CHI TIẾT THÔNG TIN LINH KIỆN --- */
+.item-info {
+    flex: 1;
+    padding-right: 100px;
+}
+
+.item-name {
+    display: -webkit-box;
+    font-size: 14px !important;
+    color: #000 !important;
+    font-weight: 600;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.4;
+    margin-bottom: 4px;
+}
+
+.item-category {
+    display: block;
+    font-size: 12px !important;
+    color: #888 !important;
+    margin-bottom: 4px;
+}
+
+.item-qty-price {
+    display: block;
+    font-size: 13px !important;
+    color: #333 !important;
+}
+
+/* Giá tổng của 1 sản phẩm */
+.item-total {
+    position: absolute;
+    right: 0;
+    top: 0;
+    font-size: 14px;
+    color: #000 !important;
+    font-weight: 600;
+    text-align: right;
+    width: 95px;
+}
+
+/* --- KHU VỰC TỔNG TIỀN --- */
+.cart-summary {
+    background-color: #ffffff;
+    padding: 15px 15px 15px 15px;
+    border-top: none;
+    border-radius: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.cart-total-wrapper {
+    display: flex;
+    justify-content: space-between; 
+    align-items: center; 
+    padding: 0 10px 0px 10px;
+    font-size: 1.1rem;
+}
+
+    .cart-total-wrapper .total-label {
+        color: #333; 
+    }
+
+    .cart-total-wrapper strong {
+        color: var(--tnc-orange, #ff6600); 
+        font-size: 1.25rem;
+    }
+    /* --- KHỐI NÚT BẤM --- */
+.cart-actions {
+    display: flex;
+    flex-direction: row;
+    gap: 15px; 
+    width: 100%;
+    padding: 0 10px 0px 10px;
+}
+
+.checkout-button, .view-cart-button {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 44px; 
+    padding: 0 10px; 
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 15px; 
+    box-sizing: border-box; 
+    transition: all 0.2s ease-in-out;
+}
+
+/* Nút Xem giỏ hàng */
+.view-cart-button {
+    background: #ffffff;
+    color: #ea4c0f;
+    border: 1px solid #ea4c0f;
+}
+
+.view-cart-button:hover {
+    background: #fff4f1;
+}
+
+/* Nút Thanh toán */
+.checkout-button {
+    background: #ea4c0f;
+    color: #ffffff;
+    border: 1px solid #ea4c0f;
+}
+
+.checkout-button:hover {
+    background: #cc400a;
 }
 
 /* ----- NAV MENU (Menu chính) ----- */
-.main-nav {
+/*.main-nav {
     background: #0056b3;
 }
 
@@ -656,6 +852,58 @@ header {
 
 .main-nav .custom-list li {
     padding: 12px 0;
+}
+
+.main-nav a {
+    color: #fff;
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: color 0.3s;
+}
+
+    .main-nav a:hover {
+        color: #ffd43b;
+    }*/
+
+/* Danh mục sản phẩm (Dropdown) */
+/*:root {
+    --tnc-orange: #ff6600;
+    --tnc-gray-dark: #343a40;
+    --tnc-blue: #00448f;*/ /* Giữ lại màu xanh nếu cần */
+/*}*/
+
+/* ----- NAV MENU ----- */
+.main-nav {
+    background: #0056b3;
+    height: 50px;
+}
+
+.container.nav-content {
+    max-width: 1280px;
+    margin: 0 auto;
+    height: 100%; 
+}
+
+.custom-list {
+    list-style: none;
+    display: flex !important;
+    align-items: center; 
+    justify-content: flex-start;
+    gap: 30px;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+}
+
+.main-nav .custom-list li {
+    padding: 0; 
+    height: 100%;
+    display: flex;
+    align-items: center; 
 }
 
 .main-nav a {
