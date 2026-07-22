@@ -1,0 +1,81 @@
+﻿@model PagedList.IPagedList<WebBanHang.Models.Order>
+@using PagedList.Mvc;
+
+<!-- BẢNG DỮ LIỆU -->
+<div class="table-responsive">
+    <table class="carcc-table">
+        <thead>
+            <tr>
+                <th style="width: 6%;">Mã ĐH</th>
+                <th style="width: 16%;">Khách hàng</th>
+                <th style="width: 10%;">Ngày đặt</th>
+                <th style="width: 12%;">Tổng tiền</th>
+                <th style="width: 14%;" class="text-center">Trạng thái TT</th>
+                <th style="width: 16%;" class="text-center">Trạng thái Duyệt</th>
+                <th style="width: 12%;" class="text-center">Vận chuyển</th>
+                <th style="width: 14%;" class="text-center">Hành động</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var order in Model)
+            {
+                <tr>
+                    <td class="fw-bold text-muted">@order.OrderID</td>
+                    <td class="fw-bold" style="color: #111827;">@order.Customer.CustomerName</td>
+                    <td>@order.OrderDate.ToString("dd/MM/yyyy")</td>
+                    <td class="fw-bold">@order.TotalAmount.ToString("N0") ₫</td>
+
+                    <!-- TRẠNG THÁI THANH TOÁN -->
+                    <td class="text-center">
+                        @{
+                            string paymentStatus = order.PaymentStatus ?? "Chưa thanh toán";
+                            string ttClass = "sb-warning"; // Mặc định (Chưa thanh toán) là vàng
+
+                            if (paymentStatus == "Đã thanh toán") { ttClass = "sb-success"; }
+                            else if (paymentStatus == "Thất bại") { ttClass = "sb-danger"; }
+                        }
+                        <span class="soft-badge @ttClass">@paymentStatus</span>
+                    </td>
+
+                    <!-- TRẠNG THÁI DUYỆT -->
+                    <td class="text-center">
+                        @{
+                            string orderStatus = order.OrderStatus ?? "Chưa xử lý";
+                            string duyClass = "sb-neutral"; // Mặc định là Xám (Chưa xử lý / Chờ xác nhận)
+
+                            if (orderStatus == "Đã duyệt - Đang lấy hàng" || orderStatus == "Đang giao")
+                            {
+                                duyClass = "sb-info"; // Xanh biển
+                            }
+                            else if (orderStatus == "Đã giao" || orderStatus == "Đã duyệt")
+                            {
+                                duyClass = "sb-success"; // Xanh lá
+                            }
+                            else if (orderStatus == "Đã hủy")
+                            {
+                                duyClass = "sb-danger"; // Đỏ
+                            }
+                        }
+                        <span class="soft-badge @duyClass">@orderStatus</span>
+                    </td>
+
+                    <td class="text-center">
+                        <span class="soft-badge sb-neutral">@order.ShippingMethod</span>
+                    </td>
+
+                    <td class="text-center">
+                        <div class="d-flex justify-content-center gap-1">
+                            <a href="@Url.Action("Details", "Orders", new { id = order.OrderID })" class="btn-action-view">View</a>
+                            <a href="@Url.Action("Process", "Orders", new { id = order.OrderID })" class="btn-action-process">Xử lý</a>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<!-- PHÂN TRANG -->
+<div class="carcc-pagination-container">
+    @Html.PagedListPager(Model, page => Url.Action("Index", new { page = page }))
+</div>

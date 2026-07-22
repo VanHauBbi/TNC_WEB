@@ -1,70 +1,258 @@
-﻿/* categories_admin.css */
-
+﻿/* --- BIẾN MÀU CLAUDE STYLE --- */
 :root {
-    --admin-primary: #007bff;
-    --admin-secondary: #6c757d;
-    --admin-danger: #dc3545;
-    --admin-success: #28a745;
-    --admin-info-bg: #f8f9fa;
+    --card-bg: #ffffff;
+    --bg-color: #f9fafb;
+    --border-color: #e5e7eb;
+    --text-main: #1f2937;
+    --text-muted: #6b7280;
+    --primary-color: #3b82f6;
+    --btn-primary-hover: #2563eb;
+    --btn-primary: var(--primary-color);
+    --btn-delete: #ef4444;
+    --hover-bg: #f3f4f6;
 }
 
-/* --- Tiêu đề nội dung --- */
-.admin-content-title {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #343a40;
-    border-bottom: 2px solid #dee2e6;
-    padding-bottom: 10px;
-    margin-bottom: 25px;
+body {
+    background-color: #f4f6f8 !important;
 }
 
-/* --- Forms (Create/Edit) --- */
-.category-form-container {
-    background-color: #fff;
-    padding: 30px;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+/* ==================================================== */
+/* 1. LAYOUT CHO TRANG DANH SÁCH (INDEX)                */
+/* ==================================================== */
+.claude-card {
+    background-color: var(--card-bg);
+    border-radius: 12px;
+    padding: 24px 32px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    border: 1px solid var(--border-color);
 }
 
-    .category-form-container .form-group {
-        display: flex;
-        align-items: baseline; /* Căn chỉnh nhãn */
-        margin-bottom: 15px;
-    }
-
-    .category-form-container .control-label {
-        flex: 0 0 150px; /* Cố định độ rộng nhãn */
-        text-align: right;
-        padding-right: 15px;
-        font-weight: 600;
-    }
-
-    .category-form-container .col-md-10 {
-        flex: 1;
-    }
-
-/* --- Details / Delete --- */
-.category-details-container {
-    background-color: var(--admin-info-bg);
-    border-left: 4px solid var(--admin-primary);
-    padding: 20px;
-    border-radius: 4px;
+.claude-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end; /* Căn chỉnh nút và text cho đều */
 }
 
-    .category-details-container dt {
+    .claude-toolbar h4 {
+        margin: 0 0 4px 0;
         font-weight: 700;
-        color: var(--admin-secondary);
-        margin-top: 10px;
+        color: var(--text-main);
+        font-size: 1.4rem;
     }
 
-.delete-confirmation-box {
-    margin-top: 20px;
-    padding: 20px;
-    border: 1px solid var(--admin-danger);
-    background-color: #fff8f8;
-    border-radius: 8px;
+/* ==================================================== */
+/* 2. LAYOUT CHO TRANG THÊM/SỬA/XÓA (FORMS)             */
+/* ==================================================== */
+.claude-form-card {
+    background-color: var(--card-bg);
+    border-radius: 12px;
+    padding: 32px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    border: 1px solid var(--border-color);
+    margin: 20px auto;
 }
 
-    .delete-confirmation-box h3 {
-        color: var(--admin-danger);
+.claude-form-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-main);
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* ==================================================== */
+/* 3. HỆ THỐNG NÚT BẤM (BUTTONS)                        */
+/* ==================================================== */
+/* Nút Thêm Mới (Xanh lá Pastel) */
+.ir-btn-add {
+    background-color: #ecfdf5;
+    color: #10b981 !important;
+    border: 1px solid #34d399;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 14.5px;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px; /* Khoảng cách giữa Icon và Text */
+}
+
+    .ir-btn-add:hover {
+        background-color: #d1fae5;
+        color: #059669 !important;
     }
+
+.btn-claude-primary {
+    background-color: var(--primary-color);
+    color: white !important;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+    .btn-claude-primary:hover {
+        background-color: var(--btn-primary-hover);
+        color: white !important; /* Thêm !important để bảo vệ màu chữ */
+        text-decoration: none;
+    }
+
+.claude-btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: white;
+    color: var(--text-main) !important;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 10px 24px;
+    font-weight: 500;
+    transition: all 0.2s;
+    text-decoration: none;
+}
+
+    .claude-btn-secondary:hover {
+        background-color: var(--hover-bg);
+        text-decoration: none;
+    }
+
+.claude-btn-danger {
+    background-color: var(--btn-delete);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 24px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+    .claude-btn-danger:hover {
+        background-color: #dc2626;
+        color: white;
+    }
+
+/* ==================================================== */
+/* 4. THIẾT KẾ BẢNG DỮ LIỆU (TABLES) - ĐÃ ĐỒNG BỘ CHUẨN */
+/* ==================================================== */
+.claude-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+    /* --- TIÊU CHUẨN TIÊU ĐỀ (TABLE HEADERS) CHUẨN ORDER --- */
+    .claude-table thead th {
+        text-transform: uppercase !important;
+        font-size: 0.9rem !important;
+        color: #4b5563 !important;
+        padding: 12px 16px !important;
+        font-weight: 700 !important;
+        vertical-align: middle !important;
+        letter-spacing: 0.5px !important;
+        border: none !important;
+        border-bottom: 2px solid #e2e8f0 !important;
+        border-top: none !important;
+        background-color: var(--bg-color); /* Giữ lại màu nền xám nhạt cho đồng bộ form */
+    }
+
+    .claude-table tbody td {
+        padding: 16px;
+        border-bottom: 1px solid var(--border-color);
+        vertical-align: middle;
+    }
+
+    .claude-table tr:hover {
+        background-color: var(--hover-bg);
+    }
+
+/* --- CỘT HÀNH ĐỘNG VÀ TIÊU CHUẨN NÚT PASTEL --- */
+.action-cell {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+/* Base button chuẩn chung */
+.btn-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 13.5px;
+    font-weight: 600;
+    white-space: nowrap !important;
+    text-decoration: none;
+    transition: all 0.2s ease-in-out;
+    height: 36px;
+}
+
+/* Nút View (Xanh dương pastel - dự phòng) */
+.btn-view {
+    background-color: #e0f2fe !important;
+    color: #0284c7 !important;
+    border: 1px solid #bae6fd !important;
+}
+
+    .btn-view:hover {
+        background-color: #bae6fd !important;
+        color: #0284c7 !important;
+    }
+
+/* Nút Edit (Vàng pastel) */
+.btn-edit {
+    background-color: #fef3c7 !important;
+    color: #d97706 !important;
+    border: 1px solid #fde68a !important;
+}
+
+    .btn-edit:hover {
+        background-color: #fde68a !important;
+        color: #d97706 !important;
+    }
+
+/* Nút Delete (Đỏ pastel - Cố định size 36px cho dạng icon) */
+.btn-delete {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    padding: 0 !important;
+    background-color: #fee2e2 !important;
+    color: #dc2626 !important;
+    border: 1px solid #fecaca !important;
+    border-radius: 8px !important;
+}
+
+    .btn-delete:hover {
+        background-color: #fecaca !important;
+        color: #dc2626 !important;
+    }
+
+/* --- CẢNH BÁO XÓA --- */
+.claude-alert-danger {
+    background-color: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #ef4444;
+    padding: 16px 20px;
+    border-radius: 8px;
+    font-weight: 500;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.category-form-wrapper input,
+.category-form-wrapper select,
+.category-form-wrapper textarea {
+    max-width: 100% !important;
+    width: 100%;
+}

@@ -7,126 +7,140 @@
 }
 
 <link href="~/Content/Admin/products_admin.css" rel="stylesheet" />
+<link href="~/Content/PagedList.css" rel="stylesheet" />
 
-<div class="card shadow-sm p-4 admin-search-page">
+<!-- ALERTS -->
+@if (TempData["ErrorMessage"] != null)
+{
+    <div id="alertMessage" class="alert alert-danger alert-dismissible fade show shadow-sm" style="border-radius: 12px;">
+        ❌ @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+@if (TempData["SuccessMessage"] != null)
+{
+    <div id="alertMessage" class="alert alert-success alert-dismissible fade show shadow-sm" style="border-radius: 12px;">
+        ✅ @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
 
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <div id="alertMessage" class="alert alert-danger alert-dismissible fade show">
-            ❌ @TempData["ErrorMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    }
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div id="alertMessage" class="alert alert-success alert-dismissible fade show">
-            ✅ @TempData["SuccessMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    }
+<!-- Ép sát khung lên trên bằng cách bỏ margin top (mt-0) -->
+<div class="claude-card mt-0">
 
-    @using (Html.BeginForm("Index", "Products", FormMethod.Get, new { @class = "mb-4 border p-3 rounded bg-light admin-toolbar" }))
+    <!-- BỘ LỌC (FILTERS) -->
+    @using (Html.BeginForm("Index", "Products", FormMethod.Get, new { @class = "mb-2" }))
     {
-        <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
-            <div class="d-flex">
-                <label class="me-3 mt-2 fw-bold text-muted">Tìm kiếm:</label>
-                @Html.TextBoxFor(m => m.searchTerm, new
-                {
-                    @class = "form-control me-2",
-                    placeholder = "Tên, mô tả sản phẩm...",
-                    style = "width: 250px;",
-                    Value = Model.searchTerm
-                })
-                <button type="submit" class="btn btn-primary">
-                    <i class="fa-solid fa-search"></i> Lọc
+        <div class="row g-2 align-items-end p-2 rounded" style="background-color: var(--hover-bg); border: 1px solid var(--border-color);">
+
+            <div class="col-md-3">
+                <label class="form-label text-muted fw-bold mb-1" style="font-size: 0.85rem;">Tìm kiếm</label>
+                @Html.TextBoxFor(m => m.searchTerm, new { @class = "form-control shadow-none", placeholder = "Tên, mô tả...", style = "border-radius: 8px;" })
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label text-muted fw-bold mb-1" style="font-size: 0.85rem;">Danh mục</label>
+                @Html.DropDownList("categoryId", ViewBag.Categories as SelectList, "Tất cả", new { @class = "claude-filter-select w-100 shadow-none", onchange = "this.form.submit();" })
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label text-muted fw-bold mb-1" style="font-size: 0.85rem;">Khoảng giá (VNĐ)</label>
+                <div class="d-flex align-items-center gap-2">
+                    @Html.TextBoxFor(m => m.MinPrice, new { @class = "form-control shadow-none", placeholder = "Từ giá", type = "number", style = "border-radius: 8px;" })
+                    <span class="text-muted fw-bold">-</span>
+                    @Html.TextBoxFor(m => m.MaxPrice, new { @class = "form-control shadow-none", placeholder = "Đến giá", type = "number", style = "border-radius: 8px;" })
+                </div>
+            </div>
+
+            <div class="col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-claude-primary flex-grow-1 shadow-sm d-flex justify-content-center">
+                    <i class="fa-solid fa-filter"></i> Lọc
                 </button>
+                @Html.ActionLink("Xóa", "Index", "Products", null, new { @class = "btn btn-outline-secondary flex-grow-1 shadow-sm", style = "border-radius: 8px;" })
             </div>
         </div>
 
-        <div class="d-flex align-items-center justify-content-start">
-            <strong class="me-3">Khoảng giá:</strong>
-            @Html.TextBoxFor(m => m.MinPrice, new
-            {
-                @class = "form-control me-2",
-                placeholder = "Giá tối thiểu (VNĐ)",
-                type = "number",
-                style = "width: 120px;",
-                Value = Model.MinPrice
-            })
+        <!-- TOOLBAR: SẮP XẾP VÀ NÚT THÊM MỚI -->
+        <div class="d-flex justify-content-between align-items-center mt-3 mb-1 flex-wrap gap-3">
 
-            <span class="me-2 text-muted">đến</span>
-            @Html.TextBoxFor(m => m.MaxPrice, new
-            {
-                @class = "form-control me-3",
-                placeholder = "Giá tối đa (VNĐ)",
-                type = "number",
-                style = "width: 120px;",
-                Value = Model.MaxPrice
-            })
-            @Html.ActionLink("Xóa Bộ Lọc", "Index", "Products", null, new { @class = "btn btn-outline-secondary btn-sm ms-3" })
+            <div class="d-flex align-items-center gap-2">
+                <span class="text-muted fw-bold me-2" style="font-size: 0.85rem;">Sắp xếp theo:</span>
+                @{
+                    var currentParams = new
+                    {
+                        searchTerm = Model.searchTerm,
+                        minPrice = Model.MinPrice,
+                        maxPrice = Model.MaxPrice,
+                        categoryId = Request["categoryId"],
+                        page = Model.page
+                    };
+                }
+                @Html.ActionLink("Tên (A-Z)", "Index", "Products", new { sortOrder = "name_asc", @currentParams }, new { @class = "btn btn-sm " + (Model.sortOrder == "name_asc" ? "btn-claude-primary" : "btn-light border") })
+                @Html.ActionLink("Tên (Z-A)", "Index", "Products", new { sortOrder = "name_desc", @currentParams }, new { @class = "btn btn-sm " + (Model.sortOrder == "name_desc" ? "btn-claude-primary" : "btn-light border") })
+                @Html.ActionLink("Giá Tăng Dần", "Index", "Products", new { sortOrder = "price_asc", @currentParams }, new { @class = "btn btn-sm " + (Model.sortOrder == "price_asc" ? "btn-claude-primary" : "btn-light border") })
+                @Html.ActionLink("Giá Giảm Dần", "Index", "Products", new { sortOrder = "price_desc", @currentParams }, new { @class = "btn btn-sm " + (Model.sortOrder == "price_desc" ? "btn-claude-primary" : "btn-light border") })
+            </div>
 
-            @Html.HiddenFor(m => m.sortOrder)
+            <div>
+                <a href="@Url.Action("Create")" class="ir-btn-add shadow-sm">
+                    <i class="fa-solid fa-plus"></i> Thêm Sản Phẩm Mới
+                </a>
+            </div>
         </div>
-        <hr class="my-4" />
-
-<div class="d-flex align-items-center mb-3 p-2 bg-light rounded order-container-admin">
-    <strong class="me-3 text-primary">Sắp xếp:</strong>
-
-    @{
-        var currentParams = new
-        {
-            searchTerm = Model.searchTerm,
-            minPrice = Model.MinPrice,
-            maxPrice = Model.MaxPrice,
-            page = Model.page
-        };
+        @Html.HiddenFor(m => m.sortOrder)
     }
 
-    @Html.ActionLink("Tên (A-Z)", "Index", "Products", new { sortOrder = "name_asc", @currentParams }, new { @class = "btn btn-outline-dark btn-sm me-2" })
-    @Html.ActionLink("Tên (Z-A)", "Index", "Products", new { sortOrder = "name_desc", @currentParams }, new { @class = "btn btn-outline-dark btn-sm me-2" })
-    @Html.ActionLink("Giá thấp nhất", "Index", "Products", new { sortOrder = "price_asc", @currentParams }, new { @class = "btn btn-outline-dark btn-sm me-2" })
-    @Html.ActionLink("Giá cao nhất", "Index", "Products", new { sortOrder = "price_desc", @currentParams }, new { @class = "btn btn-outline-dark btn-sm" })
-</div>
-    }
+    <hr class="my-3" style="border-color: var(--border-color); opacity: 1;" />
 
-    
-    @Html.ActionLink("Thêm Sản Phẩm Mới", "Create", null, new { @class = "btn btn-success btn-lg" })
+    <div class="text-muted mb-2" style="font-size: 0.9rem; margin-left: 8px;">
+        Đang hiển thị <strong class="text-dark">@Model.products.TotalItemCount</strong> sản phẩm.
+    </div>
 
-
-    <h3 class="mt-4 mb-3">Danh sách sản phẩm</h3>
-    <p class="text-muted">Đang hiển thị <strong>@Model.products.TotalItemCount </strong> sản phẩm.</p>
-
+    <!-- Gọi Partial View trực tiếp, thẻ table-responsive đã được đưa vào trong Partial -->
     @Html.Partial("PVListProduct", Model.products)
 
+    <!-- PHÂN TRANG -->
+    <div class="position-relative d-flex justify-content-center align-items-center mt-4 pt-3 border-top">
+        <div class="position-absolute start-0 text-muted" style="font-size: 0.85rem;">
+            Trang @(Model.products.PageCount < Model.products.PageNumber ? 0 : Model.products.PageNumber) / @Model.products.PageCount
+        </div>
 
-<div class="pagination-container d-flex justify-content-center mt-4">
-    @if (Model != null && Model.products != null && Model.products.PageCount > 1)
-    {
-        @Html.PagedListPager(Model.products, page => Url.Action("Index", new
-        {
-            page,
-            sortOrder = Model.sortOrder,
-            searchTerm = Model.searchTerm,
-            minPrice = Model.MinPrice,
-            maxPrice = Model.MaxPrice
-            }), PagedListRenderOptions.ClassicPlusFirstAndLast)
-    }
-</div>
+        <div class="pagination-wrapper">
+            @if (Model != null && Model.products != null && Model.products.PageCount > 1)
+            {
+                @Html.PagedListPager(Model.products, page => Url.Action("Index", new
+                {
+                    page,
+                    sortOrder = Model.sortOrder,
+                    searchTerm = Model.searchTerm,
+                    minPrice = Model.MinPrice,
+                    maxPrice = Model.MaxPrice,
+                    categoryId = Request["categoryId"]
+                }), new PagedListRenderOptions
+                {
+                    MaximumPageNumbersToDisplay = 5,
+                    DisplayEllipsesWhenNotShowingAllPageNumbers = true,
+                    DisplayLinkToFirstPage = PagedListDisplayMode.IfNeeded,
+                    DisplayLinkToLastPage = PagedListDisplayMode.IfNeeded,
+                    LinkToFirstPageFormat = "1",
+                    LinkToLastPageFormat = Model.products.PageCount.ToString(),
+                    LinkToPreviousPageFormat = "«",
+                    LinkToNextPageFormat = "»",
+                    UlElementClasses = new[] { "pagination" }
+                })
+            }
+        </div>
+    </div>
 </div>
 
 @section Scripts {
     <script>
-        // Tự động ẩn thông báo
         window.addEventListener("DOMContentLoaded", function () {
             const alertBox = document.getElementById("alertMessage");
             if (alertBox) {
-                // Sau 3 giây thì fade-out
                 setTimeout(() => {
                     alertBox.classList.add("fade-out");
-                    // Sau khi hiệu ứng kết thúc (0.5s), xóa phần tử khỏi DOM
-                    setTimeout(() => {
-                        alertBox.remove();
-                    }, 500);
+                    setTimeout(() => { alertBox.remove(); }, 500);
                 }, 3000);
             }
         });
@@ -134,23 +148,9 @@
 }
 
 <style>
-    /* CSS cho hiệu ứng thông báo (Giữ nguyên) */
-    .fade-in {
-        opacity: 0;
-        transform: translateY(-10px);
-        animation: fadeIn 0.5s forwards;
-    }
-
     .fade-out {
         opacity: 0;
         transform: translateY(-10px);
         transition: opacity 0.5s, transform 0.5s;
-    }
-
-    @@keyframes fadeIn {
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
     }
 </style>

@@ -1,58 +1,82 @@
 ﻿@model WebBanHang.Models.Customer
 
 @{
-    ViewBag.Title = "Khóa/Mở Khóa Tài khoản";
+    ViewBag.Title = "Chỉnh sửa Khách hàng";
     Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
 }
 
-<link href="~/Content/Admin/order_admin.css" rel="stylesheet" />
+<!-- Kéo CSS của Customer vào -->
+<link href="~/Content/Admin/customer_admin.css" rel="stylesheet" />
 
-<h2 class="admin-content-title">KHÓA / MỞ KHÓA KHÁCH HÀNG</h2>
+<div class="row mt-2">
+    <!-- Ép Form vào giữa màn hình, giới hạn chiều rộng bằng col-lg-8 -->
+    <div class="col-lg-8 mx-auto">
 
-@using (Html.BeginForm())
-{
-    @Html.AntiForgeryToken()
-
-    <div class="form-horizontal card p-4 shadow-sm">
-        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
-        @Html.HiddenFor(model => model.CustomerID)
-        @Html.HiddenFor(model => model.CustomerName)
-        @Html.HiddenFor(model => model.CustomerEmail)
-        @Html.HiddenFor(model => model.CustomerPhone)
-        @Html.HiddenFor(model => model.CustomerAddress)
-        @Html.HiddenFor(model => model.Username)
-
-        <h4 class="mb-4">Khách hàng: <span class="text-primary">@Model.CustomerName</span></h4>
-
-        <div class="form-group">
-            <div class="control-label col-md-3" style="text-align: right;">Trạng thái hiện tại:</div>
-            <div class="col-md-9">
-                @{
-                    string statusClass = (Model.IsActive == true) ? "bg-success" : "bg-danger";
-                    string statusText = (Model.IsActive == true) ? "ĐANG HOẠT ĐỘNG" : "ĐÃ BỊ KHÓA";
-                }
-                <span class="badge @statusClass fs-5">@statusText</span>
+        <div class="bd-card">
+            <div class="border-bottom pb-3 mb-4">
+                <div class="text-muted fs-6">ID: <span class="fw-bold">#@Model.CustomerID</span></div>
             </div>
-        </div>
 
-        <div class="form-group mt-4">
-            <div class="control-label col-md-3" style="text-align: right;">Thay đổi trạng thái:</div>
-            <div class="col-md-9">
-                <div class="checkbox">
-                    @* Checkbox này sẽ Bind với thuộc tính IsActive *@
-                    @Html.CheckBoxFor(model => model.IsActive, new { @class = "form-check-input" })
-                    <label class="form-check-label">
-                        Kích hoạt tài khoản (Active)
-                    </label>
+            @using (Html.BeginForm("Edit", "Customers", FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+
+                @* Phải giữ lại CustomerID ẩn để post lên Controller *@
+                @Html.HiddenFor(model => model.CustomerID)
+                @Html.HiddenFor(model => model.Username)
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold text-dark">Tên khách hàng</label>
+                        @Html.EditorFor(model => model.CustomerName, new { htmlAttributes = new { @class = "form-control custom-input bg - light", @readonly = "readonly" } })
+                        @Html.ValidationMessageFor(model => model.CustomerName, "", new { @class = "text-danger small" })
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold text-dark">Email</label>
+                        @Html.EditorFor(model => model.CustomerEmail, new { htmlAttributes = new { @class = "form-control custom-input bg-light", @readonly = "readonly" } })
+                        @Html.ValidationMessageFor(model => model.CustomerEmail, "", new { @class = "text-danger small" })
+                    </div>
                 </div>
-            </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold text-dark">Số điện thoại</label>
+                        @Html.EditorFor(model => model.CustomerPhone, new { htmlAttributes = new { @class = "form-control custom-inputbg-light", @readonly = "readonly" } })
+                        @Html.ValidationMessageFor(model => model.CustomerPhone, "", new { @class = "text-danger small" })
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold text-dark d-block">Trạng thái tài khoản</label>
+                        <div class="d-flex gap-4 mt-2">
+                            <div class="form-check">
+                                @Html.RadioButtonFor(model => model.IsActive, "true", new { @class = "form-check-input", id = "statusActive", style = "cursor: pointer;" })
+                                <label class="form-check-label text-dark" for="statusActive" style="cursor: pointer;">
+                                    Hoạt động
+                                </label>
+                            </div>
+
+                            <div class="form-check">
+                                @Html.RadioButtonFor(model => model.IsActive, "false", new { @class = "form-check-input", id = "statusLocked", style = "cursor: pointer;" })
+                                <label class="form-check-label text-dark" for="statusLocked" style="cursor: pointer;">
+                                    Khóa
+                                </label>
+                            </div>
+                        </div>
+                        @Html.ValidationMessageFor(model => model.IsActive, "", new { @class = "text-danger small" })
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold text-dark">Địa chỉ giao hàng</label>
+                    @Html.TextAreaFor(model => model.CustomerAddress, new { @class = "form-control custom-input bg-light", rows = "3", style = "resize: none;", @readonly = "readonly" })
+                </div>
+
+                <!-- Footer chứa nút bấm dời xuống dưới cùng -->
+                <div class="d-flex justify-content-end gap-2 border-top pt-4 mt-2">
+                    <a href="javascript:history.back()" class="btn btn-outline-custom"><i class="fa-solid fa-angle-left"></i> Quay lại</a>
+                    <button type="submit" class="btn btn-primary-custom"><i class="fa-solid fa-floppy-disk me-1"></i> Lưu thay đổi</button>
+                </div>
+            }
         </div>
 
-        <div class="form-group mt-5">
-            <div class="col-md-offset-3 col-md-9">
-                <input type="submit" value="Lưu Cập nhật" class="btn btn-warning btn-lg" />
-                @Html.ActionLink("Hủy bỏ", "Index", null, new { @class = "btn btn-secondary ms-2" })
-            </div>
-        </div>
     </div>
-}
+</div>

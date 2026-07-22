@@ -225,14 +225,33 @@ namespace WebBanHang.Areas.Admin.Controllers
             return View(receipt);
         }
 
-        // 1. Action lấy danh sách sản phẩm theo Danh mục cho hộp kiểm
+        //// 1. Action lấy danh sách sản phẩm theo Danh mục cho hộp kiểm
+        //[HttpGet]
+        //public JsonResult GetProductsByCategory(int categoryId)
+        //{
+        //    db.Configuration.ProxyCreationEnabled = false; // Ngăn EF tạo vòng lặp tham chiếu
+        //    var products = db.Products
+        //                     .Where(p => p.CategoryID == categoryId)
+        //                     .Select(p => new { p.ProductID, p.ProductName, p.SKU })
+        //                     .ToList();
+
+        //    return Json(products, JsonRequestBehavior.AllowGet);
+        //}
+
         [HttpGet]
         public JsonResult GetProductsByCategory(int categoryId)
         {
             db.Configuration.ProxyCreationEnabled = false; // Ngăn EF tạo vòng lặp tham chiếu
             var products = db.Products
                              .Where(p => p.CategoryID == categoryId)
-                             .Select(p => new { p.ProductID, p.ProductName, p.SKU })
+                             .Select(p => new {
+                                 ProductID = p.ProductID,
+                                 ProductName = p.ProductName,
+                                 SKU = p.SKU,
+                                 // BỔ SUNG 2 DÒNG NÀY (Lấy đúng tên thuộc tính trong CSDL của ông)
+                                 StockQuantity = p.StockQuantity,
+                                 Price = p.ProductPrice
+                             })
                              .ToList();
 
             return Json(products, JsonRequestBehavior.AllowGet);

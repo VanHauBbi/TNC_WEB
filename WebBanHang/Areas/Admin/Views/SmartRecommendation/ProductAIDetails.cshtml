@@ -5,124 +5,232 @@
     Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
 }
 
-<div class="card shadow mb-4 border-0">
-    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-        <h5 class="m-0 fw-bold text-primary">
-            <i class="fa-solid fa-chart-pie me-2"></i> Chi tiết Gợi ý AI: @Model.ProductInfo.ProductName
-        </h5>
-        <a href="@Url.Action("Index", "SmartRecommendation")" class="btn btn-secondary shadow-sm fw-bold">
-            <i class="fa-solid fa-arrow-left"></i> Quay lại danh sách
+<!-- Ép nền xám cho toàn trang và tạo style bảng rộng rãi -->
+<style>
+    body, .content-wrapper, .main-content, #page-wrapper, .page-content, .container-fluid {
+        background-color: #f4f6f8 !important;
+    }
+
+    .table-b2b td {
+        padding-top: 1rem !important;
+        padding-bottom: 1rem !important;
+        vertical-align: middle;
+    }
+
+    /* BỔ SUNG CSS CHO NÚT QUAY LẠI */
+    .btn-back-custom {
+        background-color: #ffffff;
+        color: #6c757d; /* Màu xám của chữ */
+        border: 1px solid #dee2e6;
+        transition: all 0.2s ease-in-out;
+    }
+
+        .btn-back-custom:hover {
+            background-color: #f8f9fa; /* Chuyển sang nền xám nhạt */
+            color: #495057; /* Chữ tối màu hơn một chút */
+            border-color: #c1c9d0;
+        }
+</style>
+
+<div class="mt-0 pt-3">
+
+    <!-- NÚT QUAY LẠI -->
+    <div class="mb-4">
+        <a href="@Url.Action("Index", "SmartRecommendation")" class="btn btn-back-custom fw-bold shadow-sm px-4 py-2" style="border-radius: 6px;">
+            <i class="fa-solid fa-arrow-left me-2"></i> Quay lại danh sách
         </a>
     </div>
 
-    <div class="card-body">
-        @* 1. KHU VỰC THÔNG TIN CƠ BẢN CỦA SẢN PHẨM *@
-        <div class="row mb-5 bg-light p-4 rounded border">
-            <div class="col-md-3 text-center">
-                <img src="@Model.ProductInfo.ProductImage" class="img-fluid bg-white rounded shadow-sm border p-2" style="height: 250px; width: 100%; object-fit: contain;" />
+    <!-- 1. KHU VỰC THÔNG TIN CƠ BẢN CỦA SẢN PHẨM -->
+    <div class="bg-white rounded shadow-sm border-0 mb-4 p-4">
+        <div class="row align-items-center">
+            <div class="col-md-3 text-center mb-3 mb-md-0">
+                <img src="@Model.ProductInfo.ProductImage" class="img-fluid rounded border p-2" style="height: 220px; width: 100%; object-fit: contain; background-color: #fff;" />
             </div>
             <div class="col-md-9">
-                <h4 class="fw-bold text-dark mb-4">@Model.ProductInfo.ProductName</h4>
-                <table class="table table-borderless table-sm fs-6">
-                    <tr>
-                        <td width="20%" class="fw-bold text-muted">Danh mục:</td>
-                        <td><span class="badge bg-secondary fs-6">@(Model.ProductInfo.Category?.CategoryName ?? "Chưa phân loại")</span></td>
-                    </tr>
-                    <tr>
-                        <td class="fw-bold text-muted">Giá bán (Đơn giá):</td>
-                        <td class="text-danger fw-bold fs-5">@Model.ProductInfo.ProductPrice.ToString("N0") ₫</td>
-                    </tr>
-                    <tr>
-                        <td class="fw-bold text-muted">Giá nhập kho (Vốn):</td>
-                        <td class="text-success fw-bold">@(Model.ProductInfo.ImportPrice > 0 ? Model.ProductInfo.ImportPrice.ToString("N0") + " ₫" : "Đang cập nhật")</td>
-                    </tr>
-                    <tr>
-                        <td class="fw-bold text-muted">Số lượng tồn kho:</td>
-                        <td>
-                            <span class="badge bg-success fs-6 px-3 py-2">@Model.ProductInfo.StockQuantity</span>
-                        </td>
-                    </tr>
-                </table>
+                <div class="d-flex align-items-center mb-3">
+                    <h4 class="fw-bold text-dark mb-0">@Model.ProductInfo.ProductName</h4>
+                </div>
+
+                <div class="row g-3 mt-2">
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded border-0">
+                            <small class="text-muted d-block mb-1 fw-bold">Danh mục</small>
+                            <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary px-3 py-2 fs-6">
+                                @(Model.ProductInfo.Category?.CategoryName ?? "Chưa phân loại")
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded border-0">
+                            <small class="text-muted d-block mb-1 fw-bold">Số lượng tồn kho</small>
+                            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary px-3 py-2 fs-6">
+                                <i class="fa-solid fa-boxes-stacked me-1"></i> @Model.ProductInfo.StockQuantity
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded border-0">
+                            <small class="text-muted d-block mb-1 fw-bold">Giá bán (Đơn giá)</small>
+                            <div class="text-danger fw-bold fs-5">@Model.ProductInfo.ProductPrice.ToString("N0") ₫</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded border-0">
+                            <small class="text-muted d-block mb-1 fw-bold">Giá nhập kho (Vốn)</small>
+                            <div class="text-success fw-bold fs-5">
+                                @(Model.ProductInfo.ImportPrice > 0 ? Model.ProductInfo.ImportPrice.ToString("N0") + " ₫" : "Đang cập nhật")
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. BẢNG TWO-PHASE (GÓC NHÌN LỢI NHUẬN) -->
+    <div class="bg-white rounded shadow-sm border-0 overflow-hidden mb-4">
+        <div class="p-3 px-4 border-bottom bg-light d-flex align-items-center">
+            <div class="bg-success bg-opacity-10 text-success rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                <i class="fa-solid fa-sack-dollar fs-5"></i>
+            </div>
+            <div>
+                <h5 class="mb-0 fw-bold text-dark">Thuật toán Two-Phase</h5>
+                <p class="text-muted mb-0" style="font-size: 0.85rem;">Tối đa hóa Lợi nhuận (Utility) cho mỗi Combo bán ra</p>
             </div>
         </div>
 
-        <hr />
-
-        @* 2. BẢNG TWO-PHASE (GÓC NHÌN LỢI NHUẬN) *@
-        <h5 class="text-success fw-bold mt-4 mb-3"><i class="fa-solid fa-sack-dollar"></i> Thuật toán Two-Phase (Tối đa hóa Lợi nhuận Utility)</h5>
-        <div class="table-responsive mb-5">
-            <table class="table table-bordered table-hover align-middle">
-                <thead class="table-success">
+        <div class="table-responsive p-3">
+            <table class="table table-hover table-b2b align-middle mb-0">
+                <thead class="text-muted" style="font-size: 0.9rem; border-bottom: 2px solid #e2e8f0;">
                     <tr>
-                        <th style="width: 40%;">Sản phẩm gợi ý mua kèm (B)</th>
-                        <th class="text-center">Tần suất chung</th>
-                        <th class="text-center">Tiền tiện ích (TWU)</th>
-                        <th class="text-center text-success fw-bold">Lợi nhuận dự kiến / Cặp</th>
+                        <th style="width: 35%;" class="ps-3 border-0">Sản phẩm gợi ý mua kèm (B)</th>
+                        <th class="text-center border-0" style="width: 15%;">Lợi nhuận SP (B)</th>
+                        <th class="text-center border-0" style="width: 15%;">Tần suất chung</th>
+                        <th class="text-center border-0" style="width: 15%;">Tiền tiện ích (TWU)</th>
+                        <!-- Đổi text-end thành text-center -->
+                        <th class="text-center text-success fw-bold border-0" style="width: 20%;">Lợi nhuận dự kiến / Cặp</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="text-dark">
                     @if (Model.TwoPhaseRecommendations != null && Model.TwoPhaseRecommendations.Any())
                     {
                         foreach (var rule in Model.TwoPhaseRecommendations)
                         {
-                            <tr>
-                                <td class="fw-bold text-dark">
-                                    <img src="@rule.Product1.ProductImage" style="width: 40px; height: 40px; object-fit: contain;" class="me-2 border bg-white p-1" />
-                                    @rule.Product1.ProductName
+                            <tr style="border-bottom: 1px solid #f1f5f9;">
+                                <td class="ps-3">
+                                    <div class="d-flex align-items-center">
+                                        <img src="@rule.Product1.ProductImage" style="width: 45px; height: 45px; object-fit: contain; border-radius: 6px;" class="me-3 border bg-white p-1 shadow-sm" />
+                                        <span class="fw-bold text-dark" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 0.95rem;">
+                                            @rule.Product1.ProductName
+                                        </span>
+                                    </div>
                                 </td>
-                                <td class="text-center fw-bold">@rule.Support lần</td>
-                                <td class="text-center  text-muted">@rule.TWU.ToString("N0") ₫</td>
-                                <td class="text-center text-success fw-bold bg-success bg-opacity-10">+ @rule.ActualUtility.ToString("N0") ₫</td>
+                                <!-- Cột Giá bán mới thêm -->
+                                <td class="text-center fw-bold text-success" style="font-size: 0.95rem;">
+                                    @((rule.Product1.ProductPrice - rule.Product1.ImportPrice).ToString("N0")) ₫
+                                </td>
+                                <td class="text-center">
+                                    <span class="fw-bold text-danger fs-6">@rule.Support</span> <span class="text-muted small">lần</span>
+                                </td>
+                                <td class="text-center text-muted" style="font-size: 0.95rem;">
+                                    @rule.TWU.ToString("N0") ₫
+                                </td>
+                                <!-- Căn giữa cột lợi nhuận -->
+                                <td class="text-center">
+                                    <span class="fw-bold text-success fs-6 d-inline-block px-2 py-1" style="background-color: #d1e7dd; border-radius: 4px;">
+                                        + @rule.ActualUtility.ToString("N0") ₫
+                                    </span>
+                                </td>
                             </tr>
                         }
                     }
                     else
                     {
-                        <tr><td colspan="4" class="text-center py-4 text-muted">Không có gợi ý lợi nhuận cao cho sản phẩm này.</td></tr>
+                        <!-- Tăng colspan lên 5 -->
+                        <tr><td colspan="5" class="text-center py-5 text-muted">Không có gợi ý lợi nhuận cao cho sản phẩm này.</td></tr>
                     }
                 </tbody>
             </table>
         </div>
+    </div>
 
-        @* 3. BẢNG APRIORI (GÓC NHÌN ĐỘ TIN CẬY) *@
-        <h5 class="text-info fw-bold mt-4 mb-3" style="color: #0dcaf0;"><i class="fa-solid fa-link"></i> Thuật toán Apriori (Tối đa hóa Độ tin cậy Confidence)</h5>
-        <div class="table-responsive mb-3">
-            <table class="table table-bordered table-hover align-middle">
-                <thead class="table-info">
+    <!-- 3. BẢNG APRIORI (GÓC NHÌN ĐỘ TIN CẬY) -->
+    <div class="bg-white rounded shadow-sm border-0 overflow-hidden mb-5">
+        <div class="p-3 px-4 border-bottom bg-light d-flex align-items-center">
+            <div class="bg-info bg-opacity-10 text-info rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                <i class="fa-solid fa-link fs-5"></i>
+            </div>
+            <div>
+                <h5 class="mb-0 fw-bold text-dark">Thuật toán Apriori</h5>
+                <p class="text-muted mb-0" style="font-size: 0.85rem;">Tối đa hóa Độ tin cậy (Confidence) dựa trên hành vi mua chung</p>
+            </div>
+        </div>
+
+        <div class="table-responsive p-3">
+            <table class="table table-hover table-b2b align-middle mb-0">
+                <thead class="text-muted" style="font-size: 0.9rem; border-bottom: 2px solid #e2e8f0;">
                     <tr>
-                        <th style="width: 40%;">Sản phẩm gợi ý mua kèm (B)</th>
-                        <th class="text-center">Độ hỗ trợ (Support / Tần suất)</th>
-                        <th class="text-center">Độ tin cậy (Confidence)</th>
+                        <th style="width: 40%;" class="ps-3 border-0">Sản phẩm gợi ý mua kèm (B)</th>
+                        <th class="text-center border-0" style="width: 20%;">Giá bán</th>
+                        <th class="text-center border-0" style="width: 20%;">Độ hỗ trợ (Support)</th>
+                        <th class="text-center border-0" style="width: 20%;">Độ tin cậy (Confidence)</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="text-dark">
                     @if (Model.AprioriRecommendations != null && Model.AprioriRecommendations.Any())
                     {
                         foreach (var rule in Model.AprioriRecommendations)
                         {
-                            <tr>
-                                <td class="fw-bold text-dark">
-                                    <img src="@rule.Product1.ProductImage" style="width: 40px; height: 40px; object-fit: contain;" class="me-2 border bg-white p-1" />
-                                    @rule.Product1.ProductName
+                            <tr style="border-bottom: 1px solid #f1f5f9;">
+                                <td class="ps-3">
+                                    <div class="d-flex align-items-center">
+                                        <img src="@rule.Product1.ProductImage" style="width: 45px; height: 45px; object-fit: contain; border-radius: 6px;" class="me-3 border bg-white p-1 shadow-sm" />
+                                        <span class="fw-bold text-dark" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 0.95rem;">
+                                            @rule.Product1.ProductName
+                                        </span>
+                                    </div>
                                 </td>
-                                <td class="text-center">Đã mua chung <span class="fw-bold text-danger">@rule.Support</span> lần</td>
+                                <!-- Cột Giá bán mới thêm -->
+                                <td class="text-center fw-bold text-dark" style="font-size: 0.95rem;">
+                                    @rule.Product1.ProductPrice.ToString("N0") ₫
+                                </td>
+                                <td class="text-center">
+                                    Đã mua chung <span class="fw-bold text-danger fs-6 mx-1">@rule.Support</span> lần
+                                </td>
+                                <!-- Xóa class pe-3 để căn giữa hoàn toàn -->
                                 <td class="text-center">
                                     @{
                                         var confPercent = rule.Confidence * 100;
-                                        string badgeColor = confPercent >= 50 ? "bg-success" : (confPercent >= 30 ? "bg-warning text-dark" : "bg-secondary");
+                                        string badgeStyle = "";
+
+                                        if (confPercent >= 60)
+                                        {
+                                            badgeStyle = "background-color: #e6f4ea; color: #137333; border: 1px solid #ceead6;";
+                                        }
+                                        else if (confPercent >= 30)
+                                        {
+                                            badgeStyle = "background-color: #fef7e0; color: #b06000; border: 1px solid #fbdc8e;";
+                                        }
+                                        else
+                                        {
+                                            badgeStyle = "background-color: #fce8e6; color: #c5221f; border: 1px solid #fad2cf;";
+                                        }
                                     }
-                                    <span class="badge @badgeColor px-3 py-2 fs-6">@confPercent.ToString("0.##")%</span>
+                                    <span class="badge rounded-pill px-3 py-2 shadow-sm" style="@badgeStyle font-size: 0.85rem;">
+                                        @confPercent.ToString("0.##")%
+                                    </span>
                                 </td>
                             </tr>
                         }
                     }
                     else
                     {
-                        <tr><td colspan="3" class="text-center py-4 text-muted">Không có luật kết hợp đủ mạnh cho sản phẩm này.</td></tr>
+                        <!-- Tăng colspan lên 4 -->
+                        <tr><td colspan="4" class="text-center py-5 text-muted">Không có luật kết hợp đủ mạnh cho sản phẩm này.</td></tr>
                     }
                 </tbody>
             </table>
         </div>
-
     </div>
 </div>

@@ -1,0 +1,194 @@
+﻿body {
+    background-color: #f4f6f8 !important;
+}
+
+/* Khung chứa Card phẳng */
+.bd-card {
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    border: 1px solid #f1f3f5;
+    padding: 24px;
+    margin-bottom: 24px;
+}
+
+.admin-content-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+/* Bảng dữ liệu phong cách Bytedash */
+.bd-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-top: 0;
+}
+
+    /* --- TIÊU CHUẨN TIÊU ĐỀ (TABLE HEADERS) CHUẨN ORDER --- */
+    .bd-table thead th {
+        text-transform: uppercase !important;
+        font-size: 0.9rem !important;
+        color: #4b5563 !important;
+        padding: 12px 16px !important;
+        font-weight: 700 !important;
+        vertical-align: middle !important;
+        letter-spacing: 0.5px !important;
+        border: none !important;
+        border-bottom: 2px solid #e2e8f0 !important;
+        border-top: none !important;
+        background-color: #f8fafc;
+    }
+
+    .bd-table tbody td {
+        padding: 16px;
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f5f9;
+        color: #334155;
+        font-size: 15.5px;
+    }
+
+    .bd-table tbody tr:hover td {
+        background-color: #f8fafc;
+    }
+
+/* Text style riêng cho cột Tên và Email */
+.customer-name {
+    font-weight: 600;
+    color: #0f172a;
+    margin-bottom: 4px;
+    font-size: 16px;
+}
+
+.customer-email {
+    color: #64748b;
+    font-size: 14px;
+}
+
+/* Soft Badge cho Trạng thái */
+.soft-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+.sb-success {
+    background-color: #dcfce7;
+    color: #166534;
+}
+
+.sb-danger {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+/* Làm mềm các ô nhập liệu (Input) */
+.custom-input {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 14.5px;
+    color: #334155;
+    box-shadow: none;
+    transition: all 0.2s ease-in-out;
+}
+
+    .custom-input:focus {
+        border-color: #0284c7;
+        box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.1);
+        outline: none;
+    }
+
+.form-label {
+    font-size: 13.5px;
+    margin-bottom: 6px;
+}
+
+/* Tùy biến nút bấm Form (Giữ nguyên form nhập liệu) */
+.btn-primary-custom {
+    background-color: #0ea5e9;
+    border-color: #0ea5e9;
+    color: white;
+    font-weight: 500;
+    padding: 8px 20px;
+    border-radius: 8px;
+}
+
+    .btn-primary-custom:hover {
+        background-color: #0284c7;
+        border-color: #0284c7;
+    }
+
+.btn-outline-custom {
+    color: #475569;
+    border: 1px solid #cbd5e1;
+    background-color: transparent;
+    font-weight: 500;
+    padding: 8px 20px;
+    border-radius: 8px;
+}
+
+    .btn-outline-custom:hover {
+        background-color: #f1f5f9;
+        color: #0f172a;
+    }
+
+/* ==================================================== */
+/* CỘT HÀNH ĐỘNG - ĐỒNG BỘ TIÊU CHUẨN NÚT PASTEL        */
+/* ==================================================== */
+.bd-text-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 13.5px;
+    font-weight: 600;
+    white-space: nowrap !important;
+    text-decoration: none;
+    transition: all 0.2s ease-in-out;
+    height: 36px;
+}
+
+/* Nút Chi tiết -> Đổi sang Xanh dương Pastel */
+.bd-text-btn-primary {
+    background-color: #e0f2fe !important;
+    color: #0284c7 !important;
+    border: 1px solid #bae6fd !important;
+    box-shadow: none;
+}
+
+    .bd-text-btn-primary:hover {
+        background-color: #bae6fd !important;
+        color: #0284c7 !important;
+    }
+
+/* Nút Xử lý -> Đổi sang Vàng Pastel */
+.bd-text-btn-outline {
+    background-color: #fef3c7 !important;
+    color: #d97706 !important;
+    border: 1px solid #fde68a !important;
+    box-shadow: none;
+}
+
+    .bd-text-btn-outline:hover {
+        background-color: #fde68a !important;
+        color: #d97706 !important;
+    }
+
+/* Nút Xóa/Khóa (Bổ sung sẵn) -> Đỏ Pastel */
+.bd-text-btn-danger {
+    background-color: #fee2e2 !important;
+    color: #dc2626 !important;
+    border: 1px solid #fecaca !important;
+    box-shadow: none;
+}
+
+    .bd-text-btn-danger:hover {
+        background-color: #fecaca !important;
+        color: #dc2626 !important;
+    }

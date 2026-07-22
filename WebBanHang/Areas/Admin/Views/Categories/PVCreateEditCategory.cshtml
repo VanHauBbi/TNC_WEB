@@ -1,16 +1,23 @@
 ﻿@model WebBanHang.Models.Category
 
-<div class="form-group">
-    <div class="control-label col-md-2">Tên danh mục</div>
-    <div class="col-md-10">
-        @Html.EditorFor(model => model.CategoryName, new { htmlAttributes = new { @class = "form-control" } })
-        @Html.ValidationMessageFor(model => model.CategoryName, "", new { @class = "text-danger" })
-    </div>
-</div>
+@{
+    bool isCreateMode = (Model == null || Model.CategoryID == 0);
+    string btnText = isCreateMode ? "Lưu danh mục" : "Cập nhật thay đổi";
+    string iconClass = isCreateMode ? "fa-plus" : "fa-check";
+}
 
-<div class="form-group">
-    <div class="col-md-offset-2 col-md-10">
-        <input type="submit" value="Lưu" class="btn btn-primary" />
-        @Html.ActionLink("Quay lại danh sách", "Index", null, new { @class = "btn btn-secondary" })
+<div class="category-form-wrapper">
+    <div class="mb-4">
+        <label class="form-label text-muted fw-bold" style="font-size: 0.85rem;">Tên danh mục <span class="text-danger">*</span></label>
+        @Html.EditorFor(model => model.CategoryName, new { htmlAttributes = new { @class = "form-control shadow-none", placeholder = "Nhập tên danh mục (vd: Bàn phím cơ...)", style = "border-radius: 8px;" } })
+        @Html.ValidationMessageFor(model => model.CategoryName, "", new { @class = "text-danger small mt-1" })
+    </div>
+
+    <!-- Dải nút đồng bộ góc phải dưới -->
+    <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-2">
+        @Html.ActionLink("Quay lại", "Index", null, new { @class = "claude-btn-secondary" })
+        <button type="submit" class="btn-claude-primary px-4">
+            <i class="fa-solid @iconClass"></i> @btnText
+        </button>
     </div>
 </div>

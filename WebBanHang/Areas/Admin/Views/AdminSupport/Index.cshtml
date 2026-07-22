@@ -5,92 +5,148 @@
     Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
 }
 
-<div class="card shadow-sm border-0 mt-3">
-    <div class="card-header bg-white py-3 border-bottom-0">
-        <h5 class="mb-0 fw-bold text-dark"><i class="fa-solid fa-list-check text-primary me-2"></i> Các phiên cần hỗ trợ trực tuyến</h5>
-    </div>
-    <div class="card-body pt-0">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle border">
-                <thead class="table-light">
-                    <tr>
-                        <th style="width: 10%;">Mã phòng</th>
-                        <th style="width: 25%;">Tên khách hàng</th>
-                        <th style="width: 25%;">Thời gian bắt đầu</th>
-                        <th style="width: 20%;">Trạng thái phòng</th>
-                        <th style="width: 20%;" class="text-center">Hành động</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (Model == null || !Model.Any())
-                    {
-                        <tr>
-                            <td colspan="5" class="text-center text-muted py-5">
-                                <i class="fa-solid fa-comment-slash fs-3 d-block mb-2 text-secondary"></i>
-                                Hiện tại không có yêu cầu hỗ trợ nào đang chờ xử lý.
-                            </td>
-                        </tr>
-                    }
-                    else
-                    {
-                        foreach (var item in Model)
-                        {
-                            <tr>
-                                <td><strong class="text-primary">#@item.SessionID</strong></td>
-                                <td>
-                                    <div class="fw-bold text-dark">@item.Customer.CustomerName</div>
-                                    <small class="text-muted"><i class="fa-solid fa-phone-flip small"></i> @item.Customer.CustomerPhone</small>
-                                </td>
-                                <td>
-                                    <span class="text-secondary">
-                                        <i class="fa-regular fa-clock me-1"></i> @item.StartTime.ToString("dd/MM/yyyy HH:mm")
-                                    </span>
-                                </td>
-                                <td>
-                                    @if (item.Status == 0)
-                                    {
-                                        <span class="badge bg-danger px-2 py-2"><i class="fa-solid fa-bell fa-beat me-1"></i> Đang chờ Admin</span>
-                                    }
-                                    else if (item.Status == 1)
-                                    {
-                                        <span class="badge bg-warning text-dark px-2 py-2"><i class="fa-solid fa-spinner fa-spin me-1"></i> Đang chat...</span>
-                                    }
-                                    else if (item.Status == 2)
-                                    {
-                                        <span class="badge bg-secondary px-2 py-2"><i class="fa-solid fa-lock me-1"></i> Đã đóng</span>
-                                    }
-                                    else if (item.Status == 3)
-                                    {
-                                        <!-- THÊM TRẠNG THÁI MỚI Ở ĐÂY -->
-                                        <span class="badge bg-info text-dark px-2 py-2 shadow-sm"><i class="fa-solid fa-hourglass-half fa-spin me-1"></i> Chờ kết thúc</span>
-                                    }
-                                </td>
-                                <td class="text-center">
-                                    <a href="@Url.Action("ChatRoom", "AdminSupport", new { id = item.SessionID })" class="btn btn-primary btn-sm px-3 fw-bold me-1">
-                                        <i class="fa-solid fa-comments me-1"></i> Trò chuyện
-                                    </a>
+<!-- LINK FILE CSS DÙNG CHUNG -->
+<link href="~/Content/Admin/chat_support_admin.css" rel="stylesheet" />
 
-                                    @* Nếu đã đóng (2) HOẶC đang chờ khách xác nhận (3) thì mờ nút Đóng đi *@
-                                    @if (item.Status == 2 || item.Status == 3)
-                                    {
-                                        <button class="btn btn-outline-secondary btn-sm" disabled title="Không thể thao tác lúc này" style="cursor: not-allowed; opacity: 0.6;">
-                                            <i class="fa-solid fa-circle-check"></i> Đóng
-                                        </button>
-                                    }
-                                    else
-                                    {
-                                        <a href="@Url.Action("EndSession", "AdminSupport", new { id = item.SessionID })"
-                                           class="btn btn-outline-secondary btn-sm"
-                                           onclick="return confirm('Bạn có chắc chắn muốn gửi yêu cầu đóng phiên này cho khách hàng?')">
-                                            <i class="fa-solid fa-circle-check"></i> Đóng
-                                        </a>
-                                    }
-                                </td>
-                            </tr>
-                        }
-                    }
-                </tbody>
-            </table>
+<!-- Ép nền xám cho toàn trang để nổi bật khối bảng -->
+
+<div class="mt-0 pt-0">
+    <div class="saas-container border-0">
+
+        <!-- HEADER (Style ngày tháng và Bộ Lọc) -->
+        <div class="d-flex justify-content-between align-items-center mb-5 pb-3 border-bottom">
+            <div>
+                <i class="text-muted mb-0" style="font-size: 1.20rem;">Phiên Hỗ Trợ Trực Tuyến</i>
+                <p class="text-muted mb-0 fw-medium" style="font-size: 0.95rem;">@DateTime.Now.ToString("dd/MM/yyyy")</p>
+            </div>
+
+            <!-- NÚT LỌC ĐÃ ĐƯỢC CHUYỂN THÀNH DROPDOWN -->
+            <div class="dropdown">
+                <button class="btn btn-light border bg-white text-muted shadow-sm dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 8px;">
+                    <i class="fa-solid fa-filter me-2"></i> <span id="filterText">Tất cả trạng thái</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="filterDropdown" style="border-radius: 8px; border: 1px solid #eaedf1;">
+                    <li><a class="dropdown-item filter-btn active fw-medium py-2" href="#" data-filter="all">Tất cả trạng thái</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item filter-btn py-2" href="#" data-filter="0"><i class="fa-solid fa-bell text-danger me-2 w-15px"></i>Đang chờ Admin</a></li>
+                    <li><a class="dropdown-item filter-btn py-2" href="#" data-filter="1"><i class="fa-solid fa-spinner text-primary me-2 w-15px"></i>Đang chat</a></li>
+                    <li><a class="dropdown-item filter-btn py-2" href="#" data-filter="3"><i class="fa-solid fa-hourglass-half text-success me-2 w-15px"></i>Chờ kết thúc</a></li>
+                    <li><a class="dropdown-item filter-btn py-2" href="#" data-filter="2"><i class="fa-solid fa-lock text-secondary me-2 w-15px"></i>Đã đóng</a></li>
+                </ul>
+            </div>
         </div>
+
+        <!-- NỘI DUNG DANH SÁCH (DẠNG KHỐI - CARD LIST) -->
+        <div class="chat-list">
+            @if (Model == null || !Model.Any())
+            {
+                <div class="text-center py-5">
+                    <i class="fa-regular fa-calendar-check text-muted mb-3" style="font-size: 3.5rem; opacity: 0.3;"></i>
+                    <h5 class="fw-bold text-dark">Lịch trình trống!</h5>
+                    <p class="text-muted">Tuyệt vời, hiện không có khách hàng nào đang đợi hỗ trợ.</p>
+                </div>
+            }
+            else
+            {
+                foreach (var item in Model)
+                {
+                    string cardClass = "";
+                    string statusText = "";
+                    string iconClass = "";
+
+                    if (item.Status == 0) { cardClass = "status-waiting"; statusText = "Đang chờ Admin"; iconClass = "fa-bell fa-shake text-danger"; }
+                    else if (item.Status == 1) { cardClass = "status-active"; statusText = "Đang chat"; iconClass = "fa-spinner fa-spin text-primary"; }
+                    else if (item.Status == 3) { cardClass = "status-closing"; statusText = "Chờ kết thúc"; iconClass = "fa-hourglass-half fa-spin text-success"; }
+                    else if (item.Status == 2) { cardClass = "status-closed"; statusText = "Đã đóng"; iconClass = "fa-lock text-secondary"; }
+
+                    <!-- Bổ sung data-status để script nhận diện -->
+                    <div class="chat-card @cardClass" data-status="@item.Status">
+
+                        <!-- Cột Trái: Nội dung chính -->
+                        <div>
+                            <div class="chat-title">
+                                Khách hàng: @item.Customer.CustomerName
+                                <span class="badge bg-white text-dark border ms-2 shadow-sm" style="font-size: 0.75rem; vertical-align: middle;">Mã phòng: #@item.SessionID</span>
+                            </div>
+                            <div class="chat-meta">
+                                <span><i class="fa-regular fa-clock me-1"></i> @item.StartTime.ToString("HH:mm - dd/MM")</span>
+                                <span><i class="fa-solid fa-phone me-1"></i> @item.Customer.CustomerPhone</span>
+                                <span class="fw-bold text-dark"><i class="fa-solid @iconClass me-1"></i> @statusText</span>
+                            </div>
+                        </div>
+
+                        <!-- Cột Phải: Các nút hành động -->
+                        <div class="d-flex gap-2">
+                            <!-- Đổi class btn-primary thành btn-pastel-primary -->
+                            <a href="@Url.Action("ChatRoom", "AdminSupport", new { id = item.SessionID })" class="btn btn-pastel-primary btn-saas shadow-sm">
+                                <i class="fa-solid fa-comments me-1"></i> Hỗ trợ
+                            </a>
+
+                            @if (item.Status == 2 || item.Status == 3)
+                            {
+                                <button class="btn btn-secondary btn-saas shadow-sm border-0" disabled style="background-color: #94a3b8; color: #ffffff; opacity: 1;">
+                                    <i class="fa-solid fa-lock me-1" style="font-size: 0.8em;"></i> Đã Đóng
+                                </button>
+                            }
+                            else
+                            {
+                                <a href="@Url.Action("EndSession", "AdminSupport", new { id = item.SessionID })" class="btn btn-white bg-white border text-danger btn-saas shadow-sm" onclick="return confirm('Khách hàng sẽ nhận được thông báo đóng phiên. Bạn có chắc chắn?')">
+                                    Kết thúc
+                                </a>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+
+            // 1. FIX LỖI DROPDOWN: Mở/đóng menu thủ công
+            $('#filterDropdown').click(function (e) {
+                e.preventDefault();
+                $(this).next('.dropdown-menu').toggleClass('show');
+            });
+
+            // Click ra ngoài vùng dropdown thì tự động đóng lại
+            $(document).click(function (e) {
+                if (!$(e.target).closest('.dropdown').length) {
+                    $('.dropdown-menu').removeClass('show');
+                }
+            });
+
+            // 2. LOGIC LỌC TRẠNG THÁI
+            $('.filter-btn').click(function (e) {
+                e.preventDefault(); // Ngăn trình duyệt nhảy trang
+
+                // Cập nhật text hiển thị trên nút Lọc
+                var selectedText = $(this).text();
+                $('#filterText').text(selectedText);
+
+                // Đổi màu làm nổi bật mục đang chọn
+                $('.filter-btn').removeClass('active fw-bold text-primary');
+                $(this).addClass('active fw-bold');
+
+                // Lấy trạng thái cần lọc
+                var statusToFilter = $(this).data('filter');
+
+                // Ẩn/Hiện khối Chat
+                if (statusToFilter === 'all') {
+                    $('.chat-card').fadeIn(250);
+                } else {
+                    $('.chat-card').hide();
+                    $('.chat-card[data-status="' + statusToFilter + '"]').fadeIn(250);
+                }
+
+                // Tự động đóng menu sau khi chọn xong
+                $('.dropdown-menu').removeClass('show');
+            });
+
+        });
+    </script>
+}

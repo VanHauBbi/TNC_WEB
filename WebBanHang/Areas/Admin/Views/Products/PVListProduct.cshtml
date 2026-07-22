@@ -1,64 +1,83 @@
-﻿@using PagedList.Mvc
-@model PagedList.IPagedList<WebBanHang.Models.Product>
+﻿@model PagedList.IPagedList<WebBanHang.Models.Product>
+@using PagedList.Mvc;
 
-<link href="~/Content/Admin/products_admin.css" rel="stylesheet" />
-
-@if (Model != null && Model.Any())
-{
-    <table class="table table-bordered table-hover table-admin-data">
-        <thead class="table-dark">
-            <tr>
-                <th style="width: 8%;">Ảnh</th>
-                <th style="width: 25%;">Tên sản phẩm</th>
-                <th style="width: 12%;" class="text-end">Giá bán</th>
-                <th style="width: 12%;" class="text-end">Giá nhập</th>
-                <th style="width: 10%;" class="text-center">Tồn kho</th>
-                <th style="width: 13%;">Danh mục</th>
-                <th style="width: 20%;" class="text-center">Hành động</th>
+<!-- Bọc table-responsive ở đây là đủ -->
+<div class="table-responsive">
+    <table class="claude-table table-hover mb-0">
+        <!-- Ép xóa viền top dư thừa -->
+        <thead style="border-top: none !important;">
+            <tr style="border-top: none !important;">
+                <th style="width: 26%; border-top: none !important;">TÊN SẢN PHẨM</th>
+                <th style="width: 12%; border-top: none !important;">GIÁ BÁN</th>
+                <th style="width: 12%; border-top: none !important;">GIÁ NHẬP</th>
+                <th style="width: 10%; border-top: none !important;" class="text-center">TỒN KHO</th>
+                <th style="width: 25%; border-top: none !important;" class="text-center">DANH MỤC</th>
+                <th style="width: 15%; border-top: none !important;" class="text-center">HÀNH ĐỘNG</th>
             </tr>
         </thead>
         <tbody>
-            @foreach (var item in Model)
+            @if (Model != null && Model.Any())
+            {
+                foreach (var item in Model)
+                {
+                    <tr>
+                        <td>
+                            <div class="product-cell">
+                                <img src="@item.ProductImage" alt="@item.ProductName" class="product-thumb-admin" />
+                                <div>
+                                    <div class="product-name">@item.ProductName</div>
+                                </div>
+                            </div>
+                        </td>
+
+                        <td class="fw-bold" style="color: #111827;">
+                            @string.Format("{0:N0}", item.ProductPrice) ₫
+                        </td>
+
+                        <td class="text-muted fw-medium">
+                            @string.Format("{0:N0}", item.ImportPrice) ₫
+                        </td>
+
+                        <td class="text-center">
+                            @if (item.StockQuantity > 0)
+                            {
+                                <span class="claude-badge badge-stock">@item.StockQuantity</span>
+                            }
+                            else
+                            {
+                                <span class="claude-badge" style="background-color: #fee2e2 !important; color: #dc2626 !important; font-weight: bold; white-space: nowrap !important;">
+                                    Hết hàng
+                                </span>
+                            }
+                        </td>
+
+                        <td class="text-center">
+                            <span class="claude-badge badge-category">
+                                @(item.Category != null ? item.Category.CategoryName : "Chưa phân loại")
+                            </span>
+                        </td>
+
+                        <td class="text-center">
+                            <div class="action-cell">
+                                <a href="@Url.Action("Edit", "Products", new { id = item.ProductID })" class="btn-action btn-edit">Edit</a>
+                                <a href="@Url.Action("Details", "Products", new { id = item.ProductID })" class="btn-action btn-view">View</a>
+                                <a href="@Url.Action("Delete", "Products", new { id = item.ProductID })" class="btn-action btn-delete">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+            else
             {
                 <tr>
-                    <td>
-                        <img src="@Html.DisplayFor(modelItem => item.ProductImage)" alt="@item.ProductName" class="product-thumb-admin" />
-                    </td>
-                    <td>
-                        <strong class="text-primary">@Html.DisplayFor(modelItem => item.ProductName)</strong>
-                    </td>
-                    <td class="text-end fw-bold text-danger">
-                        @item.ProductPrice.ToString("N0") ₫
-                    </td>
-                    <td class="text-end fw-bold text-success">
-                        @item.ImportPrice.ToString("N0") ₫
-                    </td>
-                    <td class="text-center">
-                        @if (item.StockQuantity > 0)
-                        {
-                            <span class="badge bg-success" style="font-size: 0.9em;">@item.StockQuantity</span>
-                        }
-                        else
-                        {
-                            <span class="badge bg-danger" style="font-size: 0.9em;">Hết hàng</span>
-                        }
-                    </td>
-                    <td>
-                        @Html.DisplayFor(modelItem => item.Category.CategoryName)
-                    </td>
-                    <td class="text-center">
-                        @Html.ActionLink("Sửa", "Edit", new { id = item.ProductID }, new { @class = "btn btn-warning btn-sm me-1" })
-                        @Html.ActionLink("Chi tiết", "Details", new { id = item.ProductID }, new { @class = "btn btn-info btn-sm me-1" })
-                        @Html.ActionLink("Xóa", "Delete", new { id = item.ProductID }, new { @class = "btn btn-danger btn-sm" })
+                    <td colspan="6" class="text-center py-5 text-muted">
+                        <i class="fa-solid fa-box-open fa-2x mb-2" style="color: #cbd5e1;"></i>
+                        <p class="mb-0">Không tìm thấy sản phẩm nào.</p>
                     </td>
                 </tr>
             }
         </tbody>
     </table>
-}
-else
-{
-    <div class="alert alert-warning text-center mt-3">
-        Không tìm thấy sản phẩm nào phù hợp với bộ lọc.
-    </div>
-}
+</div>

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using WebBanHang.Models;
 
 namespace WebBanHang.Models.ViewModel
@@ -18,10 +19,25 @@ namespace WebBanHang.Models.ViewModel
         // Dữ liệu cho Biểu đồ Chart.js
         public List<string> ChartLabels { get; set; }
         public List<decimal> ChartData { get; set; }
-        // Bổ sung các trường chi tiết để phục vụ khi bấm vào Card
-        public int PendingOrders { get; set; } // Chờ xác nhận
-        public int FailedOrders { get; set; }  // Đã hủy/Thất bại
-        public decimal TotalShippingFee { get; set; } // Doanh thu từ phí vận chuyển
-        public decimal TotalVoucherDiscount { get; set; } // Tổng tiền giảm giá (voucher)
+
+        public int PendingOrders { get; set; }
+        public int FailedOrders { get; set; }
+        public decimal TotalShippingFee { get; set; }
+        public decimal TotalVoucherDiscount { get; set; }
+
+        // BỔ SUNG BIẾN NÀY ĐỂ CHỨA DỮ LIỆU TIMELINE
+        public List<TimelineItemVM> RecentActivities { get; set; }
+    }
+
+    // THÊM CLASS NÀY XUỐNG DƯỚI CÙNG ĐỂ KHAI BÁO CẤU TRÚC TIMELINE
+    public class TimelineItemVM
+    {
+        public string Title { get; set; }
+        public string Description { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public string IconClass { get; set; }
+        public string IconColorClass { get; set; }
+        public string BadgeText { get; set; }
+        public string ActionUrl { get; set; }
     }
 }

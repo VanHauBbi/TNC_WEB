@@ -748,6 +748,25 @@ body {
     color: var(--danger-text) !important;
 }
 
+.main-content > .container-fluid {
+    flex: 1; /* Đẩy nội dung giãn ra, ép footer xuống tận cùng đáy */
+}
+
+.admin-footer-copyright {
+    margin-top: auto; /* Lực đẩy cuối cùng để dính chặt đáy */
+    padding: 15px 35px; /* Căn lề trái bằng với container-fluid (35px) */
+    background: transparent;
+    border-top: none;
+    margin-bottom: 0;
+}
+
+    .admin-footer-copyright p {
+        margin: 0;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        text-align: left; /* Đảm bảo luôn nằm góc trái */
+    }
+
 /*//===================================================================
 */
 /*.table-admin-data {

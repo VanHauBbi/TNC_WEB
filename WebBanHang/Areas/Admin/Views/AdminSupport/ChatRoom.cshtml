@@ -3,157 +3,239 @@
 @{
     ViewBag.Title = "Phòng Chat #" + Model.SessionID;
     Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+    var activeSessions = ViewBag.ActiveSessions as IEnumerable<WebBanHang.Models.SupportSession>;
 }
-<div class="row mt-3">
-    <div class="col-12 mb-3">
-        <a href="@Url.Action("Index", "AdminSupport")" class="btn btn-secondary btn-sm shadow-sm">
-            <i class="fa-solid fa-arrow-left me-1"></i> Quay lại danh sách
-        </a>
-    </div>
-</div>
-        <div class="row mt-3">
-            <div class="col-md-4">
-                <div class="card shadow-sm border-0 mb-4">
-                    <div class="card-header bg-white py-3 border-bottom-0">
-                        <h6 class="mb-0 fw-bold text-dark"><i class="fa-solid fa-user text-primary me-2"></i> Thông tin khách hàng</h6>
-                    </div>
-                    <div class="card-body">
-                        <p><strong>Tên khách hàng:</strong> @Model.Customer.CustomerName</p>
-                        <p><strong>Số điện thoại:</strong> @Model.Customer.CustomerPhone</p>
-                        <p>
-                            <strong>Trạng thái:</strong>
-                            <span class="badge bg-success">Đang Online</span>
-                        </p>
-                        <hr />
-                        <a href="@Url.Action("EndSession", "AdminSupport", new { id = Model.SessionID })"
-                           class="btn btn-outline-danger w-100"
-                           onclick="return confirm('Bạn có chắc chắn muốn kết thúc phiên hỗ trợ này?');">
-                            <i class="fa-solid fa-circle-check"></i> Đánh dấu đã giải quyết
-                        </a>
-                    </div>
+
+<link href="~/Content/Admin/chat_support_admin.css?v=@DateTime.Now.Ticks" rel="stylesheet" />
+
+<div class="container-fluid px-1 mb-2" style="margin-top: -25px;">
+    <div class="row g-0 chat-layout">
+
+        <!-- ========================================== -->
+        <!-- CỘT TRÁI: DANH SÁCH CÁC PHIÊN CHAT -->
+        <!-- ========================================== -->
+        <div class="col-lg-3 col-md-4 border-end d-flex flex-column bg-white h-100">
+            <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
+                <h6 class="fw-bold mb-0 text-dark">Hộp thư (Inbox)</h6>
+                <a href="@Url.Action("Index")" class="btn btn-sm btn-light border text-muted px-3 rounded-pill">
+                    <i class="fa-solid fa-house"></i>
+                </a>
+            </div>
+
+            <div class="p-3 border-bottom bg-white">
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                    <input type="text" id="searchInput" class="form-control bg-light border-0 shadow-none text-muted" placeholder="Tìm tên khách, mã phòng...">
                 </div>
             </div>
 
-            <div class="col-md-8">
-                <div class="card shadow-sm border-0">
-                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-3">
-                        <h6 class="mb-0 fw-bold"><i class="fa-regular fa-comments me-2"></i> Trò chuyện trực tiếp</h6>
-                        <span class="badge bg-light text-primary">Mã phòng: #@Model.SessionID</span>
+            <div class="flex-grow-1 scroll-y" style="overflow-y: auto; height: 100%;">
+                @if (activeSessions != null && activeSessions.Any())
+                {
+                    foreach (var session in activeSessions)
+                    {
+                        bool isActive = (session.SessionID == Model.SessionID);
+                        <a href="@Url.Action("ChatRoom", new { id = session.SessionID })" class="chat-list-item @(isActive ? "active" : "")">
+                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                <span class="fw-bold @(isActive ? "text-primary" : "text-dark")">@session.Customer.CustomerName</span>
+                                <small class="text-muted" style="font-size: 0.75rem;">@session.StartTime.ToString("HH:mm")</small>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted text-truncate" style="max-width: 150px;">Phòng #@session.SessionID</small>
+
+                                @if (session.Status == 0)
+                                {<span class="badge bg-danger rounded-circle p-1"><i class="fa-solid fa-bell fa-xs"></i></span> }
+                                else if (session.Status == 1)
+                                { <span class="badge bg-success rounded-circle p-1" style="width: 10px; height: 10px;"></span> }
+                                else if (session.Status == 3)
+                                { <span class="badge bg-info rounded-circle p-1" style="width: 10px; height: 10px;"></span> }
+                                else if (session.Status == 2)
+                                { <i class="fa-solid fa-lock text-muted fa-xs"></i>}
+                            </div>
+                        </a>
+                    }
+                }
+                else
+                {
+                    <div class="text-center p-4 text-muted">
+                        <small>Vui lòng Build lại project để tải danh sách.</small>
                     </div>
-
-                    <div class="card-body" id="chatWindow" style="height: 500px; overflow-y: auto; background-color: #f8f9fa;">
-                        <ul id="discussion" class="list-unstyled mb-0">
-                            @foreach (var msg in Model.SupportMessages.OrderBy(m => m.SendTime))
-                            {
-                                // Xác định định danh
-                                bool isAI = msg.MessageContent.StartsWith("AI: ");
-                                bool isRightSide = msg.IsAdmin || isAI; // Cả Admin và AI đều nằm bên phải
-
-                                string senderName = msg.IsAdmin ? "Admin (Bạn)" : (isAI ? "🤖 Trợ lý AI" : Model.Customer.CustomerName);
-                                string cleanContent = isAI ? msg.MessageContent.Substring(4) : msg.MessageContent;
-
-                                // Thiết lập màu sắc để phân biệt
-                                string bgColor = "";
-                                string textColor = "";
-
-                                if (msg.IsAdmin)
-                                {
-                                    bgColor = "#0d6efd"; // Xanh dương cho Admin
-                                    textColor = "white";
-                                }
-                                else if (isAI)
-                                {
-                                    bgColor = "linear-gradient(135deg, #20c997, #17a2b8)"; // Xanh ngọc Gradient cho AI
-                                    textColor = "white";
-                                }
-                                else
-                                {
-                                    bgColor = "#ffffff"; // Trắng cho Khách hàng
-                                    textColor = "#333333";
-                                }
-
-                                <div class="d-flex mb-3 @(isRightSide ? "justify-content-end" : "justify-content-start")">
-                                    <div class="p-2 rounded-3 shadow-sm"
-                                         style="max-width: 75%; background: @bgColor; color: @textColor; border: 1px solid #e2e3e5;">
-                                        <small class="d-block fw-bold mb-1" style="opacity: 0.85;">@senderName</small>
-                                        <span>@cleanContent</span>
-                                        <small class="d-block mt-1 text-end" style="font-size: 0.65rem; opacity: 0.7;">
-                                            @msg.SendTime.ToString("HH:mm")
-                                        </small>
-                                    </div>
-                                </div>
-                            }
-                        </ul>
-                    </div>
-
-                    <div class="card-footer bg-white py-3">
-                        <div class="input-group">
-                            <input type="text" id="messageInput" class="form-control" placeholder="Nhập câu trả lời của bạn..." autocomplete="off" />
-                            <button class="btn btn-primary px-4 fw-bold" id="btnSend" type="button">
-                                <i class="fa-solid fa-paper-plane me-1"></i> Gửi
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                }
             </div>
         </div>
 
-        @section scripts {
-            <script src="~/Scripts/jquery.signalR-2.4.3.min.js"></script>
-            <script src="~/signalr/hubs"></script>
+        <!-- ========================================== -->
+        <!-- CỘT GIỮA: KHUNG TRÒ CHUYỆN -->
+        <!-- ========================================== -->
+        <!-- THẺ DIV NÀY LÀ THẺ BỊ THIẾU KHIẾN GIAO DIỆN BỊ VỠ -->
+        <div class="col-lg-6 col-md-8 d-flex flex-column position-relative bg-white h-100">
 
-            <script type="text/javascript">
+            <div class="p-4 border-bottom d-flex justify-content-between align-items-center bg-white shadow-sm" style="z-index: 10; height: 75px;">
+                <div>
+                    <h5 class="fw-bold text-dark mb-1">@Model.Customer.CustomerName</h5>
+                    @if (Model.Status == 2 || Model.Status == 3)
+                    {
+                        <div class="text-muted small fw-medium">
+                            <i class="fa-solid fa-circle fa-2xs me-1"></i> Đã rời khỏi mạng (Offline)
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-success small fw-medium">
+                            <i class="fa-solid fa-circle fa-2xs me-1"></i> Đang hoạt động (Active now)
+                        </div>
+                    }
+                </div>
+                <div>
+                    <span class="badge bg-light text-primary border px-3 py-2 fs-6 rounded-pill shadow-sm">
+                        Phòng #@Model.SessionID
+                    </span>
+                </div>
+            </div>
+
+            <div class="p-4 flex-grow-1 scroll-y" id="chatWindow" style="background-color: #ffffff; overflow-y: auto;">
+                <ul id="discussion" class="list-unstyled mb-0 d-flex flex-column gap-3">
+                    @foreach (var msg in Model.SupportMessages.OrderBy(m => m.SendTime))
+                    {
+                        bool isAI = msg.MessageContent.StartsWith("AI: ");
+                        bool isRightSide = msg.IsAdmin || isAI;
+                        string cleanContent = isAI ? msg.MessageContent.Substring(4) : msg.MessageContent;
+
+                        string bubbleClass = msg.IsAdmin ? "msg-sent" : (isAI ? "msg-ai" : "msg-received");
+                        string alignment = isRightSide ? "justify-content-end" : "justify-content-start";
+
+                        <li class="d-flex @alignment">
+                            <div class="msg-bubble @bubbleClass">
+                                @if (isAI)
+                                {
+                                    <div class="fw-bold mb-1" style="font-size: 0.8rem; opacity: 0.9;"><i class="fa-solid fa-robot me-1"></i> Trợ lý AI</div>
+                                }
+                                <div>@cleanContent</div>
+                                <div class="text-end mt-1" style="font-size: 0.7rem; opacity: 0.7;">
+                                    @msg.SendTime.ToString("HH:mm")
+                                </div>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            </div>
+
+            <div class="p-3 border-top bg-white">
+                <div class="d-flex align-items-center justify-content-between p-1 border shadow-sm" style="background: #f8fafc; border-radius: 50px;">
+                    @if (Model.Status == 2 || Model.Status == 3)
+                    {
+                        <input type="text" class="form-control border-0 bg-transparent shadow-none ms-2 flex-grow-1" style="box-shadow: none;" placeholder="Phiên chat đã đóng..." disabled />
+                        <button class="btn btn-secondary text-nowrap px-4" style="border-radius: 50px;" disabled>
+                            <i class="fa-solid fa-ban me-2"></i>Đã Khóa
+                        </button>
+                    }
+                    else
+                    {
+                        <input type="text" id="messageInput" class="form-control border-0 bg-transparent shadow-none ms-2 flex-grow-1" style="box-shadow: none;" placeholder="Nhập tin nhắn..." autocomplete="off" />
+                        <button class="btn text-white text-nowrap px-4" id="btnSend" type="button" style="background-color: #6366f1; border-radius: 50px;">
+                            <i class="fa-solid fa-paper-plane me-2"></i> Gửi
+                        </button>
+                    }
+                </div>
+            </div>
+
+        </div> <!-- KẾT THÚC CỘT GIỮA -->
+        <!-- ========================================== -->
+        <!-- CỘT PHẢI: THÔNG TIN KHÁCH HÀNG -->
+        <!-- ========================================== -->
+        <div class="col-lg-3 d-none d-lg-flex flex-column border-start bg-white p-4 scroll-y h-100" style="overflow-y: auto;">
+            <div class="text-center mb-4 mt-3">
+                <div class="avatar-circle mx-auto mb-3 shadow-sm fs-2" style="background-color: #6366f1; width: 80px; height: 80px;">
+                    @Model.Customer.CustomerName.Substring(0, 1).ToUpper()
+                </div>
+                <h5 class="fw-bold text-dark mb-1">@Model.Customer.CustomerName</h5>
+                <p class="text-muted small">Khách hàng</p>
+            </div>
+
+            <hr style="border-color: #e2e8f0;" class="mb-4" />
+
+            <h6 class="fw-bold text-dark mb-3">Thông tin liên hệ</h6>
+
+            <div class="d-flex align-items-center mb-3">
+                <div class="bg-light rounded p-2 me-3 text-primary"><i class="fa-solid fa-id-card"></i></div>
+                <div>
+                    <small class="text-muted d-block">Tên đăng nhập</small>
+                    <span class="fw-bold text-dark">@Model.Customer.Username</span>
+                </div>
+            </div>
+
+            <div class="d-flex align-items-center mb-3">
+                <div class="bg-light rounded p-2 me-3 text-primary"><i class="fa-solid fa-envelope"></i></div>
+                <div style="word-break: break-all;">
+                    <small class="text-muted d-block">Email</small>
+                    <span class="fw-bold text-dark">@Model.Customer.CustomerEmail</span>
+                </div>
+            </div>
+
+            <div class="d-flex align-items-center mb-3">
+                <div class="bg-light rounded p-2 me-3 text-primary"><i class="fa-solid fa-phone"></i></div>
+                <div>
+                    <small class="text-muted d-block">Số điện thoại</small>
+                    <span class="fw-bold text-dark">@Model.Customer.CustomerPhone</span>
+                </div>
+            </div>
+
+            <div class="d-flex align-items-center mb-4">
+                <div class="bg-light rounded p-2 me-3 text-primary"><i class="fa-regular fa-clock"></i></div>
+                <div>
+                    <small class="text-muted d-block">Bắt đầu lúc</small>
+                    <span class="fw-bold text-dark">@Model.StartTime.ToString("HH:mm - dd/MM/yyyy")</span>
+                </div>
+            </div>
+
+            <div class="mt-auto pt-4 border-top">
+                @if (Model.Status == 2 || Model.Status == 3)
+                {
+                    <button class="btn btn-light border text-muted fw-bold w-100 py-2 rounded-pill shadow-sm" disabled>
+                        <i class="fa-solid fa-lock me-2"></i> Phiên đã kết thúc
+                    </button>
+                }
+                else
+                {
+                    <a href="@Url.Action("EndSession", "AdminSupport", new { id = Model.SessionID })"
+                       class="btn btn-outline-danger fw-bold w-100 py-2 rounded-pill shadow-sm"
+                       onclick="return confirm('Bạn có chắc chắn muốn kết thúc phiên hỗ trợ này? Khách hàng sẽ không thể chat tiếp.');">
+                        <i class="fa-solid fa-circle-check me-2"></i> Đánh dấu đã giải quyết
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script src="~/Scripts/jquery.signalR-2.4.3.min.js"></script>
+    <script src="~/signalr/hubs"></script>
+
+    <script type="text/javascript">
         $(function () {
-            // Tự động cuộn khung chat xuống dưới cùng khi mới load
             var chatWindow = $('#chatWindow');
             chatWindow.scrollTop(chatWindow[0].scrollHeight);
+            var canChat = $('#messageInput').length > 0;
 
-            // 1. Khởi tạo đối tượng chat từ Hub
             var chat = $.connection.chatHub;
             var sessionId = @Model.SessionID;
-            var customerName = "@Model.Customer.CustomerName";
 
-            // 2. Định nghĩa hàm nhận tin nhắn từ Server (Client Method)
             chat.client.broadcastMessage = function (senderName, message, isAdmin, time) {
-                // 1. Kiểm tra xem tin nhắn có phải của AI không
                 var isAI = message.startsWith("AI: ");
-
-                // Cả Admin và AI đều hiển thị bên phải
                 var isRightSide = isAdmin || isAI;
-
-                var alignmentClass = isRightSide ? "justify-content-end" : "justify-content-start";
-                var borderClass = isRightSide ? "border-0" : "border";
-
-                // 2. Lọc bỏ chữ "AI: " nếu có để nội dung hiển thị đẹp hơn
                 var cleanMessage = isAI ? message.substring(4) : message;
 
-                // 3. Đặt tên hiển thị
-                var displayName = isAdmin ? "Admin (Bạn)" : (isAI ? "🤖 Trợ lý AI" : customerName);
+                var bubbleClass = isAdmin ? "msg-sent" : (isAI ? "msg-ai" : "msg-received");
+                var alignment = isRightSide ? "justify-content-end" : "justify-content-start";
+                var aiHeader = isAI ? `<div class="fw-bold mb-1" style="font-size: 0.8rem; opacity: 0.9;"><i class="fa-solid fa-robot me-1"></i> Trợ lý AI</div>` : "";
 
-                // 4. XỬ LÝ ĐỔI MÀU Ở ĐÂY
-                var bgColor = "";
-                var textColor = "";
-
-                if (isAdmin) {
-                    bgColor = "#0d6efd"; // Màu nền của Admin (Xanh dương)
-                    textColor = "#ffffff"; // Chữ màu trắng
-                }
-                else if (isAI) {
-                    bgColor = "#20c997"; // Xanh ngọc đơn sắc
-                    textColor = "white";
-                }
-                else {
-                    bgColor = "#ffffff"; // Màu nền của Khách hàng (Trắng)
-                    textColor = "#212529"; // Chữ màu đen
-                }
-
-                // 5. CHỈ RENDER VÀ APPEND DUY NHẤT 1 LẦN
-                var messageHtml = ` 
-                <li class="mb-3 d-flex ${alignmentClass}">
-                    <div class="p-2 rounded-3 shadow-sm ${borderClass}" style="max-width: 75%; background: ${bgColor}; color: ${textColor};">
-                        <small class="d-block fw-bold mb-1">${displayName}</small>
-                        <span>${cleanMessage}</span>
-                        <small class="d-block text-end mt-1" style="font-size: 0.7rem; opacity: 0.8;">${time}</small>
+                var messageHtml = `
+                <li class="d-flex ${alignment}">
+                    <div class="msg-bubble ${bubbleClass}">
+                        ${aiHeader}
+                        <div>${cleanMessage}</div>
+                        <div class="text-end mt-1" style="font-size: 0.7rem; opacity: 0.7;">${time}</div>
                     </div>
                 </li>`;
 
@@ -161,41 +243,40 @@
                 chatWindow.animate({ scrollTop: chatWindow[0].scrollHeight }, 300);
             };
 
-            chat.client.errorMessage = function (error) {
-                alert("Lỗi: " + error);
-            };
+            chat.client.errorMessage = function (error) { alert("Lỗi: " + error); };
 
-            // 3. Khởi động SignalR và bắt sự kiện Gửi
             $.connection.hub.start().done(function () {
-                // Admin đăng nhập vào đúng phòng (Group) của khách hàng
                 chat.server.joinSession(sessionId);
 
-                // Sự kiện Click nút Gửi
-                $('#btnSend').click(function () {
-                    sendMessage();
-                });
-
-                // Sự kiện nhấn phím Enter
-                $('#messageInput').keypress(function (e) {
-                    if (e.which == 13) {
-                        sendMessage();
-                    }
-                });
+                if (canChat) {
+                    $('#btnSend').click(function () { sendMessage(); });
+                    $('#messageInput').keypress(function (e) { if (e.which == 13) sendMessage(); });
+                }
 
                 function sendMessage() {
                     var currentStatus = @Model.Status;
-                    if (currentStatus == 2) {
+                    if (currentStatus == 2 || currentStatus == 3) {
                         alert("Phiên này đã đóng, bạn không thể nhắn tin tiếp!");
                         return;
                     }
                     var msg = $('#messageInput').val().trim();
                     if (msg.length > 0) {
-                        // Gửi tin nhắn lên Server. Chú ý tham số cuối (isAdmin) là TRUE
                         chat.server.sendMessage(sessionId, "Admin", msg, true);
                         $('#messageInput').val('').focus();
                     }
                 }
             });
+            $('#searchInput').on('keyup', function () {
+                var keyword = $(this).val().toLowerCase(); // Lấy từ khóa người dùng gõ và chuyển thành chữ thường
+
+                // Duyệt qua từng ô khách hàng bên trái
+                $('.chat-list-item').filter(function () {
+                    // Kiểm tra xem nội dung chữ trong ô đó có chứa từ khóa không
+                    var isMatch = $(this).text().toLowerCase().indexOf(keyword) > -1;
+                    // Nếu có thì hiện (toggle true), không có thì ẩn (toggle false)
+                    $(this).toggle(isMatch);
+                });
+            });
         });
-            </script>
-        }
+    </script>
+}

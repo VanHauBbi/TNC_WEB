@@ -1,0 +1,275 @@
+﻿/* Ép nền xám cho toàn trang */
+body, .content-wrapper, .main-content {
+    background-color: #f4f6f8 !important;
+}
+
+/* KHUNG BAO BỌC (Chuẩn Card B2B) */
+.ir-wrapper {
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+    margin-bottom: 24px;
+}
+
+.ir-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #e5e7eb;
+    background-color: #ffffff;
+}
+
+/* BẢNG DỮ LIỆU */
+.ir-table {
+    width: 100%;
+    margin-bottom: 0;
+    border-collapse: collapse;
+}
+
+    /* Tiêu đề cột chuẩn hóa */
+    .ir-table th {
+        text-transform: uppercase !important;
+        font-size: 0.95rem !important;
+        color: #6b7280 !important;
+        padding: 16px 16px !important;
+        font-weight: 700 !important;
+        vertical-align: middle !important;
+        letter-spacing: 0.5px !important;
+        border: none !important;
+        border-bottom: 2px solid #e2e8f0 !important;
+        background-color: #f8fafc !important;
+    }
+
+    /* Nội dung dữ liệu (Chuẩn Lịch sử: không viền dưới, chữ to rõ) */
+    .ir-table td {
+        padding: 18px 16px;
+        vertical-align: middle;
+        border-bottom: none !important;
+        font-size: 16.5px;
+        font-weight: 500;
+        color: #1f2937;
+    }
+
+    /* Hiệu ứng nền xám xen kẽ cho Lịch sử (Zebra) */
+    .ir-table tbody tr:nth-child(even) {
+        background-color: #f9fafb;
+    }
+
+    .ir-table tbody tr:hover {
+        background-color: #f1f5f9;
+        transition: background-color 0.2s ease;
+    }
+
+/* --- HỆ THỐNG NÚT BẤM PASTEL (Tiêu chuẩn Coupon) --- */
+
+/* Nút Thêm Mới (Xanh lá Pastel) */
+.ir-btn-add {
+    background-color: #ecfdf5;
+    color: #10b981 !important;
+    border: 1px solid #34d399;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 14.5px;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+}
+
+    .ir-btn-add:hover {
+        background-color: #d1fae5;
+        color: #059669 !important;
+    }
+
+/* Nút Chi tiết (Xanh dương Pastel) */
+.ir-btn-detail {
+    background-color: #e0f2fe;
+    color: #0284c7 !important;
+    border: 1px solid #bae6fd;
+    padding: 8px 18px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 14.5px;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-block;
+    white-space: nowrap;
+}
+
+    .ir-btn-detail:hover {
+        background-color: #bae6fd;
+    }
+
+
+/* 1. Thiết kế lại nút Quay lại chuẩn B2B Pastel */
+.btn-back-pastel {
+    background-color: #f8fafc;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+}
+
+.btn-back-pastel:hover {
+    background-color: #e2e8f0;
+    color: #1e293b;
+}
+
+/* 2. Tinh chỉnh bảng chi tiết (Xóa viền dọc, xóa viền đáy) */
+.detail-table {
+    margin-bottom: 0;
+}
+
+    .detail-table th {
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        color: #6b7280;
+        background-color: #f8fafc;
+        border-bottom: 2px solid #e2e8f0 !important;
+        border-top: none !important;
+        padding: 12px 16px;
+        vertical-align: middle !important; /* Lệnh ép các tiêu đề thẳng hàng với nhau */
+    }
+
+    .detail-table td {
+        padding: 16px;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: middle;
+        font-size: 15.5px;
+    }
+    /* Xóa triệt để đường thẳng dư ở dòng Tổng tiền cuối cùng */
+    .detail-table tfoot td {
+        border-bottom: none !important;
+        background-color: #f8fafc;
+        padding: 16px;
+        vertical-align: middle !important;
+        white-space: nowrap !important; /* Lệnh cấm rớt dòng, ép nằm chết trên 1 hàng */
+    }
+
+/* 3. Đồng bộ bo góc Card */
+.detail-card {
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+
+.cr-card {
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+    margin-bottom: 24px;
+}
+
+.cr-card-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #e5e7eb;
+    background-color: #ffffff;
+}
+
+/* Custom Scrollbar (Thanh cuộn mượt mà) */
+.cr-scrollbar {
+    overflow-y: auto;
+    height: 280px;
+    border-radius: 6px;
+}
+
+    .cr-scrollbar::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .cr-scrollbar::-webkit-scrollbar-thumb {
+        background-color: #cbd5e1;
+        border-radius: 10px;
+    }
+
+/* Hiệu ứng danh sách sản phẩm bên trái */
+.cr-product-row {
+    transition: all 0.2s ease;
+    border-bottom: 1px solid #f1f5f9;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+    .cr-product-row:hover {
+        background-color: #f8fafc;
+        border-radius: 6px;
+    }
+
+.cr-checkbox {
+    transform: scale(1.2);
+    cursor: pointer;
+}
+
+/* Bảng Chi tiết Phiếu nhập (Tương đồng với trang Detail) */
+.cr-table {
+    width: 100%;
+    margin-bottom: 0;
+    border-collapse: collapse;
+}
+
+    .cr-table th {
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        color: #6b7280;
+        background-color: #f8fafc;
+        border-bottom: 2px solid #e2e8f0 !important;
+        border-top: none !important;
+        padding: 14px 16px;
+        vertical-align: middle !important;
+        white-space: nowrap !important;
+    }
+
+    .cr-table td {
+        padding: 16px;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: middle;
+        font-size: 15.5px;
+    }
+
+    .cr-table tbody tr:hover {
+        background-color: #f9fafb;
+    }
+
+/* Input số lượng */
+.cr-qty-input {
+    width: 80px;
+    text-align: center;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    box-shadow: none;
+}
+
+    .cr-qty-input:focus {
+        border-color: #3b82f6;
+        outline: none;
+    }
+
+/* Nút bấm */
+.cr-btn-fetch {
+    background-color: #f59e0b;
+    color: white;
+    border-radius: 6px;
+    padding: 10px 0;
+    transition: all 0.2s;
+    border: none;
+}
+
+    .cr-btn-fetch:hover {
+        background-color: #d97706;
+    }
+
+.cr-btn-submit {
+    border-radius: 6px;
+    padding: 10px 24px;
+}

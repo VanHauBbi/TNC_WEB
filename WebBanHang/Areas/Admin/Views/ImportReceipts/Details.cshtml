@@ -5,59 +5,73 @@
     Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
 }
 
-<div class="card shadow-sm mb-4">
-    <div class="card-header bg-white pb-0 border-bottom">
-        <h5 class="fw-bold text-primary"><i class="fa-solid fa-file-lines"></i> Phiếu Nhập Kho #@Model.ReceiptID</h5>
+<link href="~/Content/Admin/import_receipt_admin.css" rel="stylesheet" />
+
+<div class="card detail-card mb-4 bg-white">
+    <div class="card-header bg-white pb-3 pt-3 border-bottom d-flex justify-content-between align-items-center">
+        <h5 class="fw-bold text-primary mb-0">
+            <i class="fa-solid fa-file-lines me-2"></i> Phiếu Nhập Kho #@Model.ReceiptID
+        </h5>
     </div>
-    <div class="card-body">
-        <div class="row mb-4 p-3 bg-light rounded">
+
+    <div class="card-body p-4">
+        <!-- Khối thông tin chung -->
+        <div class="row mb-4 p-3 bg-light rounded" style="border: 1px dashed #e2e8f0;">
             <div class="col-sm-4">
-                <p class="mb-1 text-muted small">Ngày thực hiện</p>
-                <h6 class="fw-bold">@Model.ReceivedDate.ToString("dd/MM/yyyy HH:mm")</h6>
+                <p class="mb-1 text-muted small text-uppercase fw-bold">Ngày thực hiện</p>
+                <h6 class="fw-bold text-dark mb-0 fs-6">@Model.ReceivedDate.ToString("dd/MM/yyyy HH:mm")</h6>
             </div>
             <div class="col-sm-4">
-                <p class="mb-1 text-muted small">Người thực hiện</p>
-                <h6 class="fw-bold">@Model.ReceivedBy</h6>
+                <p class="mb-1 text-muted small text-uppercase fw-bold">Người thực hiện</p>
+                <h6 class="fw-bold text-dark mb-0 fs-6">@Model.ReceivedBy</h6>
             </div>
             <div class="col-sm-4">
-                <p class="mb-1 text-muted small">Ghi chú</p>
-                <h6 class="fw-bold">@Model.Note</h6>
+                <p class="mb-1 text-muted small text-uppercase fw-bold">Ghi chú</p>
+                <h6 class="fw-bold text-secondary mb-0 fs-6">@(string.IsNullOrEmpty(Model.Note) ? "Không có ghi chú" : Model.Note)</h6>
             </div>
         </div>
 
-        <h6 class="fw-bold mb-3 border-bottom pb-2">Danh sách Lô hàng (Cơ sở FIFO)</h6>
-        <div class="table-responsive">
-            <table class="table table-bordered align-middle">
-                <thead class="table-light">
+        <h6 class="fw-bold mb-3 pb-2 text-dark">Danh sách Lô hàng (Cơ sở FIFO)</h6>
+
+        <!-- Bảng chi tiết -->
+        <div class="table-responsive border rounded mb-4">
+            <table class="table detail-table align-middle">
+                <thead>
                     <tr>
-                        <th>Sản phẩm</th>
-                        <th class="text-center">Số lượng nhập</th>
-                        <th class="text-center text-success">Còn tồn trong lô</th>
-                        <th class="text-end">Giá Nhập Cố Định</th>
-                        <th class="text-end">Thành tiền Lô</th>
+                        <!-- Chia tỷ lệ: Cột sản phẩm 40%, các cột còn lại mỗi cột 15% -->
+                        <th class="ps-4" style="width: 40%;">Sản phẩm</th>
+                        <th class="text-center text-nowrap" style="width: 15%;">Số lượng nhập</th>
+                        <th class="text-center text-success text-nowrap" style="width: 15%;">Còn tồn trong lô</th>
+                        <th class="text-end text-nowrap" style="width: 15%;">Giá Nhập Cố Định</th>
+                        <th class="text-end pe-4 text-nowrap" style="width: 15%;">Thành tiền Lô</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var detail in Model.ImportReceiptDetails)
                     {
                         <tr>
-                            <td class="fw-bold">@detail.Product.ProductName</td>
+                            <td class="fw-bold text-dark ps-4">@detail.Product.ProductName</td>
                             <td class="text-center">@detail.ImportQuantity</td>
                             <td class="text-center fw-bold text-success">@detail.RemainingQuantity</td>
-                            <td class="text-end text-danger">@detail.ImportPrice.ToString("N0") ₫</td>
-                            <td class="text-end fw-bold text-danger">@((detail.ImportPrice * detail.ImportQuantity).ToString("N0")) ₫</td>
+                            <!-- Thêm text-nowrap để giá tiền và chữ "đ" dính chặt vào nhau -->
+                            <td class="text-end text-danger fw-medium text-nowrap">@detail.ImportPrice.ToString("N0") ₫</td>
+                            <td class="text-end fw-bold text-danger pe-4 text-nowrap">@((detail.ImportPrice * detail.ImportQuantity).ToString("N0")) ₫</td>
                         </tr>
                     }
                 </tbody>
                 <tfoot>
-                    <tr class="bg-light">
-                        <td colspan="4" class="text-end fw-bold">TỔNG GIÁ TRỊ PHIẾU:</td>
-                        <td class="text-end fw-bold text-danger fs-5">@Model.TotalAmount.ToString("N0") ₫</td>
+                    <tr>
+                        <td colspan="4" class="text-end fw-bold text-dark text-uppercase" style="font-size: 0.9rem;">Tổng giá trị phiếu:</td>
+                        <!-- text-nowrap bảo vệ tổng tiền cuối cùng -->
+                        <td class="text-end fw-bold text-danger fs-5 pe-4 text-nowrap">@Model.TotalAmount.ToString("N0") ₫</td>
                     </tr>
                 </tfoot>
             </table>
         </div>
 
-        <a href="@Url.Action("Index")" class="btn btn-secondary mt-3"><i class="fa-solid fa-arrow-left"></i> Quay lại lịch sử</a>
+        <!-- Nút Quay lại thiết kế mới -->
+        <a href="@Url.Action("Index")" class="btn-back-pastel">
+            <i class="fa-solid fa-arrow-left-long me-2"></i> Quay lại lịch sử
+        </a>
     </div>
 </div>

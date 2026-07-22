@@ -6,16 +6,31 @@
 }
 
 <link href="~/Content/Admin/products_admin.css" rel="stylesheet" />
-<h4 class="delete-warning">⚠️ Bạn thực sự muốn xóa sản phẩm này? Thao tác không thể hoàn tác!</h4>
 
-@* PVProdInfo hiển thị thông tin để xác nhận *@
-@Html.Partial("PVProdInfo", Model)
-
-@using (Html.BeginForm())
-{
-    @Html.AntiForgeryToken()
-    <div class="form-group admin-action-buttons" style="margin-top: 20px; margin-left: 15px;">
-        <input type="submit" value="Xác nhận Xóa" class="btn btn-danger" />
-        @Html.ActionLink("Hủy bỏ & Quay lại", "Index", null, new { @class = "btn btn-secondary" })
+<div class="claude-form-card">
+    <div class="claude-alert-danger">
+        <i class="fa-solid fa-triangle-exclamation fs-4"></i>
+        <span><strong>Cảnh báo:</strong> Bạn thực sự muốn xóa sản phẩm này? Thao tác không thể hoàn tác!</span>
     </div>
-}
+
+    @* PVProdInfo hiển thị thông tin để xác nhận *@
+    @Html.Partial("PVProdInfo", Model)
+
+    @using (Html.BeginForm())
+    {
+        @Html.AntiForgeryToken()
+
+        <!-- Thêm justify-content-end để đẩy 2 nút sang góc phải -->
+        <div class="mt-4 pt-3 d-flex justify-content-end gap-2">
+
+            <!-- Đảo nút Hủy bỏ lên trước cho thuận tay -->
+            @Html.ActionLink("Hủy bỏ & Quay lại", "Index", null, new { @class = "claude-btn-secondary" })
+
+            <!-- Nút Xóa nằm ngoài cùng bên phải, thêm icon thùng rác cho trực quan -->
+            <button type="submit" class="claude-btn-danger">
+                <i class="fa-solid fa-trash"></i> Xác nhận Xóa
+            </button>
+
+        </div>
+    }
+</div>

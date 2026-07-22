@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Web.Mvc;
 using WebBanHang.Models;
+using PagedList;
 
 namespace WebBanHang.Areas.Admin.Controllers
 {
@@ -12,12 +13,17 @@ namespace WebBanHang.Areas.Admin.Controllers
         private MyStoreEntities db = new MyStoreEntities();
 
         // GET: Admin/Orders
-        public ActionResult Index()
+        public ActionResult Index(int? page)
         {
+            Session["LastOrderListUrl"] = Request.Url.PathAndQuery;
             var orders = db.Orders
-                        .Include("Customer")
-                        .ToList();
-            return View(orders);
+                           .Include("Customer")
+                           .OrderByDescending(o => o.OrderDate)
+                           .ToList();
+
+            int pageSize = 10; // Hiển thị 10 đơn/trang theo chuẩn UI mới
+            int pageNumber = (page ?? 1);
+            return View(orders.ToPagedList(pageNumber, pageSize));
         }
 
         // GET: Admin/Orders/Details/5

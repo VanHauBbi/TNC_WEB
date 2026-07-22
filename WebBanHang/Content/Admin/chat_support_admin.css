@@ -1,0 +1,231 @@
+﻿/* =========================================================
+   CSS DÙNG CHUNG CHO MODULE CHAT SUPPORT (ADMIN) - GIAO DIỆN SAAS
+   ========================================================= */
+
+/* Ép nền xám cho toàn trang để nổi bật khối bảng (Dùng chung cho cả Index và ChatRoom) */
+body, .content-wrapper, .main-content, #page-wrapper, .page-content, .container-fluid {
+    background-color: #f4f6f8 !important;
+}
+.content-wrapper, .main-content, #page-wrapper, .page-content {
+    padding-bottom: 0 !important;
+}
+
+/* =========================================================
+   PHẦN 1: CSS CHO TRANG DANH SÁCH PHIÊN CHAT (INDEX)
+   ========================================================= */
+
+/* --- CONTAINER CHÍNH (Bảng điều khiển) --- */
+.saas-container {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.03);
+    padding: 30px;
+}
+
+/* --- HỆ THỐNG KHỐI CHAT (CARD-BASED) --- */
+.chat-card {
+    border-radius: 8px;
+    padding: 16px 24px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-left: 4px solid transparent;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+    .chat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    }
+
+/* --- MÀU SẮC TRẠNG THÁI (PASTEL COLORS) --- */
+.status-waiting {
+    background-color: #fff5f5;
+    border-left-color: #ff6b6b;
+}
+
+.status-active {
+    background-color: #f0f4ff;
+    border-left-color: #5c7cfa;
+}
+
+.status-closing {
+    background-color: #ebfbee;
+    border-left-color: #38d9a9;
+}
+
+.status-closed {
+    background-color: #f8f9fa;
+    border-left-color: #ced4da;
+    opacity: 0.7;
+}
+
+/* --- TYPOGRAPHY (CHỮ VÀ ICON TRONG THẺ) --- */
+.chat-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #2b3035;
+    margin-bottom: 6px;
+}
+
+.chat-meta {
+    font-size: 0.85rem;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+    .chat-meta i {
+        color: #adb5bd;
+    }
+
+/* --- NÚT BẤM SAAS (ACTION BUTTONS) --- */
+.btn-saas {
+    border-radius: 6px;
+    font-weight: 600;
+    padding: 8px 20px;
+    font-size: 0.85rem;
+    transition: all 0.2s ease-in-out;
+}
+
+    .btn-saas:hover {
+        box-shadow: 0 4px 10px rgba(0,0,0,0.08) !important;
+    }
+
+/* --- KHU VỰC TRỐNG DỮ LIỆU (EMPTY STATE) --- */
+.chat-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 1rem;
+}
+
+    .chat-empty-state i {
+        font-size: 3.5rem;
+        color: #cbd5e1;
+        margin-bottom: 1.25rem;
+    }
+
+
+/* =========================================================
+   PHẦN 2: CSS CHO TRANG PHÒNG CHAT 3 CỘT (CHAT ROOM)
+   ========================================================= */
+
+/* --- CẤU TRÚC GIAO DIỆN 3 CỘT --- */
+.chat-layout {
+    height: calc(100vh - 100px);
+    min-height: 650px;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 5px 25px rgba(0,0,0,0.03);
+    border: 1px solid #eef2f6;
+    overflow: hidden;
+}
+
+/* --- TÙY CHỈNH THANH CUỘN (SCROLLBAR) --- */
+.scroll-y::-webkit-scrollbar {
+    width: 5px;
+}
+
+.scroll-y::-webkit-scrollbar-thumb {
+    background-color: #e2e8f0;
+    border-radius: 10px;
+}
+
+.scroll-y:hover::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+}
+
+/* --- ITEM BÊN CỘT TRÁI (DANH SÁCH PHIÊN) --- */
+.chat-list-item {
+    padding: 16px 20px;
+    border-left: 4px solid transparent;
+    border-bottom: 1px solid #f8fafc;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: block;
+    text-decoration: none !important;
+}
+
+    .chat-list-item:hover {
+        background-color: #f8fafc;
+    }
+
+    .chat-list-item.active {
+        background-color: #f0f4ff;
+        border-left-color: #6366f1; /* Tím/Xanh của mockup */
+    }
+
+/* --- BUBBLE CHAT (KHUNG TIN NHẮN) --- */
+.msg-bubble {
+    padding: 12px 18px;
+    border-radius: 16px;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    max-width: 75%;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+}
+
+.msg-received {
+    background-color: #f8fafc;
+    color: #334155;
+    border-bottom-left-radius: 4px;
+    border: 1px solid #e2e8f0;
+}
+
+.msg-sent {
+    background-color: #6366f1; /* Tím/Xanh chủ đạo */
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+.msg-ai {
+    background: linear-gradient(135deg, #10b981, #14b8a6);
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+/* --- AVATAR CỘT PHẢI --- */
+.avatar-circle {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: white;
+}
+
+/* CSS Nút Tham gia - Xanh Pastel */
+.btn-pastel-primary {
+    background-color: #e0f2fe;
+    color: #0284c7;
+    border: 1px solid #bae6fd;
+    transition: all 0.2s ease;
+}
+
+    .btn-pastel-primary:hover {
+        background-color: #bae6fd;
+        color: #0369a1;
+    }
+
+.dropdown-item.active, .dropdown-item:active {
+    background-color: #e0f2fe !important; /* Nền xanh pastel rất nhạt */
+    color: #0369a1 !important; /* Chữ màu xanh đậm */
+    border-radius: 6px; /* Bo góc nhẹ cho giống app */
+}
+
+.dropdown-item {
+    transition: all 0.2s ease;
+    border-radius: 6px;
+    margin: 0 4px; /* Hơi co lề một xíu cho đẹp */
+    width: auto;
+}
+
+    .dropdown-item:hover {
+        background-color: #f1f5f9;
+    }

@@ -1,0 +1,56 @@
+﻿body, .content-wrapper, .main-content, #page-wrapper, .page-content, .container-fluid {
+    background-color: #f4f6f8 !important;
+}
+
+.ph-table-wrapper {
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    border: 1px solid #e5e7eb;
+    padding: 24px 32px;
+    overflow: hidden;
+    margin-bottom: 24px;
+}
+
+/* Bảng dữ liệu */
+.ph-table {
+    width: 100%;
+    margin-bottom: 0;
+    border-collapse: collapse;
+}
+
+    /* 3. TIÊU ĐỀ CỘT (Ép chuẩn B2B: In hoa, chữ nhỏ đậm, nền xám nhạt) */
+    .ph-table th {
+        font-size: 0.9rem !important;
+        font-weight: 700;
+        color: #6b7280 !important;
+        padding: 14px 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        background-color: #f8fafc; /* Nền xám nhạt cho Header */
+        border-bottom: 2px solid #e2e8f0 !important; /* Giữ 1 line chuẩn dưới header */
+        border-top: none;
+    }
+
+    /* 4. HÀNG DỮ LIỆU (Tôn trọng quy tắc KHÔNG viền dưới của ông) */
+    .ph-table td {
+        padding: 16px 12px; /* Rộng rãi cho thoáng */
+        vertical-align: middle;
+        border-bottom: none !important; /* Tuyệt đối không viền dưới giống ảnh mẫu */
+        font-size: 15.5px; /* Chữ to rõ chuẩn toàn hệ thống */
+        color: #1f2937;
+        font-weight: 500;
+    }
+
+    /* 5. HIỆU ỨNG NỀN XÁM ĐỂ DỄ ĐỌC DỮ LIỆU KHÔNG VIỀN */
+
+    /* Cách A: Đổ nền xám cực nhẹ xen kẽ các dòng (Dòng chẵn) */
+    .ph-table tbody tr:nth-child(even) {
+        background-color: #f9fafb;
+    }
+
+    /* Cách B: Dòng nào đưa chuột vào thì highlight nền xám dòng đó */
+    .ph-table tbody tr:hover {
+        background-color: #f1f5f9;
+        transition: background-color 0.2s ease;
+    }

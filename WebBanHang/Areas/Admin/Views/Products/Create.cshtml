@@ -7,33 +7,32 @@
 
 <link href="@Url.Content("~/Content/Admin/products_admin.css")" rel="stylesheet" />
 
-@using (Html.BeginForm())
-{
-    @Html.AntiForgeryToken()
-    <div class="form-horizontal card p-4 shadow-sm border-0">
-        <h4 class="fw-bold text-primary mb-3">@ViewBag.Title</h4>
-        <hr />
-        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+<div class="claude-form-card">
+    <h4 class="claude-form-title">@ViewBag.Title</h4>
+
+    @using (Html.BeginForm())
+    {
+        @Html.AntiForgeryToken()
+        @Html.ValidationSummary(true, "", new { @class = "text-danger mb-3" })
 
         @Html.Partial("PVCreateEditProduct", Model)
 
-        <div class="form-group mt-4">
-            <input type="submit" value="Lưu sản phẩm" class="btn btn-primary px-4 fw-bold" />
-            @Html.ActionLink("Quay lại danh sách", "Index", null, new { @class = "btn btn-secondary px-4" })
+        <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-2">
+            @Html.ActionLink("Quay lại", "Index", null, new { @class = "claude-btn-secondary" })
+            <button type="submit" class="btn-claude-primary px-4"><i class="fa-solid fa-plus"></i> Lưu sản phẩm</button>
         </div>
-    </div>
-}
+    }
+</div>
 
 @section Scripts {
     @Scripts.Render("~/bundles/jqueryval")
+    <!-- Giữ nguyên toàn bộ đoạn script Javascript của ông ở đây -->
     <script>
         $(document).ready(function () {
-
             // 1. NÚT TẠO SKU NỘI BỘ
             $('#btnGetSKU').click(function () {
                 var name = $('#txtProductName').val();
                 if (!name) { alert("Vui lòng nhập Tên sản phẩm trước!"); return; }
-
                 $.get('@Url.Action("GenerateSKUPreview", "Products")', { productName: name }, function (res) {
                     if (res.success) { $('#txtSKU').val(res.sku); }
                     else { alert(res.message); }
@@ -44,23 +43,17 @@
             $('#btnScrapePrice').click(function () {
                 var sku = $('#txtSKU').val();
                 var msgBox = $('#scrapeMsg');
-
                 if (!sku) {
                     alert("Vui lòng gõ hoặc bấm 'Tạo SKU' trước khi cào dữ liệu đối tác!");
                     return;
                 }
-
                 msgBox.text("Đang kết nối API GitHub...").removeClass("text-danger text-success").addClass("text-primary");
-
-                // Gọi chéo sang Action FetchSupplierPrice bên ImportReceipts
                 $.get('/Admin/ImportReceipts/FetchSupplierPrice', { sku: sku }, function (res) {
                     if (res.success) {
                         msgBox.text("💡 Giá nhập đối tác: " + res.price.toLocaleString('vi-VN') + " đ").removeClass("text-primary").addClass("text-success");
-
-                        // Nếu ô giá bán đang là 0, gợi ý gán luôn bằng giá nhập + 20% lợi nhuận
                         var curPrice = parseFloat($('#ProductPrice').val()) || 0;
                         if (curPrice === 0) {
-                            var suggestedSelling = res.price * 1.2; // Gợi ý lời 20%
+                            var suggestedSelling = res.price * 1.2;
                             $('#ProductPrice').val(suggestedSelling);
                             alert("Đã cào được giá gốc: " + res.price.toLocaleString('vi-VN') + " đ.\n\n💡 Hệ thống tạm điền gợi ý Giá Bán (đã cộng 20% lời) là: " + suggestedSelling.toLocaleString('vi-VN') + " đ.\nBạn có thể tự chỉnh lại con số này tùy ý!");
                         }
@@ -69,7 +62,6 @@
                     }
                 });
             });
-
         });
     </script>
 }

@@ -1,178 +1,399 @@
-﻿/* products_admin.css */
+﻿/* products_admin.css - Claude Style Redesign (Đồng bộ B2B Chuẩn) */
 
 :root {
-    --admin-primary: #007bff;
-    --admin-success: #28a745;
-    --admin-danger: #dc3545;
-    --admin-info-bg: #f9f9f9;
+    --bg-color: #f7f7f8;
+    --card-bg: #ffffff;
+    --text-main: #333333;
+    --text-muted: #6b7280;
+    --border-color: #e5e7eb;
+    --primary-color: #3b82f6;
+    --btn-primary-hover: #2563eb;
+    --hover-bg: #f3f4f6;
 }
 
-/* --- Tối ưu hóa Forms (Create/Edit) --- */
-.form-horizontal .form-group {
+body {
+    background-color: #f4f6f8 !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* --- VỎ BỌC BẢNG (CARD) --- */
+.claude-card {
+    background-color: var(--card-bg);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    border: 1px solid var(--border-color);
+}
+
+/* --- THANH CÔNG CỤ (HEADER & FILTER) --- */
+.claude-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+    .claude-toolbar h4 {
+        font-weight: 700;
+        color: var(--text-main);
+        margin: 0;
+        font-size: 1.25rem;
+    }
+
+.claude-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.btn-claude-primary {
+    background-color: var(--primary-color);
+    color: white !important;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+    .btn-claude-primary:hover {
+        background-color: var(--btn-primary-hover);
+        color: white;
+        text-decoration: none;
+    }
+
+    /* Nút thêm mới */
+.ir-btn-add {
+    background-color: #ecfdf5;
+    color: #10b981 !important;
+    border: 1px solid #34d399;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 14.5px;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px; /* Khoảng cách giữa Icon và Text */
+}
+
+    .ir-btn-add:hover {
+        background-color: #d1fae5;
+        color: #059669 !important;
+    }
+
+/* Bộ lọc danh mục */
+.claude-filter-select {
+    padding: 8px 32px 8px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background-color: white;
+    font-size: 0.9rem;
+    color: var(--text-main);
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 16px;
+    outline: none;
+    cursor: pointer;
+}
+
+    .claude-filter-select:focus {
+        border-color: var(--primary-color);
+    }
+
+/* --- BẢNG DỮ LIỆU --- */
+.claude-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 8px;
+    table-layout: fixed !important;
+}
+
+    /* --- 1. TIÊU CHUẨN TIÊU ĐỀ (TABLE HEADERS) CHUẨN ORDER --- */
+    .claude-table th {
+        text-transform: uppercase !important;
+        font-size: 0.9rem !important;
+        color: #4b5563 !important;
+        padding: 12px 16px !important;
+        font-weight: 700 !important;
+        vertical-align: middle !important;
+        letter-spacing: 0.5px !important;
+        border: none !important;
+        border-bottom: 2px solid #e2e8f0 !important;
+        border-top: none !important;
+    }
+
+    /* Các hàng dữ liệu */
+    .claude-table tbody tr {
+        transition: all 0.2s ease;
+    }
+
+    .claude-table tbody td {
+        padding: 16px;
+        vertical-align: middle !important;
+        background-color: white;
+        border-top: 1px solid transparent;
+        border-bottom: 1px solid transparent;
+        font-size: 15px;
+        color: var(--text-main);
+    }
+
+        /* Bo góc cho thẻ td đầu và cuối */
+        .claude-table tbody td:first-child {
+            border-left: 1px solid transparent;
+            border-top-left-radius: 8px;
+            border-bottom-left-radius: 8px;
+        }
+
+        .claude-table tbody td:last-child {
+            border-right: 1px solid transparent;
+            border-top-right-radius: 8px;
+            border-bottom-right-radius: 8px;
+        }
+
+    .claude-table tbody tr:hover td {
+        background-color: var(--hover-bg);
+        border-color: #d1d5db;
+    }
+
+/* --- THÀNH PHẦN TRONG BẢNG --- */
+.product-cell {
     display: flex;
     align-items: center;
-    margin-bottom: 15px;
+    gap: 15px;
 }
 
-.form-horizontal .control-label {
-    flex: 0 0 150px; /* Cố định độ rộng nhãn */
-    text-align: right;
-    padding-right: 15px;
-    font-weight: 600;
-}
-
-.form-horizontal .col-md-10 {
-    flex: 1;
-    padding-left: 0;
-}
-
-.form-horizontal .form-control {
-    max-width: 100%;
-}
-
-.form-horizontal hr {
-    margin-top: 0;
-}
-
-/* --- Nút Action --- */
-.admin-action-buttons .btn {
-    padding: 8px 16px;
-    border-radius: 5px;
-    transition: all 0.2s;
-    margin-right: 8px;
-}
-
-.admin-action-buttons .btn-primary {
-    background-color: var(--admin-primary);
-    border-color: var(--admin-primary);
-}
-
-    .admin-action-buttons .btn-primary:hover {
-        background-color: #0056b3;
-        border-color: #0056b3;
-    }
-
-.admin-action-buttons .btn-warning {
-    background-color: #ffc107;
-}
-
-/* --- DETAILS (Thông tin sản phẩm) --- */
-.product-detail-container {
-    background-color: var(--admin-info-bg);
-    border-radius: 8px;
-    padding: 25px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-}
-
-.product-detail-info {
-    font-family: Arial, sans-serif;
-}
-
-    .product-detail-info dt {
-        font-weight: bold;
-        color: #343a40;
-        margin-bottom: 5px;
-        margin-top: 10px;
-        border-bottom: 1px dotted #ccc;
-        padding-bottom: 3px;
-    }
-
-    .product-detail-info dd {
-        margin: 0 0 15px 0;
-        font-size: 16px;
-        color: #6c757d;
-    }
-
-.product-image-large {
-    height: 280px;
-    max-width: 100%;
-    object-fit: contain;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-/* --- DELETE --- */
-.delete-warning {
-    color: var(--admin-danger);
-    font-size: 1.2rem;
-    font-weight: 600;
-    margin-top: 20px;
-}
-/* Thêm vào products_admin.css */
-
-/* Định dạng hình ảnh sản phẩm trong bảng */
 .product-thumb-admin {
-    width: 60px;
-    height: 60px;
-    object-fit: contain;
-    border: 1px solid #ddd;
-    border-radius: 4px;
+    width: 65px;
+    height: 65px;
+    border-radius: 6px;
+    object-fit: cover;
+    border: 1px solid var(--border-color);
+    background: white;
+    padding: 2px;
 }
 
-/* Tận dụng lại style bảng đã định nghĩa trước đó */
-.table-admin-data {
-    font-size: 0.95rem;
+.product-name {
+    font-weight: 500;
+    font-size: 15px;
+    color: var(--text-main);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.4;
 }
 
-    /* Đảm bảo nội dung căn giữa chiều dọc */
-    .table-admin-data tbody td {
-        vertical-align: middle;
-    }
+/* Badge Trạng thái / Tồn kho / Danh mục */
+.claude-badge {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    display: inline-block;
+    text-align: center;
+}
 
-    /* Đảm bảo các cột action không bị float */
-    .table-admin-data td:last-child a,
-    .table-admin-data td:last-child button {
-        /* Đảm bảo khoảng cách giữa các nút */
-        margin: 2px;
-    }
-/* Thêm vào home_admin.css hoặc products_admin.css */
+.badge-stock {
+    background-color: #dcfce7;
+    color: #166534;
+}
 
-/* --- PHÂN TRANG CHUẨN BOOTSTRAP --- */
-.pagination-container {
+.badge-category {
+    background-color: #f3f4f6;
+    color: #4b5563;
+    border: 1px solid #e5e7eb;
+}
+
+/* --- CỘT HÀNH ĐỘNG (ACTIONS) --- */
+.action-cell {
     display: flex;
-    justify-content: center;
-    margin-top: 25px;
-    margin-bottom: 10px;
-}
-
-.pagination {
-    display: inline-flex;
     gap: 6px;
-    list-style: none;
-    padding-left: 0;
-    margin: 0;
+    justify-content: flex-end;
 }
 
-    .pagination li {
-        display: inline;
+/* ĐỔI THÀNH TIÊU CHUẨN NÚT PASTEL CHUẨN COUPON */
+.btn-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 14px; /* Trả lại kích thước chuẩn giống trang Coupon */
+    border-radius: 6px;
+    font-size: 13.5px;
+    font-weight: 600;
+    white-space: nowrap !important;
+    text-decoration: none;
+    transition: all 0.2s ease-in-out;
+    height: 36px; /* Cân bằng chiều cao các nút */
+}
+
+/* Nút View (Màu xanh dương pastel) */
+.btn-view {
+    background-color: #e0f2fe !important;
+    color: #0284c7 !important;
+    border: 1px solid #bae6fd !important;
+}
+
+    .btn-view:hover {
+        background-color: #bae6fd !important;
+        color: #0284c7 !important;
     }
 
-        .pagination li a,
-        .pagination li span {
-            border: 1px solid #dee2e6;
-            padding: 6px 12px;
-            color: #007bff;
-            background-color: #fff;
-            border-radius: 4px;
-            text-decoration: none;
-            transition: all 0.2s ease;
-        }
+/* Nút Edit (Màu vàng pastel) */
+.btn-edit {
+    background-color: #fef3c7 !important;
+    color: #d97706 !important;
+    border: 1px solid #fde68a !important;
+}
 
-            .pagination li a:hover {
-                background-color: #e9ecef;
-                border-color: #adb5bd;
-            }
+    .btn-edit:hover {
+        background-color: #fde68a !important;
+        color: #d97706 !important;
+    }
 
-        .pagination li.active span {
-            background-color: #007bff;
-            color: #fff;
-            border-color: #007bff;
-            font-weight: 600;
-        }
+/* Nút Delete (Màu đỏ pastel) */
+.btn-delete {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    padding: 0 !important;
+    background-color: #fee2e2 !important;
+    color: #dc2626 !important;
+    border: 1px solid #fecaca !important;
+}
 
-        .pagination li.disabled span {
-            color: #aaa;
-            background-color: #f8f9fa;
-            cursor: not-allowed;
-        }
+    .btn-delete:hover {
+        background-color: #fecaca !important;
+        color: #dc2626 !important;
+    }
+
+/* ÉP BUỘC CẤU TRÚC CLAUDE - GHI ĐÈ BOOTSTRAP */
+.claude-table {
+    width: 100% !important;
+    border-collapse: separate !important;
+    border-spacing: 0 8px !important;
+}
+
+    .claude-table th, .claude-table td {
+        padding: 16px !important;
+        border: none !important;
+        background-color: white !important;
+    }
+
+    .claude-table tr td:first-child {
+        border-top-left-radius: 8px;
+        border-bottom-left-radius: 8px;
+    }
+
+    .claude-table tr td:last-child {
+        border-top-right-radius: 8px;
+        border-bottom-right-radius: 8px;
+    }
+
+table.table-hover tbody tr:hover {
+    background-color: transparent !important;
+}
+
+.claude-card {
+    background: #ffffff !important;
+    border: 1px solid #e5e7eb !important;
+    box-shadow: none !important;
+}
+
+.claude-form-card {
+    max-width: 100%;
+    background-color: var(--bg-color);
+    border: none;
+    box-shadow: none;
+    padding: 0;
+}
+
+.claude-form-title {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--text-main);
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.claude-btn-secondary {
+    background-color: white;
+    color: var(--text-main) !important;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 10px 24px;
+    font-weight: 600;
+    font-size: 14.5px;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+    .claude-btn-secondary:hover {
+        background-color: var(--hover-bg);
+        border-color: #d1d5db;
+        color: var(--text-main) !important;
+    }
+
+.claude-btn-danger {
+    background-color: #ef4444;
+    color: white !important;
+    border: 1px solid #ef4444;
+    border-radius: 8px;
+    padding: 10px 24px;
+    font-weight: 600;
+    font-size: 14.5px;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+    .claude-btn-danger:hover {
+        background-color: #dc2626;
+        border-color: #dc2626;
+        color: white !important;
+        box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.2);
+    }
+
+.claude-alert-danger {
+    background-color: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #ef4444;
+    padding: 16px 20px;
+    border-radius: 8px;
+    font-weight: 500;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Sọc vằn (Zebra Striping) */
+.claude-table tbody tr:nth-child(even) td {
+    background-color: #f9fafb !important;
+}
+
+.claude-table tbody tr:nth-child(odd) td {
+    background-color: #ffffff !important;
+}
+
+/* Hiệu ứng hover nhạt hơn để không đè mất sọc */
+.claude-table tbody tr:hover td {
+    background-color: #f3f4f6 !important;
+    transition: background-color 0.2s ease;
+}

@@ -1,134 +1,98 @@
-﻿@*@model IEnumerable<WebBanHang.Models.ImportReceipt>
-
-    @{
-        ViewBag.Title = "Quản lý Phiếu Nhập Kho (FIFO)";
-        Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
-    }
-
-    <div class="container-fluid py-4">
-        <div class="card shadow border-0 rounded-3">
-            <div class="card-header bg-primary text-white p-4 d-flex justify-content-between align-items-center">
-                <div>
-                    <h4 class="mb-0 fw-bold"><i class="fa-solid fa-boxes-stacked me-2"></i> LỊCH SỬ NHẬP KHO THEO LÔ (FIFO)</h4>
-                    <small class="opacity-75">Hệ thống tự động phân bổ giá vốn khi có giao dịch xuất bán</small>
-                </div>
-                <a href="@Url.Action("Create")" class="btn btn-success fw-bold px-4 shadow-sm">
-                    <i class="fa-solid fa-plus me-1"></i> Lập Phiếu Nhập Mới
-                </a>
-            </div>
-
-            <div class="card-body p-4">
-                <div class="table-responsive">
-                    <table class="table table-bordered table-hover align-middle text-center">
-                        <thead class="table-dark">
-                            <tr>
-                                <th style="width: 8%;">Mã Phiếu</th>
-                                <th style="width: 15%;">Thời Gian Nhập</th>
-                                <th style="width: 20%;">Nguồn Nhập / Nhà Cung Cấp</th>
-                                <th style="width: 15%;">Người Phụ Trách</th>
-                                <th style="width: 22%;">Ghi Chú Nội Bộ</th>
-                                <th style="width: 12%;">Tổng Tiền</th>
-                                <th style="width: 8%;">Chi Tiết</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @if (!Model.Any())
-                            {
-                                <tr>
-                                    <td colspan="7" class="text-center py-4 text-muted">
-                                        <i class="fa-solid fa-box-open fs-2 mb-2 d-block"></i>
-                                        Chưa có chứng từ nhập kho nào được ghi nhận.
-                                    </td>
-                                </tr>
-                            }
-                            else
-                            {
-                                foreach (var item in Model)
-                                {
-                                    <tr>
-                                        <td class="fw-bold text-primary">#@item.ReceiptID</td>
-                                        <td>@item.ReceivedDate.ToString("dd/MM/yyyy HH:mm")</td>
-
-                                        <td class="text-start">
-                                            @if (item.PurchaseOrder != null)
-                                            {
-                                                <span class="badge bg-info text-dark fw-bold px-2 py-1">
-                                                    <i class="fa-solid fa-file-contract me-1"></i> @item.PurchaseOrder.SupplierName
-                                                </span>
-                                            }
-                                            else
-                                            {
-                                                <span class="badge bg-secondary px-2 py-1">
-                                                    <i class="fa-solid fa-bolt me-1"></i> Nhập trực tiếp
-                                                </span>
-                                            }
-                                        </td>
-
-                                        <td>@item.ReceivedBy</td>
-                                        <td class="text-start text-truncate" style="max-width: 200px;">
-                                            @(string.IsNullOrEmpty(item.Note) ? "-" : item.Note)
-                                        </td>
-                                        <td class="text-end fw-bold text-danger">
-                                            @item.TotalAmount.ToString("N0") ₫
-                                        </td>
-                                        <td>
-                                            <a href="@Url.Action("Details", new { id = item.ReceiptID })" class="btn btn-sm btn-outline-primary fw-bold">
-                                                <i class="fa-solid fa-eye"></i> Xem
-                                            </a>
-                                        </td>
-                                    </tr>
-                                }
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>*@
-
-@model IEnumerable<WebBanHang.Models.ImportReceipt>
+﻿@model IEnumerable<WebBanHang.Models.ImportReceipt>
 
 @{
     ViewBag.Title = "Lịch sử Nhập Kho (P.O)";
     Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
 }
 
-<div class="card shadow-sm border-0">
-    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
-        <h5 class="mb-0 fw-bold"><i class="fa-solid fa-clock-rotate-left"></i> Lịch sử Nhập Kho</h5>
-        <a href="@Url.Action("Create")" class="btn btn-primary fw-bold">
-            <i class="fa-solid fa-plus"></i> Lập Phiếu Nhập
-        </a>
-    </div>
-    <div class="card-body p-0">
-        <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
-                <tr>
-                    <th>Mã Phiếu</th>
-                    <th>Ngày Nhập</th>
-                    <th>Người Nhập</th>
-                    <th>Ghi Chú</th>
-                    <th class="text-end">Tổng Tiền (Giá Vốn)</th>
-                    <th class="text-center">Thao tác</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in Model)
-                {
+<link href="~/Content/Admin/import_receipt_admin.css" rel="stylesheet" />
+<div class="mt-0 pt-0">
+    <!-- KHỐI QUẢN LÝ PHIẾU NHẬP -->
+    <div class="ir-wrapper">
+
+        <!-- Header -->
+        <div class="ir-header d-flex justify-content-between align-items-center">
+
+            <i class="text-muted mb-0" style="font-size: 1.20rem;">Quản lý và tra cứu các chứng từ nhập hàng (P.O)</i>
+
+            <a href="@Url.Action("Create")" class="ir-btn-add shadow-sm">
+                <i class="fa-solid fa-plus me-2"></i> Lập Phiếu Nhập
+            </a>
+        </div>
+
+        <!-- Bảng Dữ Liệu -->
+        <div class="table-responsive">
+            <table class="ir-table text-start">
+                <thead>
                     <tr>
-                        <td class="fw-bold text-primary">#@item.ReceiptID</td>
-                        <td>@item.ReceivedDate.ToString("dd/MM/yyyy HH:mm")</td>
-                        <td>@item.ReceivedBy</td>
-                        <td><small class="text-muted">@item.Note</small></td>
-                        <td class="text-end fw-bold text-danger">@item.TotalAmount.ToString("N0") ₫</td>
-                        <td class="text-center">
-                            <a href="@Url.Action("Details", new { id = item.ReceiptID })" class="btn btn-sm btn-info text-white">
-                                <i class="fa-solid fa-eye"></i> Chi tiết
-                            </a>
-                        </td>
+                        <th class="ps-4" style="width: 12%;">Mã Phiếu</th>
+                        <th style="width: 20%;">Người Nhập</th>
+                        <th style="width: 18%;">Ngày Nhập</th>
+                        <th style="width: 15%;">Ghi Chú</th>
+                        <th class="text-center" style="width: 25%;">Tổng Tiền (Giá Vốn)</th>
+                        <th class="text-center pe-4" style="width: 10%;">Thao tác</th>
                     </tr>
-                }
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @if (Model == null || !Model.Any())
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center py-5">
+                                <div class="d-flex flex-column align-items-center justify-content-center text-muted">
+                                    <i class="fa-solid fa-box-open fs-1 mb-3" style="color: #cbd5e1;"></i>
+                                    <span class="fw-medium" style="font-size: 0.95rem;">Chưa có chứng từ nhập kho nào.</span>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var item in Model)
+                        {
+                <tr>
+                    <!-- Mã Phiếu -->
+                    <td class="ps-4">
+                        <strong class="fw-bold text-dark">#@item.ReceiptID</strong>
+                    </td>
+
+                    <!-- Người Nhập -->
+                    <td>
+                        <div class="fw-medium text-dark">@item.ReceivedBy</div>
+                    </td>
+
+                    <!-- Ngày Nhập -->
+                    <td>
+                        <div class="fw-bold text-dark" style="font-size: 0.95rem;">
+                            @item.ReceivedDate.ToString("dd/MM/yyyy")
+                        </div>
+                        <div class="text-muted" style="font-size: 0.85rem;">
+                            <i class="fa-regular fa-clock me-1"></i>@item.ReceivedDate.ToString("HH:mm")
+                        </div>
+                    </td>
+
+                    <!-- Ghi Chú -->
+                    <td>
+                        <div class="text-secondary" style="font-size: 0.9rem;">
+                            @(string.IsNullOrWhiteSpace(item.Note) ? "-" : item.Note)
+                        </div>
+                    </td>
+
+                    <!-- Tổng Tiền -->
+                    <td class="text-center fw-bold text-danger">
+                        @item.TotalAmount.ToString("N0") ₫
+                    </td>
+
+                    <!-- Thao tác -->
+                    <td class="text-center pe-4">
+                        <a href="@Url.Action("Details", new { id = item.ReceiptID })" class="ir-btn-detail">
+                            Chi tiết
+                        </a>
+                    </td>
+                </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>

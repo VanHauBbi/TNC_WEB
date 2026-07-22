@@ -1,5 +1,5 @@
 ﻿/* Content/Admin/dashboard.css */
-.dash-card {
+/*.dash-card {
     border-radius: 10px;
     border: none;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -48,9 +48,258 @@
 .progress-thin {
     height: 8px;
     border-radius: 10px;
-}
+}*/
 /* Bổ sung class màu tím cho Lợi nhuận */
-.bg-light-purple {
+/*.bg-light-purple {
     background-color: #f3e8ff;
     color: #6f42c1;
+}*/
+
+/* =========================================
+   MODERN VIBRANT SAAS DASHBOARD STYLES
+   ========================================= */
+body, .content-wrapper, .main-content {
+    background-color: #f3f5f9 !important;
+    font-family: 'Inter', sans-serif;
 }
+
+/* CARD CHUNG */
+.saas-card {
+    background: #ffffff;
+    border-radius: 16px;
+    border: none;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.03);
+    padding: 24px;
+}
+
+/* =========================================
+   NÚT BẤM (BUTTONS) - Bo tròn mềm mại
+   ========================================= */
+.btn-dash-action {
+    border-radius: 12px;
+    padding: 8px 18px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.btn-outline-primary-soft {
+    background-color: #e0f2fe;
+    color: #0284c7;
+}
+
+    .btn-outline-primary-soft:hover {
+        background-color: #bae6fd;
+        color: #0369a1;
+    }
+
+.btn-dark-soft {
+    background-color: #1e293b;
+    color: #ffffff;
+}
+
+    .btn-dark-soft:hover {
+        background-color: #0f172a;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+/* =========================================
+   VÙNG 3: GRADIENT CARDS 
+   ========================================= */
+.grad-card {
+    border-radius: 16px;
+    padding: 24px;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+    height: 100%;
+}
+
+    .grad-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .grad-card h6 {
+        font-size: 0.9rem;
+        opacity: 0.9;
+        margin-bottom: 8px;
+        font-weight: 500;
+    }
+
+    .grad-card h3 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 0;
+    }
+
+.grad-bg-icon {
+    position: absolute;
+    right: -10px;
+    bottom: -15px;
+    font-size: 100px;
+    opacity: 0.15;
+    transform: rotate(-15deg);
+}
+
+.bg-grad-purple {
+    background: linear-gradient(135deg, #b854a6, #7952b3);
+}
+
+.bg-grad-deep {
+    background: linear-gradient(135deg, #663dff, #aa00ff);
+}
+
+.bg-grad-blue {
+    background: linear-gradient(135deg, #00b4db, #0083b0);
+}
+
+.bg-grad-orange {
+    background: linear-gradient(135deg, #f12711, #f5af19);
+}
+
+/* =========================================
+   BỘ LỌC TIME PILLS NẰM TRONG CHART
+   ========================================= */
+.time-filter-wrapper {
+    display: inline-flex;
+    gap: 5px;
+}
+
+.btn-time-pill {
+    background: transparent;
+    color: #94a3b8;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 13px;
+    transition: all 0.2s;
+}
+
+    .btn-time-pill.active {
+        background-color: #f1f5f9;
+        color: #1e293b;
+    }
+
+.top-product-item {
+    display: flex;
+    align-items: center;
+    padding: 16px 8px;
+    background: transparent;
+    border-bottom: 1px solid #e2e8f0;
+    transition: background-color 0.2s ease;
+    width: 100%; /* Ép chiều rộng tối đa */
+}
+
+    .top-product-item:last-child {
+        border-bottom: none;
+    }
+
+    .top-product-item:hover {
+        background-color: #f8fafc;
+        border-radius: 8px;
+    }
+
+    /* --- FIX LỖI TRÀN CHỮ TẠI ĐÂY --- */
+    .top-product-item .flex-grow-1 {
+        min-width: 0 !important; /* Bắt buộc để Flexbox cho phép cắt chữ */
+        overflow: hidden;
+    }
+
+    .top-product-item h6 {
+        white-space: nowrap; /* Không cho rớt dòng */
+        overflow: hidden; /* Giấu phần chữ tràn */
+        text-overflow: ellipsis; /* Hiện dấu ... */
+        display: block;
+    }
+
+.top-product-price {
+    color: #dc2626;
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-top: 4px;
+}
+
+.top-product-badge {
+    background-color: #2563eb;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0; /* Ép Badge luôn giữ nguyên kích thước, KHÔNG bị bóp méo hay đẩy ra ngoài */
+    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+}
+
+/* =========================================
+   HIỆU ỨNG CARD CHUẨN SAAS & TIMELINE
+   ========================================= */
+.hover-lift {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+}
+
+    .hover-lift:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.15) !important;
+    }
+
+.timeline-container::-webkit-scrollbar {
+    width: 5px;
+}
+
+.timeline-container::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+.timeline-item {
+    border-left: 2px solid #e2e8f0;
+    padding-left: 20px;
+    margin-left: 16px;
+}
+
+.timeline-icon {
+    width: 32px;
+    height: 32px;
+    left: -17px;
+    top: 0;
+    box-shadow: 0 0 0 4px #ffffff;
+}
+
+.btn-outline-custom {
+    background-color: #ffffff;
+    color: #374151;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+    .btn-outline-custom:hover {
+        background-color: #f3f4f6;
+        color: #1f2937;
+        border-color: #9ca3af;
+    }
+
+/* Nút Nhập thêm - Xanh pastel */
+.btn-pastel-green {
+    background-color: #d1fae5;
+    color: #059669;
+    border: 1px solid #a7f3d0;
+    border-radius: 6px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+    .btn-pastel-green:hover {
+        background-color: #a7f3d0;
+        color: #047857;
+    }

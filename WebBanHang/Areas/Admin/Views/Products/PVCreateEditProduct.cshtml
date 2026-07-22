@@ -4,94 +4,151 @@
     bool isCreateMode = (Model == null || Model.ProductID == 0);
 }
 
-<div class="row mb-3">
-    <div class="col-md-6">
-        <label class="form-label fw-bold">Danh mục <span class="text-danger">*</span></label>
-        @Html.DropDownList("CategoryID", null, "--- Chọn Danh mục ---", htmlAttributes: new { @class = "form-control" })
-        @Html.ValidationMessageFor(model => model.CategoryID, "", new { @class = "text-danger" })
-    </div>
-    <div class="col-md-6">
-        <label class="form-label fw-bold">Nhãn Build PC (Phân loại)</label>
-        <select name="ComponentType" class="form-control">
-            <option value="" @(Model?.ComponentType == "" ? "selected" : "")>-- Không phân loại / PC Nguyên bộ --</option>
-            <option value="CPU" @(Model?.ComponentType == "CPU" ? "selected" : "")>CPU - Vi xử lý</option>
-            <option value="RAM" @(Model?.ComponentType == "RAM" ? "selected" : "")>RAM - Bộ nhớ trong</option>
-            <option value="VGA" @(Model?.ComponentType == "VGA" ? "selected" : "")>VGA - Card màn hình</option>
-            <option value="MAIN" @(Model?.ComponentType == "MAIN" ? "selected" : "")>Mainboard - Bo mạch chủ</option>
-            <option value="SSD" @(Model?.ComponentType == "SSD" ? "selected" : "")>Ổ cứng SSD/HDD</option>
-            <option value="PSU" @(Model?.ComponentType == "PSU" ? "selected" : "")>PSU - Nguồn máy tính</option>
-            <option value="CASE" @(Model?.ComponentType == "CASE" ? "selected" : "")>Case - Vỏ máy tính</option>
-            <option value="MONITOR" @(Model?.ComponentType == "MONITOR" ? "selected" : "")>Màn hình</option>
-            <option value="GEAR" @(Model?.ComponentType == "GEAR" ? "selected" : "")>Phụ kiện (Gear)</option>
-        </select>
+<!-- Ép buộc Bootstrap giãn input 100%, đè lại giới hạn 280px của ASP.NET -->
+<style>
+    .claude-form-block input,
+    .claude-form-block select,
+    .claude-form-block textarea {
+        max-width: 100% !important;
+        width: 100%;
+    }
+</style>
+
+<div class="row">
+    <div class="col-12">
+
+        <!-- ========================================== -->
+        <!-- KHỐI 1: THÔNG TIN CƠ BẢN -->
+        <!-- ========================================== -->
+        <div class="claude-form-block mb-4 p-4 rounded bg-white shadow-sm" style="border: 1px solid var(--border-color);">
+            <h6 class="fw-bold mb-4" style="color: var(--text-main); font-size: 1.1rem;">
+                <i class="fa-solid fa-box-open me-2 text-muted"></i> Thông tin cơ bản
+            </h6>
+
+            <div class="row g-4">
+                <!-- CỘT TRÁI (8/12): Các ô nhập Text (Cần độ dài) -->
+                <div class="col-lg-8">
+                    <div class="mb-3">
+                        <label class="form-label text-muted fw-bold" style="font-size: 0.85rem;">Tên sản phẩm <span class="text-danger">*</span></label>
+                        @Html.EditorFor(model => model.ProductName, new { htmlAttributes = new { @class = "form-control shadow-none", id = "txtProductName", placeholder = "Nhập tên sản phẩm...", style = "border-radius: 8px;" } })
+                        @Html.ValidationMessageFor(model => model.ProductName, "", new { @class = "text-danger small" })
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted fw-bold" style="font-size: 0.85rem;">Đường dẫn hình ảnh (URL)</label>
+                        @Html.EditorFor(model => model.ProductImage, new { htmlAttributes = new { @class = "form-control shadow-none", placeholder = "Nhập link ảnh (https://...)", style = "border-radius: 8px;" } })
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted fw-bold" style="font-size: 0.85rem;">Mô tả chi tiết</label>
+                        @Html.TextAreaFor(model => model.ProductDescription, new { @class = "form-control shadow-none", rows = 4, placeholder = "Nhập mô tả sản phẩm...", style = "border-radius: 8px;" })
+                    </div>
+                </div>
+
+                <!-- CỘT PHẢI (4/12): Các Dropdown (Xếp dọc) -->
+                <div class="col-lg-4">
+                    <div class="mb-4">
+                        <label class="form-label text-muted fw-bold" style="font-size: 0.85rem;">Danh mục <span class="text-danger">*</span></label>
+                        @Html.DropDownList("CategoryID", null, "Chọn Danh mục", htmlAttributes: new { @class = "form-control shadow-none", style = "border-radius: 8px;" })
+                        @Html.ValidationMessageFor(model => model.CategoryID, "", new { @class = "text-danger small" })
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label text-muted fw-bold" style="font-size: 0.85rem;">Nhãn Build PC</label>
+                        <select name="ComponentType" class="form-control shadow-none" style="border-radius: 8px;">
+                            <option value="" @(Model?.ComponentType == "" ? "selected" : "")>-- Không phân loại --</option>
+                            <option value="CPU" @(Model?.ComponentType == "CPU" ? "selected" : "")>CPU</option>
+                            <option value="RAM" @(Model?.ComponentType == "RAM" ? "selected" : "")>RAM</option>
+                            <option value="VGA" @(Model?.ComponentType == "VGA" ? "selected" : "")>VGA</option>
+                            <option value="MAIN" @(Model?.ComponentType == "MAIN" ? "selected" : "")>Mainboard</option>
+                            <option value="SSD" @(Model?.ComponentType == "SSD" ? "selected" : "")>SSD/HDD</option>
+                            <option value="PSU" @(Model?.ComponentType == "PSU" ? "selected" : "")>Nguồn (PSU)</option>
+                            <option value="CASE" @(Model?.ComponentType == "CASE" ? "selected" : "")>Vỏ Case</option>
+                            <option value="MONITOR" @(Model?.ComponentType == "MONITOR" ? "selected" : "")>Màn hình</option>
+                            <option value="GEAR" @(Model?.ComponentType == "GEAR" ? "selected" : "")>Phụ kiện</option>
+                        </select>
+                    </div>
+
+                    <!-- Trạng thái chỉ hiện khi Edit -->
+                    @if (!isCreateMode)
+                    {
+                        <div>
+                            <label class="form-label text-muted fw-bold" style="font-size: 0.85rem;">Trạng thái hiển thị</label>
+                            <select name="Status" class="form-control shadow-none" style="border-radius: 8px;">
+                                <option value="0" @(Model?.Status == 0 ? "selected" : "")>Bản nháp</option>
+                                <option value="1" @(Model?.Status == 1 ? "selected" : "")>Đang kinh doanh</option>
+                                <option value="2" @(Model?.Status == 2 ? "selected" : "")>Tạm hết hàng</option>
+                            </select>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- KHỐI 2: CHI TIẾT GIÁ CẢ & VẬN HÀNH -->
+        <!-- ========================================== -->
+        <div class="claude-form-block mb-4 p-4 rounded bg-white shadow-sm" style="border: 1px solid var(--border-color);">
+            <h6 class="fw-bold mb-4" style="color: var(--text-main); font-size: 1.1rem;">
+                <i class="fa-solid fa-tags me-2 text-muted"></i> Chi tiết Giá cả & Vận hành
+            </h6>
+
+            <div class="row g-4">
+                <!-- Mã SKU: 5 Cột -->
+                <div class="col-md-5">
+                    <label class="form-label text-muted fw-bold" style="font-size: 0.85rem;">Mã SKU <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        @Html.EditorFor(model => model.SKU, new { htmlAttributes = new { @class = "form-control shadow-none bg-light text-muted", id = "txtSKU", @readonly = "readonly", style = "border-radius: 8px 0 0 8px; font-family: monospace;" } })
+                        @if (isCreateMode)
+                        {
+                            <button class="btn btn-outline-secondary shadow-none" type="button" id="btnGetSKU" style="border-radius: 0 8px 8px 0;">Tạo SKU</button>
+                        }
+                    </div>
+                    <small class="text-muted mt-1 d-block" style="font-size: 0.75rem;">Mã định danh duy nhất của sản phẩm.</small>
+                </div>
+
+                <!-- Nút cào giá: Dài ra (5 cột) và đẩy lùi vào giữa (offset 1) -->
+                <div class="col-md-5 offset-md-1">
+                    <label class="form-label text-muted fw-bold" style="font-size: 0.85rem;">Tra cứu giá gốc</label>
+                    <button class="btn btn-outline-dark w-100 shadow-none d-flex justify-content-center align-items-center gap-2" type="button" id="btnScrapePrice" style="border-radius: 8px;">
+                        <i class="fa-solid fa-cloud-arrow-down"></i> Cào Giá GitHub
+                    </button>
+                    <small id="scrapeMsg" class="mt-1 d-block text-center" style="font-size: 0.75rem; font-weight: 500;"></small>
+                </div>
+
+                <!-- Dòng hiển thị Giá và Tồn kho -->
+                <div class="col-12 mt-2">
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <label class="form-label text-muted fw-bold" style="font-size: 0.85rem;">Giá bán niêm yết (₫)</label>
+                            @Html.TextBoxFor(model => model.ProductPrice, new
+                            {
+                                @class = "form-control shadow-none",
+                                type = "number",
+                                min = "0",
+                                id = "ProductPrice",
+                                style = "border-radius: 8px; font-weight: bold; color: #047857;",
+                                @Value = Model != null ? Model.ProductPrice.ToString("0") : "0"
+                            })
+                            <small class="text-muted" style="font-size: 0.75rem;">Nhập '0' nếu là hàng mới chưa chốt giá.</small>
+                        </div>
+
+                        @if (!isCreateMode)
+                        {
+                            <div class="col-md-4">
+                                <label class="form-label text-muted fw-bold" style="font-size: 0.85rem;">Tồn kho thực tế (FIFO)</label>
+                                @Html.EditorFor(model => model.StockQuantity, new { htmlAttributes = new { @class = "form-control shadow-none bg-light text-muted", @readonly = "readonly", style = "border-radius: 8px;" } })
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label text-muted fw-bold" style="font-size: 0.85rem;">Giá Vốn Kế Toán</label>
+                                @Html.EditorFor(model => model.ImportPrice, new { htmlAttributes = new { @class = "form-control shadow-none bg-light text-danger fw-bold", @readonly = "readonly", style = "border-radius: 8px;", @Value = Model != null ? Model.ImportPrice.ToString("0") : "0" } })
+                            </div>
+                        }
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
     </div>
 </div>
-
-<div class="row mb-3">
-    <div class="col-md-7">
-        <label class="form-label fw-bold">Tên sản phẩm <span class="text-danger">*</span></label>
-        @Html.EditorFor(model => model.ProductName, new { htmlAttributes = new { @class = "form-control", id = "txtProductName" } })
-        @Html.ValidationMessageFor(model => model.ProductName, "", new { @class = "text-danger" })
-    </div>
-    <div class="col-md-5">
-        <label class="form-label fw-bold">Mã SKU & Đối soát API</label>
-        <div class="input-group">
-            @Html.EditorFor(model => model.SKU, new { htmlAttributes = new { @class = "form-control bg-light fw-bold text-primary", id = "txtSKU", @readonly = "readonly" } })
-            @if (isCreateMode)
-            {
-                <button class="btn btn-warning fw-bold" type="button" id="btnGetSKU" title="Sinh mã SKU từ tên">Tạo SKU</button>
-            }
-            <button class="btn btn-info fw-bold text-white" type="button" id="btnScrapePrice" title="Tra cứu giá gốc từ GitHub">
-                <i class="fa-solid fa-cloud-arrow-down"></i> Cào Giá
-            </button>
-        </div>
-        <small id="scrapeMsg" class="fw-bold mt-1 d-block"></small>
-    </div>
-</div>
-
-<div class="mb-3">
-    <label class="form-label fw-bold">Mô tả sản phẩm</label>
-    @Html.TextAreaFor(model => model.ProductDescription, new { @class = "form-control", rows = 3 })
-</div>
-
-<div class="row mb-4 p-3 bg-light rounded border">
-    <div class="col-md-4">
-        <label class="form-label fw-bold text-primary">Giá bán niêm yết (₫)</label>
-        @Html.TextBoxFor(model => model.ProductPrice, new
-        {
-            @class = "form-control fw-bold text-primary fs-5",
-            type = "number",
-            min = "0",
-            id = "ProductPrice",
-            @Value = Model != null ? Model.ProductPrice.ToString("0") : "0"
-        })
-        <small class="text-muted">Nhập '0' nếu là hàng mới chưa chốt giá bán ra</small>
-    </div>
-    <div class="col-md-8">
-        <label class="form-label fw-bold">Hình ảnh (URL)</label>
-        @Html.EditorFor(model => model.ProductImage, new { htmlAttributes = new { @class = "form-control" } })
-    </div>
-</div>
-
-@if (!isCreateMode)
-{
-    <hr class="my-3" />
-    <div class="row mb-3 bg-white p-3 border rounded">
-        <div class="col-md-4">
-            <label class="form-label fw-bold">Trạng thái kinh doanh</label>
-            <select name="Status" class="form-control fw-bold">
-                <option value="0" @(Model?.Status == 0 ? "selected" : "")>0: Bản nháp (Chờ hàng về)</option>
-                <option value="1" @(Model?.Status == 1 ? "selected" : "")>1: Đang kinh doanh</option>
-                <option value="2" @(Model?.Status == 2 ? "selected" : "")>2: Tạm hết hàng</option>
-            </select>
-        </div>
-        <div class="col-md-4">
-            <label class="form-label fw-bold">Tồn kho thực tế (FIFO)</label>
-            @Html.EditorFor(model => model.StockQuantity, new { htmlAttributes = new { @class = "form-control bg-light fw-bold text-success", @readonly = "readonly" } })
-        </div>
-        <div class="col-md-4">
-            <label class="form-label fw-bold">Giá Vốn Kế Toán</label>
-            @Html.EditorFor(model => model.ImportPrice, new { htmlAttributes = new { @class = "form-control bg-light fw-bold text-danger", @readonly = "readonly", @Value = Model != null ? Model.ImportPrice.ToString("0") : "0" } })
-        </div>
-    </div>
-}

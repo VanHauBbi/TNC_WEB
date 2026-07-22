@@ -1,4 +1,4 @@
-﻿@model WebBanHang.Models.SupportSession
+﻿@*@model WebBanHang.Models.SupportSession
 
 @{
     ViewBag.Title = "Chi Tiết Lịch Sử #" + Model.SessionID;
@@ -49,6 +49,125 @@
                 <div class="text-danger fw-bold">
                     <i class="fa-solid fa-lock me-1"></i> Phiên hỗ trợ này đã được đóng và lưu trữ.
                 </div>
+            </div>
+        </div>
+    </div>
+</div>*@
+
+@model WebBanHang.Models.SupportSession
+
+@{
+    ViewBag.Title = "Chi Tiết Lịch Sử #" + Model.SessionID;
+    /* Lưu ý: Các trang trước ông dùng _AdminLayout.cshtml, hãy cẩn thận sai tên file nhé */
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+<!-- Ép nền xám cho toàn trang để khối nội dung nổi bật -->
+<style>
+    body, .content-wrapper, .main-content, #page-wrapper, .page-content, .container-fluid {
+        background-color: #f4f6f8 !important;
+    }
+
+    #chatWindow::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    #chatWindow::-webkit-scrollbar-thumb {
+        background-color: #cbd5e1;
+        border-radius: 10px;
+    }
+</style>
+
+<div class="mt-0 pt-3">
+    <div class="row">
+        <div class="col-md-10 offset-md-1">
+
+            <!-- NÚT QUAY LẠI -->
+            <div class="mb-4">
+                <a href="@Url.Action("Index", "AdminSupport")" class="btn btn-outline-secondary fw-bold bg-white shadow-sm px-4 py-2" style="border-radius: 6px;">
+                    <i class="fa-solid fa-arrow-left me-2"></i> Quay lại danh sách
+                </a>
+            </div>
+
+            <div class="bg-white rounded shadow-sm border-0 d-flex flex-column overflow-hidden mb-5">
+
+                <!-- HEADER -->
+                <div class="p-4 border-bottom bg-light d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-1 fw-bold text-dark">
+                            <i class="fa-solid fa-box-archive text-primary me-2"></i> Lịch sử trò chuyện
+                        </h5>
+                        <p class="text-muted mb-0" style="font-size: 0.9rem;">
+                            Khách hàng: <strong class="text-dark">@Model.Customer.CustomerName</strong>
+                        </p>
+                    </div>
+                    <span class="badge bg-white border shadow-sm text-secondary fw-bold px-3 py-2" style="font-size: 0.9rem;">
+                        Phòng #@Model.SessionID
+                    </span>
+                </div>
+
+                <!-- NỘI DUNG CHAT -->
+                <div class="p-4" id="chatWindow" style="height: 500px; overflow-y: auto; background-color: #f8fafc;">
+                    <ul class="list-unstyled mb-0 d-flex flex-column gap-2">
+                        @if (Model.SupportMessages == null || !Model.SupportMessages.Any())
+                        {
+                            <li class="text-center text-muted py-5 d-flex flex-column align-items-center">
+                                <i class="fa-solid fa-comment-slash fs-1 mb-3" style="color: #cbd5e1;"></i>
+                                <span class="fw-medium">Phiên hỗ trợ này không có dữ liệu tin nhắn.</span>
+                            </li>
+                        }
+                        else
+                        {
+                            foreach (var msg in Model.SupportMessages.OrderBy(m => m.SendTime))
+                            {
+                                bool isAI = msg.MessageContent.StartsWith("AI: ");
+                                bool isRightSide = msg.IsAdmin || isAI;
+
+                                string senderName = msg.IsAdmin ? "Admin (Đã trả lời)" : (isAI ? "🤖 Trợ lý AI" : Model.Customer.CustomerName);
+                                string cleanContent = isAI ? msg.MessageContent.Substring(4) : msg.MessageContent;
+
+                                string bgColor = "";
+                                string textColor = "";
+                                string borderClass = isRightSide ? "border-0" : "border border-light";
+
+                                if (msg.IsAdmin)
+                                {
+                                    bgColor = "#0d6efd"; // Xanh dương Admin
+                                    textColor = "white";
+                                }
+                                else if (isAI)
+                                {
+                                    bgColor = "linear-gradient(135deg, #20c997, #17a2b8)"; // Xanh ngọc AI
+                                    textColor = "white";
+                                }
+                                else
+                                {
+                                    bgColor = "#ffffff"; // Trắng Khách hàng
+                                    textColor = "#1e293b";
+                                }
+
+                                <li class="d-flex @(isRightSide ? "justify-content-end" : "justify-content-start")">
+                                    <div class="p-3 rounded-4 shadow-sm @borderClass"
+                                         style="max-width: 75%; background: @bgColor; color: @textColor; font-size: 0.95rem;">
+                                        <small class="d-block fw-bold mb-1" style="opacity: 0.9; font-size: 0.8rem;">@senderName</small>
+                                        <span style="line-height: 1.5;">@cleanContent</span>
+                                        <small class="d-block mt-2 text-end" style="font-size: 0.75rem; opacity: 0.7;">
+                                            @msg.SendTime.ToString("dd/MM/yyyy HH:mm")
+                                        </small>
+                                    </div>
+                                </li>
+                            }
+                        }
+                    </ul>
+                </div>
+
+                <!-- FOOTER -->
+                <div class="p-3 border-top bg-light text-center">
+                    <div class="text-secondary fw-medium" style="font-size: 0.95rem;">
+                        <i class="fa-solid fa-lock me-2"></i>Phiên hỗ trợ này đã được đóng và lưu trữ hệ thống.
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>

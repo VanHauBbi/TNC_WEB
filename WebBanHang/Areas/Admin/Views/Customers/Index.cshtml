@@ -5,65 +5,87 @@
     Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
 }
 
-<link href="~/Content/Admin/order_admin.css" rel="stylesheet" />
-@* Tái sử dụng CSS Admin chung *@
+<!-- Link tới CSS độc lập của trang Khách hàng -->
+<link href="~/Content/Admin/customer_admin.css" rel="stylesheet" />
 
-<div class="card shadow-sm p-4">
-    <h2 class="mb-4 admin-content-title">Danh sách Khách hàng</h2>
+<!-- Ép sát khung lên trên bằng mt-0 -->
+<div class="bd-card mt-0">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <p class="text-muted mb-0 fs-6">Tổng cộng: <strong>@Model.Count()</strong> khách hàng trên hệ thống</p>
+        </div>
+    </div>
 
-    @* ... (Khối thông báo TempData) ... *@
+    @* ... (Khối thông báo TempData của ông để ở đây) ... *@
 
-    <p class="text-muted mb-3">Tổng cộng: <strong>@Model.Count()</strong> khách hàng</p>
-
-    <table class="table table-bordered table-striped table-admin-orders">
-        <thead class="table-dark">
-            <tr>
-                <th style="width: 5%;">ID</th>
-                <th style="width: 25%;">Tên khách hàng</th>
-                <th style="width: 20%;">Email</th>
-                <th style="width: 20%;">Địa chỉ</th>
-                <th style="width: 15%;" class="text-center">Trạng thái (Active)</th>
-                <th style="width: 15%;" class="text-center">Hành động</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in Model)
-            {
-                <tr>
-                    <td>@item.CustomerID</td>
-                    <td>@item.CustomerName</td>
-                    <td>@item.CustomerEmail</td>
-                    <td>@item.CustomerAddress</td>
-                    <td class="text-center">
-                        @{
-                            string statusClass = (item.IsActive == true) ? "bg-success" : "bg-danger";
-                            string statusText = (item.IsActive == true) ? "Hoạt động" : "Bị khóa";
-                        }
-                        <span class="badge @statusClass">@statusText</span>
-                    </td>
-                    <td class="text-center">
-                        <a href="@Url.Action("Details", new { id = item.CustomerID })" class="btn btn-info btn-sm" title="Chi tiết">
-                            <i class="fa-solid fa-eye"></i>
-                        </a>
-                        <a href="@Url.Action("Edit", new { id = item.CustomerID })" class="btn btn-warning btn-sm ms-1" title="Khóa/Mở khóa">
-                            <i class="fa-solid fa-lock"></i>
-                        </a>
-
-                        @* FORM XÓA NGAY LẬP TỨC *@
-                        @*@using (Html.BeginForm("Delete", "Customers", new { id = item.CustomerID }, FormMethod.Post, new { @class = "d-inline ms-1" }))
-                        {
-                            @Html.AntiForgeryToken()
-                            <button type="submit" class="btn btn-danger btn-sm" title="Xóa Vĩnh Viễn"
-                                    onclick="return confirm('CẢNH BÁO: Xác nhận XÓA VĨNH VIỄN khách hàng @item.CustomerName và toàn bộ dữ liệu liên quan không?');">
-                                <i class="fa-solid fa-user-times"></i>
-                            </button>
-                        }*@
-
-                    </td>
+    <div class="table-responsive">
+        <!-- Thêm mb-0 để xóa khoảng trắng thừa dưới đáy bảng -->
+        <table class="bd-table mb-0">
+            <!-- Ép xóa viền top dư thừa -->
+            <thead style="border-top: none !important;">
+                <tr style="border-top: none !important;">
+                    <th style="width: 5%; border-top: none !important;">ID</th>
+                    <th style="width: 20%; border-top: none !important;">KHÁCH HÀNG</th>
+                    <th style="width: 20%; border-top: none !important;">TÊN ĐĂNG NHẬP</th>
+                    <th style="width: 25%; border-top: none !important;">ĐỊA CHỈ</th>
+                    <th style="width: 15%; border-top: none !important;" class="text-center">TRẠNG THÁI</th>
+                    <th style="width: 15%; border-top: none !important;" class="text-center">HÀNH ĐỘNG</th>
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td class="fw-bold text-muted">#@item.CustomerID</td>
+                        <td>
+                            <div class="customer-name">@item.CustomerName</div>
+                            <div class="customer-email">@item.CustomerEmail</div>
+                        </td>
+                        <td>
+                            <strong style="color: #334155;">@item.Username</strong>
+                        </td>
+                        <td>
+                            <div class="text-truncate" style="max-width: 300px;" title="@item.CustomerAddress">
+                                @(string.IsNullOrEmpty(item.CustomerAddress) ? "Chưa cập nhật" : item.CustomerAddress)
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            @{
+                                string statusClass = (item.IsActive == true) ? "sb-success" : "sb-danger";
+                                string statusText = (item.IsActive == true) ? "Hoạt động" : "Bị khóa";
+                            }
+                            <span class="soft-badge @statusClass">@statusText</span>
+                        </td>
+                        <td class="text-center">
+                            <div style="display: flex; gap: 10px; justify-content: center;">
+                                <!-- Nút Chi tiết -->
+                                <a href="@Url.Action("Details", new { id = item.CustomerID })" class="bd-text-btn bd-text-btn-primary text-nowrap">
+                                    Chi tiết
+                                </a>
+
+                                <!-- Nút Xử lý -->
+                                <a href="@Url.Action("Edit", new { id = item.CustomerID })" class="bd-text-btn bd-text-btn-outline text-nowrap">
+                                    Xử lý
+                                </a>
+                            </div>
+
+                            @* FORM XÓA NGAY LẬP TỨC *@
+                            @*
+                                @using (Html.BeginForm("Delete", "Customers", new { id = item.CustomerID }, FormMethod.Post, new { @class = "d-inline" }))
+                                {
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="bd-action-btn delete" title="Xóa Vĩnh Viễn"
+                                            onclick="return confirm('CẢNH BÁO: Xác nhận XÓA VĨNH VIỄN khách hàng @item.CustomerName?');">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                }
+                            *@
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 </div>
 
 @section Scripts {
@@ -72,10 +94,8 @@
         window.addEventListener("DOMContentLoaded", function () {
             const alertBox = document.getElementById("alertMessage");
             if (alertBox) {
-                // Sau 3 giây thì fade-out
                 setTimeout(() => {
                     alertBox.classList.add("fade-out");
-                    // Sau khi hiệu ứng kết thúc (0.5s), xóa phần tử khỏi DOM
                     setTimeout(() => {
                         alertBox.remove();
                     }, 500);

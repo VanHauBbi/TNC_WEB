@@ -3,41 +3,75 @@
 @{
     ViewBag.Title = "Chi tiết Khách hàng";
     Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+
+    // Chuẩn bị badge trạng thái
+    string statusClass = (Model.IsActive == true) ? "sb-success" : "sb-danger";
+    string statusText = (Model.IsActive == true) ? "Đang hoạt động" : "Bị khóa";
 }
 
-<link href="~/Content/Admin/order_admin.css" rel="stylesheet" />
+<!-- Kéo CSS của Customer vào (dùng chung với Index và Edit) -->
+<link href="~/Content/Admin/customer_admin.css" rel="stylesheet" />
 
-<h2 class="admin-content-title">CHI TIẾT KHÁCH HÀNG: @Model.CustomerName</h2>
+<div class="row mt-2">
+    <!-- Ép khối chi tiết vào giữa màn hình giống trang Edit -->
+    <div class="col-lg-8 mx-auto">
+        <div class="bd-card">
 
-<div class="order-detail-card shadow-sm">
-    <dl class="dl-horizontal">
-        <dt>Mã Khách hàng:</dt>
-        <dd>@Model.CustomerID</dd>
+            <!-- Header của Card -->
+            <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4">
+                <div>
+                    <div class="text-muted fs-6">ID: <span class="fw-bold text-dark">#@Model.CustomerID</span></div>
+                </div>
+                <span class="soft-badge @statusClass">@statusText</span>
+            </div>
 
-        <dt>Tên đăng nhập:</dt>
-        <dd class="fw-bold">@Model.Username</dd>
+            <!-- Nội dung chi tiết (Layout lưới thay cho dl-horizontal) -->
+            <div class="px-2">
+                <div class="row mb-3 border-bottom pb-3">
+                    <div class="col-sm-4 text-muted fw-bold">Tên khách hàng</div>
+                    <div class="col-sm-8 text-dark fw-bold fs-6">@Model.CustomerName</div>
+                </div>
 
-        <dt>Email:</dt>
-        <dd>@Model.CustomerEmail</dd>
+                <div class="row mb-3 border-bottom pb-3">
+                    <div class="col-sm-4 text-muted fw-bold">Tên đăng nhập</div>
+                    <div class="col-sm-8 text-dark">@Model.Username</div>
+                </div>
 
-        <dt>Điện thoại:</dt>
-        <dd>@Model.CustomerPhone</dd>
+                <div class="row mb-3 border-bottom pb-3">
+                    <div class="col-sm-4 text-muted fw-bold">Email</div>
+                    <div class="col-sm-8 text-dark">
+                        @(string.IsNullOrEmpty(Model.CustomerEmail) ? "Chưa cập nhật" : Model.CustomerEmail)
+                    </div>
+                </div>
 
-        <dt>Địa chỉ:</dt>
-        <dd>@Model.CustomerAddress</dd>
+                <div class="row mb-3 border-bottom pb-3">
+                    <div class="col-sm-4 text-muted fw-bold">Số điện thoại</div>
+                    <div class="col-sm-8 text-dark">
+                        @(string.IsNullOrEmpty(Model.CustomerPhone) ? "Chưa cập nhật" : Model.CustomerPhone)
+                    </div>
+                </div>
 
-        <dt>Trạng thái Tài khoản:</dt>
-        <dd>
-            @{
-                string statusClass = (Model.IsActive == true) ? "bg-success" : "bg-danger";
-                string statusText = (Model.IsActive == true) ? "Đang hoạt động" : "BỊ KHÓA";
-            }
-            <span class="badge @statusClass">@statusText</span>
-        </dd>
-    </dl>
-</div>
+                <div class="row mb-2">
+                    <div class="col-sm-4 text-muted fw-bold">Địa chỉ</div>
+                    <div class="col-sm-8 text-dark" style="line-height: 1.6;">
+                        @(string.IsNullOrEmpty(Model.CustomerAddress) ? "Chưa cập nhật" : Model.CustomerAddress)
+                    </div>
+                </div>
+            </div>
 
-<div class="mt-4">
-    @Html.ActionLink("Khóa / Mở Khóa", "Edit", new { id = Model.CustomerID }, new { @class = "btn btn-warning" })
-    @Html.ActionLink("Quay lại danh sách", "Index", null, new { @class = "btn btn-secondary ms-2" })
+            <!-- Footer chứa nút bấm dời xuống dưới cùng -->
+            <div class="d-flex justify-content-end gap-2 border-top pt-4 mt-4">
+                <a href="@Url.Action("Index", "Customers")" class="btn btn-outline-custom">
+                    <i class="fa-solid fa-angle-left"></i> Quay lại
+                </a>
+
+                <!-- Tôi dùng btn-primary-custom nhưng đổi màu một chút bằng inline style cho nó giống ý nghĩa Chỉnh sửa/Khóa -->
+                <a href="@Url.Action("Edit", "Customers", new { id = Model.CustomerID })"
+                   class="btn" style="background-color: #f59e0b; color: white; border-radius: 8px; padding: 8px 20px; font-weight: 500;">
+                    <i class="fa-solid fa-pen-to-square me-1"></i> Khóa / Mở Khóa
+                </a>
+            </div>
+
+        </div>
+    </div>
 </div>

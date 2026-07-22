@@ -1,31 +1,31 @@
 ﻿@model IEnumerable<WebBanHang.Models.ViewModel.PriceHistoryViewModel>
-
+@using System.Linq;
 @{
     Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
 }
 
-<div class="card shadow mb-4" style="border-radius: 10px; border: none; margin-top: 20px;">
-    <div class="card-header py-3 bg-white d-flex justify-content-between align-items-center">
-        <h5 class="m-0 font-weight-bold text-primary">
-            <i class="fa-solid fa-clock-rotate-left"></i> Nhật ký biến động giá toàn hệ thống
-        </h5>
-    </div>
-    <div class="card-body">
+<link href="~/Content/Admin/pricehistory_admin.css" rel="stylesheet" />
 
-        <form method="get" action="@Url.Action("Index", "PriceHistory")" class="row g-3 mb-4 align-items-end bg-light p-3 rounded" style="margin: 0 1px 20px 1px; border: 1px solid #e3e6f0;">
+
+<!-- Thêm pt-3 để khối cách thanh Topbar phía trên một chút cho thoáng -->
+<div class="mt-0 pt-0">
+
+    <!-- KHỐI BỘ LỌC (Đã xóa hẳn phần Header Tiêu đề) -->
+    <div class="bg-white p-4 rounded shadow-sm mb-4">
+        <form method="get" action="@Url.Action("Index", "PriceHistory")" class="row g-3 align-items-end">
             <div class="col-md-3">
-                <label class="form-label small font-weight-bold text-secondary">Từ ngày</label>
-                <input type="date" name="fromDate" class="form-control form-control-sm" value="@ViewBag.CurrentFromDate" />
+                <label class="form-label text-dark mb-2" style="font-size: 0.9rem;">Từ ngày</label>
+                <input type="date" name="fromDate" class="form-control" value="@ViewBag.CurrentFromDate" />
             </div>
 
             <div class="col-md-3">
-                <label class="form-label small font-weight-bold text-secondary">Đến ngày</label>
-                <input type="date" name="toDate" class="form-control form-control-sm" value="@ViewBag.CurrentToDate" />
+                <label class="form-label text-dark mb-2" style="font-size: 0.9rem;">Đến ngày</label>
+                <input type="date" name="toDate" class="form-control" value="@ViewBag.CurrentToDate" />
             </div>
 
             <div class="col-md-4">
-                <label class="form-label small font-weight-bold text-secondary">Danh mục sản phẩm</label>
-                <select name="categoryID" class="form-select form-select-sm form-control form-control-sm">
+                <label class="form-label text-dark mb-2" style="font-size: 0.9rem;">Danh mục sản phẩm</label>
+                <select name="categoryID" class="form-select">
                     <option value="">-- Tất cả danh mục --</option>
                     @foreach (var cat in ViewBag.Categories)
                     {
@@ -36,71 +36,98 @@
                 </select>
             </div>
 
+            <!-- Nút Lọc và Reset -->
             <div class="col-md-2 d-flex gap-2">
-                <button type="submit" class="btn btn-primary btn-sm w-100 me-1">
-                    <i class="fa-solid fa-magnifying-glass"></i> Lọc
+                <button type="submit" class="btn btn-primary px-3" style="border-radius: 6px; font-weight: 500;">
+                    <i class="fa-solid fa-filter me-1"></i> Lọc
                 </button>
-                <a href="@Url.Action("Index", "PriceHistory")" class="btn btn-secondary btn-sm w-100">
-                    <i class="fa-solid fa-rotate-left"></i> Reset
+                <a href="@Url.Action("Index", "PriceHistory")" class="btn btn-light px-3" style="border-radius: 6px; border: 1px solid #d1d5db; color: #4b5563; font-weight: 500;">
+                    Reset
                 </a>
             </div>
         </form>
-
-        @if (Model == null || !Model.Any())
-        {
-            <div class="alert alert-warning text-center shadow-sm" style="border-radius: 5px; color: #856404; bg-color: #fff3cd; border-color: #ffeeba;">
-                <i class="fa-solid fa-triangle-exclamation"></i> Không tìm thấy lịch sử biến động giá nào phù hợp với bộ lọc.
-            </div>
-        }
-        else
-        {
-            <div class="table-responsive">
-                <table class="table table-bordered table-hover align-middle" width="100%" cellspacing="0">
-                    <thead class="table-light">
-                        <tr>
-                            <th class="text-center" style="width: 8%">Mã SP</th>
-                            <th class="text-center" style="color: #28a745 !important;">Tên sản phẩm</th>
-                            <th class="text-center" style="width: 15%; color: #ffc107 !important;">Giá cũ</th>
-                            <th class="text-center" style="width: 15%; color: #ffc107 !important;">Giá mới</th>
-                            <th class="text-center" style="width: 18%">Mức chênh lệch</th>
-                            <th class="text-center" style="width: 20%">Thời gian thực hiện</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        @foreach (var item in Model)
-                        {
-                            var chenhLech = item.NewPrice - item.OldPrice;
-                            <tr>
-                                <td class="text-center font-weight-bold text-secondary">#@item.ProductID</td>
-                                <td>
-                                    <span class="font-weight-bold text-dark">@item.ProductName</span>
-                                </td>
-                                <td class="text-center text-muted">@string.Format("{0:N0}", item.OldPrice)đ</td>
-                                <td class="text-center text-muted">@string.Format("{0:N0}", item.NewPrice)đ</td>
-
-                                <td class="text-center font-weight-bold @(chenhLech > 0 ? "text-success" : (chenhLech < 0 ? "text-danger" : "text-secondary"))">
-                                    @if (chenhLech > 0)
-                                    {
-                                        <span><i class="fa-solid fa-arrow-trend-up"></i> +@string.Format("{0:N0}", chenhLech)đ</span>
-                                    }
-                                    else if (chenhLech < 0)
-                                    {
-                                        <span><i class="fa-solid fa-arrow-trend-down"></i> @string.Format("{0:N0}", chenhLech)đ</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="text-muted">Không đổi</span>
-                                    }
-                                </td>
-                                <td class="text-center text-secondary small">
-                                    @item.ChangeDate.ToString("dd/MM/yyyy - HH:mm:ss")
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        }
     </div>
+
+    <!-- BẢNG DỮ LIỆU CHUẨN BOOTSTRAP CÓ KHUNG VIỀN -->
+    @if (Model == null || !Model.Any())
+    {
+        <div class="text-center py-5 text-muted bg-white border rounded">
+            <i class="fa-solid fa-clock-rotate-left fa-3x mb-3" style="color: #cbd5e1;"></i>
+            <p>Không tìm thấy lịch sử biến động giá nào.</p>
+        </div>
+    }
+    else
+    {
+        <!-- 1. Đổi class của div bọc ngoài thành ph-table-wrapper -->
+        <div class="table-responsive ph-table-wrapper mt-2">
+
+            <!-- 2. Thêm class ph-table vào thẻ table -->
+            <table class="table table-striped align-middle mb-0 ph-table">  
+                <thead class="table-light">
+                    <tr>
+                        <th width="10%" class="py-3 ps-3 text-center"><i class="fa-solid fa-hashtag me-1"></i> Mã SP</th>
+                        <th width="30%" class="py-3"><i class="fa-solid fa-table-cells me-1"></i> Tên sản phẩm</th>
+                        <th width="15%" class="py-3 text-end"><i class="fa-solid fa-money-bill-1 me-1"></i> Giá cũ</th>
+                        <th width="15%" class="py-3 text-end"><i class="fa-solid fa-tag me-1"></i> Giá mới</th>
+                        <th width="15%" class="py-3 text-end"><i class="fa-solid fa-chart-line me-1"></i> Biến động</th>
+                        <th width="15%" class="py-3 text-end pe-3"><i class="fa-regular fa-calendar me-1"></i> Thời gian</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        var chenhLech = item.NewPrice - item.OldPrice;
+                        <tr>
+                            <td class="text-center ps-3" style="color: #6366f1;">
+                                #@item.ProductID
+                            </td>
+
+                            <td style="color: #374151;">
+                                @item.ProductName
+                            </td>
+
+                            <td class="text-end text-muted" style="font-size: 0.95em;">
+                                @string.Format("{0:N0}", item.OldPrice) ₫
+                            </td>
+
+                            <td class="text-dark text-end">
+                                @string.Format("{0:N0}", item.NewPrice) ₫
+                            </td>
+
+                            <!-- BIẾN ĐỘNG -->
+                            <td class="text-end">
+                                @if (chenhLech > 0)
+                                {
+                                    <span class="badge bg-success bg-opacity-10 text-success px-2 py-1" style="font-weight: 500; font-size: 0.95em; border-radius: 6px;">
+                                        <i class="fa-solid fa-arrow-trend-up me-1"></i>+@string.Format("{0:N0}", chenhLech) ₫
+                                    </span>
+                                }
+                                else if (chenhLech < 0)
+                                {
+                                    <span class="badge bg-danger bg-opacity-10 text-danger px-2 py-1" style="font-weight: 500; font-size: 0.95em; border-radius: 6px;">
+                                        <i class="fa-solid fa-arrow-trend-down me-1"></i>@string.Format("{0:N0}", chenhLech) ₫
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+
+                            <!-- Thời gian -->
+                            <td class="text-end pe-3">
+                                <div style="color: #4b5563; font-size: 0.9em;">
+                                    @item.ChangeDate.ToString("dd 'Thg'M, yyyy")
+                                </div>
+                                <div class="text-muted" style="font-size: 0.85em;">
+                                    @item.ChangeDate.ToString("hh:mm tt").Replace("AM", "SA").Replace("PM", "CH")
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
 </div>

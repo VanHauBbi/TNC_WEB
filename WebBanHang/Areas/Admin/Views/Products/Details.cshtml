@@ -7,9 +7,16 @@
 
 <link href="~/Content/Admin/products_admin.css" rel="stylesheet" />
 
-@Html.Partial("PVProdInfo", Model)
+<div class="claude-form-card">
 
-<div class="form-group admin-action-buttons" style="margin-top: 20px; margin-left: 15px;">
-    @Html.ActionLink("Sửa", "Edit", new { id = Model.ProductID }, new { @class = "btn btn-warning" })
-    @Html.ActionLink("Quay lại danh sách", "Index", null, new { @class = "btn btn-secondary" })
+    @Html.Partial("PVProdInfo", Model)
+
+    <!-- Nút hành động đặt ở góc phải dưới cùng -->
+    <div class="mt-4 pt-3 d-flex justify-content-end gap-2">
+        <a href="javascript:history.back()" class="claude-btn-secondary">Quay lại</a>
+
+        <button type="submit" class="btn-claude-primary px-4">
+            <i class="fa-solid fa-check"></i> Cập nhật thay đổi
+        </button>
+    </div>
 </div>

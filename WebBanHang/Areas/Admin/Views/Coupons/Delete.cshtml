@@ -4,6 +4,9 @@
     ViewBag.Title = "Xóa Mã Giảm Giá";
     Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
 }
+
+<link href="~/Content/Admin/coupon_admin.css" rel="stylesheet" />
+
 <div class="alert alert-danger shadow-sm">
     <h4 class="alert-heading"><i class="fa-solid fa-triangle-exclamation"></i> Cảnh báo!</h4>
     <p class="mb-0">Bạn có chắc chắn muốn xóa Mã Khuyến Mãi <strong>@Model.CouponName</strong> (Mã: <strong>@Model.Code</strong>) không? Thao tác này sẽ xóa toàn bộ dữ liệu liên kết và không thể hoàn tác.</p>

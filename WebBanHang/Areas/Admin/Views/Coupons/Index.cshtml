@@ -4,84 +4,130 @@
     ViewBag.Title = "Quản lý Mã Giảm Giá";
     Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
 }
-<div class="card shadow-sm p-4 admin-search-page mt-3">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        @Html.ActionLink("+ Thêm Mã Mới", "Create", null, new { @class = "btn btn-success" })
+
+<link href="~/Content/Admin/coupon_admin.css" rel="stylesheet" />
+
+<div class="bd-card">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <p class="text-muted mb-0 fs-6">Tổng cộng: <strong>@Model.Count()</strong> mã trên hệ thống</p>
+        </div>
+        <a href="@Url.Action("Create")" class="ir-btn-add shadow-sm" style="border-radius: 6px; font-weight: 500;">
+            <i class="fa-solid fa-plus me-1"></i> Thêm Mã Mới
+        </a>
     </div>
 
     @if (TempData["SuccessMessage"] != null)
     {
-        <div class="alert alert-success alert-dismissible fade show">
-            ✅ @TempData["SuccessMessage"]
+        <div id="alertMessage" class="alert alert-success alert-dismissible fade show" style="border-radius: 8px;">
+            <i class="fa-solid fa-circle-check me-2"></i> @TempData["SuccessMessage"]
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
 
-    <table class="table table-bordered table-hover mt-3">
-        <thead class="table-dark">
-            <tr>
-                <th style="width: 20%;" class="text-center">Tên Mã Khuyến Mãi</th>
-                <th style="width: 15%;" class="text-center">Mã Xác Thực</th>
-                <th style="width: 10%;" class="text-center">Mức giảm</th>
-                <th style="width: 12%;" class="text-center">Giảm tối đa</th>
-                <th style="width: 13%;" class="text-center">Ngày hết hạn</th>
-                <th style="width: 8%; " class="text-center">Lượt</th>
-                <th style="width: 10%;" class="text-center">Trạng thái</th>
-                <th style="width: 12%;" class="text-center">Hành động</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in Model)
-            {
+    <!-- Table -->
+    <div class="table-responsive">
+        <table class="coupon-table" style="width: 100%; border-collapse: collapse;">
+            <thead>
                 <tr>
-                    <td class="text-center fw-bold text-danger">
-                        <strong class="text-dark">@item.CouponName</strong>
-                    </td>
-                    <td class="text-center fw-bold text-danger">
-                        <span class="text-primary" style="font-size: 1.1em; letter-spacing: 1px; font-weight: 500;">@item.Code</span>
-                    </td>
-                    <td class="text-center fw-bold text-danger">
-                        @(item.DiscountPercentage.HasValue ? item.DiscountPercentage.Value.ToString("0.##") + "%" : "-")
-                    </td>
-                    <td class="text-center text-muted">
-                        @(item.MaxDiscountAmount.HasValue ? item.MaxDiscountAmount.Value.ToString("N0") + " ₫" : "-")
-                    </td>
-                    <td class="text-center">
-                        @item.ExpiryDate.ToString("dd/MM/yyyy HH:mm")
-                    </td>
-                    <td class="text-center">
-                        <span style="font-weight: 500;">@item.UsageLimit</span>
-                    </td>
-                    <td class="text-center">
-                        @if (item.ExpiryDate <= DateTime.Now)
-                        {
-                            <span class="badge bg-danger">Đã hết hạn</span>
-                        }
-                        else if (item.UsageLimit <= 0)
-                        {
-                            <span class="badge bg-warning text-dark">Hết lượt</span>
-                        }
-                        else
-                        {
-                            <span class="badge bg-success">Đang hoạt động</span>
-                        }
-                    </td>
-                    <td class="text-center">
-                        <div class="btn-group-vertical w-100" role="group">
-                            @Html.ActionLink("Sửa", "Edit", new { id = item.CouponID }, new { @class = "btn btn-warning btn-sm mb-1" })
-                            @Html.ActionLink("Chi tiết", "Details", new { id = item.CouponID }, new { @class = "btn btn-info btn-sm mb-1" })
-                            @Html.ActionLink("Xóa", "Delete", new { id = item.CouponID }, new { @class = "btn btn-danger btn-sm" })
-                        </div>
-                    </td>
+                    <th style="width: 20%; text-align: left;">Tên Khuyến Mãi</th>
+                    <th style="width: 15%; text-align: left;">Mã Code</th>
+                    <th style="width: 10%; text-align: center;">Mức giảm</th>
+                    <th style="width: 12%; text-align: center;">Giảm tối đa</th>
+                    <th style="width: 13%; text-align: center;">Ngày hết hạn</th>
+                    <th style="width: 8%; text-align: center;">Lượt</th>
+                    <th style="width: 12%; text-align: center;">Trạng thái</th>
+                    <th style="width: 10%; text-align: center;">Hành động</th>
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td class="text-dark fw-bold" style="white-space: normal; word-break: break-word;">
+                            @item.CouponName
+                        </td>
 
-    @if (!Model.Any())
-    {
-        <div class="alert alert-warning text-center mt-3">
-            Hiện tại chưa có mã giảm giá nào trong hệ thống.
-        </div>
-    }
+                        <td>
+                            <span class="coupon-code-badge">
+                                @item.Code
+                            </span>
+                        </td>
+
+                        <td class="text-center fw-bold text-dark">
+                            @(item.DiscountPercentage.HasValue ? item.DiscountPercentage.Value.ToString("0.##") + "%" : "-")
+                        </td>
+
+                        <td class="text-center text-muted">
+                            @(item.MaxDiscountAmount.HasValue ? item.MaxDiscountAmount.Value.ToString("N0") + " ₫" : "-")
+                        </td>
+
+                        <td class="text-center text-muted small">
+                            @item.ExpiryDate.ToString("dd/MM/yyyy") <br />
+                            <span style="font-size: 0.85em;">@item.ExpiryDate.ToString("HH:mm")</span>
+                        </td>
+
+                        <td class="text-center text-dark fw-bold">
+                            @item.UsageLimit
+                        </td>
+
+                        <td class="text-center">
+                            @if (item.ExpiryDate <= DateTime.Now)
+                            {
+                                <span class="cp-badge cp-expired">Đã hết hạn</span>
+                            }
+                            else if (item.UsageLimit <= 0)
+                            {
+                                <span class="cp-badge cp-empty">Hết lượt</span>
+                            }
+                            else
+                            {
+                                <span class="cp-badge cp-active">Đang hoạt động</span>
+                            }
+                        </td>
+
+                        <td class="text-center">
+                            <!-- Dùng flex-column và gap-2 để xếp 3 nút nằm dọc, cách nhau một chút -->
+                            <div class="d-flex flex-column align-items-center gap-2">
+                                <a href="@Url.Action("Details", new { id = item.CouponID })" class="cp-text-btn cp-btn-view">
+                                    Chi tiết
+                                </a>
+                                <a href="@Url.Action("Edit", new { id = item.CouponID })" class="cp-text-btn cp-btn-edit">
+                                    Sửa mã
+                                </a>
+                                <a href="@Url.Action("Delete", new { id = item.CouponID })" class="cp-text-btn cp-btn-delete">
+                                    Xóa
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        @if (!Model.Any())
+        {
+            <div class="coupon-empty-state">
+                <i class="fa-solid fa-ticket fa-3x coupon-empty-icon"></i>
+                <p>Hiện tại chưa có mã giảm giá nào trong hệ thống.</p>
+            </div>
+        }
+    </div>
 </div>
+
+@section Scripts {
+    <script>
+        window.addEventListener("DOMContentLoaded", function () {
+            const alertBox = document.getElementById("alertMessage");
+            if (alertBox) {
+                setTimeout(() => {
+                    alertBox.classList.add("fade-out");
+                    setTimeout(() => {
+                        alertBox.remove();
+                    }, 500);
+                }, 3000);
+            }
+        });
+    </script>
+}

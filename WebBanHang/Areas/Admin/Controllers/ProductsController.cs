@@ -96,9 +96,14 @@ namespace WebBanHang.Areas.Admin.Controllers
         // CÁC ACTION CỦA CONTROLLER
         // =====================================================================
 
-        public ActionResult Index(string searchTerm, decimal? MinPrice, decimal? MaxPrice, string SortOrder, int? page)
+        public ActionResult Index(string searchTerm, decimal? MinPrice, decimal? MaxPrice, string SortOrder, int? page, int? categoryId)
         {
             var product = db.Products.Include(p => p.Category).AsQueryable();
+
+            if (categoryId.HasValue)
+            {
+                product = product.Where(p => p.CategoryID == categoryId.Value);
+            }
 
             // 1. Áp dụng các bộ lọc tìm kiếm
             if (!string.IsNullOrEmpty(searchTerm))
@@ -150,6 +155,7 @@ namespace WebBanHang.Areas.Admin.Controllers
                 page = page,
                 products = product.ToPagedList(pageNumber, pageSize)
             };
+            ViewBag.Categories = new SelectList(db.Categories, "CategoryID", "CategoryName", Request["categoryId"]);
 
             return View(model);
         }

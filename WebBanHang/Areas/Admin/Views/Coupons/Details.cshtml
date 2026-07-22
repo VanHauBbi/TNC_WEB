@@ -4,52 +4,72 @@
     ViewBag.Title = "Chi tiết Mã Giảm Giá";
     Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
 }
-<div class="card shadow-sm p-4 mt-3">
+
+<link href="~/Content/Admin/coupon_admin.css" rel="stylesheet" />
+
+<div class="card shadow-sm p-4 mt-3" style="border-radius: 8px; border: 1px solid #f3f4f6;">
     <div class="row">
-        <div class="col-md-6 border-end pr-4">
-            <h4 class="text-primary mb-3"><i class="fa-solid fa-ticket"></i> Thông tin chung</h4>
-            <dl class="row">
-                <dt class="col-sm-4 text-muted">Tên Mã Khuyến Mãi:</dt>
-                <dd class="col-sm-8 fw-bold text-dark" style="font-size: 1.1em;">@Model.CouponName</dd>
+        <!-- PHẦN THÔNG TIN CHUNG (ĐÃ CHỈNH SỬA) -->
+        <div class="col-md-6 border-end pe-4">
+            <h4 class="text-primary mb-4" style="font-weight: 600;">
+                <i class="fa-solid fa-ticket me-2"></i> Thông tin chung
+            </h4>
 
-                <dt class="col-sm-4 text-muted">Mã Xác Thực:</dt>
-                <dd class="col-sm-8 fw-bold text-primary" style="font-size: 1.2em; letter-spacing: 1px;">@Model.Code</dd>
+            <div class="row mb-3 align-items-center">
+                <div class="col-sm-4 text-muted" style="font-weight: 500;">Tên Mã Khuyến Mãi:</div>
+                <div class="col-sm-8 fw-bold text-dark">@Model.CouponName</div>
+            </div>
 
-                <dt class="col-sm-4 text-muted">Mức giảm (%):</dt>
-                <dd class="col-sm-8 fw-bold text-danger">
+            <div class="row mb-3 align-items-center">
+                <div class="col-sm-4 text-muted" style="font-weight: 500;">Mã Xác Thực:</div>
+                <div class="col-sm-8">
+                    <span class="text-primary fw-bold" style="font-size: 1.15rem; letter-spacing: 0.5px;">@Model.Code</span>
+                </div>
+            </div>
+
+            <div class="row mb-3 align-items-center">
+                <div class="col-sm-4 text-muted" style="font-weight: 500;">Mức giảm (%):</div>
+                <div class="col-sm-8 fw-bold text-danger">
                     @(Model.DiscountPercentage.HasValue ? Model.DiscountPercentage.Value.ToString("0.##") + "%" : "Không áp dụng")
-                </dd>
+                </div>
+            </div>
 
-                <dt class="col-sm-4 text-muted">Giảm tối đa:</dt>
-                <dd class="col-sm-8 fw-bold text-success">
+            <div class="row mb-3 align-items-center">
+                <div class="col-sm-4 text-muted" style="font-weight: 500;">Giảm tối đa:</div>
+                <div class="col-sm-8 fw-bold text-success">
                     @(Model.MaxDiscountAmount.HasValue ? Model.MaxDiscountAmount.Value.ToString("N0") + " ₫" : "Không giới hạn")
-                </dd>
+                </div>
+            </div>
 
-                <dt class="col-sm-4 text-muted">Ngày hết hạn:</dt>
-                <dd class="col-sm-8">
+            <div class="row mb-3 align-items-center">
+                <div class="col-sm-4 text-muted" style="font-weight: 500;">Ngày hết hạn:</div>
+                <div class="col-sm-8 text-dark">
                     @Model.ExpiryDate.ToString("dd/MM/yyyy HH:mm")
                     @if (Model.ExpiryDate <= DateTime.Now)
                     {
-                        <span class="badge bg-danger ms-2">Đã hết hạn</span>
+                        <span class="badge bg-danger text-white ms-2" style="border-radius: 6px; padding: 5px 10px; font-weight: 500; color: #fff;">Đã hết hạn</span>
                     }
                     else
                     {
-                        <span class="badge bg-success ms-2">Còn hạn</span>
+                <span class="badge bg-success text-white ms-2" style="border-radius: 6px; padding: 5px 10px; font-weight: 500; color: #fff;">Còn hạn</span>
                     }
-                </dd>
+                </div>
+            </div>
 
-                <dt class="col-sm-4 text-muted">Số lượt dùng:</dt>
-                <dd class="col-sm-8">
+            <div class="row mb-3 align-items-center">
+                <div class="col-sm-4 text-muted" style="font-weight: 500;">Số lượt dùng:</div>
+                <div class="col-sm-8 text-dark">
                     <span style="font-weight: 500;">@Model.UsageLimit lượt</span>
                     @if (Model.UsageLimit <= 0)
                     {
-                        <span class="badge bg-warning text-dark ms-2">Đã hết lượt</span>
+                        <span class="badge bg-warning text-dark ms-2" style="border-radius: 6px; padding: 5px 10px; font-weight: 500;">Đã hết lượt</span>
                     }
-                </dd>
-            </dl>
+                </div>
+            </div>
         </div>
 
-        <div class="col-md-6 pl-4">
+        <!-- PHẦN SẢN PHẨM ÁP DỤNG (GIỮ NGUYÊN) -->
+        <div class="col-md-6 ps-4">
             <h4 class="text-success mb-3"><i class="fa-solid fa-box-open"></i> Sản phẩm áp dụng</h4>
 
             @if (Model.Products != null && Model.Products.Any())
@@ -77,8 +97,13 @@
         </div>
     </div>
 
-    <div class="mt-4 pt-3 border-top">
-        @Html.ActionLink("Chỉnh sửa", "Edit", new { id = Model.CouponID }, new { @class = "btn btn-warning" })
-        @Html.ActionLink("Quay lại danh sách", "Index", null, new { @class = "btn btn-secondary ms-2" })
+    <!-- PHẦN BUTTONS (ĐÃ CHỈNH SỬA) -->
+    <div class="mt-5 pt-4 d-flex gap-2">
+        <a href="@Url.Action("Edit", new { id = Model.CouponID })" class="btn btn-warning shadow-sm" style="border-radius: 6px; font-weight: 500; padding: 8px 20px;">
+            Chỉnh sửa
+        </a>
+        <a href="javascript:history.back()" class="btn btn-secondary shadow-sm" style="border-radius: 6px; font-weight: 500; padding: 8px 20px; background-color: #6c757d; border: none;">
+            Quay lại danh sách
+        </a>
     </div>
 </div>

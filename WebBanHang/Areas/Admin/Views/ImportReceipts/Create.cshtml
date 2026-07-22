@@ -4,76 +4,364 @@
     var categories = ViewBag.CategoriesList as List<WebBanHang.Models.Category>;
 }
 
-<div class="card shadow-sm border-0 p-4 mb-4">
-    <h5 class="fw-bold text-primary mb-3">Quy trình chọn sản phẩm cần nhập hàng</h5>
-    <div class="row g-3 bg-light p-3 rounded border">
-        <div class="col-md-4">
-            <label class="form-label fw-bold">Bước 1: Chọn Danh mục</label>
-            <select id="selCategory" class="form-select">
-                <option value="">-- Tất cả danh mục --</option>
-                @if (categories != null)
-                {
-                    foreach (var c in categories)
-                    {
-                        <option value="@c.CategoryID">@c.CategoryName</option>
-                    }
-                }
-            </select>
+<link href="~/Content/Admin/import_receipt_admin.css" rel="stylesheet" />
+
+<div class="mt-0 pt-3">
+
+    <!-- KHỐI 1: QUY TRÌNH CHỌN SẢN PHẨM -->
+    <div class="cr-card p-4">
+        <!-- Header -->
+        <div class="cr-card-header px-0 pt-0 mb-4 pb-3">
+            <h4 class="mb-1 fw-bold text-dark fs-5">
+                <i class="fa-solid fa-box-open text-primary me-2"></i>Quy trình chọn sản phẩm
+            </h4>
+            <p class="text-muted mb-0 small">Chọn danh mục và tải báo giá từ hệ thống đối tác</p>
         </div>
 
-        <div class="col-md-5">
-            <label class="form-label fw-bold">Bước 2: Chọn sản phẩm cần nhập</label>
-            <div id="productCheckboxContainer" class="border bg-white p-2 rounded" style="height: 200px; overflow-y: auto;">
-                <span class="text-muted small">Vui lòng chọn danh mục ở Bước 1...</span>
+        <div class="row g-4">
+            <!-- BÊN TRÁI: Danh mục & Nút tải giá -->
+            <div class="col-md-4">
+                <div class="p-4 border rounded bg-light shadow-none h-100">
+                    <!-- Cụm chọn danh mục -->
+                    <div class="mb-4">
+                        <label class="form-label text-dark fw-bold mb-2 small text-uppercase">1. Chọn danh mục hàng</label>
+                        <select id="selCategory" class="form-select border shadow-none rounded">
+                            <option value="">-- Tất cả danh mục --</option>
+                            @if (categories != null)
+                            {
+                                foreach (var c in categories)
+                                {
+                                    <option value="@c.CategoryID">@c.CategoryName</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <hr class="border-secondary opacity-25" />
+
+                    <!-- Cụm nút tải giá -->
+                    <div class="mt-4">
+                        <label class="form-label text-dark fw-bold mb-2 small text-uppercase">2. Cập nhật báo giá</label>
+                        <button type="button" id="btnBatchFetch" class="btn w-100 fw-bold cr-btn-fetch shadow-sm">
+                            <i class="fa-solid fa-cloud-arrow-down me-2"></i> Lấy Giá API Hàng Loạt
+                        </button>
+                        <small class="text-muted mt-2 d-block text-center">Yêu cầu tick chọn sản phẩm bên cạnh trước khi bấm.</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BÊN PHẢI: Danh sách sản phẩm (xổ list dài) -->
+            <div class="col-md-8">
+                <label class="form-label text-dark fw-bold mb-2 small text-uppercase">Danh sách mặt hàng</label>
+                <!-- Container có custom scrollbar -->
+                <div id="productCheckboxContainer" class="border p-2 cr-scrollbar bg-white shadow-sm">
+                    <div class="h-100 d-flex flex-column align-items-center justify-content-center text-muted">
+                        <i class="fa-solid fa-hand-pointer fs-2 mb-2 text-secondary opacity-50"></i>
+                        <span>Vui lòng chọn danh mục ở bên trái để hiển thị sản phẩm...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KHỐI 2: DANH SÁCH CHỐT PHIẾU -->
+    <div class="cr-card">
+        <!-- Tiêu đề & Tổng tiền -->
+        <div class="cr-card-header d-flex justify-content-between align-items-center bg-light p-3">
+            <h6 class="m-0 fw-bold text-dark fs-6">
+                <i class="fa-solid fa-clipboard-check text-success me-2"></i>Chi tiết phiếu nhập
+            </h6>
+            <div class="fw-bold text-dark bg-white px-3 py-1 rounded border shadow-sm">
+                Tổng giá trị: <span id="grandTotal" class="text-danger fs-5 mx-1">0</span> ₫
             </div>
         </div>
 
-        <div class="col-md-3 d-flex flex-column justify-content-end">
-            <label class="form-label fw-bold">Bước 3: Tải giá đối tác</label>
-            <button type="button" id="btnBatchFetch" class="btn btn-warning fw-bold py-2">
-                <i class="fa-solid fa-cloud-arrow-down"></i> Lấy Giá API Hàng Loạt
+        <!-- Bảng sản phẩm -->
+        <div class="table-responsive">
+            <table class="table cr-table align-middle table-hover" id="importTable">
+                <thead>
+                    <tr>
+                        <th class="ps-4" style="width: 50%;">Sản phẩm (Bấm vào dòng để sửa)</th>
+                        <th style="width: 20%;">Mã SKU</th>
+                        <th class="text-end text-nowrap" style="width: 20%;">Thành tiền</th>
+                        <th class="text-center pe-4" style="width: 10%;"><i class="fa-solid fa-trash-can"></i></th>
+                    </tr>
+                </thead>
+                <tbody class="text-dark">
+                    <!-- Javascript sẽ render vào đây -->
+                    <tr>
+                        <td colspan="4" class="text-center py-5 text-muted">
+                            Chưa có sản phẩm nào được chọn.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Nút Xác nhận -->
+        <div class="p-3 border-top bg-white d-flex justify-content-start">
+            <button id="btnSubmitReceipt" class="btn btn-primary fw-bold shadow-sm cr-btn-submit">
+                <i class="fa-solid fa-check-double me-2"></i> XÁC NHẬN CHỐT PHIẾU
             </button>
         </div>
     </div>
-</div>
 
-<div class="card shadow-sm border-0">
-    <div class="card-header bg-dark text-white fw-bold d-flex justify-content-between">
-        <span>Danh sách chốt phiếu nhập</span>
-        <span>Tổng giá trị: <span id="grandTotal" class="text-danger fw-bold fs-5">0</span> ₫</span>
+    <!-- NÚT QUAY LẠI -->
+    <div class="mb-5">
+        <a href="@Url.Action("Index", "ImportReceipts")" class="btn-back-pastel">
+            <i class="fa-solid fa-arrow-left-long me-2"></i> Quay lại danh sách
+        </a>
     </div>
-    <div class="card-body p-0">
-        <table class="table table-hover mb-0" id="importTable">
-            <thead class="table-light">
-                <tr>
-                    <th>Tên sản phẩm</th>
-                    <th>Mã SKU</th>
-                    <th class="text-end">Đơn giá nhập (Cố định)</th>
-                    <th class="text-center" style="width: 150px;">Số lượng</th>
-                    <th class="text-end">Thành tiền</th>
-                    <th class="text-center">Xóa</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-    </div>
-    <div class="card-footer p-3 bg-white">
-        <button id="btnSubmitReceipt" class="btn btn-primary w-100 fw-bold py-2">XÁC NHẬN CHỐT PHIẾU NHẬP KHO</button>
-    </div>
+
 </div>
 
 @section Scripts {
     <script>
     var importItems = [];
 
-    // --- BỔ SUNG SỰ KIỆN BẤM NÚT CHỐT PHIẾU ---
+    // Lọc sản phẩm theo Danh mục
+    $('#selCategory').change(function () {
+        var catId = $(this).val();
+        var container = $('#productCheckboxContainer');
+        container.empty();
+
+        if (!catId) {
+            container.html(`
+                <div class="h-100 d-flex flex-column align-items-center justify-content-center text-muted">
+                    <i class="fa-solid fa-hand-pointer fs-2 mb-2 text-secondary opacity-50"></i>
+                    <span>Vui lòng chọn danh mục ở bên trái để hiển thị sản phẩm...</span>
+                </div>
+            `);
+            return;
+        }
+
+        $.get('@Url.Action("GetProductsByCategory", "ImportReceipts")', { categoryId: catId }, function (data) {
+            if (data.length === 0) {
+                container.html(`
+                    <div class="h-100 d-flex flex-column align-items-center justify-content-center text-danger">
+                        <i class="fa-solid fa-folder-open fs-2 mb-2 text-danger opacity-50"></i>
+                        <span>Danh mục này hiện đang trống.</span>
+                    </div>
+                `);
+                return;
+            }
+
+            // Render list sản phẩm bằng HTML sạch
+            data.forEach(function (p) {
+                // Nếu API của ông chưa trả về StockQuantity và Price thì gán mặc định là 0 để không bị lỗi
+                var stock = p.StockQuantity || 0;
+                var price = p.Price || 0;
+
+                container.append(`
+                    <div class="form-check cr-product-row">
+                        <input class="form-check-input chk-product cr-checkbox ms-1 me-3" type="checkbox" 
+                               value="${p.ProductID}" 
+                               data-name="${p.ProductName}" 
+                               data-sku="${p.SKU}" 
+                               data-stock="${stock}"
+                               data-price="${price}"
+                               id="chk_${p.ProductID}">
+                        <label class="form-check-label w-100 mb-0 cr-cursor-pointer" for="chk_${p.ProductID}">
+                            <div class="fw-bold text-dark" style="font-size: 0.95rem;">${p.ProductName}</div>
+                            <div class="text-primary" style="font-size: 0.85rem;">
+                                <i class="fa-solid fa-barcode me-1"></i>${p.SKU} 
+                                <span class="ms-3 text-muted"><i class="fa-solid fa-box me-1"></i>Tồn: ${stock}</span>
+                            </div>
+                        </label>
+                    </div>
+                `);
+            });
+        });
+    });
+
+    // Hàm Render Bảng (Đã thêm text-nowrap để số tiền không rớt dòng)
+        function RenderTable() {
+            var tbody = $('#importTable tbody');
+            tbody.empty();
+            var grandTotal = 0;
+
+            if (importItems.length === 0) {
+                tbody.html(`<tr><td colspan="4" class="text-center py-5 text-muted">Chưa có sản phẩm nào được chọn.</td></tr>`);
+                $('#grandTotal').text("0");
+                return;
+            }
+
+            importItems.forEach(function (item, idx) {
+                var totalLine = item.ImportPrice * item.Quantity;
+                grandTotal += totalLine;
+
+                // Xử lý giữ trạng thái Đóng/Mở khi Render
+                var rowClass = item.isExpanded ? "" : "d-none";
+                var iconClass = item.isExpanded ? "fa-chevron-down" : "fa-chevron-right";
+
+                // DÒNG 1: Dòng tóm tắt
+                tbody.append(`
+                <tr style="cursor: pointer;" onclick="ToggleDetail(${idx})" title="Bấm để xem chi tiết & chỉnh sửa">
+                    <td class="fw-bold text-dark ps-4">
+                        <i class="fa-solid ${iconClass} me-2 text-muted" id="icon_toggle_${idx}" style="transition: transform 0.2s;"></i>
+                        ${item.ProductName}
+                    </td>
+                    <td><span class="text-primary fw-medium" style="font-size: 0.9rem;">${item.SKU}</span></td>
+                    <td class="text-end fw-bold text-danger text-nowrap" id="line_total_summary_${idx}">${totalLine.toLocaleString('vi-VN')} ₫</td>
+                    <td class="text-center pe-4">
+                        <button class="btn btn-sm btn-outline-danger border-0" onclick="event.stopPropagation(); RemoveItem(${idx})" title="Xóa">
+                            <i class="fa-solid fa-xmark fs-5"></i>
+                        </button>
+                    </td>
+                </tr>
+                
+                <!-- DÒNG 2: Chi tiết ẩn (Đã cân chỉnh nền và viền) -->
+                <tr class="${rowClass} bg-white" id="detail_row_${idx}">
+                    <td colspan="4" class="p-4 border-bottom shadow-sm inner">
+                        
+                        <!-- Hàng 1: Thông tin tĩnh -->
+                        <div class="row gx-4 mb-3">
+                            <div class="col-md-5">
+                                <label class="text-muted small fw-bold mb-1">Tên mặt hàng</label>
+                                <!-- Dùng border-0 và bg-light để tạo thành khối xám liền mạch -->
+                                <input type="text" class="form-control shadow-none bg-light border-0 text-secondary" value="${item.ProductName}" readonly>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="text-muted small fw-bold mb-1">Tồn kho vật lý</label>
+                                <input type="text" class="form-control shadow-none bg-light border-0 text-center fw-bold text-secondary" value="${item.Stock}" readonly>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="text-muted small fw-bold mb-1">Giá bán niêm yết</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control shadow-none bg-light border-0 text-end text-secondary" value="${item.Price.toLocaleString('vi-VN')}" readonly>
+                                    <span class="input-group-text bg-light border-0 text-secondary">₫</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Hàng 2: Nhập liệu và Tính toán -->
+                        <div class="row gx-4 align-items-center">
+                            <div class="col-md-5">
+                                <label class="text-muted small fw-bold mb-1">Đơn giá nhập (API đối tác)</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control shadow-none bg-light border-0 text-end fw-bold text-dark" value="${item.ImportPrice.toLocaleString('vi-VN')}" readonly>
+                                    <span class="input-group-text bg-light border-0 text-dark">₫</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="text-primary small fw-bold mb-1">Chỉnh số lượng</label>
+                                <!-- Ô nhập liệu duy nhất có nền trắng và viền xanh -->
+                                <input type="number" class="form-control shadow-none border-primary text-center fw-bold text-primary bg-white" value="${item.Quantity}" min="1" onkeyup="UpdateQty(${idx}, this.value)" onchange="UpdateQty(${idx}, this.value)">
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <div class="text-muted small mb-1">Thành tiền tạm tính:</div>
+                                <h5 class="text-danger fw-bold mb-0" id="line_total_detail_${idx}">${totalLine.toLocaleString('vi-VN')} ₫</h5>
+                            </div>
+                        </div>
+
+                    </td>
+                </tr>
+            `);
+            });
+            $('#grandTotal').text(grandTotal.toLocaleString('vi-VN'));
+        }
+
+        window.ToggleDetail = function (idx) {
+            var row = $('#detail_row_' + idx);
+            var icon = $('#icon_toggle_' + idx);
+
+            importItems[idx].isExpanded = !importItems[idx].isExpanded; // Cập nhật trạng thái vào mảng
+
+            if (importItems[idx].isExpanded) {
+                row.removeClass('d-none');
+                icon.removeClass('fa-chevron-right').addClass('fa-chevron-down');
+            } else {
+                row.addClass('d-none');
+                icon.removeClass('fa-chevron-down').addClass('fa-chevron-right');
+            }
+        }
+
+        // FIX LỖI Ở ĐÂY: Chỉ cập nhật số (DOM Manipulation), không Render lại cả bảng
+        window.UpdateQty = function (idx, val) {
+            var newQty = parseInt(val);
+            if (isNaN(newQty) || newQty <= 0) return;
+
+            importItems[idx].Quantity = newQty;
+            var newTotalLine = importItems[idx].ImportPrice * newQty;
+
+            // Cập nhật giá trị hiển thị trên 2 dòng của sản phẩm đó
+            $('#line_total_summary_' + idx).text(newTotalLine.toLocaleString('vi-VN') + ' ₫');
+            $('#line_total_detail_' + idx).text(newTotalLine.toLocaleString('vi-VN') + ' ₫');
+
+            // Tính lại tổng tiền toàn phiếu
+            var grandTotal = 0;
+            importItems.forEach(i => grandTotal += (i.ImportPrice * i.Quantity));
+            $('#grandTotal').text(grandTotal.toLocaleString('vi-VN'));
+        }
+
+    // --- Các hàm AJAX Submit và tính toán giữ nguyên Logic của ông ---
+
+    $('#btnBatchFetch').click(function () {
+        var selectedChecked = $('.chk-product:checked');
+        if (selectedChecked.length === 0) { alert("Vui lòng tick chọn ít nhất 1 sản phẩm!"); return; }
+
+        var skuList = [];
+        selectedChecked.each(function () { skuList.push($(this).data('sku')); });
+
+        // Đổi text button để báo loading
+        var btn = $(this);
+        var oldHtml = btn.html();
+        btn.html('<i class="fa-solid fa-spinner fa-spin me-2"></i> Đang tải giá...').prop('disabled', true);
+
+        $.ajax({
+            url: '@Url.Action("FetchBatchSupplierPrices", "ImportReceipts")',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ skuList: skuList }),
+            success: function (res) {
+                if (res.success) {
+                    var fetchedData = res.data;
+                    selectedChecked.each(function () {
+                        var pid = parseInt($(this).val());
+                        var pname = $(this).data('name');
+                        var psku = $(this).data('sku');
+
+                        var apiMatch = fetchedData.find(sp => sp.SKU === psku);
+                        if (apiMatch) {
+                            var existing = importItems.find(i => i.ProductID === pid);
+                            if (!existing) {
+                                var pstock = $(this).data('stock');
+                                var pprice = $(this).data('price');
+
+                                importItems.push({
+                                    ProductID: pid,
+                                    ProductName: pname,
+                                    SKU: psku,
+                                    ImportPrice: apiMatch.UnitPrice,
+                                    Quantity: 1,
+                                    Stock: pstock,
+                                    Price: pprice,
+                                    isExpanded: false // Mặc định thu gọn
+                                });
+                            }
+                        } else {
+                            alert(`Mặt hàng [${pname}] không tìm thấy báo giá trên GitHub đối tác.`);
+                        }
+                    });
+                    RenderTable();
+                    $('.chk-product').prop('checked', false);
+                } else {
+                    alert(res.message);
+                }
+            },
+            complete: function() {
+                // Trả lại trạng thái nút
+                btn.html(oldHtml).prop('disabled', false);
+            }
+        });
+    });
+
     $('#btnSubmitReceipt').click(function () {
         if (importItems.length === 0) {
             alert("Danh sách nhập kho đang trống, không có gì để lưu!");
             return;
         }
 
-        // Quét linh hoạt lấy Người lập và Ghi chú ở 2 ô input trên cùng của bạn
         var receivedBy = $('#txtReceivedBy').val() || $('input[placeholder*="Người lập"]').val() || "AdminTNC";
         var note = $('#txtNote').val() || $('input[placeholder*="Ghi chú"]').val() || "Nhập kho qua hệ thống PO";
 
@@ -93,9 +381,8 @@
             return;
         }
 
-        // Khóa tạm nút lại để tránh user bấm đúp gửi 2 phiếu giống nhau
         var btn = $(this);
-        btn.prop('disabled', true).text("Đang ghi dữ liệu...");
+        btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin me-2"></i> Đang xử lý...');
 
         $.ajax({
             url: '@Url.Action("SubmitReceipt", "ImportReceipts")',
@@ -105,113 +392,22 @@
             success: function (res) {
                 if (res.success) {
                     var msg = "🎉 LƯU PHIẾU NHẬP KHO THÀNH CÔNG!\nMã chứng từ: #" + res.receiptId;
-
-                    // Nếu hệ thống phát hiện lô này nhập đắt hơn giá bán, in ra cảnh báo
                     if (res.alerts && res.alerts.length > 0) {
                         msg += "\n\n⚠️ CẢNH BÁO KINH DOANH:\n" + res.alerts.join("\n");
                     }
-
                     alert(msg);
                     window.location.href = '@Url.Action("Index", "ImportReceipts")';
                 } else {
                     alert("❌ TỪ CHỐI LƯU: " + res.message);
-                    btn.prop('disabled', false).text("XÁC NHẬN CHỐT PHIẾU NHẬP KHO");
+                    btn.prop('disabled', false).html('<i class="fa-solid fa-check-double me-2"></i> XÁC NHẬN CHỐT PHIẾU');
                 }
             },
             error: function (err) {
-                alert("❌ Lỗi nghiêm trọng: Không thể kết nối đến Action SubmitReceipt!");
-                console.error(err);
-                btn.prop('disabled', false).text("XÁC NHẬN CHỐT PHIẾU NHẬP KHO");
+                alert("❌ Lỗi nghiêm trọng: Không thể kết nối đến hệ thống!");
+                btn.prop('disabled', false).html('<i class="fa-solid fa-check-double me-2"></i> XÁC NHẬN CHỐT PHIẾU');
             }
         });
     });
-
-    // Lọc sản phẩm theo Danh mục
-    $('#selCategory').change(function () {
-        var catId = $(this).val();
-        var container = $('#productCheckboxContainer');
-        container.empty();
-
-        if (!catId) { container.html('<span class="text-muted small">Vui lòng chọn danh mục...</span>'); return; }
-
-        $.get('@Url.Action("GetProductsByCategory", "ImportReceipts")', { categoryId: catId }, function (data) {
-            if (data.length === 0) { container.html('<span class="text-danger small">Danh mục này trống.</span>'); return; }
-
-            data.forEach(function (p) {
-                container.append(`
-                    <div class="form-check border-bottom py-1">
-                        <input class="form-check-input chk-product" type="checkbox" value="${p.ProductID}" data-name="${p.ProductName}" data-sku="${p.SKU}" id="chk_${p.ProductID}">
-                        <label class="form-check-label small d-block cursor-pointer" for="chk_${p.ProductID}">
-                            ${p.ProductName} <br><small class="text-primary fw-bold">[${p.SKU}]</small>
-                        </label>
-                    </div>
-                `);
-            });
-        });
-    });
-
-    // Truy Xuất Giá API Hàng Loạt
-    $('#btnBatchFetch').click(function () {
-        var selectedChecked = $('.chk-product:checked');
-        if (selectedChecked.length === 0) { alert("Vui lòng tick chọn ít nhất 1 sản phẩm!"); return; }
-
-        var skuList = [];
-        selectedChecked.each(function () { skuList.push($(this).data('sku')); });
-
-        $.ajax({
-            url: '@Url.Action("FetchBatchSupplierPrices", "ImportReceipts")',
-            type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({ skuList: skuList }),
-            success: function (res) {
-                if (res.success) {
-                    var fetchedData = res.data;
-                    selectedChecked.each(function () {
-                        var pid = parseInt($(this).val());
-                        var pname = $(this).data('name');
-                        var psku = $(this).data('sku');
-
-                        var apiMatch = fetchedData.find(sp => sp.SKU === psku);
-                        if (apiMatch) {
-                            var existing = importItems.find(i => i.ProductID === pid);
-                            if (!existing) {
-                                importItems.push({ ProductID: pid, ProductName: pname, SKU: psku, ImportPrice: apiMatch.UnitPrice, Quantity: 1 });
-                            }
-                        } else {
-                            alert(`Mặt hàng [${pname}] không tìm thấy báo giá trên GitHub đối tác.`);
-                        }
-                    });
-                    RenderTable();
-                    $('.chk-product').prop('checked', false); // Reset tick
-                } else { alert(res.message); }
-            }
-        });
-    });
-
-    function RenderTable() {
-        var tbody = $('#importTable tbody');
-        tbody.empty();
-        var grandTotal = 0;
-
-        importItems.forEach(function (item, idx) {
-            var totalLine = item.ImportPrice * item.Quantity;
-            grandTotal += totalLine;
-
-            tbody.append(`
-                <tr>
-                    <td class="fw-bold">${item.ProductName}</td>
-                    <td class="text-primary fw-bold">${item.SKU}</td>
-                    <td class="text-end text-danger fw-bold">${item.ImportPrice.toLocaleString('vi-VN')} ₫</td>
-                    <td class="text-center">
-                        <input type="number" class="form-control text-center" value="${item.Quantity}" min="1" onchange="UpdateQty(${idx}, this.value)">
-                    </td>
-                    <td class="text-end fw-bold text-danger">${totalLine.toLocaleString('vi-VN')} ₫</td>
-                    <td class="text-center"><button class="btn btn-sm btn-outline-danger" onclick="RemoveItem(${idx})"><i class="fa-solid fa-trash"></i></button></td>
-                </tr>
-            `);
-        });
-        $('#grandTotal').text(grandTotal.toLocaleString('vi-VN'));
-    }
 
     window.UpdateQty = function (idx, val) {
         var newQty = parseInt(val);

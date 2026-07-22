@@ -1,39 +1,81 @@
 ﻿@model WebBanHang.Models.Product
 
-<div class="product-detail-container">
-    <div class="row">
-        <div class="col-md-4 text-center">
-            <img src="@Html.DisplayFor(model => model.ProductImage)" class="product-image-large" />
+<!-- KHỐI LỚN BỌC TOÀN BỘ (Sử dụng class mặc định của Bootstrap để đảm bảo luôn có nền trắng và đổ bóng) -->
+<div class="bg-white p-4 rounded shadow-sm border my-4">
+
+    <div class="row align-items-start">
+        <!-- HÌNH ẢNH BÊN TRÁI -->
+        <div class="col-md-4 text-center mb-4 mb-md-0">
+            <!-- Đổi nền chỗ hình ảnh thành xám nhạt để khối hình tách bạch khỏi nền trắng của thẻ Card -->
+            <div class="p-3 rounded d-flex justify-content-center align-items-center" style="background-color: #f8fafc; border: 1px solid #e2e8f0; min-height: 280px;">
+                <img src="@Html.DisplayFor(model => model.ProductImage)" style="max-width: 100%; height: auto; max-height: 250px; object-fit: contain;" alt="@Model.ProductName" />
+            </div>
         </div>
+
+        <!-- THÔNG TIN BÊN PHẢI -->
         <div class="col-md-8">
-            <dl class="product-detail-info dl-horizontal">
-                <dt>Tên sản phẩm</dt>
-                <dd>@Html.DisplayFor(model => model.ProductName)</dd>
+            <!-- Tên sản phẩm -->
+            <h3 class="fw-bold mb-3" style="color: var(--text-main);">@Html.DisplayFor(model => model.ProductName)</h3>
 
-                <dt>Danh mục</dt>
-                <dd>@Html.DisplayFor(model => model.Category.CategoryName)</dd>
+            <!-- Khối Meta: Danh mục + SKU + Phân loại -->
+            <div class="d-flex align-items-center flex-wrap gap-2 mb-4">
+                <!-- Danh mục -->
+                <span class="claude-badge badge-category" style="padding: 6px 16px; font-size: 0.95rem; font-weight: 500; border-radius: 20px; background-color: #f3f4f6; color: #374151;">
+                    @Html.DisplayFor(model => model.Category.CategoryName)
+                </span>
 
-                <dt>Giá bán (Đơn giá)</dt>
-                <dd class="fw-bold text-danger">@Html.DisplayFor(model => model.ProductPrice) ₫</dd>
+                <span style="color: #d1d5db; margin: 0 4px;">•</span>
 
-                <dt>Giá nhập kho</dt>
-                <dd class="fw-bold text-success">@Html.DisplayFor(model => model.ImportPrice) ₫</dd>
+                <!-- Mã SKU -->
+                <span style="color: #4b5563; font-size: 0.95rem;">
+                    <strong>MÃ SKU:</strong> <span style="font-family: monospace; color: var(--primary-color); font-weight: 600;">@Html.DisplayFor(model => model.SKU)</span>
+                </span>
 
-                <dt>Số lượng tồn kho</dt>
-                <dd>
-                    @if (Model.StockQuantity > 0)
-                    {
-                        <span class="badge bg-success" style="font-size: 0.9em;">@Model.StockQuantity</span>
-                    }
-                    else
-                    {
-                        <span class="badge bg-danger" style="font-size: 0.9em;">Hết hàng</span>
-                    }
-                </dd>
+                <!-- Phân loại (Nếu có) -->
+                @if (!string.IsNullOrEmpty(Model.ComponentType))
+                {
+                    <span style="color: #d1d5db; margin: 0 4px;">•</span>
+                    <span class="text-muted" style="font-size: 0.95rem;">Phân loại: @Html.DisplayFor(model => model.ComponentType)</span>
+                }
+            </div>
 
-                <dt>Mô tả</dt>
-                <dd>@Html.DisplayFor(model => model.ProductDescription)</dd>
-            </dl>
+            <!-- Khối Báo cáo Giá & Tồn kho -->
+            <div class="row g-3 mb-4">
+                <div class="col-sm-4">
+                    <div class="p-3 rounded" style="background-color: var(--hover-bg); border: 1px solid var(--border-color);">
+                        <div class="text-muted fw-bold mb-1" style="font-size: 0.75rem; text-transform: uppercase;">Giá Bán Niêm Yết</div>
+                        <div class="fw-bold" style="color: #047857; font-size: 1.25rem;">@Model.ProductPrice.ToString("N0") ₫</div>
+                    </div>
+                </div>
+                <div class="col-sm-4">
+                    <div class="p-3 rounded" style="background-color: #fef2f2; border: 1px solid #fecaca;">
+                        <div class="text-muted fw-bold mb-1" style="font-size: 0.75rem; text-transform: uppercase;">Giá Nhập Kho</div>
+                        <div class="fw-bold text-danger" style="font-size: 1.25rem;">@(Model.ImportPrice > 0 ? Model.ImportPrice.ToString("N0") + " ₫" : "—")</div>
+                    </div>
+                </div>
+                <div class="col-sm-4">
+                    <div class="p-3 rounded bg-white" style="border: 1px solid var(--border-color);">
+                        <div class="text-muted fw-bold mb-1" style="font-size: 0.75rem; text-transform: uppercase;">Tồn Kho</div>
+                        <div style="font-size: 1.25rem;">
+                            @if (Model.StockQuantity > 0)
+                            {
+                                <span class="fw-bold" style="color: #166534;">@Model.StockQuantity <span style="font-size: 0.8rem; font-weight: normal;">sản phẩm</span></span>
+                            }
+                            else
+                            {
+                                <span class="fw-bold text-danger">Hết hàng</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MÔ TẢ SẢN PHẨM ĐƯỢC ĐÓNG KHUNG XÁM NHẠT -->
+            <h6 class="fw-bold mb-2" style="color: #475569; font-size: 0.9rem;">Mô tả sản phẩm</h6>
+            <div class="p-3 rounded" style="background-color: #f8fafc; border: 1px solid #e2e8f0; color: #334155; min-height: 100px; font-size: 0.95rem;">
+                <p style="margin-bottom: 0; line-height: 1.6; white-space: pre-wrap;">@Html.DisplayFor(model => model.ProductDescription)</p>
+            </div>
+
         </div>
     </div>
 </div>
