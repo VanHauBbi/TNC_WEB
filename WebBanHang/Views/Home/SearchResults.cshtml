@@ -3,180 +3,279 @@
 @{
     ViewBag.Title = "Kết quả tìm kiếm";
     Layout = "~/Views/Shared/_LayoutDivMain.cshtml";
+
+    // Lấy các giá trị lọc/sắp xếp hiện tại từ ViewBag (giống trang Danh mục sản phẩm)
+    string currentSearchQuery = ViewBag.SearchQuery;
+    string currentPriceRange = ViewBag.CurrentPriceRange;
+    string currentSortBy = ViewBag.CurrentSortBy;
 }
 
 <link rel="stylesheet" href="~/Content/myStyle/home.css" />
-<div class="container my-5">
+<link rel="stylesheet" href="~/Content/myStyle/danhmucsanpham.css" />
+<div class="container mt-1 mb-5">
 
-    <h2 class="mb-4 section-title">🔍 Kết quả tìm kiếm cho: "<span class="text-primary">@ViewBag.SearchQuery</span>"</h2>
+    <div class="container mt-1 mb-5">
 
-    @if (Model.Any())
-    {
-        <p class="text-muted">Tìm thấy <strong>@Model.Count()</strong> sản phẩm phù hợp.</p>
+        <!-- Gom chung cả 2 phần vào một khối Flexbox -->
+        <div class="mt-0 mb-4 search-result-box d-flex align-items-center flex-wrap">
+            <div>
+                🔍 Kết quả tìm kiếm cho: <span class="text-primary ms-1">"@ViewBag.SearchQuery"</span>
+            </div>
+            <span class="text-muted mx-3">|</span>
+            <div class="text-muted" style="font-size: 0.95rem; font-weight: 500;">
+                Tìm thấy <strong>12</strong> sản phẩm phù hợp.
+            </div>
+        </div>
+        <div class="row">
+            <!-- CỘT TRÁI: BỘ LỌC -->
+            <div class="col-lg-3 col-md-4 mb-4">
+                <div class="filter-sidebar">
+                    <h4 class="sidebar-title">Lọc sản phẩm</h4>
 
-        <div class="row product-grid">
-            @foreach (var p in Model)
-            {
-                <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
-                    <div class="card product-card h-100">
-                        <a href="@Url.Action("ProductDetail", "Home", new { id = p.ProductID })" class="product-link text-center">
-                            <img src="@p.ProductImage" class="card-img-top product-image-search" alt="@p.ProductName" />
-                        </a>
-                        <div class="card-body d-flex flex-column">
-                            <h5 class="card-title product-title-fixed">
-                                @p.ProductName
-                            </h5>
+                    <div class="filter-group mb-4">
+                        <p class="filter-heading">Sắp xếp theo</p>
+                        <select class="form-select sort-select w-100" id="sortSelect">
+                            <option value="default" @(string.IsNullOrEmpty(currentSortBy) ? "selected" : "")>Mới nhất</option>
+                            <option value="price-asc" @(currentSortBy == "price-asc" ? "selected" : "")>Giá: Thấp đến Cao</option>
+                            <option value="price-desc" @(currentSortBy == "price-desc" ? "selected" : "")>Giá: Cao đến Thấp</option>
+                            <option value="name-asc" @(currentSortBy == "name-asc" ? "selected" : "")>Tên: A-Z</option>
+                            <option value="name-desc" @(currentSortBy == "name-desc" ? "selected" : "")>Tên: Z-A</option>
+                        </select>
+                    </div>
 
-                            @{
-                                decimal discountPercent;
-                                decimal discountedPrice = PriceHelper.GetDiscountedPrice(p, out discountPercent);
-                                bool isDiscounted = discountedPrice < p.ProductPrice;
-                            }
-                            <div class="card-text mt-auto mb-2">
-                                @if (isDiscounted)
-                                {
-                                    <span class="text-muted text-decoration-line-through me-1" style="font-size:0.85em;">@p.ProductPrice.ToString("N0") ₫</span>
-                                    <span class="badge bg-warning text-danger px-1" style="font-size:0.75em;">-@discountPercent.ToString("0")%</span>
-                                    <br />
-                                    <span class="text-danger fw-bold" style="font-size:1.15em;">@discountedPrice.ToString("N0") ₫</span>
-                                }
-                                else
-                                {
-                                    <span class="text-danger fw-bold" style="font-size:1.15em;">@p.ProductPrice.ToString("N0") ₫</span>
-                                }
-                            </div>
-
-                            <div class="action-buttons mt-2">
-                                @{ string searchItemState = p.GetStatusLabel(); }
-
-                                @if (searchItemState == "AVAILABLE")
-                                {
-                                    <div class="d-flex justify-content-between gap-1">
-                                        <button class="btn btn-primary btn-sm flex-grow-1 add-to-cart-btn" data-product-id="@p.ProductID">Thêm vào giỏ</button>
-                                        <button class="btn btn-success btn-sm flex-grow-1 buy-now-btn" data-product-id="@p.ProductID">Mua ngay</button>
-                                    </div>
-                                }
-                                else if (searchItemState == "OUT_OF_STOCK")
-                                {
-                                    <span class="badge bg-secondary w-100 py-2 d-block text-center">Tạm hết hàng</span>
-                                }
-                                else if (searchItemState == "COMING_SOON")
-                                {
-                                    <span class="badge bg-warning text-dark w-100 py-2 d-block text-center fw-bold">Hàng sắp về</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-danger w-100 py-2 d-block text-center">Ngừng kinh doanh</span>
-                                }
-                            </div>
-                        </div>
+                    <div class="filter-group">
+                        <p class="filter-heading">Theo Khoảng Giá</p>
+                        <ul class="list-unstyled filter-options">
+                            <li class="@(string.IsNullOrEmpty(currentPriceRange) ? "active" : "")">
+                                <!-- Thêm "Home" vào tham số thứ 2 của Url.Action -->
+                                <a href="@Url.Action("ProductSearch", "Home", new { query = currentSearchQuery, priceRange = "", sortBy = currentSortBy })">Tất cả</a>
+                            </li>
+                            <li class="@(currentPriceRange == "duoi-5" ? "active" : "")">
+                                <a href="@Url.Action("ProductSearch", "Home", new { query = currentSearchQuery, priceRange = "duoi-5", sortBy = currentSortBy })">Dưới 5 triệu</a>
+                            </li>
+                            <li class="@(currentPriceRange == "5-10" ? "active" : "")">
+                                <a href="@Url.Action("ProductSearch", "Home", new { query = currentSearchQuery, priceRange = "5-10", sortBy = currentSortBy })">Từ 5 - 10 triệu</a>
+                            </li>
+                            <li class="@(currentPriceRange == "tren-10" ? "active" : "")">
+                                <a href="@Url.Action("ProductSearch", "Home", new { query = currentSearchQuery, priceRange = "tren-10", sortBy = currentSortBy })">Trên 10 triệu</a>
+                            </li>
+                        </ul>
                     </div>
                 </div>
-            }
-        </div>
-    }
-    else
-    {
-        <div class="alert alert-warning text-center shadow-sm">
-            Không tìm thấy sản phẩm nào khớp hoàn toàn với từ khóa "<strong>@ViewBag.SearchQuery</strong>".
-        </div>
+            </div>
 
-        if (ViewBag.AprioriSuggestions != null && ((List<WebBanHang.Models.Product>)ViewBag.AprioriSuggestions).Count > 0)
-        {
-            var suggestions = (List<WebBanHang.Models.Product>)ViewBag.AprioriSuggestions;
+            <!-- CỘT PHẢI: KẾT QUẢ TÌM KIẾM -->
+            <div class="col-lg-9 col-md-8">
 
-            <div class="recommendation-section mt-5 border-top pt-4">
-                <h4 class="fw-bold mb-4" style="color: #007bff;">
-                    <i class="fa-solid fa-magic text-warning"></i>
-                    Các sản phẩm tương tự
-                </h4>
+                @if (Model.Any())
+                {
+                    <div class="row product-grid">
+                        @foreach (var p in Model)
+                        {
+                            <div class="col-xl-4 col-lg-6 col-md-12 col-sm-6 mb-4">
+                                <div class="card product-card h-100 shadow-sm border-0" style="border-radius: 12px; overflow: hidden; border: 1px solid #eee !important;">
 
-                <div class="row product-grid">
-                    @foreach (var p in suggestions)
-                    {
-                        <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
-                            <div class="card product-card h-100 shadow-sm border-0">
-                                <a href="@Url.Action("ProductDetail", "Home", new { id = p.ProductID })" class="product-link text-center">
-                                    <img src="@p.ProductImage" class="card-img-top product-image-search p-2" alt="@p.ProductName" style="object-fit: contain; height: 200px;" />
-                                </a>
-                                <div class="card-body d-flex flex-column">
-                                    <h5 class="card-title product-title-fixed fs-6">
-                                        @p.ProductName
-                                    </h5>
+                                    <!-- CHÈN THẺ GIẢM GIÁ NHƯ TRANG DANH MỤC -->
+                                    <div class="position-relative overflow-hidden product-img-wrapper text-center p-3">
+                                        @{
+                                            decimal discountPercent;
+                                            decimal discountedPrice = PriceHelper.GetDiscountedPrice(p, out discountPercent);
+                                            bool isDiscounted = discountedPrice < p.ProductPrice;
+                                            string searchItemState = p.GetStatusLabel();
+                                        }
 
-                                    @{
-                                        decimal discountPercent;
-                                        decimal discountedPrice = PriceHelper.GetDiscountedPrice(p, out discountPercent);
-                                        bool isDiscounted = discountedPrice < p.ProductPrice;
-                                    }
-                                    <div class="card-text mt-auto mb-2">
                                         @if (isDiscounted)
                                         {
-                                            <span class="text-muted text-decoration-line-through me-1" style="font-size:0.85em;">@p.ProductPrice.ToString("N0") ₫</span>
-                                            <span class="badge bg-warning text-danger px-1" style="font-size:0.75em;">-@discountPercent.ToString("0")%</span>
-                                            <br />
-                                            <span class="text-danger fw-bold" style="font-size:1.15em;">@discountedPrice.ToString("N0") ₫</span>
+                                            <span class="badge bg-danger position-absolute badge-sale-overlay" style="top: 10px; left: 10px; z-index: 10; font-size: 0.8rem; padding: 5px 8px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">-@discountPercent.ToString("0")%</span>
                                         }
-                                        else
-                                        {
-                                            <span class="text-danger fw-bold" style="font-size:1.15em;">@p.ProductPrice.ToString("N0") ₫</span>
-                                        }
+
+                                        <a href="@Url.Action("ProductDetail", "Home", new { id = p.ProductID })" class="product-link">
+                                            <img src="@p.ProductImage" class="card-img-top product-image-search" alt="@p.ProductName" style="object-fit: contain; height: 180px; width: 100%;" />
+                                        </a>
                                     </div>
 
-                                    <div class="action-buttons mt-2">
-                                        @{ string searchItemState = p.GetStatusLabel(); }
+                                    <div class="card-body d-flex flex-column" style="padding: 15px 20px 20px 20px;">
+                                        <!-- FIX LỖI CẮT CHỮ: Đảm bảo height và webkit-line-clamp hoạt động đồng bộ -->
+                                        <h5 class="card-title product-title-fixed" style="font-size: 0.95rem; font-weight: 600; height: 42px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.4; margin-bottom: 0.5rem;">
+                                            <a href="@Url.Action("ProductDetail", "Home", new { id = p.ProductID })" class="text-dark text-decoration-none">@p.ProductName</a>
+                                        </h5>
 
-                                        @if (searchItemState == "AVAILABLE")
-                                        {
-                                            <div class="d-flex justify-content-between gap-1">
-                                                <button class="btn btn-primary btn-sm flex-grow-1 add-to-cart-btn" data-product-id="@p.ProductID">Thêm vào giỏ</button>
-                                                <button class="btn btn-success btn-sm flex-grow-1 buy-now-btn" data-product-id="@p.ProductID">Mua ngay</button>
-                                            </div>
-                                        }
-                                        else if (searchItemState == "OUT_OF_STOCK")
-                                        {
-                                            <span class="badge bg-secondary w-100 py-2 d-block text-center">Tạm hết hàng</span>
-                                        }
-                                        else if (searchItemState == "COMING_SOON")
-                                        {
-                                            <span class="badge bg-warning text-dark w-100 py-2 d-block text-center fw-bold">Hàng sắp về</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="badge bg-danger w-100 py-2 d-block text-center">Ngừng kinh doanh</span>
-                                        }
+                                        <div class="card-text mt-auto mb-3 price-area">
+                                            @if (p.ProductPrice <= 0)
+                                            {
+                                                <span class="fw-bold" style="color: #e6a23c; font-size:1.05rem;">Giá: Đang cập nhật</span>
+                                            }
+                                            else if (isDiscounted)
+                                            {
+                                                <span class="text-muted text-decoration-line-through me-2" style="font-size:0.85rem;">@p.ProductPrice.ToString("N0") ₫</span>
+                                                <div class="text-danger fw-bold" style="font-size:1.15rem;">@discountedPrice.ToString("N0") ₫</div>
+                                            }
+                                            else
+                                            {
+                                                <div class="text-danger fw-bold mt-3" style="font-size:1.15rem;">@p.ProductPrice.ToString("N0") ₫</div>
+                                            }
+                                        </div>
+
+                                        <div class="action-buttons mt-2">
+                                            @if (searchItemState == "AVAILABLE")
+                                            {
+                                                <!-- ĐỒNG BỘ NÚT VỚI TRANG CHỦ -->
+                                                <div class="row g-2" style="margin-left: -4px; margin-right: -4px;">
+                                                    <div class="col-6" style="padding-left: 4px; padding-right: 4px;">
+                                                        <button class="btn btn-add-cart-custom w-100 add-to-cart-btn track-add-cart py-2" data-product-id="@p.ProductID" style="border-radius: 8px; font-weight: 500; font-size: 0.85rem; border: none;">
+                                                            Thêm vào giỏ
+                                                        </button>
+                                                    </div>
+                                                    <div class="col-6" style="padding-left: 4px; padding-right: 4px;">
+                                                        <a href="@Url.Action("BuyNow", "Cart", new { id = p.ProductID, quantity = 1 })" class="btn btn-buy-now-custom w-100 py-2 d-flex align-items-center justify-content-center text-white" style="border-radius: 8px; font-weight: 500; font-size: 0.85rem; border: none; text-decoration: none;">
+                                                            Mua ngay
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            }
+                                            else if (searchItemState == "OUT_OF_STOCK")
+                                            {
+                                                <span class="badge bg-secondary w-100 py-2 d-block text-center" style="border-radius: 8px; font-weight: 500; font-size: 0.85rem;">Tạm hết hàng</span>
+                                            }
+                                            else if (searchItemState == "COMING_SOON")
+                                            {
+                                                <span class="badge bg-warning text-dark w-100 py-2 d-block text-center fw-bold" style="border-radius: 8px; font-weight: 600; font-size: 0.85rem;">Hàng sắp về</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-danger w-100 py-2 d-block text-center" style="border-radius: 8px; font-weight: 500; font-size: 0.85rem;">Ngừng kinh doanh</span>
+                                            }
+                                        </div>
                                     </div>
                                 </div>
                             </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-warning text-center shadow-sm">
+                        Không tìm thấy sản phẩm nào khớp hoàn toàn với từ khóa "<strong>@ViewBag.SearchQuery</strong>".
+                    </div>
+
+                    if (ViewBag.AprioriSuggestions != null && ((List<WebBanHang.Models.Product>)ViewBag.AprioriSuggestions).Count > 0)
+                    {
+                        var suggestions = (List<WebBanHang.Models.Product>)ViewBag.AprioriSuggestions;
+
+                        <div class="recommendation-section mt-5 border-top pt-4">
+                            <h4 class="fw-bold mb-4" style="color: #007bff;">
+                                <i class="fa-solid fa-magic text-warning"></i>
+                                Các sản phẩm tương tự
+                            </h4>
+
+                            <div class="row product-grid">
+                                @foreach (var p in suggestions)
+                                {
+                                    <div class="col-xl-4 col-lg-6 col-md-12 col-sm-6 mb-4">
+                                        <div class="card product-card h-100 shadow-sm border-0" style="border-radius: 12px; overflow: hidden; border: 1px solid #eee !important;">
+                                            <div class="position-relative overflow-hidden product-img-wrapper text-center p-3">
+                                                @{
+                                                    decimal discountPercent;
+                                                    decimal discountedPrice = PriceHelper.GetDiscountedPrice(p, out discountPercent);
+                                                    bool isDiscounted = discountedPrice < p.ProductPrice;
+                                                    string searchItemState = p.GetStatusLabel();
+                                                }
+
+                                                @if (isDiscounted)
+                                                {
+                                                    <span class="badge bg-danger position-absolute badge-sale-overlay" style="top: 10px; left: 10px; z-index: 10; font-size: 0.8rem; padding: 5px 8px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">-@discountPercent.ToString("0")%</span>
+                                                }
+
+                                                <a href="@Url.Action("ProductDetail", "Home", new { id = p.ProductID })" class="product-link">
+                                                    <img src="@p.ProductImage" class="card-img-top product-image-search p-2" alt="@p.ProductName" style="object-fit: contain; height: 180px; width: 100%;" />
+                                                </a>
+                                            </div>
+                                            <div class="card-body d-flex flex-column" style="padding: 15px 20px 20px 20px;">
+                                                <h5 class="card-title product-title-fixed" style="font-size: 0.95rem; font-weight: 600; height: 42px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.4; margin-bottom: 0.5rem;">
+                                                    <a href="@Url.Action("ProductDetail", "Home", new { id = p.ProductID })" class="text-dark text-decoration-none">@p.ProductName</a>
+                                                </h5>
+
+                                                <div class="card-text mt-auto mb-3 price-area">
+                                                    @if (p.ProductPrice <= 0)
+                                                    {
+                                                        <span class="fw-bold" style="color: #e6a23c; font-size:1.05rem;">Giá: Đang cập nhật</span>
+                                                    }
+                                                    else if (isDiscounted)
+                                                    {
+                                                        <span class="text-muted text-decoration-line-through me-2" style="font-size:0.85rem;">@p.ProductPrice.ToString("N0") ₫</span>
+                                                        <div class="text-danger fw-bold" style="font-size:1.15rem;">@discountedPrice.ToString("N0") ₫</div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="text-danger fw-bold mt-3" style="font-size:1.15rem;">@p.ProductPrice.ToString("N0") ₫</div>
+                                                    }
+                                                </div>
+
+                                                <div class="action-buttons mt-2">
+                                                    @if (searchItemState == "AVAILABLE")
+                                                    {
+                                                        <!-- ĐỒNG BỘ NÚT VỚI TRANG CHỦ -->
+                                                        <div class="row g-2" style="margin-left: -4px; margin-right: -4px;">
+                                                            <div class="col-6" style="padding-left: 4px; padding-right: 4px;">
+                                                                <button class="btn btn-add-cart-custom w-100 add-to-cart-btn track-add-cart py-2" data-product-id="@p.ProductID" style="border-radius: 8px; font-weight: 500; font-size: 0.85rem; border: none;">
+                                                                    Thêm vào giỏ
+                                                                </button>
+                                                            </div>
+                                                            <div class="col-6" style="padding-left: 4px; padding-right: 4px;">
+                                                                <a href="@Url.Action("BuyNow", "Cart", new { id = p.ProductID, quantity = 1 })" class="btn btn-buy-now-custom w-100 py-2 d-flex align-items-center justify-content-center text-white" style="border-radius: 8px; font-weight: 500; font-size: 0.85rem; border: none; text-decoration: none;">
+                                                                    Mua ngay
+                                                                </a>
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                    else if (searchItemState == "OUT_OF_STOCK")
+                                                    {
+                                                        <span class="badge bg-secondary w-100 py-2 d-block text-center" style="border-radius: 8px; font-weight: 500; font-size: 0.85rem;">Tạm hết hàng</span>
+                                                    }
+                                                    else if (searchItemState == "COMING_SOON")
+                                                    {
+                                                        <span class="badge bg-warning text-dark w-100 py-2 d-block text-center fw-bold" style="border-radius: 8px; font-weight: 600; font-size: 0.85rem;">Hàng sắp về</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-danger w-100 py-2 d-block text-center" style="border-radius: 8px; font-weight: 500; font-size: 0.85rem;">Ngừng kinh doanh</span>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
                         </div>
                     }
-                </div>
-            </div>
-        }
-    }
-</div>
-
-@section Scripts {
-    <script>
-        // Logic cho nút Thêm vào giỏ (Cần hàm addToCart() từ Layout)
-        document.querySelectorAll(".add-to-cart-btn").forEach(button => {
-            button.addEventListener("click", function() {
-                const productId = this.getAttribute("data-product-id");
-                if (typeof addToCart === 'function') {
-                    addToCart(productId, 1);
-                } else {
-                    alert("Chức năng thêm vào giỏ hàng chưa được kích hoạt!");
                 }
-            });
-        });
 
-        // Logic cho nút Mua ngay (Chuyển thẳng đến Checkout hoặc Cart)
-        document.querySelectorAll(".buy-now-btn").forEach(button => {
-            button.addEventListener("click", function() {
-                const productId = this.getAttribute("data-product-id");
-                // Giả định bạn có hàm mua ngay chuyển thẳng đến checkout
-                window.location.href = '@Url.Action("BuyNow", "Cart")' + '?id=' + productId;
+            </div>
+        </div>
+    </div>
+
+    @section Scripts {
+        <script>
+            $(document).ready(function () {
+                // Logic cho nút Thêm vào giỏ
+                $('.add-to-cart-btn').on('click', function () {
+                    var productId = $(this).data('product-id');
+                    if (typeof addToCart === 'function') {
+                        addToCart(productId, 1);
+                    } else {
+                        console.error("Hàm addToCart() không tồn tại.");
+                    }
+                });
+
+                // Logic cho bộ lọc "Sắp xếp theo"
+                $('#sortSelect').on('change', function () {
+                    var selectedSort = $(this).val();
+                    var url = new URL(window.location.href);
+
+                    // Cập nhật tham số sortBy
+                    url.searchParams.set('sortBy', selectedSort);
+                    window.location.href = url.href;
+                });
             });
-        });
-    </script>
-}
+        </script>
+    }

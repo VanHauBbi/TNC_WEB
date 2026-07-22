@@ -95,3 +95,19 @@
     margin-top: 10px;
     margin-bottom: 10px;
 }
+
+.product-img-wrapper {
+    position: relative;
+}
+
+.badge-sale-overlay {
+    top: 10px;
+    left: 10px;
+    z-index: 10;
+    font-size: 0.8rem;
+    padding: 5px 8px;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    font-weight: bold;
+    letter-spacing: 0.5px;
+}

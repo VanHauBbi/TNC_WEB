@@ -2,137 +2,386 @@
 
 @{
     Layout = "~/Views/Shared/_LayoutDivMain.cshtml";
-    ViewBag.Title = "Chi tiết đơn hàng " + Model.OrderID;
+    ViewBag.Title = "Chi tiết đơn hàng #" + Model.OrderID;
 }
 
 <style>
-    .order-summary-card {
-        border-left: 5px solid #007bff; /* Màu xanh nổi bật */
+    /* Ép nền sáng cho toàn bộ trang để chống lỗi Dark Mode */
+    .order-detail-page {
+        background-color: #f4f6f8;
+        padding: 30px;
+        border-radius: 12px;
+        margin-top: 20px;
+        margin-bottom: 40px;
     }
 
-    .summary-info dt {
-        /* Độ rộng cố định cho nhãn (ví dụ: "Phương thức thanh toán:") */
-        font-weight: 600;
-        color: #495057;
-        width: 180px; /* Đặt độ rộng cố định */
-        float: left; /* Dùng float để căn chỉnh nhãn sang trái */
-        clear: left; /* Đảm bảo mỗi dt nằm trên một dòng mới */
-        text-align: left; /* Căn lề trái cho nhãn */
-        margin-right: 10px;
-        padding-right: 0;
+    /* Tiêu đề trang */
+    .page-title {
+        font-weight: 800;
+        color: #2c3e50 !important;
+        margin-bottom: 25px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
     }
 
-    .summary-info dd {
-        /* Đảm bảo giá trị hiển thị ngay sau nhãn */
-        margin-left: 190px; /* Lề trái lớn hơn độ rộng của dt + margin */
-        margin-bottom: 5px; /* Giảm khoảng cách giữa các dòng */
-        text-align: left; /* Căn lề trái cho giá trị */
+    .order-id-highlight {
+        color: #e44d26 !important;
     }
 
-    /* Tùy chỉnh bổ sung cho thẻ dl-horizontal của Bootstrap */
-    .dl-horizontal {
-        /* Đảm bảo không bị overflow */
+    /* Box chứa thông tin chung */
+    .info-card {
+        background: #ffffff !important;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        border: 1px solid #eaeaea;
+        margin-bottom: 25px;
         overflow: hidden;
     }
 
-    /* Định dạng cho badge Trạng thái thanh toán */
-    .status-badge {
-        padding: 4px 8px;
-        border-radius: 4px;
+    .info-card-header {
+        background-color: #fafbfc !important;
+        padding: 15px 25px;
+        border-bottom: 1px solid #eaeaea;
         font-weight: 700;
-        font-size: 0.85rem;
+        font-size: 1.1rem;
+        color: #343a40 !important;
+    }
+
+    .info-card-body {
+        padding: 25px;
+    }
+
+    /* Label - Value của thông tin khách hàng */
+    .info-row {
+        display: flex;
+        margin-bottom: 12px;
+        font-size: 0.95rem;
+    }
+
+    .info-label {
+        font-weight: 600;
+        color: #6c757d !important;
+        width: 180px;
+        flex-shrink: 0;
+    }
+
+    .info-value {
+        color: #212529 !important;
+        font-weight: 500;
+    }
+
+    /* ---------------------------------------------------
+       CSS Badge Trạng Thái (Đồng bộ từ PurchaseHistory)
+       --------------------------------------------------- */
+    .status-badge {
+        padding: 0.4em 0.8em;
+        font-size: 0.8rem;
+        font-weight: 600;
+        border-radius: 50rem;
         display: inline-block;
     }
 
-    .dl-horizontal dd {
-        margin-left: 180px; /* Đảm bảo căn chỉnh các giá trị */
+    .status-pending {
+        background-color: #fff3cd;
+        color: #856404;
     }
 
-    .product-img-thumb {
-        width: 50px;
-        height: 50px;
-        object-fit: contain;
-        border: 1px solid #dee2e6;
-        border-radius: 4px;
-        margin-right: 10px;
+    .status-approved {
+        background-color: #cce5ff;
+        color: #004085;
     }
+
+    .status-shipping {
+        background-color: #e2e3e5;
+        color: #383d41;
+    }
+
+    .status-delivered {
+        background-color: #d4edda;
+        color: #155724;
+    }
+
+    .status-canceled {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+
+    .status-paid {
+        background-color: #d4edda;
+        color: #155724;
+    }
+
+    .status-unpaid {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+
+
+    /* Bảng chi tiết sản phẩm */
+    .custom-table {
+        margin-bottom: 0;
+    }
+
+        .custom-table th {
+            background-color: #f8f9fa !important;
+            color: #495057 !important;
+            font-weight: 700;
+            border-bottom: 2px solid #dee2e6;
+            padding: 15px;
+        }
+
+        .custom-table td {
+            vertical-align: middle;
+            padding: 15px;
+            color: #333 !important;
+            border-bottom: 1px solid #f1f1f1;
+        }
+
+    /* Hình ảnh sản phẩm */
+    .product-img-box {
+        width: 60px;
+        height: 60px;
+        background: #fff;
+        border: 1px solid #eee;
+        border-radius: 8px;
+        padding: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+        .product-img-box img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+    /* Cột tổng tiền cuối cùng */
+    .table-footer {
+        background-color: #fffaf5 !important;
+    }
+
+        .table-footer td {
+            padding: 20px 15px;
+        }
+
+    .total-title {
+        font-size: 1.1rem;
+        color: #333 !important;
+        text-transform: uppercase;
+    }
+
+    .total-amount {
+        font-size: 1.5rem;
+        color: #e44d26 !important;
+    }
+
+    /* Cụm Nút bấm phía dưới */
+    .action-group {
+        display: flex;
+        justify-content: flex-end;
+        gap: 15px;
+        margin-top: 20px;
+    }
+
+    .btn-action {
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+
+    .btn-back {
+        background-color: #fff !important;
+        color: #495057 !important;
+        border: 1px solid #ced4da;
+    }
+
+        .btn-back:hover {
+            background-color: #e9ecef !important;
+        }
+
+    .btn-history {
+        background-color: #0056b3 !important;
+        color: #fff !important;
+        border: none;
+    }
+
+        .btn-history:hover {
+            background-color: #00448f !important;
+            box-shadow: 0 4px 10px rgba(0,86,179,0.3);
+        }
+
+    .btn-track {
+        background: linear-gradient(135deg, #f6d365 0%, #fda085 100%) !important;
+        color: #fff !important;
+        border: none;
+    }
+
+        .btn-track:hover {
+            filter: brightness(0.95);
+            box-shadow: 0 4px 10px rgba(253,160,133,0.4);
+        }
 </style>
 
-<div class="container my-5">
-    <h2 class="mb-5 text-primary">📜 Chi Tiết Đơn Hàng <span class="fw-bold">#@Model.OrderID</span></h2>
+<div class="container">
+    <div class="order-detail-page">
+        <h2 class="page-title">
+            <i class="fa-solid fa-file-invoice"></i>
+            <span>Chi Tiết Đơn Hàng <span class="order-id-highlight">#@Model.OrderID</span></span>
+        </h2>
 
-    <div class="card p-4 shadow-sm order-summary-card">
-        <h4 class="card-title mb-4 border-bottom pb-2">Thông tin giao dịch</h4>
+        <!-- 1. THÔNG TIN KHÁCH HÀNG & GIAO HÀNG -->
+        <div class="info-card">
+            <div class="info-card-header">
+                <i class="fa-solid fa-circle-info text-primary me-2"></i> Thông tin giao dịch
+            </div>
+            <div class="info-card-body">
+                <div class="row">
+                    <!-- Cột Trái -->
+                    <div class="col-md-6 mb-3 mb-md-0">
+                        <div class="info-row">
+                            <span class="info-label">Khách hàng:</span>
+                            <span class="info-value">@Html.DisplayFor(model => model.Customer.CustomerName)</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Ngày đặt hàng:</span>
+                            <span class="info-value">@Html.DisplayFor(model => model.OrderDate)</span>
+                        </div>
 
-        <dl class="dl-horizontal summary-info">
-            <dt>Khách hàng:</dt>
-            <dd class="fw-bold">@Html.DisplayFor(model => model.Customer.CustomerName)</dd>
+                        <!-- Trạng thái thanh toán (Cập nhật đồng bộ) -->
+                        <div class="info-row align-items-center">
+                            <span class="info-label">Trạng thái Thanh Toán:</span>
+                            <span class="info-value">
+                                @{
+                                    string payStatus = string.IsNullOrEmpty(Model.PaymentStatus) ? "Chưa thanh toán" : Model.PaymentStatus;
+                                    string payBadge = (payStatus == "Đã thanh toán") ? "status-badge status-paid" : "status-badge status-unpaid";
+                                }
+                                <span class="@payBadge">@payStatus</span>
+                            </span>
+                        </div>
 
-            <dt>Ngày đặt hàng:</dt>
-            <dd>@Html.DisplayFor(model => model.OrderDate)</dd>
+                        <!-- Trạng thái đơn hàng (Cập nhật đồng bộ) -->
+                        <div class="info-row align-items-center">
+                            <span class="info-label">Trạng thái đơn hàng:</span>
+                            <span class="info-value">
+                                @{
+                                    string orderStatus = string.IsNullOrEmpty(Model.OrderStatus) ? "Chờ duyệt" : Model.OrderStatus;
+                                    string orderBadge = "status-badge status-pending";
 
-            <dt>Trạng thái TT:</dt>
-            <dd>
-                <span class="badge @(Model.PaymentStatus == "Đã thanh toán" ? "bg-success" : "bg-warning text-dark")">
-                    @Html.DisplayFor(model => model.PaymentStatus)
-                </span>
-            </dd>
+                                    if (orderStatus == "Đã duyệt") { orderBadge = "status-badge status-approved"; }
+                                    else if (orderStatus == "Đang giao") { orderBadge = "status-badge status-shipping"; }
+                                    else if (orderStatus == "Đã giao") { orderBadge = "status-badge status-delivered"; }
+                                    else if (orderStatus == "Đã hủy") { orderBadge = "status-badge status-canceled"; }
+                                }
+                                <span class="@orderBadge">@orderStatus</span>
+                            </span>
+                        </div>
+                    </div>
 
-            <hr />
+                    <!-- Cột Phải -->
+                    <div class="col-md-6">
+                        <div class="info-row">
+                            <span class="info-label">Địa chỉ giao hàng:</span>
+                            <span class="info-value">@Html.DisplayFor(model => model.ShippingAddress)</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Vận chuyển:</span>
+                            <span class="info-value">@Html.DisplayFor(model => model.ShippingMethod)</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Thanh toán:</span>
+                            <span class="info-value fw-bold text-primary">@Html.DisplayFor(model => model.PaymentMethod)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-            <dt>Địa chỉ giao hàng:</dt>
-            <dd class="fw-medium">@Html.DisplayFor(model => model.ShippingAddress)</dd>
+        <!-- 2. DANH SÁCH SẢN PHẨM -->
+        <div class="info-card">
+            <div class="info-card-header">
+                <i class="fa-solid fa-box-open text-success me-2"></i> Sản phẩm đã đặt (@Model.OrderDetails.Count() món)
+            </div>
 
-            <dt>Phương thức vận chuyển:</dt>
-            <dd>@Html.DisplayFor(model => model.ShippingMethod)</dd>
+            <div class="table-responsive">
+                <table class="table custom-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 50%; padding-left: 25px;">Sản phẩm</th>
+                            <th style="width: 15%; text-align: right;">Đơn giá</th>
+                            <th style="width: 15%; text-align: center;">Số lượng</th>
+                            <th style="width: 20%; text-align: right; padding-right: 25px;">Thành tiền</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.OrderDetails != null)
+                        {
+                            foreach (var detail in Model.OrderDetails)
+                            {
+                                <tr>
+                                    <td style="padding-left: 25px;">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="product-img-box">
+                                                <img src="@detail.Product.ProductImage" alt="@detail.Product.ProductName" />
+                                            </div>
+                                            <span class="fw-bold">@detail.Product.ProductName</span>
+                                        </div>
+                                    </td>
+                                    <td class="text-end fw-medium">@String.Format("{0:N0} ₫", detail.UnitPrice)</td>
+                                    <td class="text-center fw-bold text-muted">x @detail.Quantity</td>
+                                    <td class="text-end fw-bold" style="color: #e44d26 !important; padding-right: 25px;">@String.Format("{0:N0} ₫", detail.TotalPrice)</td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                    <tfoot class="table-footer">
+                        @{
+                            decimal subTotal = Model.OrderDetails?.Sum(d => d.TotalPrice) ?? 0;
+                            decimal shippingFee = Model.TotalAmount - subTotal;
+                        }
 
-            <dt>Phương thức thanh toán:</dt>
-            <dd>@Html.DisplayFor(model => model.PaymentMethod)</dd>
-        </dl>
+                        <!-- Dòng: Tổng tiền hàng -->
+                        <tr>
+                            <td colspan="3" class="text-end fw-bold" style="color: #6c757d; font-size: 1rem; padding: 15px 15px 5px 15px;">Tổng tiền hàng:</td>
+                            <td class="text-end fw-bold" style="color: #495057; padding: 15px 25px 5px 15px;">@String.Format("{0:N0} ₫", subTotal)</td>
+                        </tr>
+
+                        <!-- Dòng: Phí vận chuyển -->
+                        <tr>
+                            <td colspan="3" class="text-end fw-bold" style="color: #6c757d; font-size: 1rem; padding: 5px 15px 15px 15px;">Phí vận chuyển:</td>
+                            <td class="text-end fw-bold" style="color: #495057; padding: 5px 25px 15px 15px;">@String.Format("{0:N0} ₫", shippingFee)</td>
+                        </tr>
+
+                        <!-- Dòng: Tổng thanh toán cuối cùng -->
+                        <tr style="border-top: 2px dashed #dee2e6;">
+                            <td colspan="3" class="text-end fw-bold total-title" style="padding-top: 20px;">TỔNG THANH TOÁN CUỐI CÙNG:</td>
+                            <td class="text-end fw-bold total-amount" style="padding-right: 25px; padding-top: 20px;">@String.Format("{0:N0} ₫", Model.TotalAmount)</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <!-- 3. CÁC NÚT ĐIỀU HƯỚNG -->
+        <div class="action-group">
+            <a href="@Url.Action("Index", "Home")" class="btn-action btn-back">
+                <i class="fa-solid fa-arrow-left"></i> Về trang chủ
+            </a>
+
+            <a href="@Url.Action("PurchaseHistory", "Account")" class="btn-action btn-history">
+                <i class="fa-solid fa-clock-rotate-left"></i> Lịch sử mua hàng
+            </a>
+
+            <a href="@Url.Action("Tracking", "Orders", new { id = Model.OrderID })" class="btn-action btn-track">
+                <i class="fa-solid fa-truck-fast"></i> Theo dõi tiến độ
+            </a>
+        </div>
+
     </div>
-
-    <h3 class="mt-5 mb-3">Sản phẩm đã đặt (@Model.OrderDetails.Count() món)</h3>
-    <table class="table table-bordered table-striped align-middle">
-        <thead class="table-light">
-            <tr>
-                <th style="width: 10%;">Ảnh</th>
-                <th style="width: 45%;">Tên sản phẩm</th>
-                <th style="width: 15%; text-align: right;">Đơn giá</th>
-                <th style="width: 10%; text-align: center;">SL</th>
-                <th style="width: 20%; text-align: right;">Thành tiền</th>
-            </tr>
-        </thead>
-        <tbody>
-            @if (Model.OrderDetails != null)
-            {
-                foreach (var detail in Model.OrderDetails)
-                {
-                    <tr>
-                        <td class="text-center">
-                            <img src="@detail.Product.ProductImage" alt="@detail.Product.ProductName" class="product-img-thumb" />
-                        </td>
-                        <td>@detail.Product.ProductName</td>
-                        <td class="text-end">@String.Format("{0:N0} ₫", detail.UnitPrice)</td>
-                        <td class="text-center">@detail.Quantity</td>
-                        <td class="fw-bold text-end text-danger">@String.Format("{0:N0} ₫", detail.TotalPrice)</td>
-                    </tr>
-                }
-            }
-        </tbody>
-        <tfoot class="table-group-divider">
-            <tr>
-                <td colspan="4" class="text-end fw-bold">TỔNG THANH TOÁN CUỐI CÙNG:</td>
-                <td class="text-end fw-bold text-danger fs-5">@String.Format("{0:N0} ₫", Model.TotalAmount)</td>
-            </tr>
-        </tfoot>
-    </table>
-
-    <p class="mt-4 action-links">
-        @Html.ActionLink("LỊCH SỬ MUA HÀNG", "PurchaseHistory", "Account", null, new { @class = "btn btn-primary btn-lg me-3" })
-        @Html.ActionLink("← VỀ TRANG CHỦ", "Index", "Home", null, new { @class = "btn btn-outline-secondary" })
-    </p>
-
-    <a href="@Url.Action("Tracking", "Orders", new { id = Model.OrderID })" class="btn btn-warning fw-bold text-white me-2">
-        <i class="fa-solid fa-map-location-dot"></i> Theo dõi tiến độ
-    </a>
 </div>

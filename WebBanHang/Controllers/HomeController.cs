@@ -346,18 +346,11 @@ namespace WebBanHang.Controllers
         // ==========================================================
         // 3. TÌM KIẾM VÀ GHI LOG SEARCH AI
         // ==========================================================
-        public ActionResult ProductSearch(string query)
+        public ActionResult ProductSearch(string query, string priceRange, string sortBy)
         {
             if (string.IsNullOrWhiteSpace(query))
             {
                 TempData["ErrorMessage"] = "Vui lòng nhập từ khóa";
-                return RedirectToAction("Index");
-            }
-
-            const int MAX_LENGTH = 100;
-            if (query.Length > MAX_LENGTH)
-            {
-                TempData["ErrorMessage"] = "Từ khóa tìm kiếm quá dài (tối đa 100 ký tự).";
                 return RedirectToAction("Index");
             }
 
@@ -369,43 +362,29 @@ namespace WebBanHang.Controllers
             {
                 try
                 {
-                    // Tìm xem từ khóa này khách đã search bao giờ chưa
                     var currentSearchLog = db.UserBehaviorLogs.FirstOrDefault(l =>
-                        l.CustomerID == currentCustomerId
-                        && l.ActionType == "SEARCH_KEYWORD"
-                        && l.SearchKeyword == searchQuery);
+                        l.CustomerID == currentCustomerId &&
+                        l.ActionType == "SEARCH_KEYWORD" &&
+                        l.SearchKeyword == searchQuery);
 
-                    if (currentCustomerId != null)
+                    if (currentSearchLog == null)
                     {
-                        try
+                        db.UserBehaviorLogs.Add(new UserBehaviorLog
                         {
-                            // KHÔNG CẦN KIỂM TRA CŨ HAY MỚI, CỨ SEARCH LÀ BẮT BUỘC ĐẺ THÊM DÒNG LOG!
-                            db.UserBehaviorLogs.Add(new UserBehaviorLog
-                            {
-                                SessionID = Session.SessionID,
-                                CustomerID = currentCustomerId,
-                                ProductID = null,
-                                ActionType = "SEARCH_KEYWORD",
-                                SearchKeyword = searchQuery,
-                                ActionWeight = 0,
-                                CreatedAt = DateTime.Now
-                            });
-
-                            // Lưu thẳng xuống DB
-                            db.SaveChanges();
-                        }
-                        catch (Exception ex)
-                        {
-                            System.Diagnostics.Debug.WriteLine("Lỗi ghi log Search: " + ex.Message);
-                        }
+                            SessionID = Session.SessionID,
+                            CustomerID = currentCustomerId,
+                            ProductID = null,
+                            ActionType = "SEARCH_KEYWORD",
+                            SearchKeyword = searchQuery,
+                            ActionWeight = 0,
+                            CreatedAt = DateTime.Now
+                        });
                     }
                     else
                     {
-                        // CÓ RỒI -> Chỉ cập nhật thời gian lên hiện tại để AI ưu tiên
                         currentSearchLog.CreatedAt = DateTime.Now;
                         db.Entry(currentSearchLog).State = System.Data.Entity.EntityState.Modified;
                     }
-
                     db.SaveChanges();
                 }
                 catch (Exception ex)
@@ -414,20 +393,56 @@ namespace WebBanHang.Controllers
                 }
             }
 
-            // 2. LẤY KẾT QUẢ TÌM KIẾM
-            var searchResults = db.Products
+            // 2. LƯU TRẠNG THÁI BỘ LỌC ĐỂ HIỂN THỊ RA VIEW
+            ViewBag.SearchQuery = query;
+            ViewBag.CurrentPriceRange = priceRange;
+            ViewBag.CurrentSortBy = sortBy;
+
+            // 3. TÌM KIẾM TỪ KHÓA
+            var productsQuery = db.Products
                 .Include(p => p.Category)
                 .Include(p => p.Coupons)
                 .Where(p => p.Status != 2 &&
                     (p.ProductName.ToLower().Contains(searchQuery) ||
                      p.ProductDescription.ToLower().Contains(searchQuery) ||
                      p.Category.CategoryName.ToLower().Contains(searchQuery))
-                ).ToList();
+                ).AsQueryable();
 
-            ViewBag.SearchQuery = query;
+            // 4. ÁP DỤNG ĐIỀU KIỆN LỌC GIÁ
+            if (!string.IsNullOrEmpty(priceRange))
+            {
+                if (priceRange == "duoi-5")
+                    productsQuery = productsQuery.Where(p => p.ProductPrice < 5000000);
+                else if (priceRange == "5-10")
+                    productsQuery = productsQuery.Where(p => p.ProductPrice >= 5000000 && p.ProductPrice <= 10000000);
+                else if (priceRange == "tren-10")
+                    productsQuery = productsQuery.Where(p => p.ProductPrice > 10000000);
+            }
 
-            // 3. LẤP ĐẦY TRANG CHO ĐỦ 12 SẢN PHẨM (Ưu tiên đồ đắt/Lời)
-            if (searchResults.Count < 12)
+            // 5. ÁP DỤNG ĐIỀU KIỆN SẮP XẾP 
+            if (!string.IsNullOrEmpty(sortBy))
+            {
+                if (sortBy == "price-asc")
+                    productsQuery = productsQuery.OrderBy(p => p.ProductPrice);
+                else if (sortBy == "price-desc")
+                    productsQuery = productsQuery.OrderByDescending(p => p.ProductPrice);
+                else if (sortBy == "name-asc")
+                    productsQuery = productsQuery.OrderBy(p => p.ProductName);
+                else if (sortBy == "name-desc")
+                    productsQuery = productsQuery.OrderByDescending(p => p.ProductName);
+                else
+                    productsQuery = productsQuery.OrderByDescending(p => p.ProductID);
+            }
+            else
+            {
+                productsQuery = productsQuery.OrderByDescending(p => p.ProductID);
+            }
+
+            // Thực thi câu lệnh SQL và lấy list sản phẩm ra
+            var searchResults = productsQuery.ToList();
+
+            // 6. LẤP ĐẦY TRANG CHO ĐỦ 12 SẢN PHẨM 
+            if (searchResults.Count < 12 && string.IsNullOrEmpty(priceRange) && string.IsNullOrEmpty(sortBy))
             {
                 var existingIds = searchResults.Select(p => p.ProductID).ToList();
                 int needMore = 12 - searchResults.Count;

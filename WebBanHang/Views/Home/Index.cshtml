@@ -67,7 +67,7 @@
     <!-- ========================================================================= -->
     @if (homeRecommendations.Any())
     {
-        <div class="d-flex justify-content-between align-items-end mb-4 border-bottom pb-2 mt-5 pt-3">
+        <div id="ai-recommendations-section" class="d-flex justify-content-between align-items-end mb-4 border-bottom pb-2 mt-5 pt-3">
             <h3 class="fw-bold text-uppercase mb-0" style="color: #ff5500;">
                 <i class="fa-solid fa-bolt text-warning me-2"></i> Gợi ý hôm nay cho bạn
             </h3>
@@ -124,11 +124,13 @@
                                 @if (aiState == "AVAILABLE")
                                 {
                                     <div class="d-flex gap-2">
-                                        <button class="btn btn-primary flex-fill add-to-cart-btn btn-cart-modern track-add-cart py-2" data-product-id="@item.ProductID" style="font-size: 0.85rem; border: none;">
+                                        <!-- NÚT 1: THÊM VÀO GIỎ -->
+                                        <button class="btn btn-add-cart-custom flex-fill add-to-cart-btn btn-cart-modern track-add-cart py-2" data-product-id="@item.ProductID" style="font-size: 0.85rem;">
                                             Thêm vào giỏ
                                         </button>
 
-                                        <a href="@Url.Action("BuyNow", "Cart", new { id = item.ProductID, quantity = 1 })" class="btn btn-success flex-fill py-2 d-flex align-items-center justify-content-center text-white" style="font-size: 0.85rem; border: none; text-decoration: none;">
+                                        <!-- NÚT 2: MUA NGAY -->
+                                        <a href="@Url.Action("BuyNow", "Cart", new { id = item.ProductID, quantity = 1 })" class="btn btn-buy-now-custom flex-fill py-2 d-flex align-items-center justify-content-center" style="font-size: 0.85rem; text-decoration: none;">
                                             Mua ngay
                                         </a>
                                     </div>
@@ -162,7 +164,7 @@
     }
     <!-- ========================================================================= -->
     <!-- SẢN PHẨM NỔI BẬT -->
-    <div class="d-flex justify-content-between align-items-end mb-4 border-bottom pb-2 mt-5 pt-5">
+    <div id="featured-products-section" class="d-flex justify-content-between align-items-end mb-4 border-bottom pb-2 mt-5 pt-5">
         <h3 class="fw-bold text-uppercase mb-0 text-primary"><i class="fa-solid fa-fire text-danger"></i> Sản phẩm nổi bật</h3>
     </div>
 
@@ -218,13 +220,13 @@
                             @if (featState == "AVAILABLE")
                             {
                                 <div class="d-flex gap-2">
-                                    <!-- NÚT 1: THÊM VÀO GIỎ (Màu xanh dương, không icon, giữ nguyên class ngầm) -->
-                                    <button class="btn btn-primary flex-fill add-to-cart-btn btn-cart-modern track-add-cart py-2" data-product-id="@item.ProductID" style="font-size: 0.85rem; border: none;">
+                                    <!-- NÚT 1: THÊM VÀO GIỎ -->
+                                    <button class="btn btn-add-cart-custom flex-fill add-to-cart-btn btn-cart-modern track-add-cart py-2" data-product-id="@item.ProductID" style="font-size: 0.85rem;">
                                         Thêm vào giỏ
                                     </button>
 
-                                    <!-- NÚT 2: MUA NGAY (Màu xanh lá) -->
-                                    <a href="@Url.Action("BuyNow", "Cart", new { id = item.ProductID, quantity = 1 })" class="btn btn-success flex-fill py-2 d-flex align-items-center justify-content-center text-white" style="font-size: 0.85rem; border: none; text-decoration: none;">
+                                    <!-- NÚT 2: MUA NGAY -->
+                                    <a href="@Url.Action("BuyNow", "Cart", new { id = item.ProductID, quantity = 1 })" class="btn btn-buy-now-custom flex-fill py-2 d-flex align-items-center justify-content-center" style="font-size: 0.85rem; text-decoration: none;">
                                         Mua ngay
                                     </a>
                                 </div>
@@ -317,7 +319,8 @@
                                 <div class="text-danger fw-bold fs-5">@discountedPrice.ToString("N0") ₫</div>
                             </div>
 
-                            <a href="@Url.Action("BuyNow", "Cart", new { id = item.ProductID })" class="btn btn-danger w-100 mt-3 fw-bold btn-cart-modern d-block">
+                            <!-- NÚT MUA NGAY (KHUYẾN MÃI) -->
+                            <a href="@Url.Action("BuyNow", "Cart", new { id = item.ProductID })" class="btn btn-buy-now-custom w-100 mt-3 py-2 text-center d-block" style="text-decoration: none;">
                                 Mua Ngay Kẻo Lỡ
                             </a>
                         </div>
@@ -368,7 +371,7 @@
                             isExpanded = false;
 
                             // Cuộn màn hình nhẹ lên trên một chút để người dùng biết là đã thu gọn
-                            document.getElementById("khuyen-mai-section").scrollIntoView({ behavior: 'smooth' });
+                            document.getElementById("khuyen-mai-section").scrollIntoView({ behavior: 'smooth', block: 'start' });
                         }
                     });
                 }
@@ -377,7 +380,7 @@
     }
 
     <!-- SẢN PHẨM MỚI VỀ -->
-    <div class="d-flex justify-content-between align-items-end mb-4 border-bottom pb-2 mt-5">
+    <div id="new-products-section" class="d-flex justify-content-between align-items-end mb-4 border-bottom pb-2 mt-5">
         <h3 class="fw-bold text-uppercase mb-0 text-success"><i class="fa-solid fa-bolt text-warning"></i> Sản phẩm mới về</h3>
     </div>
 
@@ -434,13 +437,13 @@
                             @if (newState == "AVAILABLE")
                             {
                                 <div class="d-flex gap-2">
-                                    <!-- NÚT 1: THÊM VÀO GIỎ (Màu xanh dương, không icon, giữ nguyên class ngầm) -->
-                                    <button class="btn btn-primary flex-fill add-to-cart-btn btn-cart-modern track-add-cart py-2" data-product-id="@item.ProductID" style="font-size: 0.85rem; border: none;">
+                                    <!-- NÚT 1: THÊM VÀO GIỎ -->
+                                    <button class="btn btn-add-cart-custom flex-fill add-to-cart-btn btn-cart-modern track-add-cart py-2" data-product-id="@item.ProductID" style="font-size: 0.85rem;">
                                         Thêm vào giỏ
                                     </button>
 
-                                    <!-- NÚT 2: MUA NGAY (Màu xanh lá) -->
-                                    <a href="@Url.Action("BuyNow", "Cart", new { id = item.ProductID, quantity = 1 })" class="btn btn-success flex-fill py-2 d-flex align-items-center justify-content-center text-white" style="font-size: 0.85rem; border: none; text-decoration: none;">
+                                    <!-- NÚT 2: MUA NGAY -->
+                                    <a href="@Url.Action("BuyNow", "Cart", new { id = item.ProductID, quantity = 1 })" class="btn btn-buy-now-custom flex-fill py-2 d-flex align-items-center justify-content-center" style="font-size: 0.85rem; text-decoration: none;">
                                         Mua ngay
                                     </a>
                                 </div>
@@ -476,8 +479,9 @@
 
 @section Scripts {
     <script>
-        function setupProductToggle(buttonId, productClass) {
+        function setupProductToggle(buttonId, productClass, sectionId) {
             const toggleBtn = document.getElementById(buttonId);
+            const sectionTarget = document.getElementById(sectionId); // Lấy element chứa tiêu đề khu vực
             if (!toggleBtn) return;
 
             const productContainers = document.querySelectorAll(productClass);
@@ -495,14 +499,26 @@
                     }
                 });
 
-                toggleBtn.innerHTML = showAll ? 'Thu gọn <i class="fa-solid fa-angle-up"></i>' : 'Xem thêm <i class="fa-solid fa-angle-down"></i>';
+                if (showAll) {
+                    toggleBtn.innerHTML = 'Thu gọn <i class="fa-solid fa-angle-up"></i>';
+                } else {
+                    toggleBtn.innerHTML = 'Xem thêm <i class="fa-solid fa-angle-down"></i>';
+                    // Cuộn lên khi thu gọn
+                    if (sectionTarget) {
+                        const yOffset = -80; // Trừ hao phần header nếu có
+                        const y = sectionTarget.getBoundingClientRect().top + window.pageYOffset + yOffset;
+                        window.scrollTo({ top: y, behavior: 'smooth' });
+                    }
+                }
             });
         }
 
-        setupProductToggle("toggleNewProducts", ".extra-new-product");
-        setupProductToggle("toggleFeaturedProducts", ".extra-featured-product");
-        setupProductToggle("toggleAiProducts", ".extra-ai-product");
+        // Kích hoạt hàm Toggle cho các danh sách sản phẩm
+        setupProductToggle("toggleAiProducts", ".extra-ai-product", "ai-recommendations-section");
+        setupProductToggle("toggleFeaturedProducts", ".extra-featured-product", "featured-products-section");
+        setupProductToggle("toggleNewProducts", ".extra-new-product", "new-products-section");
 
+        // Xử lý Thêm vào giỏ hàng
         document.querySelectorAll(".add-to-cart-btn").forEach(button => {
             button.addEventListener("click", function () {
                 const productId = this.getAttribute("data-product-id");

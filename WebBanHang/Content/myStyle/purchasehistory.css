@@ -1,20 +1,143 @@
 ﻿/* ~/Content/myStyle/purchasehistory.css */
-.order-history-table th, .order-history-table td {
-    vertical-align: middle;
+
+/* Khung nền xám bao bọc toàn trang (Đồng bộ với Details) */
+.purchase-history-page {
+    background-color: #f4f6f8;
+    padding: 30px;
+    border-radius: 12px;
+    margin-bottom: 40px;
 }
 
-/* Trạng thái đơn hàng (Màu nền pastel) */
-.order-status-pending {
+/* Tiêu đề trang */
+.page-title-custom {
+    color: #2c3e50 !important;
+}
+
+/* Bao bọc bảng */
+.table-wrapper {
+    background: #ffffff !important;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    border: 1px solid #eaeaea;
+    overflow: hidden; 
+    padding: 10px;
+}
+
+/* Tùy chỉnh Table */
+.order-history-table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+    .order-history-table th {
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #dee2e6 !important;
+        background-color: #f8f9fa !important; 
+        color: #495057 !important;
+    }
+
+    .order-history-table td {
+        padding: 1rem 0.75rem;
+        border-bottom: 1px solid #f1f1f1;
+        font-size: 0.95rem;
+        border-right: 1px solid #f1f1f1;
+    }
+
+        .order-history-table td:last-child {
+            border-right: none;
+        }
+
+    .order-history-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .order-history-table tbody tr:hover {
+        background-color: #fafbfc;
+    }
+
+/* Mã đơn hàng */
+.text-order-id {
+    color: #28a745;
+}
+
+/* Nút hành động (Chi tiết) */
+.btn-action {
+    background-color: #e6f2ff; 
+    color: #0056b3 !important; 
+    border: none;
+    border-radius: 50rem; 
+    padding: 0.4em 1em; 
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.2s ease-in-out;
+    text-decoration: none;
+    display: inline-block;
+}
+
+    .btn-action:hover {
+        background-color: #cce5ff; 
+        color: #004085 !important;
+        transform: translateY(-1px); 
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08); 
+    }
+
+/* Tùy chỉnh Badge Trạng thái */
+.status-badge {
+    padding: 0.4em 0.8em;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border-radius: 50rem;
+    display: inline-block;
+}
+
+.status-pending {
     background-color: #fff3cd;
     color: #856404;
 }
 
-.order-status-shipped {
-    background-color: #d1ecf1;
-    color: #0c5460;
+.status-approved {
+    background-color: #cce5ff;
+    color: #004085;
 }
 
-.order-status-paid {
+.status-shipping {
+    background-color: #e2e3e5;
+    color: #383d41;
+}
+
+.status-delivered {
     background-color: #d4edda;
     color: #155724;
 }
+
+.status-canceled {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.status-paid {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.status-unpaid {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+/* Tùy chỉnh nút Tiếp tục mua sắm */
+.btn-continue-shopping {
+    background-color: #ffffff;
+    color: #495057;
+    border: 1px solid #ced4da;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+    .btn-continue-shopping:hover {
+        background-color: #e9ecef; 
+        color: #212529; 
+        border-color: #adb5bd;
+    }
