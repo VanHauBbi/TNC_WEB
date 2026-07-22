@@ -74,10 +74,13 @@
                             </div>
                         </div>
 
-                        <div class="cart-item-right">
-                            <p class="item-total fw-bold text-danger mb-2">@item.TotalPrice.ToString("N0") VNĐ</p>
-                            <button type="button" class="btn-remove-item" onclick="cartRemoveItem(@item.ProductID)">
-                                <i class="fa-solid fa-trash-can"></i>
+                        <div class="cart-item-right d-flex flex-row align-items-center justify-content-end" style="gap: 20px;">
+                            <p class="item-total fw-bold text-danger mb-0" style="position: static !important; font-size: 1.1rem;">
+                                @item.TotalPrice.ToString("N0") VNĐ
+                            </p>
+
+                            <button type="button" class="btn-remove-item border-0 bg-transparent text-secondary" onclick="cartRemoveItem(@item.ProductID)" style="position: static !important; padding: 0;">
+                                <i class="fa-solid fa-trash-can fs-5" style="cursor: pointer;"></i>
                             </button>
                         </div>
                     </div>
