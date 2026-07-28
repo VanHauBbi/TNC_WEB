@@ -92,18 +92,18 @@
                     <span>Hỗ Trợ Khách Hàng</span>
                 </a>
             </li>
-                @*<li>
-                    <a href="@Url.Action("Index", "Recommendations", new { area = "Admin" })" class="@GetActiveClass("Recommendations")" data-tooltip="AI">
-                        <i class="fa-solid fa-brain"></i>
-                        <span>Huấn luyện AI (Apriori)</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="@Url.Action("Index", "TwoPhase", new { area = "Admin" })">
-                        <i class="fa-solid fa-sack-dollar text-success"></i>
-                        <span>Khai phá Lợi Nhuận (Two-Phase)</span>
-                    </a>
-                </li>*@
+            @*<li>
+            <a href="@Url.Action("Index", "Recommendations", new { area = "Admin" })" class="@GetActiveClass("Recommendations")" data-tooltip="AI">
+                <i class="fa-solid fa-brain"></i>
+                <span>Huấn luyện AI (Apriori)</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="@Url.Action("Index", "TwoPhase", new { area = "Admin" })">
+                <i class="fa-solid fa-sack-dollar text-success"></i>
+                <span>Khai phá Lợi Nhuận (Two-Phase)</span>
+            </a>
+        </li>*@
             <li style="border-top: 1px solid #333; margin-top: 10px; padding-top: 10px;">
                 <a href="@Url.Action("Index", "SmartRecommendation", new { area = "Admin" })"
                    class="@GetActiveClass("SmartRecommendation")"
@@ -124,22 +124,24 @@
     <!-- MAIN CONTENT -->
     <div class="main-content expanded">
 
-        <!-- HEADER ĐÃ ĐƯỢC THIẾT KẾ LẠI -->
-        <div class="admin-header">
-            <div class="header-left">
-                <!-- Nút Toggle được di chuyển ra main header -->
-                <button class="toggle-sidebar-btn" id="toggleSidebarBtn" type="button" title="Thu/Mở Sidebar">
-                    <i class="fa-solid fa-bars"></i>
+        <!-- HEADER ĐÃ ĐƯỢC THIẾT KẾ LẠI ĐỒNG BỘ -->
+        <div class="admin-header d-flex justify-content-between align-items-center">
+            <div class="header-left d-flex align-items-center gap-3">
+                <!-- Nút Toggle -->
+                <button class="toggle-sidebar-btn" id="toggleSidebarBtn" type="button" title="Thu/Mở Sidebar" style="background: none; border: none; padding: 0.5rem; cursor: pointer;">
+                    <i class="fa-solid fa-bars fs-5 text-secondary"></i>
                 </button>
-                <h1 class="admin-title">@ViewBag.Title</h1>
+
+                <!-- TIÊU ĐỀ: Đã khóa cứng font, size, độ đậm và màu sắc để các trang không tự ý đổi -->
+                <h4 class="admin-title mb-0 fw-bold" style="font-size: 1.25rem; color: #1e293b; letter-spacing: -0.01em;">@ViewBag.Title</h4>
             </div>
 
-            <div class="admin-user-info">
-                <span class="text-secondary">Xin chào, @Session["UserName"]</span>
+            <div>
+                <span class="fw-medium" style="font-size: 0.95rem; color: #64748b;">Xin chào, @Session["UserName"]</span>
             </div>
         </div>
 
-        <div class="container-fluid">
+        <div class="@(ViewBag.RemoveSpacing == true ? "container-fluid px-4 pt-3 pb-0" : "container-fluid")">
             @RenderBody()
         </div>
 

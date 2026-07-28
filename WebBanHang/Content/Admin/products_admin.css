@@ -47,23 +47,25 @@ body {
 }
 
 .btn-claude-primary {
-    background-color: var(--primary-color);
-    color: white !important;
-    border: none;
+    background-color: #e0e7ff; /* Nền xanh Indigo nhạt */
+    color: #4f46e5 !important; /* Chữ màu xanh đậm */
+    border: 2px solid #a5b4fc;
     border-radius: 8px;
-    padding: 8px 16px;
+    padding: 7px 15px;
     font-size: 0.9rem;
     font-weight: 500;
-    transition: all 0.2s;
+    transition: all 0.2s ease-in-out;
     display: inline-flex;
     align-items: center;
     gap: 6px;
 }
 
+    /* Hiệu ứng khi rà chuột (Hover) */
     .btn-claude-primary:hover {
-        background-color: var(--btn-primary-hover);
-        color: white;
-        text-decoration: none;
+        background-color: #c7d2fe; /* Nền đậm lên */
+        border-color: #818cf8; /* Viền cũng đậm lên 1 tone cho đồng bộ */
+        color: #3730a3 !important;
+        box-shadow: 0 2px 6px rgba(79, 70, 229, 0.15); /* Đổ bóng nhẹ */
     }
 
     /* Nút thêm mới */

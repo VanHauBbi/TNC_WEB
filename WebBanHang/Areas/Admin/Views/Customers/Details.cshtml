@@ -13,62 +13,97 @@
 <link href="~/Content/Admin/customer_admin.css" rel="stylesheet" />
 
 <div class="row mt-2">
-    <!-- Ép khối chi tiết vào giữa màn hình giống trang Edit -->
+    <!-- Ép khối chi tiết vào giữa màn hình -->
     <div class="col-lg-8 mx-auto">
-        <div class="bd-card">
+        <div class="bd-card shadow-sm" style="border-radius: 12px; border: 1px solid #f1f5f9;">
 
             <!-- Header của Card -->
             <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4">
                 <div>
-                    <div class="text-muted fs-6">ID: <span class="fw-bold text-dark">#@Model.CustomerID</span></div>
+                    <div class="text-muted fs-6">
+                        <i class="fa-regular fa-address-card me-2"></i>Hồ sơ ID: <span class="fw-bold text-dark">#@Model.CustomerID</span>
+                    </div>
                 </div>
                 <span class="soft-badge @statusClass">@statusText</span>
             </div>
 
-            <!-- Nội dung chi tiết (Layout lưới thay cho dl-horizontal) -->
+            <!-- Nội dung chi tiết có bổ sung Icon -->
             <div class="px-2">
-                <div class="row mb-3 border-bottom pb-3">
-                    <div class="col-sm-4 text-muted fw-bold">Tên khách hàng</div>
+                <div class="row mb-3 border-bottom pb-3 align-items-center">
+                    <div class="col-sm-4 text-muted fw-bold">
+                        <i class="fa-regular fa-user me-2" style="opacity: 0.6;"></i> Tên khách hàng
+                    </div>
                     <div class="col-sm-8 text-dark fw-bold fs-6">@Model.CustomerName</div>
                 </div>
 
-                <div class="row mb-3 border-bottom pb-3">
-                    <div class="col-sm-4 text-muted fw-bold">Tên đăng nhập</div>
+                <div class="row mb-3 border-bottom pb-3 align-items-center">
+                    <div class="col-sm-4 text-muted fw-bold">
+                        <i class="fa-solid fa-id-card-clip me-2" style="opacity: 0.6;"></i> Tên đăng nhập
+                    </div>
                     <div class="col-sm-8 text-dark">@Model.Username</div>
                 </div>
 
-                <div class="row mb-3 border-bottom pb-3">
-                    <div class="col-sm-4 text-muted fw-bold">Email</div>
+                <div class="row mb-3 border-bottom pb-3 align-items-center">
+                    <div class="col-sm-4 text-muted fw-bold">
+                        <i class="fa-regular fa-envelope me-2" style="opacity: 0.6;"></i> Email
+                    </div>
                     <div class="col-sm-8 text-dark">
-                        @(string.IsNullOrEmpty(Model.CustomerEmail) ? "Chưa cập nhật" : Model.CustomerEmail)
+                        @if (string.IsNullOrEmpty(Model.CustomerEmail))
+                        {
+                            <span class="text-secondary fst-italic">Chưa cập nhật</span>
+                        }
+                        else
+                        {
+                            @Model.CustomerEmail
+                        }
                     </div>
                 </div>
 
-                <div class="row mb-3 border-bottom pb-3">
-                    <div class="col-sm-4 text-muted fw-bold">Số điện thoại</div>
+                <div class="row mb-3 border-bottom pb-3 align-items-center">
+                    <div class="col-sm-4 text-muted fw-bold">
+                        <i class="fa-solid fa-phone me-2" style="opacity: 0.6;"></i> Số điện thoại
+                    </div>
                     <div class="col-sm-8 text-dark">
-                        @(string.IsNullOrEmpty(Model.CustomerPhone) ? "Chưa cập nhật" : Model.CustomerPhone)
+                        @if (string.IsNullOrEmpty(Model.CustomerPhone))
+                        {
+                            <span class="text-secondary fst-italic">Chưa cập nhật</span>
+                        }
+                        else
+                        {
+                            @Model.CustomerPhone
+                        }
                     </div>
                 </div>
 
-                <div class="row mb-2">
-                    <div class="col-sm-4 text-muted fw-bold">Địa chỉ</div>
+                <div class="row mb-2 align-items-start">
+                    <div class="col-sm-4 text-muted fw-bold pt-1">
+                        <i class="fa-solid fa-location-dot me-2" style="opacity: 0.6;"></i> Địa chỉ
+                    </div>
                     <div class="col-sm-8 text-dark" style="line-height: 1.6;">
-                        @(string.IsNullOrEmpty(Model.CustomerAddress) ? "Chưa cập nhật" : Model.CustomerAddress)
+                        @if (string.IsNullOrEmpty(Model.CustomerAddress))
+                        {
+                            <span class="text-secondary fst-italic">Chưa cập nhật</span>
+                        }
+                        else
+                        {
+                            @Model.CustomerAddress
+                        }
                     </div>
                 </div>
             </div>
 
-            <!-- Footer chứa nút bấm dời xuống dưới cùng -->
-            <div class="d-flex justify-content-end gap-2 border-top pt-4 mt-4">
-                <a href="@Url.Action("Index", "Customers")" class="btn btn-outline-custom">
-                    <i class="fa-solid fa-angle-left"></i> Quay lại
+            <!-- Footer chứa nút bấm Pastel -->
+            <div class="d-flex justify-content-end gap-3 border-top pt-4 mt-4">
+                <!-- Nút Xám Pastel -->
+                <a href="@Url.Action("Index", "Customers")" class="btn"
+                   style="background-color: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 20px; font-weight: 500;">
+                    <i class="fa-solid fa-angle-left me-1"></i> Quay lại
                 </a>
 
-                <!-- Tôi dùng btn-primary-custom nhưng đổi màu một chút bằng inline style cho nó giống ý nghĩa Chỉnh sửa/Khóa -->
-                <a href="@Url.Action("Edit", "Customers", new { id = Model.CustomerID })"
-                   class="btn" style="background-color: #f59e0b; color: white; border-radius: 8px; padding: 8px 20px; font-weight: 500;">
-                    <i class="fa-solid fa-pen-to-square me-1"></i> Khóa / Mở Khóa
+                <!-- Nút Cam Pastel (Mềm mại, dễ chịu mắt) -->
+                <a href="@Url.Action("Edit", "Customers", new { id = Model.CustomerID })" class="btn"
+                   style="background-color: #ffedd5; color: #ea580c; border: 1px solid #fdba74; border-radius: 8px; padding: 8px 20px; font-weight: 500;">
+                    <i class="fa-solid fa-user-lock me-1"></i> Khóa / Mở Khóa
                 </a>
             </div>
 

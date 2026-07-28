@@ -63,41 +63,39 @@
     </div>
 }
 
-<div class="mt-0 pt-3">
-    <!-- KHỐI QUẢN LÝ DỮ LIỆU (Trả lại cấu trúc Card rộng rãi) -->
+<div class="mt-0 pt-0">
+    <!-- KHỐI QUẢN LÝ DỮ LIỆU -->
     <div class="card shadow-sm border-0 mb-4">
-
-        <!-- Header -->
-        <div class="card-header bg-white py-3 px-4 d-flex justify-content-between align-items-center border-bottom">
+        <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center ps-3 pe-4 pt-2 pb-3">
             <div>
-                <h5 class="mb-1 fw-bold text-dark">
+                <h5 class="mt-0 mb-1 fw-bold text-dark">
                     <i class="fa-solid fa-microchip text-primary me-2"></i> Kết quả huấn luyện AI
                 </h5>
-                <p class="text-muted mb-0" style="font-size: 0.85rem;">Danh sách các luật kết hợp (Apriori + Two-Phase)</p>
+                <small class="text-muted">Danh sách các luật kết hợp (Apriori + Two-Phase)</small>
             </div>
 
             @using (Html.BeginForm("RunAlgorithm", "SmartRecommendation", FormMethod.Post, new { @class = "d-inline m-0", id = "runAlgorithmForm" }))
             {
                 @Html.AntiForgeryToken()
-                <button type="button" class="btn btn-warning fw-bold shadow-sm px-4 text-nowrap" style="border-radius: 6px; color: #fff;" onclick="confirmRunAlgorithm()">
+                <button type="button" class="btn btn-warning fw-bold shadow-sm px-3 py-2 text-nowrap" style="border-radius: 6px; color: #fff;" onclick="confirmRunAlgorithm()">
                     <i class="fa-solid fa-rotate me-2"></i> Ép quét lại toàn bộ (Thủ công)
                 </button>
             }
         </div>
 
-        <!-- Body (Tạo khoảng đệm rộng rãi cho bảng) -->
-        <div class="card-body p-4">
+        <!-- Body: Dùng p-0 để bảng tràn viền (Edge-to-edge), loại bỏ khoảng trắng thừa -->
+        <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover table-b2b mb-0 border-bottom">
-                    <thead class="table-light text-muted" style="font-size: 0.9rem;">
-                        <tr>
-                            <th style="width: 25%;" class="ps-3">Khách xem (A)</th>
-                            <th style="width: 25%;"><i class="fa-solid fa-arrow-right text-success me-2"></i> Sẽ gợi ý mua kèm (B)</th>
-                            <th class="text-center">Tin cậy</th>
-                            <th class="text-center">Tần suất</th>
-                            <th class="text-center">TWU</th>
-                            <th class="text-center text-success">Lợi nhuận 1 Combo</th>
-                            <th class="text-center pe-3">Cập nhật</th>
+                <table class="table table-hover table-striped table-b2b mb-0">
+                    <thead class="bg-light border-bottom" style="font-size: 0.85rem; letter-spacing: 0.5px;">
+                        <tr class="text-secondary text-uppercase fw-bold">
+                            <th style="width: 25%;" class="ps-4 py-3 border-0">Khách xem (A)</th>
+                            <th style="width: 25%;" class="py-3 border-0"><i class="fa-solid fa-arrow-right text-success me-2"></i> Sẽ gợi ý mua kèm (B)</th>
+                            <th class="text-center py-3 border-0">Tin cậy</th>
+                            <th class="text-center py-3 border-0">Tần suất</th>
+                            <th class="text-center py-3 border-0">TWU</th>
+                            <th class="text-center text-success py-3 border-0">Lợi nhuận 1 Combo</th>
+                            <th class="text-center pe-4 py-3 border-0">Cập nhật</th>
                         </tr>
                     </thead>
                     <tbody class="text-dark">
@@ -107,9 +105,9 @@
                             {
                                 <tr>
                                     <!-- SẢN PHẨM A -->
-                                    <td class="ps-3">
+                                    <td class="ps-4 align-middle">
                                         <a href="@Url.Action("ProductAIDetails", "SmartRecommendation", new { area = "Admin", id = item.Product.ProductID })" class="text-decoration-none d-flex align-items-center" title="Xem chi tiết thuật toán">
-                                            <img src="@item.Product.ProductImage" alt="Ảnh A" style="width: 55px; height: 55px; object-fit: contain; border-radius: 6px;" class="me-3 border bg-white p-1 shadow-sm" />
+                                            <img src="@item.Product.ProductImage" alt="Ảnh A" style="width: 50px; height: 50px; object-fit: contain; border-radius: 6px;" class="me-3 border bg-white p-1 shadow-sm" />
                                             <span class="fw-bold text-primary" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 0.95rem;">
                                                 @item.Product.ProductName
                                             </span>
@@ -117,33 +115,32 @@
                                     </td>
 
                                     <!-- SẢN PHẨM B -->
-                                    <td>
+                                    <td class="align-middle">
                                         <div class="d-flex align-items-center">
-                                            <img src="@item.Product1.ProductImage" alt="Ảnh B" style="width: 55px; height: 55px; object-fit: contain; border-radius: 6px;" class="me-3 border bg-white p-1 shadow-sm" />
+                                            <img src="@item.Product1.ProductImage" alt="Ảnh B" style="width: 50px; height: 50px; object-fit: contain; border-radius: 6px;" class="me-3 border bg-white p-1 shadow-sm" />
                                             <span class="fw-bold text-dark" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 0.95rem;">
                                                 @item.Product1.ProductName
                                             </span>
                                         </div>
                                     </td>
 
-                                    <!-- TIN CẬY (Sửa lại màu chuẩn SaaS Pastel) -->
-                                    <td class="text-center">
+                                    <!-- TIN CẬY -->
+                                    <td class="text-center align-middle">
                                         @{
                                             var confPercent = item.Confidence * 100;
                                             string badgeStyle = "";
 
-                                            // Tùy chỉnh màu nền nhạt, chữ đậm chuẩn UI/UX
                                             if (confPercent >= 60)
                                             {
-                                                badgeStyle = "background-color: #e6f4ea; color: #137333; border: 1px solid #ceead6;"; // Xanh lá
+                                                badgeStyle = "background-color: #e6f4ea; color: #137333; border: 1px solid #ceead6;";
                                             }
                                             else if (confPercent >= 30)
                                             {
-                                                badgeStyle = "background-color: #fef7e0; color: #b06000; border: 1px solid #fbdc8e;"; // Cam/Vàng
+                                                badgeStyle = "background-color: #fef7e0; color: #b06000; border: 1px solid #fbdc8e;";
                                             }
                                             else
                                             {
-                                                badgeStyle = "background-color: #fce8e6; color: #c5221f; border: 1px solid #fad2cf;"; // Đỏ
+                                                badgeStyle = "background-color: #fce8e6; color: #c5221f; border: 1px solid #fad2cf;";
                                             }
                                         }
                                         <span class="badge rounded-pill px-3 py-2 shadow-sm" style="@badgeStyle font-size: 0.85rem;">
@@ -152,24 +149,24 @@
                                     </td>
 
                                     <!-- TẦN SUẤT -->
-                                    <td class="text-center">
+                                    <td class="text-center align-middle">
                                         <span class="fw-bold text-danger fs-6">@item.Support</span> <span class="text-muted small">lần</span>
                                     </td>
 
                                     <!-- TWU -->
-                                    <td class="text-end text-muted" style="font-size: 0.9rem;">
+                                    <td class="text-center text-muted align-middle" style="font-size: 0.9rem;">
                                         @item.TWU.ToString("N0") đ
                                     </td>
 
                                     <!-- LỢI NHUẬN COMBO -->
-                                    <td class="text-center">
+                                    <td class="text-center align-middle">
                                         <span class="fw-bold text-success fs-6">
                                             + @item.ActualUtility.ToString("N0") ₫
                                         </span>
                                     </td>
 
                                     <!-- CẬP NHẬT -->
-                                    <td class="text-center pe-3">
+                                    <td class="text-center pe-4 align-middle">
                                         <div class="text-muted" style="font-size: 0.85rem;">
                                             <div class="fw-medium text-dark">@item.UpdateDate.ToString("dd/MM/yyyy")</div>
                                             <div style="font-size: 0.8rem;">@item.UpdateDate.ToString("HH:mm")</div>
@@ -190,26 +187,31 @@
                                 </td>
                             </tr>
                         }
-                    </tbody>
-                </table>
-            </div>
-            <!-- ALERT THÔNG TIN TỐI ƯU -->
-            <div class="bg-white rounded shadow-sm border-0 mt-4 mb-4 p-3 d-flex align-items-center" style="border-left: 4px solid #0dcaf0 !important;">
-                <i class="fa-solid fa-graduation-cap fs-2 text-info me-3"></i>
-                <div style="font-size: 0.95rem;">
-                    <strong class="text-dark">Sự tối ưu (Hybrid AI):</strong> Hệ thống lai áp dụng <b>Apriori</b> để đảm bảo tính liên kết (Không gợi ý bừa bãi), và <b>Two-Phase</b> để tối đa hóa <b>Lợi nhuận Combo</b>. Hệ thống luôn ưu tiên hiển thị cặp sản phẩm mang lại biên lợi nhuận lớn nhất!
+                        </tbody>
+                    </table>
                 </div>
-            </div>
-            <!-- PHÂN TRANG -->
-            <div class="d-flex justify-content-center mt-4">
-                @if (Model != null && Model.PageCount > 1)
-                {
-                    @Html.PagedListPager(Model, page => Url.Action("Index", new { page }), PagedListRenderOptions.ClassicPlusFirstAndLast)
-                }
+
+                <!-- KHU VỰC THÔNG TIN & PHÂN TRANG (Có padding riêng để tách biệt với bảng) -->
+                <div class="p-4 border-top bg-light">
+                    <!-- ALERT THÔNG TIN TỐI ƯU -->
+                    <div class="bg-white rounded shadow-sm border-0 mb-4 p-3 d-flex align-items-center" style="border-left: 4px solid #0dcaf0 !important;">
+                        <i class="fa-solid fa-graduation-cap fs-2 text-info me-3"></i>
+                        <div style="font-size: 0.95rem;">
+                            <strong class="text-dark">Sự tối ưu (Hybrid AI):</strong> Hệ thống lai áp dụng <b>Apriori</b> để đảm bảo tính liên kết (Không gợi ý bừa bãi), và <b>Two-Phase</b> để tối đa hóa <b>Lợi nhuận Combo</b>. Hệ thống luôn ưu tiên hiển thị cặp sản phẩm mang lại biên lợi nhuận lớn nhất!
+                        </div>
+                    </div>
+
+                    <!-- PHÂN TRANG -->
+                    <div class="d-flex justify-content-center">
+                        @if (Model != null && Model.PageCount > 1)
+                        {
+                            @Html.PagedListPager(Model, page => Url.Action("Index", new { page }), PagedListRenderOptions.ClassicPlusFirstAndLast)
+                        }
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
 @section scripts {
     <script>

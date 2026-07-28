@@ -4,206 +4,209 @@
     ViewBag.Title = "Phòng Chat #" + Model.SessionID;
     Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
     var activeSessions = ViewBag.ActiveSessions as IEnumerable<WebBanHang.Models.SupportSession>;
+
+    ViewBag.RemoveSpacing = true;
 }
 
 <link href="~/Content/Admin/chat_support_admin.css?v=@DateTime.Now.Ticks" rel="stylesheet" />
 
-<div class="container-fluid px-1 mb-2" style="margin-top: -25px;">
-    <div class="row g-0 chat-layout">
+<!-- Đã chỉnh height thành calc(100vh - 145px) để kéo dài khung chat xuống sát footer -->
+<div class="row g-0 chat-layout shadow-sm mb-0" style="height: calc(100vh - 145px); overflow: hidden; border-radius: 8px; border: 1px solid #e2e8f0;">
+    <!-- ========================================== -->
+    <!-- CỘT TRÁI: DANH SÁCH CÁC PHIÊN CHAT -->
+    <!-- ========================================== -->
+    <div class="col-lg-3 col-md-4 border-end d-flex flex-column bg-white h-100">
+        <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
+            <h5 class="fw-bold mb-0 text-dark">Hộp thư (Inbox)</h5>
+            <a href="@Url.Action("Index")" class="btn btn-light border text-muted px-3 py-1 rounded-pill">
+                <i class="fa-solid fa-house"></i>
+            </a>
+        </div>
 
-        <!-- ========================================== -->
-        <!-- CỘT TRÁI: DANH SÁCH CÁC PHIÊN CHAT -->
-        <!-- ========================================== -->
-        <div class="col-lg-3 col-md-4 border-end d-flex flex-column bg-white h-100">
-            <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
-                <h6 class="fw-bold mb-0 text-dark">Hộp thư (Inbox)</h6>
-                <a href="@Url.Action("Index")" class="btn btn-sm btn-light border text-muted px-3 rounded-pill">
-                    <i class="fa-solid fa-house"></i>
-                </a>
-            </div>
-
-            <div class="p-3 border-bottom bg-white">
-                <div class="input-group">
-                    <span class="input-group-text bg-light border-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
-                    <input type="text" id="searchInput" class="form-control bg-light border-0 shadow-none text-muted" placeholder="Tìm tên khách, mã phòng...">
-                </div>
-            </div>
-
-            <div class="flex-grow-1 scroll-y" style="overflow-y: auto; height: 100%;">
-                @if (activeSessions != null && activeSessions.Any())
-                {
-                    foreach (var session in activeSessions)
-                    {
-                        bool isActive = (session.SessionID == Model.SessionID);
-                        <a href="@Url.Action("ChatRoom", new { id = session.SessionID })" class="chat-list-item @(isActive ? "active" : "")">
-                            <div class="d-flex justify-content-between align-items-start mb-1">
-                                <span class="fw-bold @(isActive ? "text-primary" : "text-dark")">@session.Customer.CustomerName</span>
-                                <small class="text-muted" style="font-size: 0.75rem;">@session.StartTime.ToString("HH:mm")</small>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <small class="text-muted text-truncate" style="max-width: 150px;">Phòng #@session.SessionID</small>
-
-                                @if (session.Status == 0)
-                                {<span class="badge bg-danger rounded-circle p-1"><i class="fa-solid fa-bell fa-xs"></i></span> }
-                                else if (session.Status == 1)
-                                { <span class="badge bg-success rounded-circle p-1" style="width: 10px; height: 10px;"></span> }
-                                else if (session.Status == 3)
-                                { <span class="badge bg-info rounded-circle p-1" style="width: 10px; height: 10px;"></span> }
-                                else if (session.Status == 2)
-                                { <i class="fa-solid fa-lock text-muted fa-xs"></i>}
-                            </div>
-                        </a>
-                    }
-                }
-                else
-                {
-                    <div class="text-center p-4 text-muted">
-                        <small>Vui lòng Build lại project để tải danh sách.</small>
-                    </div>
-                }
+        <div class="p-2 px-3 border-bottom bg-white">
+            <div class="input-group">
+                <span class="input-group-text bg-light border-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                <input type="text" id="searchInput" class="form-control bg-light border-0 shadow-none text-muted" placeholder="Tìm tên khách, mã phòng...">
             </div>
         </div>
 
-        <!-- ========================================== -->
-        <!-- CỘT GIỮA: KHUNG TRÒ CHUYỆN -->
-        <!-- ========================================== -->
-        <!-- THẺ DIV NÀY LÀ THẺ BỊ THIẾU KHIẾN GIAO DIỆN BỊ VỠ -->
-        <div class="col-lg-6 col-md-8 d-flex flex-column position-relative bg-white h-100">
-
-            <div class="p-4 border-bottom d-flex justify-content-between align-items-center bg-white shadow-sm" style="z-index: 10; height: 75px;">
-                <div>
-                    <h5 class="fw-bold text-dark mb-1">@Model.Customer.CustomerName</h5>
-                    @if (Model.Status == 2 || Model.Status == 3)
-                    {
-                        <div class="text-muted small fw-medium">
-                            <i class="fa-solid fa-circle fa-2xs me-1"></i> Đã rời khỏi mạng (Offline)
+        <div class="flex-grow-1 scroll-y" style="overflow-y: auto; min-height: 0;">
+            @if (activeSessions != null && activeSessions.Any())
+            {
+                foreach (var session in activeSessions)
+                {
+                    bool isActive = (session.SessionID == Model.SessionID);
+                    <a href="@Url.Action("ChatRoom", new { id = session.SessionID })" class="chat-list-item py-2 @(isActive ? "active" : "")">
+                        <div class="d-flex justify-content-between align-items-start mb-1">
+                            <span class="fw-bold @(isActive ? "text-primary" : "text-dark")" style="font-size: 1rem;">@session.Customer.CustomerName</span>
+                            <small class="text-muted" style="font-size: 0.8rem;">@session.StartTime.ToString("HH:mm")</small>
                         </div>
-                    }
-                    else
-                    {
-                        <div class="text-success small fw-medium">
-                            <i class="fa-solid fa-circle fa-2xs me-1"></i> Đang hoạt động (Active now)
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted text-truncate" style="max-width: 150px; font-size: 0.85rem;">Phòng #@session.SessionID</small>
+
+                            @if (session.Status == 0)
+                            {<span class="badge bg-danger rounded-circle p-1"><i class="fa-solid fa-bell fa-xs"></i></span> }
+                            else if (session.Status == 1)
+                            { <span class="badge bg-success rounded-circle p-1" style="width: 10px; height: 10px;"></span> }
+                            else if (session.Status == 3)
+                            { <span class="badge bg-info rounded-circle p-1" style="width: 10px; height: 10px;"></span> }
+                            else if (session.Status == 2)
+                            { <i class="fa-solid fa-lock text-muted" style="font-size: 0.8rem;"></i>}
                         </div>
-                    }
+                    </a>
+                }
+            }
+            else
+            {
+                <div class="text-center p-3 text-muted">
+                    <small>Vui lòng Build lại project để tải danh sách.</small>
                 </div>
-                <div>
-                    <span class="badge bg-light text-primary border px-3 py-2 fs-6 rounded-pill shadow-sm">
-                        Phòng #@Model.SessionID
-                    </span>
-                </div>
-            </div>
+            }
+        </div>
+    </div>
 
-            <div class="p-4 flex-grow-1 scroll-y" id="chatWindow" style="background-color: #ffffff; overflow-y: auto;">
-                <ul id="discussion" class="list-unstyled mb-0 d-flex flex-column gap-3">
-                    @foreach (var msg in Model.SupportMessages.OrderBy(m => m.SendTime))
-                    {
-                        bool isAI = msg.MessageContent.StartsWith("AI: ");
-                        bool isRightSide = msg.IsAdmin || isAI;
-                        string cleanContent = isAI ? msg.MessageContent.Substring(4) : msg.MessageContent;
+    <!-- ========================================== -->
+    <!-- CỘT GIỮA: KHUNG TRÒ CHUYỆN -->
+    <!-- ========================================== -->
+    <div class="col-lg-6 col-md-8 d-flex flex-column position-relative bg-white h-100">
 
-                        string bubbleClass = msg.IsAdmin ? "msg-sent" : (isAI ? "msg-ai" : "msg-received");
-                        string alignment = isRightSide ? "justify-content-end" : "justify-content-start";
-
-                        <li class="d-flex @alignment">
-                            <div class="msg-bubble @bubbleClass">
-                                @if (isAI)
-                                {
-                                    <div class="fw-bold mb-1" style="font-size: 0.8rem; opacity: 0.9;"><i class="fa-solid fa-robot me-1"></i> Trợ lý AI</div>
-                                }
-                                <div>@cleanContent</div>
-                                <div class="text-end mt-1" style="font-size: 0.7rem; opacity: 0.7;">
-                                    @msg.SendTime.ToString("HH:mm")
-                                </div>
-                            </div>
-                        </li>
-                    }
-                </ul>
-            </div>
-
-            <div class="p-3 border-top bg-white">
-                <div class="d-flex align-items-center justify-content-between p-1 border shadow-sm" style="background: #f8fafc; border-radius: 50px;">
-                    @if (Model.Status == 2 || Model.Status == 3)
-                    {
-                        <input type="text" class="form-control border-0 bg-transparent shadow-none ms-2 flex-grow-1" style="box-shadow: none;" placeholder="Phiên chat đã đóng..." disabled />
-                        <button class="btn btn-secondary text-nowrap px-4" style="border-radius: 50px;" disabled>
-                            <i class="fa-solid fa-ban me-2"></i>Đã Khóa
-                        </button>
-                    }
-                    else
-                    {
-                        <input type="text" id="messageInput" class="form-control border-0 bg-transparent shadow-none ms-2 flex-grow-1" style="box-shadow: none;" placeholder="Nhập tin nhắn..." autocomplete="off" />
-                        <button class="btn text-white text-nowrap px-4" id="btnSend" type="button" style="background-color: #6366f1; border-radius: 50px;">
-                            <i class="fa-solid fa-paper-plane me-2"></i> Gửi
-                        </button>
-                    }
-                </div>
-            </div>
-
-        </div> <!-- KẾT THÚC CỘT GIỮA -->
-        <!-- ========================================== -->
-        <!-- CỘT PHẢI: THÔNG TIN KHÁCH HÀNG -->
-        <!-- ========================================== -->
-        <div class="col-lg-3 d-none d-lg-flex flex-column border-start bg-white p-4 scroll-y h-100" style="overflow-y: auto;">
-            <div class="text-center mb-4 mt-3">
-                <div class="avatar-circle mx-auto mb-3 shadow-sm fs-2" style="background-color: #6366f1; width: 80px; height: 80px;">
-                    @Model.Customer.CustomerName.Substring(0, 1).ToUpper()
-                </div>
-                <h5 class="fw-bold text-dark mb-1">@Model.Customer.CustomerName</h5>
-                <p class="text-muted small">Khách hàng</p>
-            </div>
-
-            <hr style="border-color: #e2e8f0;" class="mb-4" />
-
-            <h6 class="fw-bold text-dark mb-3">Thông tin liên hệ</h6>
-
-            <div class="d-flex align-items-center mb-3">
-                <div class="bg-light rounded p-2 me-3 text-primary"><i class="fa-solid fa-id-card"></i></div>
-                <div>
-                    <small class="text-muted d-block">Tên đăng nhập</small>
-                    <span class="fw-bold text-dark">@Model.Customer.Username</span>
-                </div>
-            </div>
-
-            <div class="d-flex align-items-center mb-3">
-                <div class="bg-light rounded p-2 me-3 text-primary"><i class="fa-solid fa-envelope"></i></div>
-                <div style="word-break: break-all;">
-                    <small class="text-muted d-block">Email</small>
-                    <span class="fw-bold text-dark">@Model.Customer.CustomerEmail</span>
-                </div>
-            </div>
-
-            <div class="d-flex align-items-center mb-3">
-                <div class="bg-light rounded p-2 me-3 text-primary"><i class="fa-solid fa-phone"></i></div>
-                <div>
-                    <small class="text-muted d-block">Số điện thoại</small>
-                    <span class="fw-bold text-dark">@Model.Customer.CustomerPhone</span>
-                </div>
-            </div>
-
-            <div class="d-flex align-items-center mb-4">
-                <div class="bg-light rounded p-2 me-3 text-primary"><i class="fa-regular fa-clock"></i></div>
-                <div>
-                    <small class="text-muted d-block">Bắt đầu lúc</small>
-                    <span class="fw-bold text-dark">@Model.StartTime.ToString("HH:mm - dd/MM/yyyy")</span>
-                </div>
-            </div>
-
-            <div class="mt-auto pt-4 border-top">
+        <!-- Header bự hơn một chút -->
+        <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-white shadow-sm" style="z-index: 10; height: 70px;">
+            <div>
+                <h5 class="fw-bold text-dark mb-0">@Model.Customer.CustomerName</h5>
                 @if (Model.Status == 2 || Model.Status == 3)
                 {
-                    <button class="btn btn-light border text-muted fw-bold w-100 py-2 rounded-pill shadow-sm" disabled>
-                        <i class="fa-solid fa-lock me-2"></i> Phiên đã kết thúc
+                    <div class="text-muted fw-medium" style="font-size: 0.85rem;">
+                        <i class="fa-solid fa-circle fa-2xs me-1"></i> Đã rời khỏi mạng (Offline)
+                    </div>
+                }
+                else
+                {
+                    <div class="text-success fw-medium" style="font-size: 0.85rem;">
+                        <i class="fa-solid fa-circle fa-2xs me-1"></i> Đang hoạt động (Active now)
+                    </div>
+                }
+            </div>
+            <div>
+                <span class="badge bg-light text-primary border px-3 py-2 fs-6 rounded-pill shadow-sm">
+                    Phòng #@Model.SessionID
+                </span>
+            </div>
+        </div>
+
+        <div class="p-4 flex-grow-1 scroll-y" id="chatWindow" style="background-color: #ffffff; overflow-y: auto; min-height: 0;">
+            <ul id="discussion" class="list-unstyled mb-0 d-flex flex-column gap-3">
+                @foreach (var msg in Model.SupportMessages.OrderBy(m => m.SendTime))
+                {
+                    bool isAI = msg.MessageContent.StartsWith("AI: ");
+                    bool isRightSide = msg.IsAdmin || isAI;
+                    string cleanContent = isAI ? msg.MessageContent.Substring(4) : msg.MessageContent;
+
+                    string bubbleClass = msg.IsAdmin ? "msg-sent" : (isAI ? "msg-ai" : "msg-received");
+                    string alignment = isRightSide ? "justify-content-end" : "justify-content-start";
+
+                    <li class="d-flex @alignment">
+                        <!-- Tăng padding và font-size lên 1rem -->
+                        <div class="msg-bubble @bubbleClass" style="padding: 10px 16px; font-size: 1rem;">
+                            @if (isAI)
+                            {
+                                <div class="fw-bold mb-1" style="font-size: 0.85rem; opacity: 0.9;"><i class="fa-solid fa-robot me-1"></i> Trợ lý AI</div>
+                            }
+                            <div>@cleanContent</div>
+                            <div class="text-end mt-1" style="font-size: 0.75rem; opacity: 0.7;">
+                                @msg.SendTime.ToString("HH:mm")
+                            </div>
+                        </div>
+                    </li>
+                }
+            </ul>
+        </div>
+
+        <!-- Khung nhập text to rõ ràng hơn -->
+        <div class="p-3 border-top bg-white">
+            <div class="d-flex align-items-center justify-content-between p-1 border shadow-sm" style="background: #f8fafc; border-radius: 50px;">
+                @if (Model.Status == 2 || Model.Status == 3)
+                {
+                    <input type="text" class="form-control border-0 bg-transparent shadow-none ms-2 flex-grow-1" style="box-shadow: none; font-size: 1rem;" placeholder="Phiên chat đã đóng..." disabled />
+                    <button class="btn btn-secondary text-nowrap px-4 py-2" style="border-radius: 50px;" disabled>
+                        <i class="fa-solid fa-ban me-1"></i>Đã Khóa
                     </button>
                 }
                 else
                 {
-                    <a href="@Url.Action("EndSession", "AdminSupport", new { id = Model.SessionID })"
-                       class="btn btn-outline-danger fw-bold w-100 py-2 rounded-pill shadow-sm"
-                       onclick="return confirm('Bạn có chắc chắn muốn kết thúc phiên hỗ trợ này? Khách hàng sẽ không thể chat tiếp.');">
-                        <i class="fa-solid fa-circle-check me-2"></i> Đánh dấu đã giải quyết
-                    </a>
+                    <input type="text" id="messageInput" class="form-control border-0 bg-transparent shadow-none ms-2 flex-grow-1" style="box-shadow: none; font-size: 1rem;" placeholder="Nhập tin nhắn..." autocomplete="off" />
+                    <button class="btn text-white text-nowrap px-4 py-2" id="btnSend" type="button" style="background-color: #6366f1; border-radius: 50px; font-size: 1rem;">
+                        <i class="fa-solid fa-paper-plane me-1"></i> Gửi
+                    </button>
                 }
             </div>
+        </div>
+
+    </div> <!-- KẾT THÚC CỘT GIỮA -->
+    <!-- ========================================== -->
+    <!-- CỘT PHẢI: THÔNG TIN KHÁCH HÀNG -->
+    <!-- ========================================== -->
+    <div class="col-lg-3 d-none d-lg-flex flex-column border-start bg-white p-4 scroll-y h-100" style="overflow-y: auto; min-height: 0;">
+        <div class="text-center mb-3 mt-2">
+            <!-- Tăng avatar lên 70px -->
+            <div class="avatar-circle mx-auto mb-2 shadow-sm fs-2" style="background-color: #6366f1; width: 70px; height: 70px; line-height: 70px;">
+                @Model.Customer.CustomerName.Substring(0, 1).ToUpper()
+            </div>
+            <h5 class="fw-bold text-dark mb-1">@Model.Customer.CustomerName</h5>
+            <p class="text-muted" style="font-size: 0.9rem;">Khách hàng</p>
+        </div>
+
+        <hr style="border-color: #e2e8f0; margin: 0.5rem 0 1.5rem 0;" />
+
+        <h6 class="fw-bold text-dark mb-3" style="font-size: 1rem;">Thông tin liên hệ</h6>
+
+        <div class="d-flex align-items-center mb-3" style="font-size: 0.9rem;">
+            <div class="bg-light rounded p-2 me-3 text-primary" style="width: 36px; text-align: center;"><i class="fa-solid fa-id-card"></i></div>
+            <div>
+                <small class="text-muted d-block" style="font-size: 0.8rem;">Tên đăng nhập</small>
+                <span class="fw-bold text-dark">@Model.Customer.Username</span>
+            </div>
+        </div>
+
+        <div class="d-flex align-items-center mb-3" style="font-size: 0.9rem;">
+            <div class="bg-light rounded p-2 me-3 text-primary" style="width: 36px; text-align: center;"><i class="fa-solid fa-envelope"></i></div>
+            <div style="word-break: break-all;">
+                <small class="text-muted d-block" style="font-size: 0.8rem;">Email</small>
+                <span class="fw-bold text-dark">@Model.Customer.CustomerEmail</span>
+            </div>
+        </div>
+
+        <div class="d-flex align-items-center mb-3" style="font-size: 0.9rem;">
+            <div class="bg-light rounded p-2 me-3 text-primary" style="width: 36px; text-align: center;"><i class="fa-solid fa-phone"></i></div>
+            <div>
+                <small class="text-muted d-block" style="font-size: 0.8rem;">Số điện thoại</small>
+                <span class="fw-bold text-dark">@Model.Customer.CustomerPhone</span>
+            </div>
+        </div>
+
+        <div class="d-flex align-items-center mb-3" style="font-size: 0.9rem;">
+            <div class="bg-light rounded p-2 me-3 text-primary" style="width: 36px; text-align: center;"><i class="fa-regular fa-clock"></i></div>
+            <div>
+                <small class="text-muted d-block" style="font-size: 0.8rem;">Bắt đầu lúc</small>
+                <span class="fw-bold text-dark">@Model.StartTime.ToString("HH:mm - dd/MM/yyyy")</span>
+            </div>
+        </div>
+
+        <div class="mt-auto pt-4 border-top">
+            @if (Model.Status == 2 || Model.Status == 3)
+            {
+                <button class="btn btn-light border text-muted fw-bold w-100 py-2 rounded-pill shadow-sm" disabled>
+                    <i class="fa-solid fa-lock me-2"></i> Đã kết thúc
+                </button>
+            }
+            else
+            {
+                <a href="@Url.Action("EndSession", "AdminSupport", new { id = Model.SessionID })"
+                   class="btn btn-outline-danger fw-bold w-100 py-2 rounded-pill shadow-sm"
+                   onclick="return confirm('Bạn có chắc chắn muốn kết thúc phiên hỗ trợ này? Khách hàng sẽ không thể chat tiếp.');">
+                    <i class="fa-solid fa-circle-check me-1"></i> Hoàn thành tư vấn
+                </a>
+            }
         </div>
     </div>
 </div>
@@ -228,14 +231,15 @@
 
                 var bubbleClass = isAdmin ? "msg-sent" : (isAI ? "msg-ai" : "msg-received");
                 var alignment = isRightSide ? "justify-content-end" : "justify-content-start";
-                var aiHeader = isAI ? `<div class="fw-bold mb-1" style="font-size: 0.8rem; opacity: 0.9;"><i class="fa-solid fa-robot me-1"></i> Trợ lý AI</div>` : "";
+                // Đã tăng font-size ở render Javascript lên khớp với Razor
+                var aiHeader = isAI ? `<div class="fw-bold mb-1" style="font-size: 0.85rem; opacity: 0.9;"><i class="fa-solid fa-robot me-1"></i> Trợ lý AI</div>` : "";
 
                 var messageHtml = `
                 <li class="d-flex ${alignment}">
-                    <div class="msg-bubble ${bubbleClass}">
+                    <div class="msg-bubble ${bubbleClass}" style="padding: 10px 16px; font-size: 1rem;">
                         ${aiHeader}
                         <div>${cleanMessage}</div>
-                        <div class="text-end mt-1" style="font-size: 0.7rem; opacity: 0.7;">${time}</div>
+                        <div class="text-end mt-1" style="font-size: 0.75rem; opacity: 0.7;">${time}</div>
                     </div>
                 </li>`;
 
@@ -267,13 +271,10 @@
                 }
             });
             $('#searchInput').on('keyup', function () {
-                var keyword = $(this).val().toLowerCase(); // Lấy từ khóa người dùng gõ và chuyển thành chữ thường
+                var keyword = $(this).val().toLowerCase();
 
-                // Duyệt qua từng ô khách hàng bên trái
                 $('.chat-list-item').filter(function () {
-                    // Kiểm tra xem nội dung chữ trong ô đó có chứa từ khóa không
                     var isMatch = $(this).text().toLowerCase().indexOf(keyword) > -1;
-                    // Nếu có thì hiện (toggle true), không có thì ẩn (toggle false)
                     $(this).toggle(isMatch);
                 });
             });

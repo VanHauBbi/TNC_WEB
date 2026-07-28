@@ -12,9 +12,12 @@
     <!-- Ép Form vào giữa màn hình, giới hạn chiều rộng bằng col-lg-8 -->
     <div class="col-lg-8 mx-auto">
 
-        <div class="bd-card">
+        <!-- Đồng bộ border-radius và shadow giống trang Details -->
+        <div class="bd-card shadow-sm" style="border-radius: 12px; border: 1px solid #f1f5f9;">
             <div class="border-bottom pb-3 mb-4">
-                <div class="text-muted fs-6">ID: <span class="fw-bold">#@Model.CustomerID</span></div>
+                <div class="text-muted fs-6">
+                    <i class="fa-regular fa-pen-to-square me-2"></i>Chỉnh sửa ID: <span class="fw-bold text-dark">#@Model.CustomerID</span>
+                </div>
             </div>
 
             @using (Html.BeginForm("Edit", "Customers", FormMethod.Post))
@@ -27,12 +30,16 @@
 
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label class="form-label fw-bold text-dark">Tên khách hàng</label>
-                        @Html.EditorFor(model => model.CustomerName, new { htmlAttributes = new { @class = "form-control custom-input bg - light", @readonly = "readonly" } })
+                        <label class="form-label fw-bold text-dark">
+                            <i class="fa-regular fa-user me-1" style="opacity: 0.6;"></i> Tên khách hàng
+                        </label>
+                        @Html.EditorFor(model => model.CustomerName, new { htmlAttributes = new { @class = "form-control custom-input bg-light", @readonly = "readonly" } })
                         @Html.ValidationMessageFor(model => model.CustomerName, "", new { @class = "text-danger small" })
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label class="form-label fw-bold text-dark">Email</label>
+                        <label class="form-label fw-bold text-dark">
+                            <i class="fa-regular fa-envelope me-1" style="opacity: 0.6;"></i> Email
+                        </label>
                         @Html.EditorFor(model => model.CustomerEmail, new { htmlAttributes = new { @class = "form-control custom-input bg-light", @readonly = "readonly" } })
                         @Html.ValidationMessageFor(model => model.CustomerEmail, "", new { @class = "text-danger small" })
                     </div>
@@ -40,12 +47,17 @@
 
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label class="form-label fw-bold text-dark">Số điện thoại</label>
-                        @Html.EditorFor(model => model.CustomerPhone, new { htmlAttributes = new { @class = "form-control custom-inputbg-light", @readonly = "readonly" } })
+                        <label class="form-label fw-bold text-dark">
+                            <i class="fa-solid fa-phone me-1" style="opacity: 0.6;"></i> Số điện thoại
+                        </label>
+                        <!-- Đã sửa lỗi dính chữ custom-inputbg-light ở đây -->
+                        @Html.EditorFor(model => model.CustomerPhone, new { htmlAttributes = new { @class = "form-control custom-input bg-light", @readonly = "readonly" } })
                         @Html.ValidationMessageFor(model => model.CustomerPhone, "", new { @class = "text-danger small" })
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label class="form-label fw-bold text-dark d-block">Trạng thái tài khoản</label>
+                        <label class="form-label fw-bold text-dark d-block">
+                            <i class="fa-solid fa-shield-halved me-1" style="opacity: 0.6;"></i> Trạng thái tài khoản
+                        </label>
                         <div class="d-flex gap-4 mt-2">
                             <div class="form-check">
                                 @Html.RadioButtonFor(model => model.IsActive, "true", new { @class = "form-check-input", id = "statusActive", style = "cursor: pointer;" })
@@ -66,14 +78,23 @@
                 </div>
 
                 <div class="mb-4">
-                    <label class="form-label fw-bold text-dark">Địa chỉ giao hàng</label>
+                    <label class="form-label fw-bold text-dark">
+                        <i class="fa-solid fa-location-dot me-1" style="opacity: 0.6;"></i> Địa chỉ giao hàng
+                    </label>
                     @Html.TextAreaFor(model => model.CustomerAddress, new { @class = "form-control custom-input bg-light", rows = "3", style = "resize: none;", @readonly = "readonly" })
                 </div>
 
-                <!-- Footer chứa nút bấm dời xuống dưới cùng -->
-                <div class="d-flex justify-content-end gap-2 border-top pt-4 mt-2">
-                    <a href="javascript:history.back()" class="btn btn-outline-custom"><i class="fa-solid fa-angle-left"></i> Quay lại</a>
-                    <button type="submit" class="btn btn-primary-custom"><i class="fa-solid fa-floppy-disk me-1"></i> Lưu thay đổi</button>
+                <!-- Footer chứa nút bấm dời xuống dưới cùng và đổi màu Pastel -->
+                <div class="d-flex justify-content-end gap-3 border-top pt-4 mt-2">
+                    <a href="javascript:history.back()" class="btn"
+                       style="background-color: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 20px; font-weight: 500;">
+                        <i class="fa-solid fa-angle-left me-1"></i> Quay lại
+                    </a>
+
+                    <button type="submit" class="btn"
+                            style="background-color: #e0e7ff; color: #4f46e5; border: 1px solid #c7d2fe; border-radius: 8px; padding: 8px 20px; font-weight: 500;">
+                        <i class="fa-solid fa-floppy-disk me-1"></i> Lưu thay đổi
+                    </button>
                 </div>
             }
         </div>

@@ -113,7 +113,7 @@
                             <button type="submit" name="actionType" value="Complete" class="bd-btn bd-btn-success" onclick="return confirm('Xác nhận đã giao hàng?')">Hoàn thành đơn</button>
                         }
 
-                        if (Model.PaymentStatus != "Đã thanh toán")
+                        if (Model.PaymentStatus != "Đã thanh toán" && Model.PaymentMethod != "Tiền mặt")
                         {
                             <button type="submit" name="actionType" value="MarkPaid" class="bd-btn bd-btn-outline" onclick="return confirm('Xác nhận thu tiền?')"><i class="fa-solid fa-money-bill"></i> Thu tiền</button>
                         }
