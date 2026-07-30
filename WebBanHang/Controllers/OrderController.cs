@@ -450,7 +450,18 @@ namespace WebBanHang.Controllers
                     }
                     else
                     {
-                        Session.Remove("Cart"); // Chỉ xóa giỏ chính
+                        Session.Remove("Cart"); // Khách mua giỏ chính -> Xóa Session
+
+                        var dbCart = db.Carts.FirstOrDefault(c => c.CustomerID == customerId);
+                        if (dbCart != null)
+                        {
+                            var oldItems = db.CartItems.Where(ci => ci.CartID == dbCart.CartID).ToList();
+                            if (oldItems.Any())
+                            {
+                                db.CartItems.RemoveRange(oldItems);
+                                db.SaveChanges();
+                            }
+                        }
                     }
 
                     Session.Remove("VoucherDiscount");
@@ -527,12 +538,23 @@ namespace WebBanHang.Controllers
                             // ✅ Cập nhật AI khi đơn VNPay thanh toán thành công
                             try { new WebBanHang.Services.SmartRecommendationService().RunHybridAlgorithm(0.2, 1, 100000m); } catch { }
 
+                            // Dọn dẹp Session
                             Session.Remove("Cart");
                             Session.Remove("VoucherDiscount");
                             Session.Remove("BuyNowTempCart");
                             Session.Remove("ShippingFee");
 
-                            // ✅ FIX LỖI 3: Loại bỏ TempData thông báo trùng lặp
+                            var dbCart = db.Carts.FirstOrDefault(c => c.CustomerID == order.CustomerID);
+                            if (dbCart != null)
+                            {
+                                var oldItems = db.CartItems.Where(ci => ci.CartID == dbCart.CartID).ToList();
+                                if (oldItems.Any())
+                                {
+                                    db.CartItems.RemoveRange(oldItems);
+                                    db.SaveChanges();
+                                }
+                            }
+
                             TempData["Message"] = "Thanh toán đơn hàng qua cổng VNPay thành công!";
                             return RedirectToAction("OrderSuccess", new { id = orderId });
                         }
