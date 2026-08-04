@@ -6,7 +6,7 @@ ASP.NET MVC 5 / .NET Framework 4.7.2 computer retail system using Entity Framewo
 
 1. Pull the feature branch and restore NuGet packages in Visual Studio.
 2. Back up the `MyStore` database.
-3. Run `DatabaseScripts/MarketingSelling.sql` against `MyStore` in SQL Server Management Studio.
+3. Update the `MyStore` database with the Marketing Selling tables and Coupon columns before starting the application.
 4. Update the `MyStoreEntities` connection string in `WebBanHang/Web.config` for your SQL Server instance.
 5. Fill development-only values for SMTP, GHN and VNPay. Do not commit real secrets.
 6. Build the solution, sign in as Admin, then open **Marketing Selling**.
