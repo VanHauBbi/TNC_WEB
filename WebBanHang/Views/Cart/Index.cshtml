@@ -10,47 +10,24 @@
 <h2 class="cart-title">🛒 Giỏ hàng của bạn</h2>
 
 @{
-    var personalVouchers = ViewBag.PersonalVouchers as List<WebBanHang.Models.ViewModel.PersonalVoucherVM>
-                           ?? new List<WebBanHang.Models.ViewModel.PersonalVoucherVM>();
     var comboOffers = ViewBag.ComboOffers as List<WebBanHang.Models.ViewModel.ComboOfferVM>
                       ?? new List<WebBanHang.Models.ViewModel.ComboOfferVM>();
+    var bestCombo = ViewBag.BestCombo as WebBanHang.Models.ViewModel.PromotionEvaluation;
 }
 
-@if (personalVouchers.Any())
-{
-    <div class="container mb-3">
-        <div class="alert alert-warning shadow-sm mb-0">
-            <strong><i class="fa-solid fa-user-tag"></i> Ưu đãi riêng của bạn:</strong>
-            @foreach (var voucher in personalVouchers.Take(3))
-            {
-                <span class="badge bg-danger ms-2">@voucher.Code · giảm @voucher.DiscountAmount.ToString("N0") ₫</span>
-            }
-            <a class="ms-2" href="@Url.Action("MyVouchers", "Account")">Xem tất cả</a>
-        </div>
-    </div>
-}
-
-@if (comboOffers.Any())
+@if (bestCombo != null && bestCombo.IsValid)
 {
     <div class="container mb-4">
         <div class="card border-success shadow-sm">
-            <div class="card-header bg-success text-white"><strong><i class="fa-solid fa-boxes-stacked"></i> Mua cùng tiết kiệm hơn</strong></div>
+            <div class="card-header bg-success text-white"><strong><i class="fa-solid fa-wand-magic-sparkles"></i> Combo tốt nhất đã được nhận diện</strong></div>
             <div class="card-body">
-                <div class="row g-3">
-                    @foreach (var combo in comboOffers.Take(4))
-                    {
-                        <div class="col-md-6">
-                            <div class="border rounded p-3 h-100">
-                                <div><strong>@combo.ProductNameA</strong> + <strong>@combo.ProductNameB</strong></div>
-                                <div class="text-success fw-bold">Giảm @combo.DiscountAmount.ToString("N0") ₫</div>
-                                <small>Mã combo: <code>@combo.Code</code></small>
-                                <div class="mt-2">
-                                    <a class="btn btn-sm btn-outline-success" href="@Url.Action("ProductDetail", "Home", new { id = combo.ProductID_B })">Thêm sản phẩm còn thiếu</a>
-                                </div>
-                            </div>
-                        </div>
-                    }
+                <div><strong>@bestCombo.ProductNameA</strong> + <strong>@bestCombo.ProductNameB</strong></div>
+                <div class="mt-2">
+                    <span class="text-muted text-decoration-line-through me-2">@bestCombo.OriginalAmount.ToString("N0") ₫</span>
+                    <span class="text-danger fw-bold fs-5">@bestCombo.FinalAmount.ToString("N0") ₫</span>
+                    <span class="badge bg-success ms-2">Tiết kiệm @bestCombo.DiscountAmount.ToString("N0") ₫</span>
                 </div>
+                <small class="text-muted">Ưu đãi được tính tự động một lần cho toàn đơn và sẽ kiểm tra lại tại thanh toán.</small>
             </div>
         </div>
     </div>
@@ -85,6 +62,9 @@
                             <img src="@item.ProductImage" alt="@item.ProductName" class="cart-product-img" />
                             <div class="cart-item-info">
                                 <h5 class="cart-item-name">@item.ProductName</h5>
+                                <span id="combo-badge-@item.ProductID" class="badge bg-success mb-2 combo-applied-badge" style="display:none;">
+                                    <i class="fa-solid fa-link"></i> Thuộc combo đang áp dụng
+                                </span>
 
                                 <div class="cart-item-price mb-2">
                                     <div class="price-discounted" style="display: none;">
@@ -145,6 +125,11 @@
                         <span id="summary-discount-value" class="fw-bold">-0 VNĐ</span>
                     </p>
 
+                    <p id="summary-combo-row" class="text-success" style="display: none; justify-content: space-between;">
+                        <span>Giảm combo tốt nhất:</span>
+                        <span id="summary-combo-value" class="fw-bold">-0 VNĐ</span>
+                    </p>
+
                     <div class="summary-divider"></div>
                     <p class="summary-total"><strong>Tổng thanh toán:</strong> <strong id="summary-total-value">0 VNĐ</strong></p>
                 </div>
@@ -172,6 +157,9 @@
 
 @section Scripts {
     <script>
+        var comboCandidates = @Html.Raw(System.Web.Helpers.Json.Encode(
+            comboOffers.Select(c => new { a = c.ProductID_A, b = c.ProductID_B, discount = c.DiscountAmount })));
+
         // Cập nhật số lượng có kiểm tra tồn kho bằng JS
         function cartUpdateQuantity(id, change, stockLimit, btnElement) {
             var row = btnElement.closest('.cart-item-card');
@@ -209,6 +197,7 @@
             var subtotalValue = 0;
             var actualTotalValue = 0;
             var couponTracker = {};
+            var selectedProductIds = [];
 
             for (var i = 0; i < checkboxes.length; i++) {
                 var row = checkboxes[i].closest('.cart-item-card');
@@ -223,6 +212,7 @@
 
                 // CHỈ TÍNH TOÁN KHI Ô CHECKBOX ĐƯỢC TÍCH VÀO
                 if (checkboxes[i].checked) {
+                    selectedProductIds.push(parseInt(checkboxes[i].value));
                     totalItems += qty;
                     subtotalValue += (qty * originalPrice);
 
@@ -276,11 +266,27 @@
                 row.querySelector('.item-total').innerText = rowTotal.toLocaleString('vi-VN') + ' VNĐ';
             }
 
+            document.querySelectorAll('.combo-applied-badge').forEach(function (badge) { badge.style.display = 'none'; });
+            var bestSelectedCombo = null;
+            comboCandidates.forEach(function (combo) {
+                if (selectedProductIds.indexOf(combo.a) >= 0 && selectedProductIds.indexOf(combo.b) >= 0
+                    && (!bestSelectedCombo || combo.discount > bestSelectedCombo.discount)) {
+                    bestSelectedCombo = combo;
+                }
+            });
+            var comboDiscount = bestSelectedCombo ? Math.min(bestSelectedCombo.discount, actualTotalValue) : 0;
+            if (bestSelectedCombo) {
+                var badgeA = document.getElementById('combo-badge-' + bestSelectedCombo.a);
+                var badgeB = document.getElementById('combo-badge-' + bestSelectedCombo.b);
+                if (badgeA) badgeA.style.display = 'inline-block';
+                if (badgeB) badgeB.style.display = 'inline-block';
+            }
+
             // Cập nhật Bảng Tóm Tắt Đơn Hàng
             var totalDiscount = subtotalValue - actualTotalValue;
             document.getElementById('summary-total-items').innerText = totalItems;
             document.getElementById('summary-subtotal-value').innerText = subtotalValue.toLocaleString('vi-VN') + ' VNĐ';
-            document.getElementById('summary-total-value').innerText = actualTotalValue.toLocaleString('vi-VN') + ' VNĐ';
+            document.getElementById('summary-total-value').innerText = Math.max(0, actualTotalValue - comboDiscount).toLocaleString('vi-VN') + ' VNĐ';
 
             var discountRow = document.getElementById('summary-discount-row');
             if (totalDiscount > 0) {
@@ -288,6 +294,14 @@
                 discountRow.style.display = 'flex';
             } else {
                 discountRow.style.display = 'none';
+            }
+
+            var comboRow = document.getElementById('summary-combo-row');
+            if (comboDiscount > 0) {
+                document.getElementById('summary-combo-value').innerText = '-' + comboDiscount.toLocaleString('vi-VN') + ' VNĐ';
+                comboRow.style.display = 'flex';
+            } else {
+                comboRow.style.display = 'none';
             }
         }
 
