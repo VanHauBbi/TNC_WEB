@@ -30,6 +30,26 @@
           <Property Name="CategoryID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
           <Property Name="CategoryName" Type="nvarchar(max)" Nullable="false" />
         </EntityType>
+        <EntityType Name="ComboOffer">
+          <Key>
+            <PropertyRef Name="ComboOfferID" />
+          </Key>
+          <Property Name="ComboOfferID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="CampaignID" Type="int" />
+          <Property Name="ProductID_A" Type="int" Nullable="false" />
+          <Property Name="ProductID_B" Type="int" Nullable="false" />
+          <Property Name="Code" Type="nvarchar" MaxLength="50" Nullable="false" />
+          <Property Name="DiscountAmount" Type="decimal" Precision="18" Scale="3" Nullable="false" />
+          <Property Name="Support" Type="int" Nullable="false" />
+          <Property Name="Confidence" Type="decimal" Precision="5" Scale="2" Nullable="false" />
+          <Property Name="ActualUtility" Type="decimal" Precision="18" Scale="3" Nullable="false" />
+          <Property Name="MinimumMarginPct" Type="decimal" Precision="5" Scale="2" Nullable="false" />
+          <Property Name="StartDate" Type="datetime2" Precision="0" Nullable="false" />
+          <Property Name="EndDate" Type="datetime2" Precision="0" Nullable="false" />
+          <Property Name="UsageLimit" Type="int" Nullable="false" />
+          <Property Name="IsActive" Type="bit" Nullable="false" />
+          <Property Name="CreatedAt" Type="datetime2" Precision="0" Nullable="false" />
+        </EntityType>
         <EntityType Name="Coupon">
           <Key>
             <PropertyRef Name="CouponID" />
@@ -41,6 +61,15 @@
           <Property Name="MaxDiscountAmount" Type="decimal" Precision="18" Scale="3" />
           <Property Name="ExpiryDate" Type="datetime" Nullable="false" />
           <Property Name="UsageLimit" Type="int" Nullable="false" />
+          <Property Name="CouponType" Type="varchar" MaxLength="20" Nullable="false" />
+          <Property Name="DiscountType" Type="varchar" MaxLength="20" Nullable="false" />
+          <Property Name="FixedDiscountAmount" Type="decimal" Precision="18" Scale="3" />
+          <Property Name="MinimumOrderValue" Type="decimal" Precision="18" Scale="3" Nullable="false" />
+          <Property Name="StartDate" Type="datetime2" Precision="0" />
+          <Property Name="IsActive" Type="bit" Nullable="false" />
+          <Property Name="IsStackable" Type="bit" Nullable="false" />
+          <Property Name="CampaignID" Type="int" />
+          <Property Name="SourceType" Type="varchar" MaxLength="30" Nullable="false" />
         </EntityType>
         <EntityType Name="CouponProduct">
           <Key>
@@ -61,6 +90,25 @@
           <Property Name="CustomerAddress" Type="nvarchar(max)" />
           <Property Name="Username" Type="nvarchar" MaxLength="255" Nullable="false" />
           <Property Name="IsActive" Type="bit" Nullable="false" />
+        </EntityType>
+        <EntityType Name="CustomerCoupon">
+          <Key>
+            <PropertyRef Name="CustomerCouponID" />
+          </Key>
+          <Property Name="CustomerCouponID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="CouponID" Type="int" Nullable="false" />
+          <Property Name="CustomerID" Type="int" Nullable="false" />
+          <Property Name="TargetProductID" Type="int" />
+          <Property Name="TriggerType" Type="varchar" MaxLength="40" Nullable="false" />
+          <Property Name="InterestScore" Type="decimal" Precision="10" Scale="2" Nullable="false" />
+          <Property Name="Status" Type="varchar" MaxLength="20" Nullable="false" />
+          <Property Name="AssignedAt" Type="datetime2" Precision="0" Nullable="false" />
+          <Property Name="ViewedAt" Type="datetime2" Precision="0" />
+          <Property Name="ClickedAt" Type="datetime2" Precision="0" />
+          <Property Name="AddedToCartAt" Type="datetime2" Precision="0" />
+          <Property Name="UsedAt" Type="datetime2" Precision="0" />
+          <Property Name="ExpiresAt" Type="datetime2" Precision="0" Nullable="false" />
+          <Property Name="OrderID" Type="int" />
         </EntityType>
         <EntityType Name="ImportReceipt">
           <Key>
@@ -83,6 +131,21 @@
           <Property Name="ImportPrice" Type="decimal" Precision="18" Scale="3" Nullable="false" />
           <Property Name="ImportQuantity" Type="int" Nullable="false" />
           <Property Name="RemainingQuantity" Type="int" Nullable="false" />
+        </EntityType>
+        <EntityType Name="MarketingCampaign">
+          <Key>
+            <PropertyRef Name="CampaignID" />
+          </Key>
+          <Property Name="CampaignID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="CampaignName" Type="nvarchar" MaxLength="200" Nullable="false" />
+          <Property Name="CampaignType" Type="varchar" MaxLength="30" Nullable="false" />
+          <Property Name="SourceType" Type="varchar" MaxLength="30" Nullable="false" />
+          <Property Name="StartDate" Type="datetime2" Precision="0" Nullable="false" />
+          <Property Name="EndDate" Type="datetime2" Precision="0" Nullable="false" />
+          <Property Name="MinimumMarginPct" Type="decimal" Precision="5" Scale="2" Nullable="false" />
+          <Property Name="IsActive" Type="bit" Nullable="false" />
+          <Property Name="CreatedBy" Type="nvarchar" MaxLength="255" />
+          <Property Name="CreatedAt" Type="datetime2" Precision="0" Nullable="false" />
         </EntityType>
         <EntityType Name="Order">
           <Key>
@@ -113,6 +176,20 @@
           <Property Name="ImportPrice" Type="decimal" Precision="18" Scale="3" Nullable="false" />
           <Property Name="DiscountAmount" Type="decimal" Precision="18" Scale="3" Nullable="false" />
           <Property Name="TotalPrice" Type="decimal" Precision="29" Scale="3" StoreGeneratedPattern="Computed" />
+        </EntityType>
+        <EntityType Name="OrderPromotion">
+          <Key>
+            <PropertyRef Name="OrderPromotionID" />
+          </Key>
+          <Property Name="OrderPromotionID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="OrderID" Type="int" Nullable="false" />
+          <Property Name="PromotionType" Type="varchar" MaxLength="20" Nullable="false" />
+          <Property Name="CouponID" Type="int" />
+          <Property Name="CustomerCouponID" Type="int" />
+          <Property Name="ComboOfferID" Type="int" />
+          <Property Name="PromotionCode" Type="nvarchar" MaxLength="50" Nullable="false" />
+          <Property Name="DiscountAmount" Type="decimal" Precision="18" Scale="3" Nullable="false" />
+          <Property Name="CreatedAt" Type="datetime2" Precision="0" Nullable="false" />
         </EntityType>
         <EntityType Name="PaymentTransaction">
           <Key>
@@ -301,6 +378,54 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
+        <Association Name="FK_ComboOffer_Campaign">
+          <End Role="MarketingCampaign" Type="Self.MarketingCampaign" Multiplicity="0..1" />
+          <End Role="ComboOffer" Type="Self.ComboOffer" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="MarketingCampaign">
+              <PropertyRef Name="CampaignID" />
+            </Principal>
+            <Dependent Role="ComboOffer">
+              <PropertyRef Name="CampaignID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_ComboOffer_ProductA">
+          <End Role="Product" Type="Self.Product" Multiplicity="1" />
+          <End Role="ComboOffer" Type="Self.ComboOffer" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Product">
+              <PropertyRef Name="ProductID" />
+            </Principal>
+            <Dependent Role="ComboOffer">
+              <PropertyRef Name="ProductID_A" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_ComboOffer_ProductB">
+          <End Role="Product" Type="Self.Product" Multiplicity="1" />
+          <End Role="ComboOffer" Type="Self.ComboOffer" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Product">
+              <PropertyRef Name="ProductID" />
+            </Principal>
+            <Dependent Role="ComboOffer">
+              <PropertyRef Name="ProductID_B" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Coupon_MarketingCampaign">
+          <End Role="MarketingCampaign" Type="Self.MarketingCampaign" Multiplicity="0..1" />
+          <End Role="Coupon" Type="Self.Coupon" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="MarketingCampaign">
+              <PropertyRef Name="CampaignID" />
+            </Principal>
+            <Dependent Role="Coupon">
+              <PropertyRef Name="CampaignID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
         <Association Name="FK_CouponProduct_Coupon">
           <End Role="Coupon" Type="Self.Coupon" Multiplicity="1">
             <OnDelete Action="Cascade" />
@@ -338,6 +463,54 @@
             </Principal>
             <Dependent Role="Customer">
               <PropertyRef Name="Username" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_CustomerCoupon_Coupon">
+          <End Role="Coupon" Type="Self.Coupon" Multiplicity="1" />
+          <End Role="CustomerCoupon" Type="Self.CustomerCoupon" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Coupon">
+              <PropertyRef Name="CouponID" />
+            </Principal>
+            <Dependent Role="CustomerCoupon">
+              <PropertyRef Name="CouponID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_CustomerCoupon_Customer">
+          <End Role="Customer" Type="Self.Customer" Multiplicity="1" />
+          <End Role="CustomerCoupon" Type="Self.CustomerCoupon" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Customer">
+              <PropertyRef Name="CustomerID" />
+            </Principal>
+            <Dependent Role="CustomerCoupon">
+              <PropertyRef Name="CustomerID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_CustomerCoupon_Order">
+          <End Role="Order" Type="Self.Order" Multiplicity="0..1" />
+          <End Role="CustomerCoupon" Type="Self.CustomerCoupon" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Order">
+              <PropertyRef Name="OrderID" />
+            </Principal>
+            <Dependent Role="CustomerCoupon">
+              <PropertyRef Name="OrderID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_CustomerCoupon_Product">
+          <End Role="Product" Type="Self.Product" Multiplicity="0..1" />
+          <End Role="CustomerCoupon" Type="Self.CustomerCoupon" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Product">
+              <PropertyRef Name="ProductID" />
+            </Principal>
+            <Dependent Role="CustomerCoupon">
+              <PropertyRef Name="TargetProductID" />
             </Dependent>
           </ReferentialConstraint>
         </Association>
@@ -426,6 +599,54 @@
             </Principal>
             <Dependent Role="OrderDetail">
               <PropertyRef Name="ProductID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_OrderPromotion_ComboOffer">
+          <End Role="ComboOffer" Type="Self.ComboOffer" Multiplicity="0..1" />
+          <End Role="OrderPromotion" Type="Self.OrderPromotion" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="ComboOffer">
+              <PropertyRef Name="ComboOfferID" />
+            </Principal>
+            <Dependent Role="OrderPromotion">
+              <PropertyRef Name="ComboOfferID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_OrderPromotion_Coupon">
+          <End Role="Coupon" Type="Self.Coupon" Multiplicity="0..1" />
+          <End Role="OrderPromotion" Type="Self.OrderPromotion" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Coupon">
+              <PropertyRef Name="CouponID" />
+            </Principal>
+            <Dependent Role="OrderPromotion">
+              <PropertyRef Name="CouponID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_OrderPromotion_CustomerCoupon">
+          <End Role="CustomerCoupon" Type="Self.CustomerCoupon" Multiplicity="0..1" />
+          <End Role="OrderPromotion" Type="Self.OrderPromotion" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="CustomerCoupon">
+              <PropertyRef Name="CustomerCouponID" />
+            </Principal>
+            <Dependent Role="OrderPromotion">
+              <PropertyRef Name="CustomerCouponID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_OrderPromotion_Order">
+          <End Role="Order" Type="Self.Order" Multiplicity="1" />
+          <End Role="OrderPromotion" Type="Self.OrderPromotion" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Order">
+              <PropertyRef Name="OrderID" />
+            </Principal>
+            <Dependent Role="OrderPromotion">
+              <PropertyRef Name="OrderID" />
             </Dependent>
           </ReferentialConstraint>
         </Association>
@@ -633,13 +854,17 @@
           <EntitySet Name="Cart" EntityType="Self.Cart" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="CartItem" EntityType="Self.CartItem" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Category" EntityType="Self.Category" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="ComboOffer" EntityType="Self.ComboOffer" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Coupon" EntityType="Self.Coupon" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="CouponProduct" EntityType="Self.CouponProduct" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Customer" EntityType="Self.Customer" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="CustomerCoupon" EntityType="Self.CustomerCoupon" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="ImportReceipt" EntityType="Self.ImportReceipt" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="ImportReceiptDetail" EntityType="Self.ImportReceiptDetail" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="MarketingCampaign" EntityType="Self.MarketingCampaign" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Order" EntityType="Self.Order" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="OrderDetail" EntityType="Self.OrderDetail" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="OrderPromotion" EntityType="Self.OrderPromotion" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="PaymentTransaction" EntityType="Self.PaymentTransaction" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="PriceExceptionLog" EntityType="Self.PriceExceptionLog" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Product" EntityType="Self.Product" Schema="dbo" store:Type="Tables" />
@@ -665,6 +890,22 @@
             <End Role="Product" EntitySet="Product" />
             <End Role="CartItem" EntitySet="CartItem" />
           </AssociationSet>
+          <AssociationSet Name="FK_ComboOffer_Campaign" Association="Self.FK_ComboOffer_Campaign">
+            <End Role="MarketingCampaign" EntitySet="MarketingCampaign" />
+            <End Role="ComboOffer" EntitySet="ComboOffer" />
+          </AssociationSet>
+          <AssociationSet Name="FK_ComboOffer_ProductA" Association="Self.FK_ComboOffer_ProductA">
+            <End Role="Product" EntitySet="Product" />
+            <End Role="ComboOffer" EntitySet="ComboOffer" />
+          </AssociationSet>
+          <AssociationSet Name="FK_ComboOffer_ProductB" Association="Self.FK_ComboOffer_ProductB">
+            <End Role="Product" EntitySet="Product" />
+            <End Role="ComboOffer" EntitySet="ComboOffer" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Coupon_MarketingCampaign" Association="Self.FK_Coupon_MarketingCampaign">
+            <End Role="MarketingCampaign" EntitySet="MarketingCampaign" />
+            <End Role="Coupon" EntitySet="Coupon" />
+          </AssociationSet>
           <AssociationSet Name="FK_CouponProduct_Coupon" Association="Self.FK_CouponProduct_Coupon">
             <End Role="Coupon" EntitySet="Coupon" />
             <End Role="CouponProduct" EntitySet="CouponProduct" />
@@ -676,6 +917,22 @@
           <AssociationSet Name="FK_Customer_User" Association="Self.FK_Customer_User">
             <End Role="User" EntitySet="User" />
             <End Role="Customer" EntitySet="Customer" />
+          </AssociationSet>
+          <AssociationSet Name="FK_CustomerCoupon_Coupon" Association="Self.FK_CustomerCoupon_Coupon">
+            <End Role="Coupon" EntitySet="Coupon" />
+            <End Role="CustomerCoupon" EntitySet="CustomerCoupon" />
+          </AssociationSet>
+          <AssociationSet Name="FK_CustomerCoupon_Customer" Association="Self.FK_CustomerCoupon_Customer">
+            <End Role="Customer" EntitySet="Customer" />
+            <End Role="CustomerCoupon" EntitySet="CustomerCoupon" />
+          </AssociationSet>
+          <AssociationSet Name="FK_CustomerCoupon_Order" Association="Self.FK_CustomerCoupon_Order">
+            <End Role="Order" EntitySet="Order" />
+            <End Role="CustomerCoupon" EntitySet="CustomerCoupon" />
+          </AssociationSet>
+          <AssociationSet Name="FK_CustomerCoupon_Product" Association="Self.FK_CustomerCoupon_Product">
+            <End Role="Product" EntitySet="Product" />
+            <End Role="CustomerCoupon" EntitySet="CustomerCoupon" />
           </AssociationSet>
           <AssociationSet Name="FK_ImportDetail_Product" Association="Self.FK_ImportDetail_Product">
             <End Role="Product" EntitySet="Product" />
@@ -704,6 +961,22 @@
           <AssociationSet Name="FK_OrderDetail_Product" Association="Self.FK_OrderDetail_Product">
             <End Role="Product" EntitySet="Product" />
             <End Role="OrderDetail" EntitySet="OrderDetail" />
+          </AssociationSet>
+          <AssociationSet Name="FK_OrderPromotion_ComboOffer" Association="Self.FK_OrderPromotion_ComboOffer">
+            <End Role="ComboOffer" EntitySet="ComboOffer" />
+            <End Role="OrderPromotion" EntitySet="OrderPromotion" />
+          </AssociationSet>
+          <AssociationSet Name="FK_OrderPromotion_Coupon" Association="Self.FK_OrderPromotion_Coupon">
+            <End Role="Coupon" EntitySet="Coupon" />
+            <End Role="OrderPromotion" EntitySet="OrderPromotion" />
+          </AssociationSet>
+          <AssociationSet Name="FK_OrderPromotion_CustomerCoupon" Association="Self.FK_OrderPromotion_CustomerCoupon">
+            <End Role="CustomerCoupon" EntitySet="CustomerCoupon" />
+            <End Role="OrderPromotion" EntitySet="OrderPromotion" />
+          </AssociationSet>
+          <AssociationSet Name="FK_OrderPromotion_Order" Association="Self.FK_OrderPromotion_Order">
+            <End Role="Order" EntitySet="Order" />
+            <End Role="OrderPromotion" EntitySet="OrderPromotion" />
           </AssociationSet>
           <AssociationSet Name="FK_PaymentTransaction_Order" Association="Self.FK_PaymentTransaction_Order">
             <End Role="Order" EntitySet="Order" />
@@ -813,6 +1086,18 @@
           <Property Name="UsageLimit" Type="Int32" Nullable="false" />
           <NavigationProperty Name="Orders" Relationship="Self.FK_Order_Coupon" FromRole="Coupon" ToRole="Order" />
           <NavigationProperty Name="Products" Relationship="Self.CouponProduct" FromRole="Coupon" ToRole="Product" />
+          <Property Name="CouponType" Type="String" Nullable="false" MaxLength="20" FixedLength="false" Unicode="false" />
+          <Property Name="DiscountType" Type="String" Nullable="false" MaxLength="20" FixedLength="false" Unicode="false" />
+          <Property Name="FixedDiscountAmount" Type="Decimal" Precision="18" Scale="3" />
+          <Property Name="MinimumOrderValue" Type="Decimal" Nullable="false" Precision="18" Scale="3" />
+          <Property Name="StartDate" Type="DateTime" Precision="0" />
+          <Property Name="IsActive" Type="Boolean" Nullable="false" />
+          <Property Name="IsStackable" Type="Boolean" Nullable="false" />
+          <Property Name="CampaignID" Type="Int32" />
+          <Property Name="SourceType" Type="String" Nullable="false" MaxLength="30" FixedLength="false" Unicode="false" />
+          <NavigationProperty Name="MarketingCampaign" Relationship="MyStoreModel.FK_Coupon_MarketingCampaign" FromRole="Coupon" ToRole="MarketingCampaign" />
+          <NavigationProperty Name="CustomerCoupons" Relationship="MyStoreModel.FK_CustomerCoupon_Coupon" FromRole="Coupon" ToRole="CustomerCoupon" />
+          <NavigationProperty Name="OrderPromotions" Relationship="MyStoreModel.FK_OrderPromotion_Coupon" FromRole="Coupon" ToRole="OrderPromotion" />
         </EntityType>
         <EntityType Name="Customer">
           <Key>
@@ -830,6 +1115,7 @@
           <NavigationProperty Name="Orders" Relationship="Self.FK_Order_Customer" FromRole="Customer" ToRole="Order" />
           <NavigationProperty Name="ProductReviews" Relationship="Self.FK_ProductReview_Customer" FromRole="Customer" ToRole="ProductReview" />
           <NavigationProperty Name="SupportSessions" Relationship="Self.FK_SupportSession_Customer" FromRole="Customer" ToRole="SupportSession" />
+          <NavigationProperty Name="CustomerCoupons" Relationship="MyStoreModel.FK_CustomerCoupon_Customer" FromRole="Customer" ToRole="CustomerCoupon" />
         </EntityType>
         <EntityType Name="ImportReceipt">
           <Key>
@@ -878,6 +1164,8 @@
           <NavigationProperty Name="OrderDetails" Relationship="Self.FK_OrderDetail_Order" FromRole="Order" ToRole="OrderDetail" />
           <NavigationProperty Name="PaymentTransactions" Relationship="Self.FK_PaymentTransaction_Order" FromRole="Order" ToRole="PaymentTransaction" />
           <NavigationProperty Name="PriceExceptionLogs" Relationship="Self.FK_PriceException_Order" FromRole="Order" ToRole="PriceExceptionLog" />
+          <NavigationProperty Name="CustomerCoupons" Relationship="MyStoreModel.FK_CustomerCoupon_Order" FromRole="Order" ToRole="CustomerCoupon" />
+          <NavigationProperty Name="OrderPromotions" Relationship="MyStoreModel.FK_OrderPromotion_Order" FromRole="Order" ToRole="OrderPromotion" />
         </EntityType>
         <EntityType Name="OrderDetail">
           <Key>
@@ -949,6 +1237,9 @@
           <NavigationProperty Name="SmartRecommendations1" Relationship="Self.FK_SmartRec_ProductB" FromRole="Product" ToRole="SmartRecommendation" />
           <NavigationProperty Name="UserBehaviorLogs" Relationship="Self.FK_UserBehaviorLogs_Product" FromRole="Product" ToRole="UserBehaviorLogs" />
           <NavigationProperty Name="Coupons" Relationship="Self.CouponProduct" FromRole="Product" ToRole="Coupon" />
+          <NavigationProperty Name="ComboOffers" Relationship="MyStoreModel.FK_ComboOffer_ProductA" FromRole="Product" ToRole="ComboOffer" />
+          <NavigationProperty Name="ComboOffers1" Relationship="MyStoreModel.FK_ComboOffer_ProductB" FromRole="Product" ToRole="ComboOffer" />
+          <NavigationProperty Name="CustomerCoupons" Relationship="MyStoreModel.FK_CustomerCoupon_Product" FromRole="Product" ToRole="CustomerCoupon" />
         </EntityType>
         <EntityType Name="ProductPriceHistory">
           <Key>
@@ -1547,7 +1838,286 @@
             <End Role="Coupon" EntitySet="Coupons" />
             <End Role="Product" EntitySet="Products" />
           </AssociationSet>
+          <EntitySet Name="ComboOffers" EntityType="MyStoreModel.ComboOffer" />
+          <EntitySet Name="CustomerCoupons" EntityType="MyStoreModel.CustomerCoupon" />
+          <EntitySet Name="MarketingCampaigns" EntityType="MyStoreModel.MarketingCampaign" />
+          <EntitySet Name="OrderPromotions" EntityType="MyStoreModel.OrderPromotion" />
+          <AssociationSet Name="FK_ComboOffer_Campaign" Association="MyStoreModel.FK_ComboOffer_Campaign">
+            <End Role="MarketingCampaign" EntitySet="MarketingCampaigns" />
+            <End Role="ComboOffer" EntitySet="ComboOffers" />
+          </AssociationSet>
+          <AssociationSet Name="FK_ComboOffer_ProductA" Association="MyStoreModel.FK_ComboOffer_ProductA">
+            <End Role="Product" EntitySet="Products" />
+            <End Role="ComboOffer" EntitySet="ComboOffers" />
+          </AssociationSet>
+          <AssociationSet Name="FK_ComboOffer_ProductB" Association="MyStoreModel.FK_ComboOffer_ProductB">
+            <End Role="Product" EntitySet="Products" />
+            <End Role="ComboOffer" EntitySet="ComboOffers" />
+          </AssociationSet>
+          <AssociationSet Name="FK_OrderPromotion_ComboOffer" Association="MyStoreModel.FK_OrderPromotion_ComboOffer">
+            <End Role="ComboOffer" EntitySet="ComboOffers" />
+            <End Role="OrderPromotion" EntitySet="OrderPromotions" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Coupon_MarketingCampaign" Association="MyStoreModel.FK_Coupon_MarketingCampaign">
+            <End Role="MarketingCampaign" EntitySet="MarketingCampaigns" />
+            <End Role="Coupon" EntitySet="Coupons" />
+          </AssociationSet>
+          <AssociationSet Name="FK_CustomerCoupon_Coupon" Association="MyStoreModel.FK_CustomerCoupon_Coupon">
+            <End Role="Coupon" EntitySet="Coupons" />
+            <End Role="CustomerCoupon" EntitySet="CustomerCoupons" />
+          </AssociationSet>
+          <AssociationSet Name="FK_OrderPromotion_Coupon" Association="MyStoreModel.FK_OrderPromotion_Coupon">
+            <End Role="Coupon" EntitySet="Coupons" />
+            <End Role="OrderPromotion" EntitySet="OrderPromotions" />
+          </AssociationSet>
+          <AssociationSet Name="FK_CustomerCoupon_Customer" Association="MyStoreModel.FK_CustomerCoupon_Customer">
+            <End Role="Customer" EntitySet="Customers" />
+            <End Role="CustomerCoupon" EntitySet="CustomerCoupons" />
+          </AssociationSet>
+          <AssociationSet Name="FK_CustomerCoupon_Order" Association="MyStoreModel.FK_CustomerCoupon_Order">
+            <End Role="Order" EntitySet="Orders" />
+            <End Role="CustomerCoupon" EntitySet="CustomerCoupons" />
+          </AssociationSet>
+          <AssociationSet Name="FK_CustomerCoupon_Product" Association="MyStoreModel.FK_CustomerCoupon_Product">
+            <End Role="Product" EntitySet="Products" />
+            <End Role="CustomerCoupon" EntitySet="CustomerCoupons" />
+          </AssociationSet>
+          <AssociationSet Name="FK_OrderPromotion_CustomerCoupon" Association="MyStoreModel.FK_OrderPromotion_CustomerCoupon">
+            <End Role="CustomerCoupon" EntitySet="CustomerCoupons" />
+            <End Role="OrderPromotion" EntitySet="OrderPromotions" />
+          </AssociationSet>
+          <AssociationSet Name="FK_OrderPromotion_Order" Association="MyStoreModel.FK_OrderPromotion_Order">
+            <End Role="Order" EntitySet="Orders" />
+            <End Role="OrderPromotion" EntitySet="OrderPromotions" />
+          </AssociationSet>
         </EntityContainer>
+        <EntityType Name="ComboOffer">
+          <Key>
+            <PropertyRef Name="ComboOfferID" />
+          </Key>
+          <Property Name="ComboOfferID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="CampaignID" Type="Int32" />
+          <Property Name="ProductID_A" Type="Int32" Nullable="false" />
+          <Property Name="ProductID_B" Type="Int32" Nullable="false" />
+          <Property Name="Code" Type="String" Nullable="false" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="DiscountAmount" Type="Decimal" Nullable="false" Precision="18" Scale="3" />
+          <Property Name="Support" Type="Int32" Nullable="false" />
+          <Property Name="Confidence" Type="Decimal" Nullable="false" Precision="5" Scale="2" />
+          <Property Name="ActualUtility" Type="Decimal" Nullable="false" Precision="18" Scale="3" />
+          <Property Name="MinimumMarginPct" Type="Decimal" Nullable="false" Precision="5" Scale="2" />
+          <Property Name="StartDate" Type="DateTime" Nullable="false" Precision="0" />
+          <Property Name="EndDate" Type="DateTime" Nullable="false" Precision="0" />
+          <Property Name="UsageLimit" Type="Int32" Nullable="false" />
+          <Property Name="IsActive" Type="Boolean" Nullable="false" />
+          <Property Name="CreatedAt" Type="DateTime" Nullable="false" Precision="0" />
+          <NavigationProperty Name="MarketingCampaign" Relationship="MyStoreModel.FK_ComboOffer_Campaign" FromRole="ComboOffer" ToRole="MarketingCampaign" />
+          <NavigationProperty Name="Product" Relationship="MyStoreModel.FK_ComboOffer_ProductA" FromRole="ComboOffer" ToRole="Product" />
+          <NavigationProperty Name="Product1" Relationship="MyStoreModel.FK_ComboOffer_ProductB" FromRole="ComboOffer" ToRole="Product" />
+          <NavigationProperty Name="OrderPromotions" Relationship="MyStoreModel.FK_OrderPromotion_ComboOffer" FromRole="ComboOffer" ToRole="OrderPromotion" />
+        </EntityType>
+        <EntityType Name="CustomerCoupon">
+          <Key>
+            <PropertyRef Name="CustomerCouponID" />
+          </Key>
+          <Property Name="CustomerCouponID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="CouponID" Type="Int32" Nullable="false" />
+          <Property Name="CustomerID" Type="Int32" Nullable="false" />
+          <Property Name="TargetProductID" Type="Int32" />
+          <Property Name="TriggerType" Type="String" Nullable="false" MaxLength="40" FixedLength="false" Unicode="false" />
+          <Property Name="InterestScore" Type="Decimal" Nullable="false" Precision="10" Scale="2" />
+          <Property Name="Status" Type="String" Nullable="false" MaxLength="20" FixedLength="false" Unicode="false" />
+          <Property Name="AssignedAt" Type="DateTime" Nullable="false" Precision="0" />
+          <Property Name="ViewedAt" Type="DateTime" Precision="0" />
+          <Property Name="ClickedAt" Type="DateTime" Precision="0" />
+          <Property Name="AddedToCartAt" Type="DateTime" Precision="0" />
+          <Property Name="UsedAt" Type="DateTime" Precision="0" />
+          <Property Name="ExpiresAt" Type="DateTime" Nullable="false" Precision="0" />
+          <Property Name="OrderID" Type="Int32" />
+          <NavigationProperty Name="Coupon" Relationship="MyStoreModel.FK_CustomerCoupon_Coupon" FromRole="CustomerCoupon" ToRole="Coupon" />
+          <NavigationProperty Name="Customer" Relationship="MyStoreModel.FK_CustomerCoupon_Customer" FromRole="CustomerCoupon" ToRole="Customer" />
+          <NavigationProperty Name="Order" Relationship="MyStoreModel.FK_CustomerCoupon_Order" FromRole="CustomerCoupon" ToRole="Order" />
+          <NavigationProperty Name="Product" Relationship="MyStoreModel.FK_CustomerCoupon_Product" FromRole="CustomerCoupon" ToRole="Product" />
+          <NavigationProperty Name="OrderPromotions" Relationship="MyStoreModel.FK_OrderPromotion_CustomerCoupon" FromRole="CustomerCoupon" ToRole="OrderPromotion" />
+        </EntityType>
+        <EntityType Name="MarketingCampaign">
+          <Key>
+            <PropertyRef Name="CampaignID" />
+          </Key>
+          <Property Name="CampaignID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="CampaignName" Type="String" Nullable="false" MaxLength="200" FixedLength="false" Unicode="true" />
+          <Property Name="CampaignType" Type="String" Nullable="false" MaxLength="30" FixedLength="false" Unicode="false" />
+          <Property Name="SourceType" Type="String" Nullable="false" MaxLength="30" FixedLength="false" Unicode="false" />
+          <Property Name="StartDate" Type="DateTime" Nullable="false" Precision="0" />
+          <Property Name="EndDate" Type="DateTime" Nullable="false" Precision="0" />
+          <Property Name="MinimumMarginPct" Type="Decimal" Nullable="false" Precision="5" Scale="2" />
+          <Property Name="IsActive" Type="Boolean" Nullable="false" />
+          <Property Name="CreatedBy" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
+          <Property Name="CreatedAt" Type="DateTime" Nullable="false" Precision="0" />
+          <NavigationProperty Name="ComboOffers" Relationship="MyStoreModel.FK_ComboOffer_Campaign" FromRole="MarketingCampaign" ToRole="ComboOffer" />
+          <NavigationProperty Name="Coupons" Relationship="MyStoreModel.FK_Coupon_MarketingCampaign" FromRole="MarketingCampaign" ToRole="Coupon" />
+        </EntityType>
+        <EntityType Name="OrderPromotion">
+          <Key>
+            <PropertyRef Name="OrderPromotionID" />
+          </Key>
+          <Property Name="OrderPromotionID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="OrderID" Type="Int32" Nullable="false" />
+          <Property Name="PromotionType" Type="String" Nullable="false" MaxLength="20" FixedLength="false" Unicode="false" />
+          <Property Name="CouponID" Type="Int32" />
+          <Property Name="CustomerCouponID" Type="Int32" />
+          <Property Name="ComboOfferID" Type="Int32" />
+          <Property Name="PromotionCode" Type="String" Nullable="false" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="DiscountAmount" Type="Decimal" Nullable="false" Precision="18" Scale="3" />
+          <Property Name="CreatedAt" Type="DateTime" Nullable="false" Precision="0" />
+          <NavigationProperty Name="ComboOffer" Relationship="MyStoreModel.FK_OrderPromotion_ComboOffer" FromRole="OrderPromotion" ToRole="ComboOffer" />
+          <NavigationProperty Name="Coupon" Relationship="MyStoreModel.FK_OrderPromotion_Coupon" FromRole="OrderPromotion" ToRole="Coupon" />
+          <NavigationProperty Name="CustomerCoupon" Relationship="MyStoreModel.FK_OrderPromotion_CustomerCoupon" FromRole="OrderPromotion" ToRole="CustomerCoupon" />
+          <NavigationProperty Name="Order" Relationship="MyStoreModel.FK_OrderPromotion_Order" FromRole="OrderPromotion" ToRole="Order" />
+        </EntityType>
+        <Association Name="FK_ComboOffer_Campaign">
+          <End Type="MyStoreModel.MarketingCampaign" Role="MarketingCampaign" Multiplicity="0..1" />
+          <End Type="MyStoreModel.ComboOffer" Role="ComboOffer" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="MarketingCampaign">
+              <PropertyRef Name="CampaignID" />
+            </Principal>
+            <Dependent Role="ComboOffer">
+              <PropertyRef Name="CampaignID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_ComboOffer_ProductA">
+          <End Type="MyStoreModel.Product" Role="Product" Multiplicity="1" />
+          <End Type="MyStoreModel.ComboOffer" Role="ComboOffer" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Product">
+              <PropertyRef Name="ProductID" />
+            </Principal>
+            <Dependent Role="ComboOffer">
+              <PropertyRef Name="ProductID_A" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_ComboOffer_ProductB">
+          <End Type="MyStoreModel.Product" Role="Product" Multiplicity="1" />
+          <End Type="MyStoreModel.ComboOffer" Role="ComboOffer" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Product">
+              <PropertyRef Name="ProductID" />
+            </Principal>
+            <Dependent Role="ComboOffer">
+              <PropertyRef Name="ProductID_B" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_OrderPromotion_ComboOffer">
+          <End Type="MyStoreModel.ComboOffer" Role="ComboOffer" Multiplicity="0..1" />
+          <End Type="MyStoreModel.OrderPromotion" Role="OrderPromotion" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="ComboOffer">
+              <PropertyRef Name="ComboOfferID" />
+            </Principal>
+            <Dependent Role="OrderPromotion">
+              <PropertyRef Name="ComboOfferID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Coupon_MarketingCampaign">
+          <End Type="MyStoreModel.MarketingCampaign" Role="MarketingCampaign" Multiplicity="0..1" />
+          <End Type="MyStoreModel.Coupon" Role="Coupon" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="MarketingCampaign">
+              <PropertyRef Name="CampaignID" />
+            </Principal>
+            <Dependent Role="Coupon">
+              <PropertyRef Name="CampaignID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_CustomerCoupon_Coupon">
+          <End Type="MyStoreModel.Coupon" Role="Coupon" Multiplicity="1" />
+          <End Type="MyStoreModel.CustomerCoupon" Role="CustomerCoupon" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Coupon">
+              <PropertyRef Name="CouponID" />
+            </Principal>
+            <Dependent Role="CustomerCoupon">
+              <PropertyRef Name="CouponID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_OrderPromotion_Coupon">
+          <End Type="MyStoreModel.Coupon" Role="Coupon" Multiplicity="0..1" />
+          <End Type="MyStoreModel.OrderPromotion" Role="OrderPromotion" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Coupon">
+              <PropertyRef Name="CouponID" />
+            </Principal>
+            <Dependent Role="OrderPromotion">
+              <PropertyRef Name="CouponID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_CustomerCoupon_Customer">
+          <End Type="MyStoreModel.Customer" Role="Customer" Multiplicity="1" />
+          <End Type="MyStoreModel.CustomerCoupon" Role="CustomerCoupon" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Customer">
+              <PropertyRef Name="CustomerID" />
+            </Principal>
+            <Dependent Role="CustomerCoupon">
+              <PropertyRef Name="CustomerID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_CustomerCoupon_Order">
+          <End Type="MyStoreModel.Order" Role="Order" Multiplicity="0..1" />
+          <End Type="MyStoreModel.CustomerCoupon" Role="CustomerCoupon" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Order">
+              <PropertyRef Name="OrderID" />
+            </Principal>
+            <Dependent Role="CustomerCoupon">
+              <PropertyRef Name="OrderID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_CustomerCoupon_Product">
+          <End Type="MyStoreModel.Product" Role="Product" Multiplicity="0..1" />
+          <End Type="MyStoreModel.CustomerCoupon" Role="CustomerCoupon" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Product">
+              <PropertyRef Name="ProductID" />
+            </Principal>
+            <Dependent Role="CustomerCoupon">
+              <PropertyRef Name="TargetProductID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_OrderPromotion_CustomerCoupon">
+          <End Type="MyStoreModel.CustomerCoupon" Role="CustomerCoupon" Multiplicity="0..1" />
+          <End Type="MyStoreModel.OrderPromotion" Role="OrderPromotion" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="CustomerCoupon">
+              <PropertyRef Name="CustomerCouponID" />
+            </Principal>
+            <Dependent Role="OrderPromotion">
+              <PropertyRef Name="CustomerCouponID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_OrderPromotion_Order">
+          <End Type="MyStoreModel.Order" Role="Order" Multiplicity="1" />
+          <End Type="MyStoreModel.OrderPromotion" Role="OrderPromotion" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Order">
+              <PropertyRef Name="OrderID" />
+            </Principal>
+            <Dependent Role="OrderPromotion">
+              <PropertyRef Name="OrderID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
       </Schema>
     </edmx:ConceptualModels>
     <!-- C-S mapping content -->
@@ -1585,6 +2155,15 @@
           <EntitySetMapping Name="Coupons">
             <EntityTypeMapping TypeName="MyStoreModel.Coupon">
               <MappingFragment StoreEntitySet="Coupon">
+                <ScalarProperty Name="SourceType" ColumnName="SourceType" />
+                <ScalarProperty Name="CampaignID" ColumnName="CampaignID" />
+                <ScalarProperty Name="IsStackable" ColumnName="IsStackable" />
+                <ScalarProperty Name="IsActive" ColumnName="IsActive" />
+                <ScalarProperty Name="StartDate" ColumnName="StartDate" />
+                <ScalarProperty Name="MinimumOrderValue" ColumnName="MinimumOrderValue" />
+                <ScalarProperty Name="FixedDiscountAmount" ColumnName="FixedDiscountAmount" />
+                <ScalarProperty Name="DiscountType" ColumnName="DiscountType" />
+                <ScalarProperty Name="CouponType" ColumnName="CouponType" />
                 <ScalarProperty Name="CouponID" ColumnName="CouponID" />
                 <ScalarProperty Name="CouponName" ColumnName="CouponName" />
                 <ScalarProperty Name="Code" ColumnName="Code" />
@@ -1834,6 +2413,78 @@
               <ScalarProperty Name="ProductID" ColumnName="ProductID" />
             </EndProperty>
           </AssociationSetMapping>
+          <EntitySetMapping Name="ComboOffers">
+            <EntityTypeMapping TypeName="MyStoreModel.ComboOffer">
+              <MappingFragment StoreEntitySet="ComboOffer">
+                <ScalarProperty Name="CreatedAt" ColumnName="CreatedAt" />
+                <ScalarProperty Name="IsActive" ColumnName="IsActive" />
+                <ScalarProperty Name="UsageLimit" ColumnName="UsageLimit" />
+                <ScalarProperty Name="EndDate" ColumnName="EndDate" />
+                <ScalarProperty Name="StartDate" ColumnName="StartDate" />
+                <ScalarProperty Name="MinimumMarginPct" ColumnName="MinimumMarginPct" />
+                <ScalarProperty Name="ActualUtility" ColumnName="ActualUtility" />
+                <ScalarProperty Name="Confidence" ColumnName="Confidence" />
+                <ScalarProperty Name="Support" ColumnName="Support" />
+                <ScalarProperty Name="DiscountAmount" ColumnName="DiscountAmount" />
+                <ScalarProperty Name="Code" ColumnName="Code" />
+                <ScalarProperty Name="ProductID_B" ColumnName="ProductID_B" />
+                <ScalarProperty Name="ProductID_A" ColumnName="ProductID_A" />
+                <ScalarProperty Name="CampaignID" ColumnName="CampaignID" />
+                <ScalarProperty Name="ComboOfferID" ColumnName="ComboOfferID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="CustomerCoupons">
+            <EntityTypeMapping TypeName="MyStoreModel.CustomerCoupon">
+              <MappingFragment StoreEntitySet="CustomerCoupon">
+                <ScalarProperty Name="OrderID" ColumnName="OrderID" />
+                <ScalarProperty Name="ExpiresAt" ColumnName="ExpiresAt" />
+                <ScalarProperty Name="UsedAt" ColumnName="UsedAt" />
+                <ScalarProperty Name="AddedToCartAt" ColumnName="AddedToCartAt" />
+                <ScalarProperty Name="ClickedAt" ColumnName="ClickedAt" />
+                <ScalarProperty Name="ViewedAt" ColumnName="ViewedAt" />
+                <ScalarProperty Name="AssignedAt" ColumnName="AssignedAt" />
+                <ScalarProperty Name="Status" ColumnName="Status" />
+                <ScalarProperty Name="InterestScore" ColumnName="InterestScore" />
+                <ScalarProperty Name="TriggerType" ColumnName="TriggerType" />
+                <ScalarProperty Name="TargetProductID" ColumnName="TargetProductID" />
+                <ScalarProperty Name="CustomerID" ColumnName="CustomerID" />
+                <ScalarProperty Name="CouponID" ColumnName="CouponID" />
+                <ScalarProperty Name="CustomerCouponID" ColumnName="CustomerCouponID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="MarketingCampaigns">
+            <EntityTypeMapping TypeName="MyStoreModel.MarketingCampaign">
+              <MappingFragment StoreEntitySet="MarketingCampaign">
+                <ScalarProperty Name="CreatedAt" ColumnName="CreatedAt" />
+                <ScalarProperty Name="CreatedBy" ColumnName="CreatedBy" />
+                <ScalarProperty Name="IsActive" ColumnName="IsActive" />
+                <ScalarProperty Name="MinimumMarginPct" ColumnName="MinimumMarginPct" />
+                <ScalarProperty Name="EndDate" ColumnName="EndDate" />
+                <ScalarProperty Name="StartDate" ColumnName="StartDate" />
+                <ScalarProperty Name="SourceType" ColumnName="SourceType" />
+                <ScalarProperty Name="CampaignType" ColumnName="CampaignType" />
+                <ScalarProperty Name="CampaignName" ColumnName="CampaignName" />
+                <ScalarProperty Name="CampaignID" ColumnName="CampaignID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="OrderPromotions">
+            <EntityTypeMapping TypeName="MyStoreModel.OrderPromotion">
+              <MappingFragment StoreEntitySet="OrderPromotion">
+                <ScalarProperty Name="CreatedAt" ColumnName="CreatedAt" />
+                <ScalarProperty Name="DiscountAmount" ColumnName="DiscountAmount" />
+                <ScalarProperty Name="PromotionCode" ColumnName="PromotionCode" />
+                <ScalarProperty Name="ComboOfferID" ColumnName="ComboOfferID" />
+                <ScalarProperty Name="CustomerCouponID" ColumnName="CustomerCouponID" />
+                <ScalarProperty Name="CouponID" ColumnName="CouponID" />
+                <ScalarProperty Name="PromotionType" ColumnName="PromotionType" />
+                <ScalarProperty Name="OrderID" ColumnName="OrderID" />
+                <ScalarProperty Name="OrderPromotionID" ColumnName="OrderPromotionID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
         </EntityContainerMapping>
       </Mapping>
     </edmx:Mappings>

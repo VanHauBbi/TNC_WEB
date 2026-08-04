@@ -19,6 +19,8 @@ namespace WebBanHang.Models
         {
             this.Orders = new HashSet<Order>();
             this.Products = new HashSet<Product>();
+            this.CustomerCoupons = new HashSet<CustomerCoupon>();
+            this.OrderPromotions = new HashSet<OrderPromotion>();
         }
     
         public int CouponID { get; set; }
@@ -28,10 +30,24 @@ namespace WebBanHang.Models
         public Nullable<decimal> MaxDiscountAmount { get; set; }
         public System.DateTime ExpiryDate { get; set; }
         public int UsageLimit { get; set; }
+        public string CouponType { get; set; }
+        public string DiscountType { get; set; }
+        public Nullable<decimal> FixedDiscountAmount { get; set; }
+        public decimal MinimumOrderValue { get; set; }
+        public Nullable<System.DateTime> StartDate { get; set; }
+        public bool IsActive { get; set; }
+        public bool IsStackable { get; set; }
+        public Nullable<int> CampaignID { get; set; }
+        public string SourceType { get; set; }
     
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<Order> Orders { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<Product> Products { get; set; }
+        public virtual MarketingCampaign MarketingCampaign { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        public virtual ICollection<CustomerCoupon> CustomerCoupons { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        public virtual ICollection<OrderPromotion> OrderPromotions { get; set; }
     }
 }
