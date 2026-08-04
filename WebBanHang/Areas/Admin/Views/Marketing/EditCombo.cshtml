@@ -1,17 +1,33 @@
 @model WebBanHang.Models.ViewModel.ComboOfferEditVM
 @{
     ViewBag.Title = "Chỉnh sửa combo";
+    ViewBag.RemoveSpacing = true;
     Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
 }
-<div class="container-fluid py-3"><div class="card shadow-sm border-0 mx-auto" style="max-width:900px"><div class="card-header bg-white"><h4 class="mb-0"><i class="fa-solid fa-pen text-primary"></i> Chỉnh sửa combo mua chung</h4></div><div class="card-body p-4">
-    <div class="alert alert-info"><strong>Bảo vệ tự động:</strong> tiền giảm được áp dụng một lần trên tổng đơn và sẽ tự hạ nếu vượt ngân sách lợi nhuận FIFO.</div>
-    @using (Html.BeginForm()) { @Html.AntiForgeryToken() @Html.HiddenFor(m => m.ComboOfferID) @Html.HiddenFor(m => m.Code) @Html.HiddenFor(m => m.ProductNameA) @Html.HiddenFor(m => m.ProductNameB) @Html.ValidationSummary(false, "", new { @class = "alert alert-danger" })
-        <div class="row g-3"><div class="col-md-4"><label class="form-label fw-bold">Mã combo</label><input class="form-control" value="@Model.Code" readonly /></div><div class="col-md-4"><label class="form-label fw-bold">Sản phẩm A</label><input class="form-control" value="@Model.ProductNameA" readonly /></div><div class="col-md-4"><label class="form-label fw-bold">Sản phẩm B</label><input class="form-control" value="@Model.ProductNameB" readonly /></div>
-            <div class="col-md-6"><label class="form-label fw-bold">Số tiền giảm cho cả combo</label><div class="input-group">@Html.TextBoxFor(m => m.DiscountAmount, new { @class = "form-control", type = "number", min = "1000", step = "1000", Value = Model.DiscountAmount.ToString("0", System.Globalization.CultureInfo.InvariantCulture) })<span class="input-group-text">₫ / đơn</span></div>@Html.ValidationMessageFor(m => m.DiscountAmount, "", new { @class = "text-danger" })</div>
-            <div class="col-md-6"><label class="form-label fw-bold">Lượt sử dụng còn lại</label>@Html.TextBoxFor(m => m.UsageLimit, new { @class = "form-control", type = "number", min = "0" })@Html.ValidationMessageFor(m => m.UsageLimit, "", new { @class = "text-danger" })</div>
-            <div class="col-md-6"><label class="form-label fw-bold">Ngày bắt đầu</label>@Html.TextBoxFor(m => m.StartDate, "{0:yyyy-MM-ddTHH:mm}", new { @class = "form-control", type = "datetime-local" })@Html.ValidationMessageFor(m => m.StartDate, "", new { @class = "text-danger" })</div>
-            <div class="col-md-6"><label class="form-label fw-bold">Ngày kết thúc</label>@Html.TextBoxFor(m => m.EndDate, "{0:yyyy-MM-ddTHH:mm}", new { @class = "form-control", type = "datetime-local" })@Html.ValidationMessageFor(m => m.EndDate, "", new { @class = "text-danger" })</div>
-            <div class="col-12"><div class="form-check form-switch">@Html.CheckBoxFor(m => m.IsActive, new { @class = "form-check-input" })<label class="form-check-label fw-bold" for="IsActive">Cho phép combo tiếp tục hoạt động</label></div></div></div>
-        <div class="mt-4 d-flex gap-2"><button class="btn btn-primary" type="submit"><i class="fa-solid fa-floppy-disk"></i> Lưu thay đổi</button><a class="btn btn-secondary" href="@Url.Action("ComboDetails", new { id = Model.ComboOfferID })">Hủy</a></div>
-    }
-</div></div></div>
+<link href="~/Content/Admin/marketing_admin.css" rel="stylesheet" />
+<div class="mk-page mk-form-shell">
+    <div class="mk-page-heading"><div><h3>Chỉnh sửa combo mua chung</h3><p>Giữ nguyên cặp sản phẩm và chỉ cập nhật điều kiện áp dụng.</p></div><a class="mk-btn mk-btn-neutral" href="@Url.Action("ComboDetails", new { id = Model.ComboOfferID })"><i class="fa-solid fa-arrow-left"></i> Quay lại</a></div>
+    <div class="mk-form-card">
+        <div class="mk-form-header"><div class="mk-form-header-icon"><i class="fa-solid fa-boxes-stacked"></i></div><div><h4>@Model.Code</h4><p>@Model.ProductNameA + @Model.ProductNameB</p></div></div>
+        <div class="mk-form-body">
+            <div class="mk-safety-note"><i class="fa-solid fa-shield-halved me-2"></i><strong>Bảo vệ tự động:</strong> tiền giảm áp dụng một lần/đơn và tự hạ nếu vượt ngân sách FIFO.</div>
+            @using (Html.BeginForm())
+            {
+                @Html.AntiForgeryToken()
+                @Html.HiddenFor(m => m.ComboOfferID) @Html.HiddenFor(m => m.Code) @Html.HiddenFor(m => m.ProductNameA) @Html.HiddenFor(m => m.ProductNameB)
+                @Html.ValidationSummary(false, "", new { @class = "alert alert-danger" })
+                <div class="row g-3">
+                    <div class="col-md-4"><label class="form-label">Mã combo</label><input class="form-control mk-readonly" value="@Model.Code" readonly /></div>
+                    <div class="col-md-4"><label class="form-label">Sản phẩm A</label><input class="form-control mk-readonly" value="@Model.ProductNameA" readonly /></div>
+                    <div class="col-md-4"><label class="form-label">Sản phẩm B</label><input class="form-control mk-readonly" value="@Model.ProductNameB" readonly /></div>
+                    <div class="col-md-6"><label class="form-label">Tiền giảm cho cả combo</label><div class="input-group">@Html.TextBoxFor(m => m.DiscountAmount, new { @class = "form-control", type = "number", min = "1000", step = "1000", Value = Model.DiscountAmount.ToString("0", System.Globalization.CultureInfo.InvariantCulture) })<span class="input-group-text">₫ / đơn</span></div>@Html.ValidationMessageFor(m => m.DiscountAmount, "", new { @class = "text-danger small" })</div>
+                    <div class="col-md-6"><label class="form-label">Lượt sử dụng còn lại</label>@Html.TextBoxFor(m => m.UsageLimit, new { @class = "form-control", type = "number", min = "0" })@Html.ValidationMessageFor(m => m.UsageLimit, "", new { @class = "text-danger small" })</div>
+                    <div class="col-md-6"><label class="form-label">Ngày bắt đầu</label>@Html.TextBoxFor(m => m.StartDate, "{0:yyyy-MM-ddTHH:mm}", new { @class = "form-control", type = "datetime-local" })@Html.ValidationMessageFor(m => m.StartDate, "", new { @class = "text-danger small" })</div>
+                    <div class="col-md-6"><label class="form-label">Ngày kết thúc</label>@Html.TextBoxFor(m => m.EndDate, "{0:yyyy-MM-ddTHH:mm}", new { @class = "form-control", type = "datetime-local" })@Html.ValidationMessageFor(m => m.EndDate, "", new { @class = "text-danger small" })</div>
+                    <div class="col-12"><div class="form-check form-switch mt-2">@Html.CheckBoxFor(m => m.IsActive, new { @class = "form-check-input" })<label class="form-check-label fw-semibold" for="IsActive">Cho phép combo tiếp tục hoạt động</label></div></div>
+                </div>
+                <div class="mk-form-footer"><a class="mk-btn mk-btn-neutral" href="@Url.Action("ComboDetails", new { id = Model.ComboOfferID })">Hủy</a><button class="mk-btn mk-btn-solid" type="submit"><i class="fa-solid fa-floppy-disk"></i> Lưu thay đổi</button></div>
+            }
+        </div>
+    </div>
+</div>
