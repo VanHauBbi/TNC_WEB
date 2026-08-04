@@ -31,6 +31,18 @@ namespace WebBanHang.Models
         public bool IsActive { get; set; }
         public string CreatedBy { get; set; }
         public System.DateTime CreatedAt { get; set; }
+        public decimal DiscountPercentage { get; set; }
+        public decimal MaxDiscountAmount { get; set; }
+        public decimal MinInterestScore { get; set; }
+        public int ValidityHours { get; set; }
+        public int CooldownDays { get; set; }
+        public int MinSupport { get; set; }
+        public decimal MinConfidence { get; set; }
+        public decimal MinUtility { get; set; }
+        public int ValidityDays { get; set; }
+        public int UsageLimit { get; set; }
+        public string UpdatedBy { get; set; }
+        public Nullable<System.DateTime> UpdatedAt { get; set; }
     
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<ComboOffer> ComboOffers { get; set; }

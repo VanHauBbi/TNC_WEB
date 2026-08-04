@@ -146,6 +146,18 @@
           <Property Name="IsActive" Type="bit" Nullable="false" />
           <Property Name="CreatedBy" Type="nvarchar" MaxLength="255" />
           <Property Name="CreatedAt" Type="datetime2" Precision="0" Nullable="false" />
+          <Property Name="DiscountPercentage" Type="decimal" Precision="5" Scale="2" Nullable="false" />
+          <Property Name="MaxDiscountAmount" Type="decimal" Precision="18" Scale="3" Nullable="false" />
+          <Property Name="MinInterestScore" Type="decimal" Precision="10" Scale="2" Nullable="false" />
+          <Property Name="ValidityHours" Type="int" Nullable="false" />
+          <Property Name="CooldownDays" Type="int" Nullable="false" />
+          <Property Name="MinSupport" Type="int" Nullable="false" />
+          <Property Name="MinConfidence" Type="decimal" Precision="5" Scale="2" Nullable="false" />
+          <Property Name="MinUtility" Type="decimal" Precision="18" Scale="3" Nullable="false" />
+          <Property Name="ValidityDays" Type="int" Nullable="false" />
+          <Property Name="UsageLimit" Type="int" Nullable="false" />
+          <Property Name="UpdatedBy" Type="nvarchar" MaxLength="255" />
+          <Property Name="UpdatedAt" Type="datetime2" Precision="0" />
         </EntityType>
         <EntityType Name="Order">
           <Key>
@@ -1955,6 +1967,18 @@
           <Property Name="CreatedAt" Type="DateTime" Nullable="false" Precision="0" />
           <NavigationProperty Name="ComboOffers" Relationship="MyStoreModel.FK_ComboOffer_Campaign" FromRole="MarketingCampaign" ToRole="ComboOffer" />
           <NavigationProperty Name="Coupons" Relationship="MyStoreModel.FK_Coupon_MarketingCampaign" FromRole="MarketingCampaign" ToRole="Coupon" />
+          <Property Name="DiscountPercentage" Type="Decimal" Nullable="false" Precision="5" Scale="2" />
+          <Property Name="MaxDiscountAmount" Type="Decimal" Nullable="false" Precision="18" Scale="3" />
+          <Property Name="MinInterestScore" Type="Decimal" Nullable="false" Precision="10" Scale="2" />
+          <Property Name="ValidityHours" Type="Int32" Nullable="false" />
+          <Property Name="CooldownDays" Type="Int32" Nullable="false" />
+          <Property Name="MinSupport" Type="Int32" Nullable="false" />
+          <Property Name="MinConfidence" Type="Decimal" Nullable="false" Precision="5" Scale="2" />
+          <Property Name="MinUtility" Type="Decimal" Nullable="false" Precision="18" Scale="3" />
+          <Property Name="ValidityDays" Type="Int32" Nullable="false" />
+          <Property Name="UsageLimit" Type="Int32" Nullable="false" />
+          <Property Name="UpdatedBy" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
+          <Property Name="UpdatedAt" Type="DateTime" Precision="0" />
         </EntityType>
         <EntityType Name="OrderPromotion">
           <Key>
@@ -2457,6 +2481,18 @@
           <EntitySetMapping Name="MarketingCampaigns">
             <EntityTypeMapping TypeName="MyStoreModel.MarketingCampaign">
               <MappingFragment StoreEntitySet="MarketingCampaign">
+                <ScalarProperty Name="UpdatedAt" ColumnName="UpdatedAt" />
+                <ScalarProperty Name="UpdatedBy" ColumnName="UpdatedBy" />
+                <ScalarProperty Name="UsageLimit" ColumnName="UsageLimit" />
+                <ScalarProperty Name="ValidityDays" ColumnName="ValidityDays" />
+                <ScalarProperty Name="MinUtility" ColumnName="MinUtility" />
+                <ScalarProperty Name="MinConfidence" ColumnName="MinConfidence" />
+                <ScalarProperty Name="MinSupport" ColumnName="MinSupport" />
+                <ScalarProperty Name="CooldownDays" ColumnName="CooldownDays" />
+                <ScalarProperty Name="ValidityHours" ColumnName="ValidityHours" />
+                <ScalarProperty Name="MinInterestScore" ColumnName="MinInterestScore" />
+                <ScalarProperty Name="MaxDiscountAmount" ColumnName="MaxDiscountAmount" />
+                <ScalarProperty Name="DiscountPercentage" ColumnName="DiscountPercentage" />
                 <ScalarProperty Name="CreatedAt" ColumnName="CreatedAt" />
                 <ScalarProperty Name="CreatedBy" ColumnName="CreatedBy" />
                 <ScalarProperty Name="IsActive" ColumnName="IsActive" />
