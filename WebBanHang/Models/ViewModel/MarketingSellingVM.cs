@@ -65,7 +65,7 @@ namespace WebBanHang.Models.ViewModel
         [Range(0.01, 100)] public decimal ComboDiscountPct { get; set; } = 5m;
         [Range(1000, 100000000)] public decimal ComboMaxDiscountAmount { get; set; } = 300000m;
         [Range(1, int.MaxValue)] public int ComboMinSupport { get; set; } = 2;
-        [Range(0, 1)] public decimal ComboMinConfidence { get; set; } = 0.20m;
+        [Range(0, 100)] public decimal ComboMinConfidencePercent { get; set; } = 20m;
         [Range(0, 1000000000)] public decimal ComboMinUtility { get; set; } = 100000m;
         [Range(1, 365)] public int ComboValidityDays { get; set; } = 14;
         [Range(1, 1000000)] public int ComboUsageLimit { get; set; } = 100;
