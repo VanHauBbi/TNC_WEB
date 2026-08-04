@@ -1,5 +1,6 @@
 using System;
 using System.Globalization;
+using System.Net;
 using System.Web.Mvc;
 using WebBanHang.Models;
 using WebBanHang.Services;
@@ -77,6 +78,11 @@ namespace WebBanHang.Areas.Admin.Controllers
             ReadInt(form, "ComboUsageLimit", "Số đơn sử dụng combo tối đa", value => settings.ComboUsageLimit = value);
             ReadDecimal(form, "ComboMinimumMarginPct", "Lợi nhuận combo phải giữ lại", value => settings.ComboMinimumMarginPct = value);
 
+            if (settings.PersonalMinimumMarginPct != 10m && settings.PersonalMinimumMarginPct != 5m && settings.PersonalMinimumMarginPct != 2m)
+                ModelState.AddModelError("PersonalMinimumMarginPct", "Vui lòng chọn một chế độ bảo vệ lợi nhuận voucher.");
+            if (settings.ComboMinimumMarginPct != 10m && settings.ComboMinimumMarginPct != 5m && settings.ComboMinimumMarginPct != 2m)
+                ModelState.AddModelError("ComboMinimumMarginPct", "Vui lòng chọn một chế độ bảo vệ lợi nhuận combo.");
+
             TryValidateModel(settings);
             return settings;
         }
@@ -133,6 +139,126 @@ namespace WebBanHang.Areas.Admin.Controllers
             {
                 var count = new MarketingSellingService(db).GenerateComboOffers(Session["UserName"] as string);
                 TempData["SuccessMessage"] = "Đã tạo " + count + " combo mua chung mới. Mỗi combo chỉ giảm một lần trên tổng đơn.";
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
+            }
+            return RedirectToAction("Index");
+        }
+
+        public ActionResult PersonalVoucherDetails(int? id)
+        {
+            if (!id.HasValue) return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+            var model = new MarketingSellingService(db).GetPersonalVoucherAdmin(id.Value);
+            if (model == null) return HttpNotFound();
+            return View(model);
+        }
+
+        public ActionResult EditPersonalVoucher(int? id)
+        {
+            if (!id.HasValue) return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+            var model = new MarketingSellingService(db).GetPersonalVoucherEdit(id.Value);
+            if (model == null) return HttpNotFound();
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult EditPersonalVoucher(PersonalVoucherEditVM model)
+        {
+            if (!ModelState.IsValid) return View(model);
+            try
+            {
+                var savedDiscount = new MarketingSellingService(db).UpdatePersonalVoucher(model);
+                TempData["SuccessMessage"] = savedDiscount < model.DiscountAmount
+                    ? "Đã lưu voucher. Hệ thống tự hạ mức giảm còn " + savedDiscount.ToString("N0") + " ₫ để bảo vệ lợi nhuận FIFO."
+                    : "Đã cập nhật voucher cá nhân.";
+                return RedirectToAction("PersonalVoucherDetails", new { id = model.CustomerCouponID });
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", ex.Message);
+                return View(model);
+            }
+        }
+
+        public ActionResult DeletePersonalVoucher(int? id)
+        {
+            if (!id.HasValue) return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+            var model = new MarketingSellingService(db).GetPersonalVoucherAdmin(id.Value);
+            if (model == null) return HttpNotFound();
+            return View(model);
+        }
+
+        [HttpPost, ActionName("DeletePersonalVoucher")]
+        [ValidateAntiForgeryToken]
+        public ActionResult DeletePersonalVoucherConfirmed(int id)
+        {
+            try
+            {
+                new MarketingSellingService(db).DeactivatePersonalVoucher(id);
+                TempData["SuccessMessage"] = "Voucher đã được ngừng áp dụng; lịch sử vẫn được giữ nguyên.";
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
+            }
+            return RedirectToAction("Index");
+        }
+
+        public ActionResult ComboDetails(int? id)
+        {
+            if (!id.HasValue) return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+            var model = new MarketingSellingService(db).GetComboOfferAdmin(id.Value);
+            if (model == null) return HttpNotFound();
+            return View(model);
+        }
+
+        public ActionResult EditCombo(int? id)
+        {
+            if (!id.HasValue) return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+            var model = new MarketingSellingService(db).GetComboOfferEdit(id.Value);
+            if (model == null) return HttpNotFound();
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult EditCombo(ComboOfferEditVM model)
+        {
+            if (!ModelState.IsValid) return View(model);
+            try
+            {
+                var savedDiscount = new MarketingSellingService(db).UpdateComboOffer(model);
+                TempData["SuccessMessage"] = savedDiscount < model.DiscountAmount
+                    ? "Đã lưu combo. Hệ thống tự hạ mức giảm còn " + savedDiscount.ToString("N0") + " ₫ để bảo vệ lợi nhuận FIFO."
+                    : "Đã cập nhật combo mua chung.";
+                return RedirectToAction("ComboDetails", new { id = model.ComboOfferID });
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", ex.Message);
+                return View(model);
+            }
+        }
+
+        public ActionResult DeleteCombo(int? id)
+        {
+            if (!id.HasValue) return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+            var model = new MarketingSellingService(db).GetComboOfferAdmin(id.Value);
+            if (model == null) return HttpNotFound();
+            return View(model);
+        }
+
+        [HttpPost, ActionName("DeleteCombo")]
+        [ValidateAntiForgeryToken]
+        public ActionResult DeleteComboConfirmed(int id)
+        {
+            try
+            {
+                new MarketingSellingService(db).DeactivateComboOffer(id);
+                TempData["SuccessMessage"] = "Combo đã được ngừng áp dụng; lịch sử vẫn được giữ nguyên.";
             }
             catch (Exception ex)
             {

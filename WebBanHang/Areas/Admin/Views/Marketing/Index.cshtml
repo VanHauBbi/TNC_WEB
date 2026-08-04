@@ -1,5 +1,6 @@
 @model WebBanHang.Models.ViewModel.MarketingDashboardVM
 @using System.Globalization
+@using System.Collections.Generic
 @{
     ViewBag.Title = "Marketing Selling";
     Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
@@ -71,8 +72,14 @@
                                     <div class="form-text">Không phát lại voucher cho cùng sản phẩm trong thời gian này.</div>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label fw-semibold">Lợi nhuận phải giữ lại</label>
-                                    <div class="input-group">@Html.TextBox("PersonalMinimumMarginPct", Model.Settings.PersonalMinimumMarginPct.ToString("0.##", CultureInfo.InvariantCulture), new { @class = "form-control", type = "number", step = "0.01", min = "0", max = "100" })<span class="input-group-text">%</span></div>
+                                    <label class="form-label fw-semibold">Chế độ bảo vệ lợi nhuận</label>
+                                    @Html.DropDownList("PersonalMinimumMarginPct", new List<SelectListItem>
+                                    {
+                                        new SelectListItem { Text = "An toàn – giữ tối thiểu 10%", Value = "10", Selected = Model.Settings.PersonalMinimumMarginPct == 10m },
+                                        new SelectListItem { Text = "Cân bằng – giữ tối thiểu 5%", Value = "5", Selected = Model.Settings.PersonalMinimumMarginPct != 10m && Model.Settings.PersonalMinimumMarginPct != 2m },
+                                        new SelectListItem { Text = "Đẩy bán – giữ tối thiểu 2%", Value = "2", Selected = Model.Settings.PersonalMinimumMarginPct == 2m }
+                                    }, new { @class = "form-select" })
+                                    <div class="form-text">Hệ thống tự tính chi phí FIFO và tự hạ tiền giảm khi cần.</div>
                                 </div>
                             </div>
                         </div>
@@ -116,8 +123,14 @@
                                     <div class="input-group">@Html.TextBox("ComboUsageLimit", Model.Settings.ComboUsageLimit, new { @class = "form-control", type = "number", min = "1" })<span class="input-group-text">đơn</span></div>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label fw-semibold">Lợi nhuận phải giữ lại sau giảm</label>
-                                    <div class="input-group">@Html.TextBox("ComboMinimumMarginPct", Model.Settings.ComboMinimumMarginPct.ToString("0.##", CultureInfo.InvariantCulture), new { @class = "form-control", type = "number", step = "0.01", min = "0", max = "100" })<span class="input-group-text">%</span></div>
+                                    <label class="form-label fw-semibold">Chế độ bảo vệ lợi nhuận</label>
+                                    @Html.DropDownList("ComboMinimumMarginPct", new List<SelectListItem>
+                                    {
+                                        new SelectListItem { Text = "An toàn – giữ tối thiểu 10%", Value = "10", Selected = Model.Settings.ComboMinimumMarginPct == 10m },
+                                        new SelectListItem { Text = "Cân bằng – giữ tối thiểu 5%", Value = "5", Selected = Model.Settings.ComboMinimumMarginPct != 10m && Model.Settings.ComboMinimumMarginPct != 2m },
+                                        new SelectListItem { Text = "Đẩy bán – giữ tối thiểu 2%", Value = "2", Selected = Model.Settings.ComboMinimumMarginPct == 2m }
+                                    }, new { @class = "form-select" })
+                                    <div class="form-text">Không cần tự tính margin; hệ thống kiểm tra FIFO khi tạo và khi thanh toán.</div>
                                 </div>
                             </div>
                         </div>
@@ -148,7 +161,7 @@
         <div class="card-header bg-white"><strong>Voucher cá nhân gần đây</strong></div>
         <div class="table-responsive">
             <table class="table table-hover mb-0">
-                <thead><tr><th>Mã</th><th>Sản phẩm</th><th>Điểm</th><th>Kích hoạt bởi</th><th>Giảm</th><th>Trạng thái</th><th>Hết hạn</th></tr></thead>
+                <thead><tr><th>Mã</th><th>Sản phẩm</th><th>Điểm</th><th>Kích hoạt bởi</th><th>Giảm</th><th>Trạng thái</th><th>Hết hạn</th><th class="text-end">Quản lý</th></tr></thead>
                 <tbody>
                 @foreach (var item in Model.RecentPersonalVouchers)
                 {
@@ -156,6 +169,14 @@
                         <td><code>@item.Code</code></td><td>@item.ProductName</td><td>@item.InterestScore</td>
                         <td>@item.TriggerType</td><td>@item.DiscountAmount.ToString("N0") ₫</td>
                         <td>@item.Status</td><td>@item.ExpiresAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                        <td class="text-end text-nowrap">
+                            <a class="btn btn-sm btn-outline-info" href="@Url.Action("PersonalVoucherDetails", "Marketing", new { area = "Admin", id = item.CustomerCouponID })"><i class="fa-solid fa-eye"></i> Chi tiết</a>
+                            @if (item.Status != "USED")
+                            {
+                                <a class="btn btn-sm btn-outline-primary" href="@Url.Action("EditPersonalVoucher", "Marketing", new { area = "Admin", id = item.CustomerCouponID })"><i class="fa-solid fa-pen"></i> Sửa</a>
+                            }
+                            <a class="btn btn-sm btn-outline-danger" href="@Url.Action("DeletePersonalVoucher", "Marketing", new { area = "Admin", id = item.CustomerCouponID })"><i class="fa-solid fa-ban"></i> Ngừng</a>
+                        </td>
                     </tr>
                 }
                 </tbody>
@@ -164,17 +185,28 @@
     </div>
 
     <div class="card shadow-sm border-0">
-        <div class="card-header bg-white"><strong>Combo đang hoạt động</strong></div>
+        <div class="card-header bg-white"><strong>Combo gần đây</strong> <span class="text-muted small">(bao gồm cả combo đã ngừng)</span></div>
         <div class="table-responsive">
             <table class="table table-hover mb-0">
-                <thead><tr><th>Mã</th><th>Sản phẩm A</th><th>Sản phẩm B</th><th>Số đơn mua chung</th><th>Tỷ lệ mua kèm</th><th>LN trung bình của cặp</th><th>Giảm một lần/đơn</th></tr></thead>
+                <thead><tr><th>Mã</th><th>Sản phẩm A</th><th>Sản phẩm B</th><th>Số đơn mua chung</th><th>Tỷ lệ mua kèm</th><th>LN trung bình</th><th>Giảm/đơn</th><th>Trạng thái</th><th class="text-end">Quản lý</th></tr></thead>
                 <tbody>
-                @foreach (var item in Model.ActiveCombos)
+                @foreach (var item in Model.ManagedCombos)
                 {
                     <tr>
                         <td><code>@item.Code</code></td><td>@item.ProductNameA</td><td>@item.ProductNameB</td>
                         <td>@item.Support</td><td>@((item.Confidence * 100).ToString("N0"))%</td>
                         <td>@item.ActualUtility.ToString("N0") ₫</td><td>@item.DiscountAmount.ToString("N0") ₫</td>
+                        <td>
+                            @if (item.IsActive && item.EndDate > DateTime.Now && item.UsageLimit > 0)
+                            { <span class="badge bg-success">Đang hoạt động</span> }
+                            else
+                            { <span class="badge bg-secondary">Đã ngừng</span> }
+                        </td>
+                        <td class="text-end text-nowrap">
+                            <a class="btn btn-sm btn-outline-info" href="@Url.Action("ComboDetails", "Marketing", new { area = "Admin", id = item.ComboOfferID })"><i class="fa-solid fa-eye"></i> Chi tiết</a>
+                            <a class="btn btn-sm btn-outline-primary" href="@Url.Action("EditCombo", "Marketing", new { area = "Admin", id = item.ComboOfferID })"><i class="fa-solid fa-pen"></i> Sửa</a>
+                            <a class="btn btn-sm btn-outline-danger" href="@Url.Action("DeleteCombo", "Marketing", new { area = "Admin", id = item.ComboOfferID })"><i class="fa-solid fa-ban"></i> Ngừng</a>
+                        </td>
                     </tr>
                 }
                 </tbody>
