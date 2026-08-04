@@ -1,31 +1,30 @@
 @model WebBanHang.Models.ViewModel.PersonalVoucherEditVM
 @{
     ViewBag.Title = "Chỉnh sửa voucher cá nhân";
+    ViewBag.RemoveSpacing = true;
     Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
 }
-
-<div class="container-fluid py-3">
-    <div class="card shadow-sm border-0 mx-auto" style="max-width:850px">
-        <div class="card-header bg-white"><h4 class="mb-0"><i class="fa-solid fa-pen text-primary"></i> Chỉnh sửa voucher cá nhân</h4></div>
-        <div class="card-body p-4">
-            <div class="alert alert-info"><strong>Bảo vệ tự động:</strong> nếu số tiền nhập làm lợi nhuận FIFO thấp hơn chế độ đã chọn, hệ thống sẽ tự hạ tiền giảm khi lưu.</div>
+<link href="~/Content/Admin/marketing_admin.css" rel="stylesheet" />
+<div class="mk-page mk-form-shell">
+    <div class="mk-page-heading"><div><h3>Chỉnh sửa voucher cá nhân</h3><p>Chỉ thay đổi mức giảm, hạn dùng và trạng thái.</p></div><a class="mk-btn mk-btn-neutral" href="@Url.Action("PersonalVoucherDetails", new { id = Model.CustomerCouponID })"><i class="fa-solid fa-arrow-left"></i> Quay lại</a></div>
+    <div class="mk-form-card">
+        <div class="mk-form-header"><div class="mk-form-header-icon"><i class="fa-solid fa-user-tag"></i></div><div><h4>@Model.Code</h4><p>@Model.CustomerName · @Model.ProductName</p></div></div>
+        <div class="mk-form-body">
+            <div class="mk-safety-note"><i class="fa-solid fa-shield-halved me-2"></i><strong>Hệ thống tự bảo vệ lợi nhuận:</strong> mức giảm sẽ tự hạ nếu vượt ngân sách FIFO an toàn.</div>
             @using (Html.BeginForm())
             {
                 @Html.AntiForgeryToken()
-                @Html.HiddenFor(m => m.CustomerCouponID)
-                @Html.HiddenFor(m => m.Code)
-                @Html.HiddenFor(m => m.CustomerName)
-                @Html.HiddenFor(m => m.ProductName)
+                @Html.HiddenFor(m => m.CustomerCouponID) @Html.HiddenFor(m => m.Code) @Html.HiddenFor(m => m.CustomerName) @Html.HiddenFor(m => m.ProductName)
                 @Html.ValidationSummary(false, "", new { @class = "alert alert-danger" })
                 <div class="row g-3">
-                    <div class="col-md-6"><label class="form-label fw-bold">Mã voucher</label><input class="form-control" value="@Model.Code" readonly /></div>
-                    <div class="col-md-6"><label class="form-label fw-bold">Khách hàng</label><input class="form-control" value="@Model.CustomerName" readonly /></div>
-                    <div class="col-12"><label class="form-label fw-bold">Sản phẩm áp dụng</label><input class="form-control" value="@Model.ProductName" readonly /></div>
-                    <div class="col-md-6"><label class="form-label fw-bold">Số tiền giảm</label><div class="input-group">@Html.TextBoxFor(m => m.DiscountAmount, new { @class = "form-control", type = "number", min = "1000", step = "1000", Value = Model.DiscountAmount.ToString("0", System.Globalization.CultureInfo.InvariantCulture) })<span class="input-group-text">₫</span></div>@Html.ValidationMessageFor(m => m.DiscountAmount, "", new { @class = "text-danger" })</div>
-                    <div class="col-md-6"><label class="form-label fw-bold">Hạn sử dụng</label>@Html.TextBoxFor(m => m.ExpiresAt, "{0:yyyy-MM-ddTHH:mm}", new { @class = "form-control", type = "datetime-local" })@Html.ValidationMessageFor(m => m.ExpiresAt, "", new { @class = "text-danger" })</div>
-                    <div class="col-12"><div class="form-check form-switch">@Html.CheckBoxFor(m => m.IsActive, new { @class = "form-check-input" })<label class="form-check-label fw-bold" for="IsActive">Cho phép voucher tiếp tục hoạt động</label></div></div>
+                    <div class="col-md-6"><label class="form-label">Mã voucher</label><input class="form-control mk-readonly" value="@Model.Code" readonly /></div>
+                    <div class="col-md-6"><label class="form-label">Khách hàng</label><input class="form-control mk-readonly" value="@Model.CustomerName" readonly /></div>
+                    <div class="col-12"><label class="form-label">Sản phẩm áp dụng</label><input class="form-control mk-readonly" value="@Model.ProductName" readonly /></div>
+                    <div class="col-md-6"><label class="form-label">Số tiền giảm</label><div class="input-group">@Html.TextBoxFor(m => m.DiscountAmount, new { @class = "form-control", type = "number", min = "1000", step = "1000", Value = Model.DiscountAmount.ToString("0", System.Globalization.CultureInfo.InvariantCulture) })<span class="input-group-text">₫</span></div>@Html.ValidationMessageFor(m => m.DiscountAmount, "", new { @class = "text-danger small" })</div>
+                    <div class="col-md-6"><label class="form-label">Hạn sử dụng</label>@Html.TextBoxFor(m => m.ExpiresAt, "{0:yyyy-MM-ddTHH:mm}", new { @class = "form-control", type = "datetime-local" })@Html.ValidationMessageFor(m => m.ExpiresAt, "", new { @class = "text-danger small" })</div>
+                    <div class="col-12"><div class="form-check form-switch mt-2">@Html.CheckBoxFor(m => m.IsActive, new { @class = "form-check-input" })<label class="form-check-label fw-semibold" for="IsActive">Cho phép voucher tiếp tục hoạt động</label></div></div>
                 </div>
-                <div class="mt-4 d-flex gap-2"><button class="btn btn-primary" type="submit"><i class="fa-solid fa-floppy-disk"></i> Lưu thay đổi</button><a class="btn btn-secondary" href="@Url.Action("PersonalVoucherDetails", new { id = Model.CustomerCouponID })">Hủy</a></div>
+                <div class="mk-form-footer"><a class="mk-btn mk-btn-neutral" href="@Url.Action("PersonalVoucherDetails", new { id = Model.CustomerCouponID })">Hủy</a><button class="mk-btn mk-btn-solid" type="submit"><i class="fa-solid fa-floppy-disk"></i> Lưu thay đổi</button></div>
             }
         </div>
     </div>
