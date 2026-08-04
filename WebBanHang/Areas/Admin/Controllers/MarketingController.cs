@@ -34,8 +34,10 @@ namespace WebBanHang.Areas.Admin.Controllers
             }
             try
             {
-                new MarketingSellingService(db).SaveSettings(settings, Session["UserName"] as string);
-                TempData["SuccessMessage"] = "Đã lưu cấu hình Marketing Selling.";
+                var comboSettingsChanged = new MarketingSellingService(db).SaveSettings(settings, Session["UserName"] as string);
+                TempData["SuccessMessage"] = comboSettingsChanged
+                    ? "Đã lưu cấu hình. Các combo theo cấu hình cũ đã được ngừng; hãy bấm Tạo combo mua chung để sinh lại."
+                    : "Đã lưu cấu hình Marketing Selling.";
             }
             catch (Exception ex)
             {
@@ -67,7 +69,7 @@ namespace WebBanHang.Areas.Admin.Controllers
             try
             {
                 var count = new MarketingSellingService(db).GenerateComboOffers(Session["UserName"] as string);
-                TempData["SuccessMessage"] = "Đã tạo " + count + " combo mới từ luật Hybrid.";
+                TempData["SuccessMessage"] = "Đã tạo " + count + " combo mua chung mới. Mỗi combo chỉ giảm một lần trên tổng đơn.";
             }
             catch (Exception ex)
             {
