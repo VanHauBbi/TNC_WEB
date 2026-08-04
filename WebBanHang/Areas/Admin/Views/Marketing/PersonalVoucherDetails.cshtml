@@ -1,41 +1,50 @@
 @model WebBanHang.Models.ViewModel.PersonalVoucherAdminVM
 @{
     ViewBag.Title = "Chi tiết voucher cá nhân";
+    ViewBag.RemoveSpacing = true;
     Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
     var isRunning = Model.CouponIsActive && Model.Status != "EXPIRED" && Model.Status != "USED" && Model.ExpiresAt > DateTime.Now;
+    var protectionMode = Model.MinimumMarginPct >= 10m ? "An toàn" : Model.MinimumMarginPct <= 2m ? "Đẩy bán" : "Cân bằng";
 }
+<link href="~/Content/Admin/marketing_admin.css" rel="stylesheet" />
 
-<div class="container-fluid py-3">
-    @if (TempData["SuccessMessage"] != null) { <div class="alert alert-success">@TempData["SuccessMessage"]</div> }
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <div><h3 class="mb-1"><i class="fa-solid fa-user-tag text-primary"></i> @Model.Code</h3><div class="text-muted">Voucher dành riêng cho một khách hàng và một sản phẩm.</div></div>
-        <div class="d-flex gap-2">
-            @if (Model.Status != "USED") { <a class="btn btn-primary" href="@Url.Action("EditPersonalVoucher", new { id = Model.CustomerCouponID })"><i class="fa-solid fa-pen"></i> Chỉnh sửa</a> }
-            <a class="btn btn-outline-danger" href="@Url.Action("DeletePersonalVoucher", new { id = Model.CustomerCouponID })"><i class="fa-solid fa-ban"></i> Ngừng áp dụng</a>
-            <a class="btn btn-secondary" href="@Url.Action("Index")">Quay lại</a>
+<div class="mk-page mk-detail-shell">
+    @if (TempData["SuccessMessage"] != null) { <div class="mk-toast"><div class="d-flex gap-3 align-items-center"><i class="fa-solid fa-circle-check text-success"></i><div>@TempData["SuccessMessage"]</div></div></div> }
+    <div class="mk-page-heading">
+        <div><h3><i class="fa-solid fa-user-tag text-primary me-2"></i>Chi tiết voucher cá nhân</h3><p>Mã <span class="mk-code">@Model.Code</span></p></div>
+        <div class="mk-toolbar">
+            @if (Model.Status != "USED") { <a class="mk-btn mk-btn-warning" href="@Url.Action("EditPersonalVoucher", new { id = Model.CustomerCouponID })"><i class="fa-solid fa-pen"></i> Chỉnh sửa</a> }
+            <a class="mk-btn mk-btn-danger" href="@Url.Action("DeletePersonalVoucher", new { id = Model.CustomerCouponID })"><i class="fa-solid fa-ban"></i> Ngừng áp dụng</a>
+            <a class="mk-btn mk-btn-neutral" href="@Url.Action("Index")"><i class="fa-solid fa-arrow-left"></i> Quay lại</a>
         </div>
     </div>
 
-    <div class="row g-3">
-        <div class="col-lg-6"><div class="card shadow-sm border-0 h-100"><div class="card-header bg-white fw-bold">Thông tin áp dụng</div><div class="card-body">
-            <dl class="row mb-0">
-                <dt class="col-sm-4">Khách hàng</dt><dd class="col-sm-8">@Model.CustomerName <div class="text-muted small">@Model.CustomerEmail</div></dd>
-                <dt class="col-sm-4">Sản phẩm</dt><dd class="col-sm-8">@Model.ProductName</dd>
-                <dt class="col-sm-4">Tiền giảm</dt><dd class="col-sm-8 text-danger fw-bold">@Model.DiscountAmount.ToString("N0") ₫</dd>
-                <dt class="col-sm-4">Điểm quan tâm</dt><dd class="col-sm-8">@Model.InterestScore.ToString("0.##")</dd>
-                <dt class="col-sm-4">Nguồn hành vi</dt><dd class="col-sm-8">@Model.TriggerType</dd>
-                <dt class="col-sm-4">Bảo vệ lợi nhuận</dt><dd class="col-sm-8">@(Model.MinimumMarginPct >= 10m ? "An toàn" : Model.MinimumMarginPct <= 2m ? "Đẩy bán" : "Cân bằng") <div class="text-muted small">Hệ thống tự tính theo FIFO</div></dd>
-            </dl>
-        </div></div></div>
-        <div class="col-lg-6"><div class="card shadow-sm border-0 h-100"><div class="card-header bg-white fw-bold">Trạng thái và lịch sử</div><div class="card-body">
-            <dl class="row mb-0">
-                <dt class="col-sm-4">Trạng thái</dt><dd class="col-sm-8">@if (isRunning) { <span class="badge bg-success">Đang hoạt động</span> } else { <span class="badge bg-secondary">@Model.Status</span> }</dd>
-                <dt class="col-sm-4">Ngày phát</dt><dd class="col-sm-8">@Model.AssignedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
-                <dt class="col-sm-4">Hết hạn</dt><dd class="col-sm-8">@Model.ExpiresAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
-                <dt class="col-sm-4">Đã xem</dt><dd class="col-sm-8">@(Model.ViewedAt.HasValue ? Model.ViewedAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm") : "Chưa")</dd>
-                <dt class="col-sm-4">Đã thêm giỏ</dt><dd class="col-sm-8">@(Model.AddedToCartAt.HasValue ? Model.AddedToCartAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm") : "Chưa")</dd>
-                <dt class="col-sm-4">Đơn sử dụng</dt><dd class="col-sm-8">@(Model.OrderID.HasValue ? "#" + Model.OrderID.Value : "Chưa sử dụng")</dd>
-            </dl>
-        </div></div></div>
+    <div class="mk-summary-strip">
+        <div class="mk-summary-item"><div class="mk-summary-label">Tiền giảm</div><div class="mk-summary-value text-danger">@Model.DiscountAmount.ToString("N0") ₫</div></div>
+        <div class="mk-summary-item"><div class="mk-summary-label">Trạng thái</div><div class="mk-summary-value">@if (Model.Status == "USED") { <span class="mk-badge info">Đã sử dụng</span> } else if (isRunning) { <span class="mk-badge success">Đang hoạt động</span> } else { <span class="mk-badge muted">Đã ngừng</span> }</div></div>
+        <div class="mk-summary-item"><div class="mk-summary-label">Bảo vệ lợi nhuận</div><div class="mk-summary-value">@protectionMode <span class="text-muted fw-normal">· tự tính FIFO</span></div></div>
+    </div>
+
+    <div class="mk-info-grid">
+        <section class="mk-info-card">
+            <div class="mk-info-card-title"><i class="fa-solid fa-user me-2 text-primary"></i>Đối tượng áp dụng</div>
+            <div class="mk-info-list">
+                <div class="mk-info-row"><div class="mk-info-label">Khách hàng</div><div class="mk-info-value">@Model.CustomerName<div class="text-muted small mt-1">@Model.CustomerEmail</div></div></div>
+                <div class="mk-info-row"><div class="mk-info-label">Sản phẩm</div><div class="mk-info-value"><div class="mk-product"><img class="mk-product-img" src="@Model.ProductImage" alt="" /><span class="mk-product-name">@Model.ProductName</span></div></div></div>
+                <div class="mk-info-row"><div class="mk-info-label">Điểm quan tâm</div><div class="mk-info-value">@Model.InterestScore.ToString("0.##") điểm</div></div>
+                <div class="mk-info-row"><div class="mk-info-label">Hành vi kích hoạt</div><div class="mk-info-value">@Model.TriggerType</div></div>
+            </div>
+        </section>
+        <section class="mk-info-card">
+            <div class="mk-info-card-title"><i class="fa-solid fa-clock-rotate-left me-2 text-primary"></i>Lịch sử voucher</div>
+            <div class="mk-info-list">
+                <div class="mk-info-row"><div class="mk-info-label">Ngày phát</div><div class="mk-info-value">@Model.AssignedAt.ToString("dd/MM/yyyy HH:mm")</div></div>
+                <div class="mk-info-row"><div class="mk-info-label">Hết hạn</div><div class="mk-info-value">@Model.ExpiresAt.ToString("dd/MM/yyyy HH:mm")</div></div>
+                <div class="mk-info-row"><div class="mk-info-label">Khách đã xem</div><div class="mk-info-value">@(Model.ViewedAt.HasValue ? Model.ViewedAt.Value.ToString("dd/MM/yyyy HH:mm") : "Chưa xem")</div></div>
+                <div class="mk-info-row"><div class="mk-info-label">Đã thêm giỏ</div><div class="mk-info-value">@(Model.AddedToCartAt.HasValue ? Model.AddedToCartAt.Value.ToString("dd/MM/yyyy HH:mm") : "Chưa thêm")</div></div>
+                <div class="mk-info-row"><div class="mk-info-label">Đơn sử dụng</div><div class="mk-info-value">@(Model.OrderID.HasValue ? "#" + Model.OrderID.Value : "Chưa sử dụng")</div></div>
+            </div>
+        </section>
     </div>
 </div>
+@section Scripts { <script>$(function(){if($('.mk-toast').length)setTimeout(function(){$('.mk-toast').fadeOut(350);},5000);});</script> }
