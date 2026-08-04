@@ -124,7 +124,7 @@
                                     <div id="selectedVoucherDisplay" class="text-muted small">
                                         @if (Model.AutomaticCombo != null && Model.AutomaticCombo.IsValid)
                                         {
-                                            <span class="text-success fw-bold">Combo tốt nhất đang được áp dụng tự động</span>
+                                            <span class="text-success fw-bold">Combo tốt nhất đang giảm một lần trên tổng đơn</span>
                                         }
                                         else
                                         {
@@ -169,7 +169,7 @@
                         </div>
 
                         <div class="calc-row text-danger" id="voucherRow" style="@(Model.AutomaticCombo != null && Model.AutomaticCombo.IsValid ? "" : "display: none;")">
-                            <span id="promotionDiscountLabel">@(Model.AutomaticCombo != null ? "Giảm combo tự động:" : "Giảm ưu đãi:")</span>
+                            <span id="promotionDiscountLabel">@(Model.AutomaticCombo != null ? "Giảm combo trên tổng đơn (1 lần):" : "Giảm ưu đãi:")</span>
                             <span class="price-value fw-bold" id="voucherDiscountDisplay">-@((Model.AutomaticCombo?.DiscountAmount ?? 0m).ToString("N0")) VNĐ</span>
                         </div>
 
@@ -516,7 +516,7 @@
                             $("#AppliedVoucherCode").val(code);
                             $("#VoucherDiscount").val(res.discountAmount);
 
-                            $("#promotionDiscountLabel").text(res.promotionType === 'COMBO' ? 'Giảm combo tự động:' : 'Giảm voucher:');
+                            $("#promotionDiscountLabel").text(res.promotionType === 'COMBO' ? 'Giảm combo trên tổng đơn (1 lần):' : 'Giảm voucher:');
                             $("#voucherDiscountDisplay").text("-" + formatCurrency(res.discountAmount));
                             $("#voucherRow").slideDown();
 
