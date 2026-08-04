@@ -544,6 +544,279 @@ namespace WebBanHang.Services
                 new SqlParameter("@customerId", customerId), new SqlParameter("@productId", productId));
         }
 
+        public PersonalVoucherAdminVM GetPersonalVoucherAdmin(int customerCouponId)
+        {
+            EnsureSchema();
+            var item = db.Database.SqlQuery<PersonalVoucherAdminVM>(@"
+                SELECT cc.CustomerCouponID, cc.CouponID, cc.CustomerID, cc.TargetProductID,
+                       customer.CustomerName, customer.CustomerEmail,
+                       product.ProductName, product.ProductImage,
+                       coupon.CouponName, coupon.Code,
+                       CAST(COALESCE(coupon.FixedDiscountAmount, coupon.MaxDiscountAmount, 0) AS DECIMAL(18,3)) DiscountAmount,
+                       cc.InterestScore, cc.TriggerType, cc.Status,
+                       CAST(cc.AssignedAt AS DATETIME) AssignedAt,
+                       CAST(cc.ViewedAt AS DATETIME) ViewedAt,
+                       CAST(cc.ClickedAt AS DATETIME) ClickedAt,
+                       CAST(cc.AddedToCartAt AS DATETIME) AddedToCartAt,
+                       CAST(cc.UsedAt AS DATETIME) UsedAt,
+                       CAST(cc.ExpiresAt AS DATETIME) ExpiresAt,
+                       cc.OrderID, coupon.UsageLimit,
+                       CAST(COALESCE(campaign.MinimumMarginPct, 5) AS DECIMAL(5,2)) MinimumMarginPct,
+                       CAST(coupon.IsActive AS BIT) CouponIsActive
+                FROM dbo.CustomerCoupon cc
+                INNER JOIN dbo.Coupon coupon ON coupon.CouponID = cc.CouponID
+                INNER JOIN dbo.Customer customer ON customer.CustomerID = cc.CustomerID
+                LEFT JOIN dbo.Product product ON product.ProductID = cc.TargetProductID
+                LEFT JOIN dbo.MarketingCampaign campaign ON campaign.CampaignID = coupon.CampaignID
+                WHERE cc.CustomerCouponID = @id;",
+                new SqlParameter("@id", customerCouponId)).FirstOrDefault();
+            if (item != null)
+            {
+                item.AssignedAt = AsLocalTime(item.AssignedAt);
+                item.ViewedAt = AsLocalTime(item.ViewedAt);
+                item.ClickedAt = AsLocalTime(item.ClickedAt);
+                item.AddedToCartAt = AsLocalTime(item.AddedToCartAt);
+                item.UsedAt = AsLocalTime(item.UsedAt);
+                item.ExpiresAt = AsLocalTime(item.ExpiresAt);
+            }
+            return item;
+        }
+
+        public PersonalVoucherEditVM GetPersonalVoucherEdit(int customerCouponId)
+        {
+            var item = GetPersonalVoucherAdmin(customerCouponId);
+            if (item == null) return null;
+            return new PersonalVoucherEditVM
+            {
+                CustomerCouponID = item.CustomerCouponID,
+                Code = item.Code,
+                CustomerName = item.CustomerName,
+                ProductName = item.ProductName,
+                DiscountAmount = item.DiscountAmount,
+                ExpiresAt = item.ExpiresAt,
+                IsActive = item.CouponIsActive && item.Status != "EXPIRED" && item.Status != "USED"
+            };
+        }
+
+        public decimal UpdatePersonalVoucher(PersonalVoucherEditVM model)
+        {
+            if (model == null) throw new ArgumentNullException(nameof(model));
+            var current = GetPersonalVoucherAdmin(model.CustomerCouponID);
+            if (current == null) throw new InvalidOperationException("Không tìm thấy voucher cá nhân.");
+            if (current.Status == "USED") throw new InvalidOperationException("Voucher đã sử dụng chỉ được xem lịch sử, không thể chỉnh sửa.");
+
+            var product = current.TargetProductID.HasValue ? db.Products.Find(current.TargetProductID.Value) : null;
+            if (product == null) throw new InvalidOperationException("Không tìm thấy sản phẩm của voucher.");
+            var requestedItems = new List<CartViewItem>
+            {
+                new CartViewItem
+                {
+                    ProductID = product.ProductID, ProductName = product.ProductName, Quantity = 1,
+                    UnitPrice = product.ProductPrice, OriginalPrice = product.ProductPrice
+                }
+            };
+            var safeDiscount = ApplyMarginGuard(model.DiscountAmount, requestedItems, current.MinimumMarginPct);
+            if (safeDiscount <= 0m)
+                throw new InvalidOperationException("Sản phẩm không còn đủ lợi nhuận FIFO để áp dụng voucher.");
+
+            var expiresLocal = DateTime.SpecifyKind(model.ExpiresAt, DateTimeKind.Local);
+            var expiresUtc = expiresLocal.ToUniversalTime();
+            if (model.IsActive && expiresUtc <= DateTime.UtcNow)
+                throw new InvalidOperationException("Voucher đang hoạt động phải có hạn sử dụng trong tương lai.");
+            if (model.IsActive)
+            {
+                var otherActive = db.Database.SqlQuery<int>(@"
+                    SELECT COUNT(1) FROM dbo.CustomerCoupon
+                    WHERE CustomerID = @customerId AND CustomerCouponID <> @id
+                      AND Status IN ('ISSUED','VIEWED','CLICKED','CARTED')
+                      AND ExpiresAt > SYSUTCDATETIME();",
+                    new SqlParameter("@customerId", current.CustomerID),
+                    new SqlParameter("@id", current.CustomerCouponID)).Single();
+                if (otherActive > 0)
+                    throw new InvalidOperationException("Khách hàng đã có một voucher khác đang hoạt động.");
+            }
+
+            db.Database.ExecuteSqlCommand(@"
+                UPDATE dbo.Coupon
+                SET FixedDiscountAmount = @discount, MaxDiscountAmount = @discount,
+                    ExpiryDate = @expiresLocal, IsActive = @active
+                WHERE CouponID = @couponId;
+
+                UPDATE dbo.CustomerCoupon
+                SET ExpiresAt = @expiresUtc,
+                    Status = CASE
+                        WHEN @active = 0 THEN 'EXPIRED'
+                        WHEN Status = 'EXPIRED' THEN 'ISSUED'
+                        ELSE Status END
+                WHERE CustomerCouponID = @id;",
+                new SqlParameter("@discount", safeDiscount),
+                new SqlParameter("@expiresLocal", expiresLocal),
+                new SqlParameter("@expiresUtc", expiresUtc),
+                new SqlParameter("@active", model.IsActive),
+                new SqlParameter("@couponId", current.CouponID),
+                new SqlParameter("@id", current.CustomerCouponID));
+            return safeDiscount;
+        }
+
+        public bool DeactivatePersonalVoucher(int customerCouponId)
+        {
+            EnsureSchema();
+            return db.Database.ExecuteSqlCommand(@"
+                UPDATE coupon SET IsActive = 0
+                FROM dbo.Coupon coupon
+                INNER JOIN dbo.CustomerCoupon cc ON cc.CouponID = coupon.CouponID
+                WHERE cc.CustomerCouponID = @id;
+
+                UPDATE dbo.CustomerCoupon SET Status = 'EXPIRED'
+                WHERE CustomerCouponID = @id AND Status <> 'USED';",
+                new SqlParameter("@id", customerCouponId)) > 0;
+        }
+
+        public ComboOfferAdminVM GetComboOfferAdmin(int comboOfferId)
+        {
+            EnsureSchema();
+            var item = db.Database.SqlQuery<ComboOfferAdminVM>(@"
+                SELECT combo.ComboOfferID, combo.ProductID_A, combo.ProductID_B,
+                       productA.ProductName ProductNameA, productB.ProductName ProductNameB,
+                       productA.ProductImage ProductImageA, productB.ProductImage ProductImageB,
+                       productA.ProductPrice ProductPriceA, productB.ProductPrice ProductPriceB,
+                       combo.Code, combo.DiscountAmount, combo.Support, combo.Confidence,
+                       combo.ActualUtility, combo.MinimumMarginPct,
+                       CAST(combo.StartDate AS DATETIME) StartDate,
+                       CAST(combo.EndDate AS DATETIME) EndDate,
+                       combo.UsageLimit, combo.IsActive,
+                       CAST(combo.CreatedAt AS DATETIME) CreatedAt,
+                       (SELECT COUNT(1) FROM dbo.OrderPromotion op WHERE op.ComboOfferID = combo.ComboOfferID) UsedOrderCount,
+                       CAST(COALESCE((SELECT SUM(op.DiscountAmount) FROM dbo.OrderPromotion op WHERE op.ComboOfferID = combo.ComboOfferID), 0) AS DECIMAL(18,3)) UsedDiscountTotal
+                FROM dbo.ComboOffer combo
+                INNER JOIN dbo.Product productA ON productA.ProductID = combo.ProductID_A
+                INNER JOIN dbo.Product productB ON productB.ProductID = combo.ProductID_B
+                WHERE combo.ComboOfferID = @id;",
+                new SqlParameter("@id", comboOfferId)).FirstOrDefault();
+            if (item != null)
+            {
+                item.StartDate = AsLocalTime(item.StartDate);
+                item.EndDate = AsLocalTime(item.EndDate);
+                item.CreatedAt = AsLocalTime(item.CreatedAt);
+            }
+            return item;
+        }
+
+        public List<ComboOfferAdminVM> GetRecentComboOffersAdmin()
+        {
+            EnsureSchema();
+            var items = db.Database.SqlQuery<ComboOfferAdminVM>(@"
+                SELECT TOP 30 combo.ComboOfferID, combo.ProductID_A, combo.ProductID_B,
+                       productA.ProductName ProductNameA, productB.ProductName ProductNameB,
+                       productA.ProductImage ProductImageA, productB.ProductImage ProductImageB,
+                       productA.ProductPrice ProductPriceA, productB.ProductPrice ProductPriceB,
+                       combo.Code, combo.DiscountAmount, combo.Support, combo.Confidence,
+                       combo.ActualUtility, combo.MinimumMarginPct,
+                       CAST(combo.StartDate AS DATETIME) StartDate,
+                       CAST(combo.EndDate AS DATETIME) EndDate,
+                       combo.UsageLimit, combo.IsActive,
+                       CAST(combo.CreatedAt AS DATETIME) CreatedAt,
+                       (SELECT COUNT(1) FROM dbo.OrderPromotion op WHERE op.ComboOfferID = combo.ComboOfferID) UsedOrderCount,
+                       CAST(COALESCE((SELECT SUM(op.DiscountAmount) FROM dbo.OrderPromotion op WHERE op.ComboOfferID = combo.ComboOfferID), 0) AS DECIMAL(18,3)) UsedDiscountTotal
+                FROM dbo.ComboOffer combo
+                INNER JOIN dbo.Product productA ON productA.ProductID = combo.ProductID_A
+                INNER JOIN dbo.Product productB ON productB.ProductID = combo.ProductID_B
+                ORDER BY combo.CreatedAt DESC, combo.ComboOfferID DESC;").ToList();
+            foreach (var item in items)
+            {
+                item.StartDate = AsLocalTime(item.StartDate);
+                item.EndDate = AsLocalTime(item.EndDate);
+                item.CreatedAt = AsLocalTime(item.CreatedAt);
+            }
+            return items;
+        }
+
+        public ComboOfferEditVM GetComboOfferEdit(int comboOfferId)
+        {
+            var item = GetComboOfferAdmin(comboOfferId);
+            if (item == null) return null;
+            return new ComboOfferEditVM
+            {
+                ComboOfferID = item.ComboOfferID,
+                Code = item.Code,
+                ProductNameA = item.ProductNameA,
+                ProductNameB = item.ProductNameB,
+                DiscountAmount = item.DiscountAmount,
+                StartDate = item.StartDate,
+                EndDate = item.EndDate,
+                UsageLimit = item.UsageLimit,
+                IsActive = item.IsActive
+            };
+        }
+
+        public decimal UpdateComboOffer(ComboOfferEditVM model)
+        {
+            if (model == null) throw new ArgumentNullException(nameof(model));
+            var current = GetComboOfferAdmin(model.ComboOfferID);
+            if (current == null) throw new InvalidOperationException("Không tìm thấy combo.");
+
+            var products = db.Products.Where(p => p.ProductID == current.ProductID_A || p.ProductID == current.ProductID_B).ToList();
+            if (products.Count != 2) throw new InvalidOperationException("Không tìm thấy đầy đủ sản phẩm của combo.");
+            var requestedItems = products.Select(product => new CartViewItem
+            {
+                ProductID = product.ProductID, ProductName = product.ProductName, Quantity = 1,
+                UnitPrice = product.ProductPrice, OriginalPrice = product.ProductPrice
+            }).ToList();
+            var safeDiscount = ApplyMarginGuard(model.DiscountAmount, requestedItems, current.MinimumMarginPct, true);
+            if (safeDiscount <= 0m)
+                throw new InvalidOperationException("Cặp sản phẩm không còn đủ lợi nhuận FIFO để áp dụng combo.");
+
+            var startUtc = DateTime.SpecifyKind(model.StartDate, DateTimeKind.Local).ToUniversalTime();
+            var endUtc = DateTime.SpecifyKind(model.EndDate, DateTimeKind.Local).ToUniversalTime();
+            if (endUtc <= startUtc) throw new InvalidOperationException("Ngày kết thúc phải sau ngày bắt đầu.");
+            if (model.IsActive && (endUtc <= DateTime.UtcNow || model.UsageLimit <= 0))
+                throw new InvalidOperationException("Combo hoạt động phải còn hạn và còn lượt sử dụng.");
+            if (model.IsActive)
+            {
+                var duplicateActive = db.Database.SqlQuery<int>(@"
+                    SELECT COUNT(1) FROM dbo.ComboOffer
+                    WHERE ComboOfferID <> @id AND IsActive = 1 AND EndDate > SYSUTCDATETIME()
+                      AND ((ProductID_A = @a AND ProductID_B = @b)
+                        OR (ProductID_A = @b AND ProductID_B = @a));",
+                    new SqlParameter("@id", current.ComboOfferID),
+                    new SqlParameter("@a", current.ProductID_A),
+                    new SqlParameter("@b", current.ProductID_B)).Single();
+                if (duplicateActive > 0)
+                    throw new InvalidOperationException("Cặp sản phẩm này đã có một combo khác đang hoạt động.");
+            }
+
+            db.Database.ExecuteSqlCommand(@"
+                UPDATE dbo.ComboOffer
+                SET DiscountAmount = @discount, StartDate = @startDate, EndDate = @endDate,
+                    UsageLimit = @usageLimit, IsActive = @active
+                WHERE ComboOfferID = @id;",
+                new SqlParameter("@discount", safeDiscount),
+                new SqlParameter("@startDate", startUtc),
+                new SqlParameter("@endDate", endUtc),
+                new SqlParameter("@usageLimit", model.UsageLimit),
+                new SqlParameter("@active", model.IsActive),
+                new SqlParameter("@id", model.ComboOfferID));
+            return safeDiscount;
+        }
+
+        public bool DeactivateComboOffer(int comboOfferId)
+        {
+            EnsureSchema();
+            return db.Database.ExecuteSqlCommand(
+                "UPDATE dbo.ComboOffer SET IsActive = 0 WHERE ComboOfferID = @id;",
+                new SqlParameter("@id", comboOfferId)) > 0;
+        }
+
+        private static DateTime AsLocalTime(DateTime value)
+        {
+            return DateTime.SpecifyKind(value, DateTimeKind.Utc).ToLocalTime();
+        }
+
+        private static DateTime? AsLocalTime(DateTime? value)
+        {
+            return value.HasValue ? AsLocalTime(value.Value) : (DateTime?)null;
+        }
+
         public MarketingDashboardVM GetDashboard()
         {
             var vm = new MarketingDashboardVM();
@@ -563,6 +836,7 @@ namespace WebBanHang.Services
                 LEFT JOIN dbo.Product p ON p.ProductID = cc.TargetProductID
                 ORDER BY cc.AssignedAt DESC").ToList();
             vm.ActiveCombos = GetComboOffers();
+            vm.ManagedCombos = GetRecentComboOffersAdmin();
             return vm;
         }
 
