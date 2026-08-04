@@ -18,51 +18,90 @@ namespace WebBanHang.Services
             db = context ?? throw new ArgumentNullException(nameof(context));
         }
 
-        public int GeneratePersonalVouchers(string createdBy, decimal minimumMarginPct = 5m)
+        public int GeneratePersonalVouchers(string createdBy)
         {
             EnsureSchema();
             ExpireOldOffers();
-            var campaignId = GetOrCreateCampaign("Ưu đãi cá nhân tự động", "PERSONAL", minimumMarginPct, createdBy);
+            var settings = GetOrCreateCampaignSettings("PERSONAL", createdBy);
 
+            // Mỗi hành vi chỉ được tính trong giới hạn/ngày, sau đó chỉ lấy sản phẩm
+            // có điểm cao nhất của từng khách. Một khách đang có voucher sẽ không được phát thêm.
             var candidates = db.Database.SqlQuery<InterestCandidate>(@"
-                SELECT l.CustomerID, l.ProductID,
-                       CAST(SUM(l.ActionWeight * CASE
-                           WHEN DATEDIFF(DAY, l.CreatedAt, GETDATE()) <= 1 THEN 1.00
-                           WHEN DATEDIFF(DAY, l.CreatedAt, GETDATE()) <= 7 THEN 0.75
-                           WHEN DATEDIFF(DAY, l.CreatedAt, GETDATE()) <= 14 THEN 0.50
-                           ELSE 0.25 END) AS DECIMAL(10,2)) AS InterestScore,
-                       CASE
-                           WHEN MAX(CASE WHEN l.ActionType = 'REMOVE_CART' THEN 1 ELSE 0 END) = 1 THEN 'CART_ABANDONED'
-                           WHEN MAX(CASE WHEN l.ActionType = 'ADD_CART' THEN 1 ELSE 0 END) = 1 THEN 'ADD_CART'
-                           WHEN MAX(CASE WHEN l.ActionType = 'CLICK' THEN 1 ELSE 0 END) = 1 THEN 'CLICK'
-                           ELSE 'VIEW' END AS TriggerType
-                FROM dbo.UserBehaviorLogs l
-                WHERE l.CustomerID IS NOT NULL
-                  AND l.ProductID IS NOT NULL
-                  AND l.CreatedAt >= DATEADD(DAY, -30, GETDATE())
-                  AND l.ActionType IN ('VIEW','CLICK','DWELL_TIME','ADD_CART','REMOVE_CART')
-                  AND NOT EXISTS
-                  (
-                      SELECT 1 FROM dbo.UserBehaviorLogs bought
-                      WHERE bought.CustomerID = l.CustomerID
-                        AND bought.ProductID = l.ProductID
-                        AND bought.ActionType IN ('BUY','PURCHASE')
-                        AND bought.CreatedAt >= DATEADD(DAY, -30, GETDATE())
-                  )
-                  AND NOT EXISTS
-                  (
-                      SELECT 1 FROM dbo.CustomerCoupon cc
-                      WHERE cc.CustomerID = l.CustomerID
-                        AND cc.TargetProductID = l.ProductID
-                        AND cc.Status IN ('ISSUED','VIEWED','CLICKED','CARTED')
-                        AND cc.ExpiresAt > SYSUTCDATETIME()
-                  )
-                GROUP BY l.CustomerID, l.ProductID
-                HAVING SUM(l.ActionWeight * CASE
-                           WHEN DATEDIFF(DAY, l.CreatedAt, GETDATE()) <= 1 THEN 1.00
-                           WHEN DATEDIFF(DAY, l.CreatedAt, GETDATE()) <= 7 THEN 0.75
-                           WHEN DATEDIFF(DAY, l.CreatedAt, GETDATE()) <= 14 THEN 0.50
-                           ELSE 0.25 END) >= 8").ToList();
+                WITH DailyRanked AS
+                (
+                    SELECT l.CustomerID, l.ProductID, l.ActionType, l.CreatedAt,
+                           ROW_NUMBER() OVER
+                           (
+                               PARTITION BY l.CustomerID, l.ProductID, l.ActionType, CONVERT(date, l.CreatedAt)
+                               ORDER BY l.CreatedAt DESC, l.LogID DESC
+                           ) AS DailyRank
+                    FROM dbo.UserBehaviorLogs l
+                    WHERE l.CustomerID IS NOT NULL
+                      AND l.ProductID IS NOT NULL
+                      AND l.CreatedAt >= DATEADD(DAY, -30, GETDATE())
+                      AND l.ActionType IN ('VIEW','CLICK','DWELL_TIME','ADD_CART','REMOVE_CART')
+                ), Scored AS
+                (
+                    SELECT CustomerID, ProductID, ActionType,
+                           CAST((CASE ActionType
+                               WHEN 'VIEW' THEN 1 WHEN 'CLICK' THEN 2 WHEN 'DWELL_TIME' THEN 2
+                               WHEN 'ADD_CART' THEN 5 WHEN 'REMOVE_CART' THEN 4 ELSE 0 END)
+                           * (CASE
+                               WHEN DATEDIFF(DAY, CreatedAt, GETDATE()) <= 1 THEN 1.00
+                               WHEN DATEDIFF(DAY, CreatedAt, GETDATE()) <= 7 THEN 0.75
+                               WHEN DATEDIFF(DAY, CreatedAt, GETDATE()) <= 14 THEN 0.50
+                               ELSE 0.25 END) AS DECIMAL(10,2)) AS Score
+                    FROM DailyRanked
+                    WHERE DailyRank <= CASE WHEN ActionType IN ('VIEW','CLICK') THEN 2 ELSE 1 END
+                ), Aggregated AS
+                (
+                    SELECT s.CustomerID, s.ProductID, SUM(s.Score) AS InterestScore,
+                           CASE
+                               WHEN MAX(CASE WHEN s.ActionType = 'REMOVE_CART' THEN 1 ELSE 0 END) = 1 THEN 'CART_ABANDONED'
+                               WHEN MAX(CASE WHEN s.ActionType = 'ADD_CART' THEN 1 ELSE 0 END) = 1 THEN 'ADD_CART'
+                               WHEN MAX(CASE WHEN s.ActionType = 'CLICK' THEN 1 ELSE 0 END) = 1 THEN 'CLICK'
+                               ELSE 'VIEW' END AS TriggerType
+                    FROM Scored s
+                    WHERE NOT EXISTS
+                    (
+                        SELECT 1 FROM dbo.UserBehaviorLogs bought
+                        WHERE bought.CustomerID = s.CustomerID AND bought.ProductID = s.ProductID
+                          AND bought.ActionType IN ('BUY','PURCHASE')
+                          AND bought.CreatedAt >= DATEADD(DAY, -30, GETDATE())
+                    )
+                    GROUP BY s.CustomerID, s.ProductID
+                    HAVING SUM(s.Score) >= @minScore
+                ), RankedCandidates AS
+                (
+                    SELECT a.*,
+                           ROW_NUMBER() OVER
+                           (
+                               PARTITION BY a.CustomerID
+                               ORDER BY a.InterestScore DESC,
+                                        CASE a.TriggerType WHEN 'CART_ABANDONED' THEN 4 WHEN 'ADD_CART' THEN 3 WHEN 'CLICK' THEN 2 ELSE 1 END DESC,
+                                        a.ProductID DESC
+                           ) AS CandidateRank
+                    FROM Aggregated a
+                    WHERE NOT EXISTS
+                    (
+                        SELECT 1 FROM dbo.CustomerCoupon activeVoucher
+                        WHERE activeVoucher.CustomerID = a.CustomerID
+                          AND activeVoucher.Status IN ('ISSUED','VIEWED','CLICKED','CARTED')
+                          AND activeVoucher.ExpiresAt > SYSUTCDATETIME()
+                    )
+                      AND NOT EXISTS
+                    (
+                        SELECT 1 FROM dbo.CustomerCoupon previousVoucher
+                        WHERE previousVoucher.CustomerID = a.CustomerID
+                          AND previousVoucher.TargetProductID = a.ProductID
+                          AND COALESCE(previousVoucher.UsedAt, previousVoucher.ExpiresAt)
+                              > DATEADD(DAY, -@cooldownDays, SYSUTCDATETIME())
+                    )
+                )
+                SELECT CustomerID, ProductID, CAST(InterestScore AS DECIMAL(10,2)) InterestScore, TriggerType
+                FROM RankedCandidates WHERE CandidateRank = 1;",
+                new SqlParameter("@minScore", settings.MinInterestScore),
+                new SqlParameter("@cooldownDays", settings.CooldownDays)).ToList();
 
             var created = 0;
             foreach (var candidate in candidates)
@@ -71,17 +110,30 @@ namespace WebBanHang.Services
                 if (product == null) continue;
 
                 var marginBudget = product.ProductPrice - product.ImportPrice
-                                 - (product.ProductPrice * minimumMarginPct / 100m);
-                var proposed = Math.Min(product.ProductPrice * 0.05m, 150000m);
+                                 - (product.ProductPrice * settings.MinimumMarginPct / 100m);
+                var proposed = Math.Min(product.ProductPrice * settings.DiscountPercentage / 100m,
+                                        settings.MaxDiscountAmount);
                 var discount = RoundDownToThousand(Math.Min(proposed, marginBudget));
-                if (discount < 10000m) continue;
+                if (discount <= 0m) continue;
 
-                using (var transaction = db.Database.BeginTransaction())
+                using (var transaction = db.Database.BeginTransaction(IsolationLevel.Serializable))
                 {
                     try
                     {
+                        var activeCount = db.Database.SqlQuery<int>(@"
+                            SELECT COUNT(1) FROM dbo.CustomerCoupon WITH (UPDLOCK, HOLDLOCK)
+                            WHERE CustomerID = @customerId
+                              AND Status IN ('ISSUED','VIEWED','CLICKED','CARTED')
+                              AND ExpiresAt > SYSUTCDATETIME();",
+                            new SqlParameter("@customerId", candidate.CustomerID)).Single();
+                        if (activeCount > 0)
+                        {
+                            transaction.Rollback();
+                            continue;
+                        }
+
                         var code = "TNC-" + candidate.CustomerID + "-" + Guid.NewGuid().ToString("N").Substring(0, 8).ToUpperInvariant();
-                        var expiresAt = DateTime.UtcNow.AddHours(72);
+                        var expiresAt = DateTime.UtcNow.AddHours(settings.ValidityHours);
                         var couponId = Convert.ToInt32(db.Database.SqlQuery<decimal>(@"
                             INSERT dbo.Coupon
                                 (CouponName, Code, DiscountPercentage, MaxDiscountAmount, ExpiryDate, UsageLimit,
@@ -96,7 +148,7 @@ namespace WebBanHang.Services
                             new SqlParameter("@code", code),
                             new SqlParameter("@discount", discount),
                             new SqlParameter("@expiry", expiresAt),
-                            new SqlParameter("@campaignId", campaignId)).Single());
+                            new SqlParameter("@campaignId", settings.CampaignID)).Single());
 
                         db.Database.ExecuteSqlCommand(@"
                             INSERT dbo.CustomerCoupon
@@ -122,13 +174,15 @@ namespace WebBanHang.Services
             return created;
         }
 
-        public int GenerateComboOffers(string createdBy, decimal minimumMarginPct = 5m)
+        public int GenerateComboOffers(string createdBy)
         {
             EnsureSchema();
             ExpireOldOffers();
-            var campaignId = GetOrCreateCampaign("Combo mua chung tự động", "COMBO", minimumMarginPct, createdBy);
+            var settings = GetOrCreateCampaignSettings("COMBO", createdBy);
             var rules = db.SmartRecommendations
-                .Where(r => r.Support >= 2 && r.Confidence >= 0.20m && r.ActualUtility >= 100000m)
+                .Where(r => r.Support >= settings.MinSupport
+                         && r.Confidence >= settings.MinConfidence
+                         && r.ActualUtility >= settings.MinUtility)
                 .OrderByDescending(r => r.ActualUtility)
                 .ThenByDescending(r => r.Confidence)
                 .Take(100)
@@ -144,17 +198,19 @@ namespace WebBanHang.Services
 
                 var alreadyExists = db.Database.SqlQuery<int>(@"
                     SELECT COUNT(1) FROM dbo.ComboOffer
-                    WHERE ProductID_A = @a AND ProductID_B = @b
+                    WHERE ((ProductID_A = @a AND ProductID_B = @b)
+                        OR (ProductID_A = @b AND ProductID_B = @a))
                       AND IsActive = 1 AND EndDate > SYSUTCDATETIME();",
                     new SqlParameter("@a", rule.ProductID_A), new SqlParameter("@b", rule.ProductID_B)).Single() > 0;
                 if (alreadyExists) continue;
 
                 var revenue = productA.ProductPrice + productB.ProductPrice;
                 var grossMargin = revenue - productA.ImportPrice - productB.ImportPrice;
-                var marginBudget = grossMargin - revenue * minimumMarginPct / 100m;
-                var proposed = Math.Min(Math.Min(revenue * 0.05m, rule.ActualUtility * 0.15m), 300000m);
+                var marginBudget = grossMargin - revenue * settings.MinimumMarginPct / 100m;
+                var proposed = Math.Min(revenue * settings.DiscountPercentage / 100m,
+                                        settings.MaxDiscountAmount);
                 var discount = RoundDownToThousand(Math.Min(proposed, marginBudget));
-                if (discount < 20000m) continue;
+                if (discount <= 0m) continue;
 
                 var code = "COMBO-" + rule.ProductID_A + "-" + rule.ProductID_B + "-" + Guid.NewGuid().ToString("N").Substring(0, 4).ToUpperInvariant();
                 db.Database.ExecuteSqlCommand(@"
@@ -163,8 +219,8 @@ namespace WebBanHang.Services
                          Confidence, ActualUtility, MinimumMarginPct, StartDate, EndDate, UsageLimit, IsActive)
                     VALUES
                         (@campaignId, @a, @b, @code, @discount, @support,
-                         @confidence, @utility, @margin, SYSUTCDATETIME(), DATEADD(DAY, 14, SYSUTCDATETIME()), 100, 1);",
-                    new SqlParameter("@campaignId", campaignId),
+                         @confidence, @utility, @margin, SYSUTCDATETIME(), DATEADD(DAY, @validityDays, SYSUTCDATETIME()), @usageLimit, 1);",
+                    new SqlParameter("@campaignId", settings.CampaignID),
                     new SqlParameter("@a", rule.ProductID_A),
                     new SqlParameter("@b", rule.ProductID_B),
                     new SqlParameter("@code", code),
@@ -172,7 +228,9 @@ namespace WebBanHang.Services
                     new SqlParameter("@support", rule.Support),
                     new SqlParameter("@confidence", rule.Confidence),
                     new SqlParameter("@utility", rule.ActualUtility),
-                    new SqlParameter("@margin", minimumMarginPct));
+                    new SqlParameter("@margin", settings.MinimumMarginPct),
+                    new SqlParameter("@validityDays", settings.ValidityDays),
+                    new SqlParameter("@usageLimit", settings.UsageLimit));
                 created++;
             }
             return created;
@@ -215,8 +273,10 @@ namespace WebBanHang.Services
             var ids = (productIds ?? Enumerable.Empty<int>()).Distinct().ToList();
             var sql = @"
                 SELECT co.ComboOfferID, co.ProductID_A, co.ProductID_B,
-                       a.ProductName ProductNameA, b.ProductName ProductNameB, b.ProductImage ProductImageB,
-                       co.Code, co.DiscountAmount, co.Support, co.Confidence, co.ActualUtility,
+                       a.ProductName ProductNameA, b.ProductName ProductNameB,
+                       a.ProductImage ProductImageA, b.ProductImage ProductImageB,
+                       a.ProductPrice ProductPriceA, b.ProductPrice ProductPriceB,
+                       co.Code, co.DiscountAmount, co.Support, co.Confidence, co.ActualUtility, co.MinimumMarginPct,
                        CAST(co.EndDate AS DATETIME) EndDate
                 FROM dbo.ComboOffer co
                 INNER JOIN dbo.Product a ON a.ProductID = co.ProductID_A
@@ -234,62 +294,153 @@ namespace WebBanHang.Services
                     names.Add(name);
                     parameters.Add(new SqlParameter(name, ids[i]));
                 }
-                sql += " AND co.ProductID_A IN (" + string.Join(",", names) + ")";
+                var inClause = string.Join(",", names);
+                sql += ids.Count == 1
+                    ? " AND (co.ProductID_A IN (" + inClause + ") OR co.ProductID_B IN (" + inClause + "))"
+                    : " AND co.ProductID_A IN (" + inClause + ") AND co.ProductID_B IN (" + inClause + ")";
             }
-            sql += " ORDER BY co.ActualUtility DESC, co.Confidence DESC";
+            sql += " ORDER BY co.DiscountAmount DESC, co.ActualUtility DESC, co.Confidence DESC";
             return db.Database.SqlQuery<ComboOfferVM>(sql, parameters.Cast<object>().ToArray()).Take(12).ToList();
+        }
+
+        public PromotionEvaluation GetBestCombo(IEnumerable<CartViewItem> items)
+        {
+            var cartItems = (items ?? Enumerable.Empty<CartViewItem>()).Where(x => x.Quantity > 0).ToList();
+            if (!cartItems.Any() || !SchemaExists()) return Invalid("Giỏ hàng chưa đủ điều kiện combo.");
+
+            PromotionEvaluation best = null;
+            foreach (var combo in GetComboOffers(cartItems.Select(x => x.ProductID)))
+            {
+                var pair = cartItems.Where(x => x.ProductID == combo.ProductID_A || x.ProductID == combo.ProductID_B).ToList();
+                if (pair.Select(x => x.ProductID).Distinct().Count() != 2) continue;
+
+                var allowed = ApplyMarginGuard(combo.DiscountAmount, pair, combo.MinimumMarginPct, true);
+                if (allowed <= 0m) continue;
+
+                var currentPairAmount = pair.Sum(x => x.UnitPrice);
+                var candidate = new PromotionEvaluation
+                {
+                    IsValid = true,
+                    PromotionType = "COMBO",
+                    Code = combo.Code,
+                    DiscountAmount = allowed,
+                    ComboOfferID = combo.ComboOfferID,
+                    ProductID_A = combo.ProductID_A,
+                    ProductID_B = combo.ProductID_B,
+                    ProductNameA = combo.ProductNameA,
+                    ProductNameB = combo.ProductNameB,
+                    OriginalAmount = currentPairAmount,
+                    Message = "Combo tốt nhất đã được tự động áp dụng."
+                };
+                if (best == null || candidate.DiscountAmount > best.DiscountAmount)
+                    best = candidate;
+            }
+            return best ?? Invalid("Giỏ hàng chưa đủ điều kiện combo.");
         }
 
         public PromotionEvaluation EvaluatePromotion(string code, int customerId, IEnumerable<CartViewItem> items)
         {
-            var cartItems = (items ?? Enumerable.Empty<CartViewItem>()).ToList();
-            if (string.IsNullOrWhiteSpace(code) || !cartItems.Any() || !SchemaExists())
-                return Invalid("Mã ưu đãi không hợp lệ.");
+            return EvaluateBestPromotion(code, customerId, items);
+        }
 
-            code = code.Trim().ToUpperInvariant();
-            var personal = db.Database.SqlQuery<PersonalPromotionRow>(@"
-                SELECT TOP 1 cc.CustomerCouponID, cc.CouponID, cc.TargetProductID,
-                       c.Code, COALESCE(c.FixedDiscountAmount, c.MaxDiscountAmount, 0) DiscountAmount
-                FROM dbo.CustomerCoupon cc
-                INNER JOIN dbo.Coupon c ON c.CouponID = cc.CouponID
-                WHERE cc.CustomerID = @customerId AND c.Code = @code
-                  AND cc.Status IN ('ISSUED','VIEWED','CLICKED','CARTED')
-                  AND cc.ExpiresAt > SYSUTCDATETIME()
-                  AND c.IsActive = 1 AND c.UsageLimit > 0;",
-                new SqlParameter("@customerId", customerId), new SqlParameter("@code", code)).FirstOrDefault();
+        public PromotionEvaluation EvaluateBestPromotion(string selectedCode, int customerId, IEnumerable<CartViewItem> items)
+        {
+            var cartItems = (items ?? Enumerable.Empty<CartViewItem>()).Where(x => x.Quantity > 0).ToList();
+            if (!cartItems.Any() || !SchemaExists()) return Invalid("Giỏ hàng hoặc schema ưu đãi không hợp lệ.");
 
-            if (personal != null)
+            var combo = GetBestCombo(cartItems);
+            PromotionEvaluation voucher = null;
+            string voucherError = null;
+
+            if (!string.IsNullOrWhiteSpace(selectedCode))
             {
-                if (!personal.TargetProductID.HasValue || cartItems.All(x => x.ProductID != personal.TargetProductID.Value))
-                    return Invalid("Voucher này chỉ áp dụng cho sản phẩm được chỉ định.");
+                var code = selectedCode.Trim().ToUpperInvariant();
+                var personal = db.Database.SqlQuery<PersonalPromotionRow>(@"
+                    SELECT TOP 1 cc.CustomerCouponID, cc.CouponID, cc.TargetProductID,
+                           c.Code, COALESCE(c.FixedDiscountAmount, c.MaxDiscountAmount, 0) DiscountAmount,
+                           COALESCE(mc.MinimumMarginPct, 5) MinimumMarginPct
+                    FROM dbo.CustomerCoupon cc
+                    INNER JOIN dbo.Coupon c ON c.CouponID = cc.CouponID
+                    LEFT JOIN dbo.MarketingCampaign mc ON mc.CampaignID = c.CampaignID
+                    WHERE cc.CustomerID = @customerId AND c.Code = @code
+                      AND cc.Status IN ('ISSUED','VIEWED','CLICKED','CARTED')
+                      AND cc.ExpiresAt > SYSUTCDATETIME()
+                      AND c.IsActive = 1 AND c.UsageLimit > 0;",
+                    new SqlParameter("@customerId", customerId), new SqlParameter("@code", code)).FirstOrDefault();
 
-                var allowed = ApplyMarginGuard(personal.DiscountAmount, cartItems);
-                if (allowed <= 0) return Invalid("Ưu đãi không thể áp dụng vì không đạt biên lợi nhuận tối thiểu.");
-                return new PromotionEvaluation
+                if (personal != null)
                 {
-                    IsValid = true, Message = "Áp dụng voucher cá nhân thành công.", PromotionType = "PERSONAL",
-                    Code = code, DiscountAmount = allowed, CouponID = personal.CouponID,
-                    CustomerCouponID = personal.CustomerCouponID
-                };
+                    var targetItems = personal.TargetProductID.HasValue
+                        ? cartItems.Where(x => x.ProductID == personal.TargetProductID.Value).ToList()
+                        : new List<CartViewItem>();
+                    if (!targetItems.Any())
+                    {
+                        voucherError = "Voucher này chỉ áp dụng cho sản phẩm được chỉ định.";
+                    }
+                    else
+                    {
+                        var allowed = ApplyMarginGuard(personal.DiscountAmount, targetItems, personal.MinimumMarginPct);
+                        if (allowed > 0m)
+                        {
+                            voucher = new PromotionEvaluation
+                            {
+                                IsValid = true, PromotionType = "PERSONAL", Code = code,
+                                DiscountAmount = allowed, CouponID = personal.CouponID,
+                                CustomerCouponID = personal.CustomerCouponID,
+                                OriginalAmount = cartItems.Sum(x => x.TotalPrice),
+                                Message = "Voucher cá nhân hợp lệ."
+                            };
+                        }
+                        else voucherError = "Voucher không đạt biên lợi nhuận tối thiểu.";
+                    }
+                }
+                else
+                {
+                    var global = db.Coupons.FirstOrDefault(c => c.Code == code);
+                    if (global == null || global.ExpiryDate <= DateTime.Now || global.UsageLimit <= 0 || global.Products.Any())
+                    {
+                        voucherError = "Mã voucher không tồn tại, đã hết hạn hoặc không áp dụng cho toàn đơn.";
+                    }
+                    else
+                    {
+                        var cartTotal = cartItems.Sum(x => x.TotalPrice);
+                        var requested = global.DiscountPercentage.GetValueOrDefault() > 0m
+                            ? cartTotal * global.DiscountPercentage.Value / 100m : 0m;
+                        if (global.MaxDiscountAmount.GetValueOrDefault() > 0m)
+                            requested = requested <= 0m ? global.MaxDiscountAmount.Value : Math.Min(requested, global.MaxDiscountAmount.Value);
+                        var allowed = ApplyMarginGuard(requested, cartItems, 5m);
+                        if (allowed > 0m)
+                        {
+                            voucher = new PromotionEvaluation
+                            {
+                                IsValid = true, PromotionType = "GLOBAL", Code = code,
+                                DiscountAmount = allowed, CouponID = global.CouponID,
+                                OriginalAmount = cartTotal, Message = "Voucher toàn đơn hợp lệ."
+                            };
+                        }
+                        else voucherError = "Voucher không đạt biên lợi nhuận tối thiểu.";
+                    }
+                }
             }
 
-            var combo = db.Database.SqlQuery<ComboPromotionRow>(@"
-                SELECT TOP 1 ComboOfferID, ProductID_A, ProductID_B, Code, DiscountAmount
-                FROM dbo.ComboOffer
-                WHERE Code = @code AND IsActive = 1 AND UsageLimit > 0
-                  AND StartDate <= SYSUTCDATETIME() AND EndDate > SYSUTCDATETIME();",
-                new SqlParameter("@code", code)).FirstOrDefault();
-            if (combo == null) return Invalid("Mã ưu đãi không tồn tại hoặc đã hết hạn.");
-            if (cartItems.All(x => x.ProductID != combo.ProductID_A) || cartItems.All(x => x.ProductID != combo.ProductID_B))
-                return Invalid("Bạn cần có đủ hai sản phẩm của combo trong giỏ hàng.");
-
-            var comboAllowed = ApplyMarginGuard(combo.DiscountAmount, cartItems);
-            if (comboAllowed <= 0) return Invalid("Combo không thể áp dụng vì không đạt biên lợi nhuận tối thiểu.");
-            return new PromotionEvaluation
+            if (voucher != null && (!combo.IsValid || voucher.DiscountAmount >= combo.DiscountAmount))
             {
-                IsValid = true, Message = "Áp dụng ưu đãi combo thành công.", PromotionType = "COMBO",
-                Code = code, DiscountAmount = comboAllowed, ComboOfferID = combo.ComboOfferID
-            };
+                voucher.Message = combo.IsValid
+                    ? "Đã chọn voucher vì mức giảm bằng hoặc cao hơn combo tốt nhất."
+                    : "Áp dụng voucher thành công.";
+                return voucher;
+            }
+            if (combo.IsValid)
+            {
+                combo.Message = voucher != null
+                    ? "Hệ thống chọn combo vì tiết kiệm hơn voucher " +
+                      (combo.DiscountAmount - voucher.DiscountAmount).ToString("N0") + " ₫."
+                    : (!string.IsNullOrEmpty(voucherError)
+                        ? voucherError + " Hệ thống đã áp dụng combo tốt nhất thay thế."
+                        : "Combo tốt nhất đã được tự động áp dụng.");
+                return combo;
+            }
+            return Invalid(voucherError ?? "Không có ưu đãi phù hợp với giỏ hàng.");
         }
 
         public bool IsManagedPromotionCode(string code)
@@ -398,6 +549,7 @@ namespace WebBanHang.Services
             var vm = new MarketingDashboardVM();
             if (!SchemaExists()) return vm;
             ExpireOldOffers();
+            vm.Settings = GetSettings();
             vm.ActivePersonalVouchers = db.Database.SqlQuery<int>("SELECT COUNT(1) FROM dbo.CustomerCoupon WHERE Status IN ('ISSUED','VIEWED','CLICKED','CARTED') AND ExpiresAt > SYSUTCDATETIME()").Single();
             vm.ActiveComboOffers = db.Database.SqlQuery<int>("SELECT COUNT(1) FROM dbo.ComboOffer WHERE IsActive = 1 AND EndDate > SYSUTCDATETIME() AND UsageLimit > 0").Single();
             vm.RedeemedVouchers = db.Database.SqlQuery<int>("SELECT COUNT(1) FROM dbo.CustomerCoupon WHERE Status = 'USED'").Single();
@@ -414,14 +566,78 @@ namespace WebBanHang.Services
             return vm;
         }
 
-        private decimal ApplyMarginGuard(decimal requestedDiscount, List<CartViewItem> cartItems)
+        public MarketingSettingsVM GetSettings()
+        {
+            EnsureSchema();
+            var personal = GetOrCreateCampaignSettings("PERSONAL", null);
+            var combo = GetOrCreateCampaignSettings("COMBO", null);
+            return new MarketingSettingsVM
+            {
+                PersonalDiscountPct = personal.DiscountPercentage,
+                PersonalMaxDiscountAmount = personal.MaxDiscountAmount,
+                PersonalMinInterestScore = personal.MinInterestScore,
+                VoucherValidityHours = personal.ValidityHours,
+                VoucherCooldownDays = personal.CooldownDays,
+                PersonalMinimumMarginPct = personal.MinimumMarginPct,
+                ComboDiscountPct = combo.DiscountPercentage,
+                ComboMaxDiscountAmount = combo.MaxDiscountAmount,
+                ComboMinSupport = combo.MinSupport,
+                ComboMinConfidence = combo.MinConfidence,
+                ComboMinUtility = combo.MinUtility,
+                ComboValidityDays = combo.ValidityDays,
+                ComboUsageLimit = combo.UsageLimit,
+                ComboMinimumMarginPct = combo.MinimumMarginPct
+            };
+        }
+
+        public void SaveSettings(MarketingSettingsVM model, string updatedBy)
+        {
+            if (model == null) throw new ArgumentNullException(nameof(model));
+            EnsureSchema();
+            var personal = GetOrCreateCampaignSettings("PERSONAL", updatedBy);
+            var combo = GetOrCreateCampaignSettings("COMBO", updatedBy);
+
+            db.Database.ExecuteSqlCommand(@"
+                UPDATE dbo.MarketingCampaign SET
+                    DiscountPercentage = @personalPct, MaxDiscountAmount = @personalMax,
+                    MinInterestScore = @minScore, ValidityHours = @hours, CooldownDays = @cooldown,
+                    MinimumMarginPct = @personalMargin, UpdatedAt = SYSUTCDATETIME(), UpdatedBy = @updatedBy
+                WHERE CampaignID = @personalId;
+
+                UPDATE dbo.MarketingCampaign SET
+                    DiscountPercentage = @comboPct, MaxDiscountAmount = @comboMax,
+                    MinSupport = @support, MinConfidence = @confidence, MinUtility = @utility,
+                    ValidityDays = @days, UsageLimit = @usageLimit,
+                    MinimumMarginPct = @comboMargin, UpdatedAt = SYSUTCDATETIME(), UpdatedBy = @updatedBy
+                WHERE CampaignID = @comboId;",
+                new SqlParameter("@personalPct", model.PersonalDiscountPct),
+                new SqlParameter("@personalMax", model.PersonalMaxDiscountAmount),
+                new SqlParameter("@minScore", model.PersonalMinInterestScore),
+                new SqlParameter("@hours", model.VoucherValidityHours),
+                new SqlParameter("@cooldown", model.VoucherCooldownDays),
+                new SqlParameter("@personalMargin", model.PersonalMinimumMarginPct),
+                new SqlParameter("@comboPct", model.ComboDiscountPct),
+                new SqlParameter("@comboMax", model.ComboMaxDiscountAmount),
+                new SqlParameter("@support", model.ComboMinSupport),
+                new SqlParameter("@confidence", model.ComboMinConfidence),
+                new SqlParameter("@utility", model.ComboMinUtility),
+                new SqlParameter("@days", model.ComboValidityDays),
+                new SqlParameter("@usageLimit", model.ComboUsageLimit),
+                new SqlParameter("@comboMargin", model.ComboMinimumMarginPct),
+                new SqlParameter("@updatedBy", (object)updatedBy ?? DBNull.Value),
+                new SqlParameter("@personalId", personal.CampaignID),
+                new SqlParameter("@comboId", combo.CampaignID));
+        }
+
+        private decimal ApplyMarginGuard(decimal requestedDiscount, List<CartViewItem> cartItems,
+                                         decimal minimumMarginPct, bool singleUnitPerProduct = false)
         {
             decimal revenue = 0m;
             decimal fifoCost = 0m;
             foreach (var item in cartItems)
             {
-                revenue += item.TotalPrice;
-                var needed = item.Quantity;
+                var needed = singleUnitPerProduct ? Math.Min(1, item.Quantity) : item.Quantity;
+                revenue += singleUnitPerProduct ? item.UnitPrice * needed : item.TotalPrice;
                 var batches = db.ImportReceiptDetails
                     .Where(x => x.ProductID == item.ProductID && x.RemainingQuantity > 0)
                     .OrderBy(x => x.DetailID).ToList();
@@ -439,26 +655,52 @@ namespace WebBanHang.Services
                 }
             }
 
-            var maximumDiscount = revenue - fifoCost - revenue * 0.05m;
+            var maximumDiscount = revenue - fifoCost - revenue * minimumMarginPct / 100m;
             return RoundDownToThousand(Math.Max(0m, Math.Min(requestedDiscount, maximumDiscount)));
         }
 
-        private int GetOrCreateCampaign(string name, string type, decimal margin, string createdBy)
+        private CampaignSettingsRow GetOrCreateCampaignSettings(string type, string createdBy)
         {
-            var existing = db.Database.SqlQuery<int>(@"
-                SELECT TOP 1 CampaignID FROM dbo.MarketingCampaign
-                WHERE CampaignName = @name AND CampaignType = @type AND IsActive = 1 AND EndDate > SYSUTCDATETIME()
-                ORDER BY CampaignID DESC;",
-                new SqlParameter("@name", name), new SqlParameter("@type", type)).FirstOrDefault();
-            if (existing > 0) return existing;
+            var existing = db.Database.SqlQuery<CampaignSettingsRow>(@"
+                SELECT TOP 1 CampaignID, CampaignType, MinimumMarginPct,
+                       DiscountPercentage, MaxDiscountAmount, MinInterestScore,
+                       ValidityHours, CooldownDays, MinSupport, MinConfidence,
+                       MinUtility, ValidityDays, UsageLimit
+                FROM dbo.MarketingCampaign
+                WHERE CampaignType = @type AND IsActive = 1 AND EndDate > SYSUTCDATETIME()
+                ORDER BY CampaignID DESC;", new SqlParameter("@type", type)).FirstOrDefault();
+            if (existing != null) return existing;
 
-            return Convert.ToInt32(db.Database.SqlQuery<decimal>(@"
+            var name = type == "PERSONAL" ? "Ưu đãi cá nhân tự động" : "Combo mua chung tự động";
+            var id = Convert.ToInt32(db.Database.SqlQuery<decimal>(@"
                 INSERT dbo.MarketingCampaign
-                    (CampaignName, CampaignType, SourceType, StartDate, EndDate, MinimumMarginPct, IsActive, CreatedBy)
-                VALUES (@name, @type, 'HYBRID', SYSUTCDATETIME(), DATEADD(DAY, 30, SYSUTCDATETIME()), @margin, 1, @createdBy);
+                    (CampaignName, CampaignType, SourceType, StartDate, EndDate, MinimumMarginPct,
+                     DiscountPercentage, MaxDiscountAmount, MinInterestScore, ValidityHours, CooldownDays,
+                     MinSupport, MinConfidence, MinUtility, ValidityDays, UsageLimit, IsActive, CreatedBy)
+                VALUES
+                    (@name, @type, 'HYBRID', SYSUTCDATETIME(), DATEADD(YEAR, 10, SYSUTCDATETIME()), 5,
+                     5, CASE WHEN @type = 'PERSONAL' THEN 150000 ELSE 300000 END,
+                     8, 72, 7, 2, 0.20, 100000, 14, 100, 1, @createdBy);
                 SELECT CAST(SCOPE_IDENTITY() AS DECIMAL(18,0));",
                 new SqlParameter("@name", name), new SqlParameter("@type", type),
-                new SqlParameter("@margin", margin), new SqlParameter("@createdBy", (object)createdBy ?? DBNull.Value)).Single());
+                new SqlParameter("@createdBy", (object)createdBy ?? DBNull.Value)).Single());
+
+            return new CampaignSettingsRow
+            {
+                CampaignID = id,
+                CampaignType = type,
+                MinimumMarginPct = 5m,
+                DiscountPercentage = 5m,
+                MaxDiscountAmount = type == "PERSONAL" ? 150000m : 300000m,
+                MinInterestScore = 8m,
+                ValidityHours = 72,
+                CooldownDays = 7,
+                MinSupport = 2,
+                MinConfidence = 0.20m,
+                MinUtility = 100000m,
+                ValidityDays = 14,
+                UsageLimit = 100
+            };
         }
 
         private void ExpireOldOffers()
@@ -466,6 +708,24 @@ namespace WebBanHang.Services
             db.Database.ExecuteSqlCommand(@"
                 UPDATE dbo.CustomerCoupon SET Status = 'EXPIRED'
                 WHERE Status IN ('ISSUED','VIEWED','CLICKED','CARTED') AND ExpiresAt <= SYSUTCDATETIME();
+
+                ;WITH OpenVoucherRank AS
+                (
+                    SELECT CustomerCouponID,
+                           ROW_NUMBER() OVER
+                           (
+                               PARTITION BY CustomerID
+                               ORDER BY InterestScore DESC, AssignedAt DESC, CustomerCouponID DESC
+                           ) AS VoucherRank
+                    FROM dbo.CustomerCoupon
+                    WHERE Status IN ('ISSUED','VIEWED','CLICKED','CARTED')
+                      AND ExpiresAt > SYSUTCDATETIME()
+                )
+                UPDATE cc SET Status = 'EXPIRED'
+                FROM dbo.CustomerCoupon cc
+                INNER JOIN OpenVoucherRank ranked ON ranked.CustomerCouponID = cc.CustomerCouponID
+                WHERE ranked.VoucherRank > 1;
+
                 UPDATE dbo.Coupon SET IsActive = 0
                 WHERE CouponType = 'PERSONAL' AND ExpiryDate <= GETDATE();
                 UPDATE dbo.ComboOffer SET IsActive = 0 WHERE EndDate <= SYSUTCDATETIME();");
@@ -473,7 +733,15 @@ namespace WebBanHang.Services
 
         private bool SchemaExists()
         {
-            return db.Database.SqlQuery<int>("SELECT CASE WHEN OBJECT_ID('dbo.CustomerCoupon','U') IS NOT NULL AND OBJECT_ID('dbo.ComboOffer','U') IS NOT NULL THEN 1 ELSE 0 END").Single() == 1;
+            return db.Database.SqlQuery<int>(@"
+                SELECT CASE WHEN OBJECT_ID('dbo.CustomerCoupon','U') IS NOT NULL
+                                  AND OBJECT_ID('dbo.ComboOffer','U') IS NOT NULL
+                                  AND OBJECT_ID('dbo.OrderPromotion','U') IS NOT NULL
+                                  AND OBJECT_ID('dbo.MarketingCampaign','U') IS NOT NULL
+                                  AND COL_LENGTH('dbo.MarketingCampaign','DiscountPercentage') IS NOT NULL
+                                  AND COL_LENGTH('dbo.MarketingCampaign','CooldownDays') IS NOT NULL
+                                  AND COL_LENGTH('dbo.Coupon','CouponType') IS NOT NULL
+                             THEN 1 ELSE 0 END").Single() == 1;
         }
 
         private void EnsureSchema()
@@ -499,15 +767,24 @@ namespace WebBanHang.Services
             public int? TargetProductID { get; set; }
             public string Code { get; set; }
             public decimal DiscountAmount { get; set; }
+            public decimal MinimumMarginPct { get; set; }
         }
 
-        private class ComboPromotionRow
+        private class CampaignSettingsRow
         {
-            public int ComboOfferID { get; set; }
-            public int ProductID_A { get; set; }
-            public int ProductID_B { get; set; }
-            public string Code { get; set; }
-            public decimal DiscountAmount { get; set; }
+            public int CampaignID { get; set; }
+            public string CampaignType { get; set; }
+            public decimal MinimumMarginPct { get; set; }
+            public decimal DiscountPercentage { get; set; }
+            public decimal MaxDiscountAmount { get; set; }
+            public decimal MinInterestScore { get; set; }
+            public int ValidityHours { get; set; }
+            public int CooldownDays { get; set; }
+            public int MinSupport { get; set; }
+            public decimal MinConfidence { get; set; }
+            public decimal MinUtility { get; set; }
+            public int ValidityDays { get; set; }
+            public int UsageLimit { get; set; }
         }
     }
 }
