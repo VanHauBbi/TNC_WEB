@@ -1,10 +1,34 @@
 /*
-    TNC Store - Marketing Selling Engine
-    Run against the MyStore database before starting the application.
-    The script is idempotent: it can be executed again after an interrupted run.
+    TNC Store - Cài Marketing Selling trên database MyStore HIỆN CÓ.
+
+    Script này KHÔNG DROP DATABASE, KHÔNG DROP TABLE và KHÔNG xóa dữ liệu.
+    Nó chỉ:
+      1. Tạo 4 bảng mới: MarketingCampaign, CustomerCoupon, ComboOffer, OrderPromotion.
+      2. Bổ sung các cột marketing còn thiếu vào bảng Coupon hiện có.
+      3. Tạo các khóa ngoại và index phục vụ truy vấn.
+
+    SmartRecommendation và UserBehaviorLogs đã có trong database gốc nên được tái sử dụng.
+    Có thể chạy lại script an toàn nếu lần chạy trước bị gián đoạn.
 */
+USE [MyStore];
+GO
+
 SET NOCOUNT ON;
 SET XACT_ABORT ON;
+
+-- Dừng ngay nếu đang chạy nhầm database hoặc database gốc chưa đủ bảng.
+IF OBJECT_ID('dbo.Coupon', 'U') IS NULL
+    THROW 50001, N'Không tìm thấy bảng dbo.Coupon trong database MyStore.', 1;
+IF OBJECT_ID('dbo.Customer', 'U') IS NULL
+    THROW 50002, N'Không tìm thấy bảng dbo.Customer trong database MyStore.', 1;
+IF OBJECT_ID('dbo.Product', 'U') IS NULL
+    THROW 50003, N'Không tìm thấy bảng dbo.Product trong database MyStore.', 1;
+IF OBJECT_ID('dbo.[Order]', 'U') IS NULL
+    THROW 50004, N'Không tìm thấy bảng dbo.Order trong database MyStore.', 1;
+IF OBJECT_ID('dbo.SmartRecommendation', 'U') IS NULL
+    THROW 50005, N'Không tìm thấy bảng dbo.SmartRecommendation trong database MyStore.', 1;
+IF OBJECT_ID('dbo.UserBehaviorLogs', 'U') IS NULL
+    THROW 50006, N'Không tìm thấy bảng dbo.UserBehaviorLogs trong database MyStore.', 1;
 
 BEGIN TRY
     BEGIN TRANSACTION;
