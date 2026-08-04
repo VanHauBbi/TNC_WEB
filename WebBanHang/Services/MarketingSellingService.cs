@@ -330,7 +330,7 @@ namespace WebBanHang.Services
                     ProductNameA = combo.ProductNameA,
                     ProductNameB = combo.ProductNameB,
                     OriginalAmount = currentPairAmount,
-                    Message = "Combo tốt nhất đã được tự động áp dụng."
+                    Message = "Combo tốt nhất đã được giảm một lần trên tổng đơn."
                 };
                 if (best == null || candidate.DiscountAmount > best.DiscountAmount)
                     best = candidate;
@@ -437,7 +437,7 @@ namespace WebBanHang.Services
                       (combo.DiscountAmount - voucher.DiscountAmount).ToString("N0") + " ₫."
                     : (!string.IsNullOrEmpty(voucherError)
                         ? voucherError + " Hệ thống đã áp dụng combo tốt nhất thay thế."
-                        : "Combo tốt nhất đã được tự động áp dụng.");
+                        : "Combo tốt nhất đã được giảm một lần trên tổng đơn.");
                 return combo;
             }
             return Invalid(voucherError ?? "Không có ưu đãi phù hợp với giỏ hàng.");
@@ -582,7 +582,7 @@ namespace WebBanHang.Services
                 ComboDiscountPct = combo.DiscountPercentage,
                 ComboMaxDiscountAmount = combo.MaxDiscountAmount,
                 ComboMinSupport = combo.MinSupport,
-                ComboMinConfidence = combo.MinConfidence,
+                ComboMinConfidencePercent = combo.MinConfidence * 100m,
                 ComboMinUtility = combo.MinUtility,
                 ComboValidityDays = combo.ValidityDays,
                 ComboUsageLimit = combo.UsageLimit,
@@ -590,12 +590,21 @@ namespace WebBanHang.Services
             };
         }
 
-        public void SaveSettings(MarketingSettingsVM model, string updatedBy)
+        public bool SaveSettings(MarketingSettingsVM model, string updatedBy)
         {
             if (model == null) throw new ArgumentNullException(nameof(model));
             EnsureSchema();
             var personal = GetOrCreateCampaignSettings("PERSONAL", updatedBy);
             var combo = GetOrCreateCampaignSettings("COMBO", updatedBy);
+            var normalizedConfidence = model.ComboMinConfidencePercent / 100m;
+            var comboSettingsChanged = combo.DiscountPercentage != model.ComboDiscountPct
+                || combo.MaxDiscountAmount != model.ComboMaxDiscountAmount
+                || combo.MinSupport != model.ComboMinSupport
+                || combo.MinConfidence != normalizedConfidence
+                || combo.MinUtility != model.ComboMinUtility
+                || combo.ValidityDays != model.ComboValidityDays
+                || combo.UsageLimit != model.ComboUsageLimit
+                || combo.MinimumMarginPct != model.ComboMinimumMarginPct;
 
             db.Database.ExecuteSqlCommand(@"
                 UPDATE dbo.MarketingCampaign SET
@@ -619,7 +628,7 @@ namespace WebBanHang.Services
                 new SqlParameter("@comboPct", model.ComboDiscountPct),
                 new SqlParameter("@comboMax", model.ComboMaxDiscountAmount),
                 new SqlParameter("@support", model.ComboMinSupport),
-                new SqlParameter("@confidence", model.ComboMinConfidence),
+                new SqlParameter("@confidence", normalizedConfidence),
                 new SqlParameter("@utility", model.ComboMinUtility),
                 new SqlParameter("@days", model.ComboValidityDays),
                 new SqlParameter("@usageLimit", model.ComboUsageLimit),
@@ -627,6 +636,17 @@ namespace WebBanHang.Services
                 new SqlParameter("@updatedBy", (object)updatedBy ?? DBNull.Value),
                 new SqlParameter("@personalId", personal.CampaignID),
                 new SqlParameter("@comboId", combo.CampaignID));
+
+            if (comboSettingsChanged)
+            {
+                // Combo cũ mang số tiền giảm được tính theo cấu hình trước đó.
+                // Ngừng chúng để lần tạo tiếp theo luôn dùng đúng cấu hình vừa lưu.
+                db.Database.ExecuteSqlCommand(@"
+                    UPDATE dbo.ComboOffer
+                    SET IsActive = 0
+                    WHERE IsActive = 1 AND EndDate > SYSUTCDATETIME();");
+            }
+            return comboSettingsChanged;
         }
 
         private decimal ApplyMarginGuard(decimal requestedDiscount, List<CartViewItem> cartItems,
