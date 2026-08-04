@@ -5,6 +5,7 @@ using System.Data;
 using System.Linq;
 using WebBanHang.Models;
 using WebBanHang.Models.ViewModel;
+using CartViewItem = WebBanHang.Models.ViewModel.CartItem;
 
 namespace WebBanHang.Services
 {
@@ -239,9 +240,9 @@ namespace WebBanHang.Services
             return db.Database.SqlQuery<ComboOfferVM>(sql, parameters.Cast<object>().ToArray()).Take(12).ToList();
         }
 
-        public PromotionEvaluation EvaluatePromotion(string code, int customerId, IEnumerable<CartItem> items)
+        public PromotionEvaluation EvaluatePromotion(string code, int customerId, IEnumerable<CartViewItem> items)
         {
-            var cartItems = (items ?? Enumerable.Empty<CartItem>()).ToList();
+            var cartItems = (items ?? Enumerable.Empty<CartViewItem>()).ToList();
             if (string.IsNullOrWhiteSpace(code) || !cartItems.Any() || !SchemaExists())
                 return Invalid("Mã ưu đãi không hợp lệ.");
 
@@ -413,7 +414,7 @@ namespace WebBanHang.Services
             return vm;
         }
 
-        private decimal ApplyMarginGuard(decimal requestedDiscount, List<CartItem> cartItems)
+        private decimal ApplyMarginGuard(decimal requestedDiscount, List<CartViewItem> cartItems)
         {
             decimal revenue = 0m;
             decimal fifoCost = 0m;
