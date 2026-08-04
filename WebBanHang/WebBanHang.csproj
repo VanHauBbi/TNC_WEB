@@ -564,6 +564,12 @@
     <Content Include="Areas\Admin\Views\SmartRecommendation\Index.cshtml" />
     <Content Include="Areas\Admin\Views\SmartRecommendation\ProductAIDetails.cshtml" />
     <Content Include="Areas\Admin\Views\Marketing\Index.cshtml" />
+    <Content Include="Areas\Admin\Views\Marketing\PersonalVoucherDetails.cshtml" />
+    <Content Include="Areas\Admin\Views\Marketing\EditPersonalVoucher.cshtml" />
+    <Content Include="Areas\Admin\Views\Marketing\DeletePersonalVoucher.cshtml" />
+    <Content Include="Areas\Admin\Views\Marketing\ComboDetails.cshtml" />
+    <Content Include="Areas\Admin\Views\Marketing\EditCombo.cshtml" />
+    <Content Include="Areas\Admin\Views\Marketing\DeleteCombo.cshtml" />
     <EntityDeploy Include="Models\Model.edmx">
       <Generator>EntityModelCodeGenerator</Generator>
       <LastGenOutput>Model.Designer.cs</LastGenOutput>
