@@ -51,6 +51,7 @@ namespace WebBanHang.Models.ViewModel
         public MarketingSettingsVM Settings { get; set; } = new MarketingSettingsVM();
         public List<PersonalVoucherVM> RecentPersonalVouchers { get; set; } = new List<PersonalVoucherVM>();
         public List<ComboOfferVM> ActiveCombos { get; set; } = new List<ComboOfferVM>();
+        public List<ComboOfferAdminVM> ManagedCombos { get; set; } = new List<ComboOfferAdminVM>();
     }
 
     public class MarketingSettingsVM
@@ -88,5 +89,107 @@ namespace WebBanHang.Models.ViewModel
         public string ProductNameB { get; set; }
         public decimal OriginalAmount { get; set; }
         public decimal FinalAmount => Math.Max(0m, OriginalAmount - DiscountAmount);
+    }
+
+    public class PersonalVoucherAdminVM
+    {
+        public int CustomerCouponID { get; set; }
+        public int CouponID { get; set; }
+        public int CustomerID { get; set; }
+        public int? TargetProductID { get; set; }
+        public string CustomerName { get; set; }
+        public string CustomerEmail { get; set; }
+        public string ProductName { get; set; }
+        public string ProductImage { get; set; }
+        public string CouponName { get; set; }
+        public string Code { get; set; }
+        public decimal DiscountAmount { get; set; }
+        public decimal InterestScore { get; set; }
+        public string TriggerType { get; set; }
+        public string Status { get; set; }
+        public DateTime AssignedAt { get; set; }
+        public DateTime? ViewedAt { get; set; }
+        public DateTime? ClickedAt { get; set; }
+        public DateTime? AddedToCartAt { get; set; }
+        public DateTime? UsedAt { get; set; }
+        public DateTime ExpiresAt { get; set; }
+        public int? OrderID { get; set; }
+        public int UsageLimit { get; set; }
+        public decimal MinimumMarginPct { get; set; }
+        public bool CouponIsActive { get; set; }
+    }
+
+    public class PersonalVoucherEditVM
+    {
+        public int CustomerCouponID { get; set; }
+        public string Code { get; set; }
+        public string CustomerName { get; set; }
+        public string ProductName { get; set; }
+
+        [Display(Name = "Số tiền giảm")]
+        [Range(1000, 100000000, ErrorMessage = "Số tiền giảm phải từ 1.000 ₫ trở lên.")]
+        public decimal DiscountAmount { get; set; }
+
+        [Display(Name = "Hạn sử dụng")]
+        [Required(ErrorMessage = "Vui lòng chọn hạn sử dụng.")]
+        public DateTime ExpiresAt { get; set; }
+
+        [Display(Name = "Đang hoạt động")]
+        public bool IsActive { get; set; }
+    }
+
+    public class ComboOfferAdminVM
+    {
+        public int ComboOfferID { get; set; }
+        public int ProductID_A { get; set; }
+        public int ProductID_B { get; set; }
+        public string ProductNameA { get; set; }
+        public string ProductNameB { get; set; }
+        public string ProductImageA { get; set; }
+        public string ProductImageB { get; set; }
+        public decimal ProductPriceA { get; set; }
+        public decimal ProductPriceB { get; set; }
+        public string Code { get; set; }
+        public decimal DiscountAmount { get; set; }
+        public int Support { get; set; }
+        public decimal Confidence { get; set; }
+        public decimal ActualUtility { get; set; }
+        public decimal MinimumMarginPct { get; set; }
+        public DateTime StartDate { get; set; }
+        public DateTime EndDate { get; set; }
+        public int UsageLimit { get; set; }
+        public bool IsActive { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public int UsedOrderCount { get; set; }
+        public decimal UsedDiscountTotal { get; set; }
+        public decimal OriginalAmount => ProductPriceA + ProductPriceB;
+        public decimal DiscountedAmount => Math.Max(0m, OriginalAmount - DiscountAmount);
+    }
+
+    public class ComboOfferEditVM
+    {
+        public int ComboOfferID { get; set; }
+        public string Code { get; set; }
+        public string ProductNameA { get; set; }
+        public string ProductNameB { get; set; }
+
+        [Display(Name = "Số tiền giảm cho cả combo")]
+        [Range(1000, 100000000, ErrorMessage = "Số tiền giảm phải từ 1.000 ₫ trở lên.")]
+        public decimal DiscountAmount { get; set; }
+
+        [Display(Name = "Ngày bắt đầu")]
+        [Required(ErrorMessage = "Vui lòng chọn ngày bắt đầu.")]
+        public DateTime StartDate { get; set; }
+
+        [Display(Name = "Ngày kết thúc")]
+        [Required(ErrorMessage = "Vui lòng chọn ngày kết thúc.")]
+        public DateTime EndDate { get; set; }
+
+        [Display(Name = "Lượt sử dụng còn lại")]
+        [Range(0, 1000000, ErrorMessage = "Lượt sử dụng không được âm.")]
+        public int UsageLimit { get; set; }
+
+        [Display(Name = "Đang hoạt động")]
+        public bool IsActive { get; set; }
     }
 }
