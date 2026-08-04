@@ -27,7 +27,7 @@
                     <span class="text-danger fw-bold fs-5">@bestCombo.FinalAmount.ToString("N0") ₫</span>
                     <span class="badge bg-success ms-2">Tiết kiệm @bestCombo.DiscountAmount.ToString("N0") ₫</span>
                 </div>
-                <small class="text-muted">Ưu đãi được tính tự động một lần cho toàn đơn và sẽ kiểm tra lại tại thanh toán.</small>
+                <small class="text-muted">Khoản giảm @bestCombo.DiscountAmount.ToString("N0") ₫ được trừ đúng một lần trên tổng đơn, không giảm riêng từng sản phẩm. Hệ thống sẽ kiểm tra lại tại thanh toán.</small>
             </div>
         </div>
     </div>
@@ -126,7 +126,7 @@
                     </p>
 
                     <p id="summary-combo-row" class="text-success" style="display: none; justify-content: space-between;">
-                        <span>Giảm combo tốt nhất:</span>
+                        <span>Giảm combo trên tổng đơn (1 lần):</span>
                         <span id="summary-combo-value" class="fw-bold">-0 VNĐ</span>
                     </p>
 
