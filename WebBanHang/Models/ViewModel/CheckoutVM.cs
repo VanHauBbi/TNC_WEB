@@ -38,6 +38,8 @@ namespace WebBanHang.Models.ViewModel
         public List<OrderDetail> OrderDetails { get; set; }
 
         public List<Coupon> AvailableCoupons { get; set; }
+        public List<PersonalVoucherVM> AvailablePersonalVouchers { get; set; } = new List<PersonalVoucherVM>();
+        public PromotionEvaluation AutomaticCombo { get; set; }
         public string AppliedVoucherCode { get; set; }
     }
 }
