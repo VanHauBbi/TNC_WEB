@@ -478,7 +478,7 @@ namespace WebBanHang.Services
 
         private void EnsureSchema()
         {
-            if (!SchemaExists()) throw new InvalidOperationException("Chưa cài đặt DatabaseScripts/MarketingSelling.sql.");
+            if (!SchemaExists()) throw new InvalidOperationException("Chưa cài đặt schema Marketing Selling trong database.");
         }
 
         private static decimal RoundDownToThousand(decimal value) => Math.Floor(value / 1000m) * 1000m;
