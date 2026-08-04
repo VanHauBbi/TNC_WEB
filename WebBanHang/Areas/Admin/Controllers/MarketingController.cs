@@ -17,7 +17,7 @@ namespace WebBanHang.Areas.Admin.Controllers
             }
             catch (Exception ex)
             {
-                ViewBag.SchemaError = "Chưa thể đọc dữ liệu marketing. Hãy chạy DatabaseScripts/MarketingSelling.sql. Chi tiết: " + ex.Message;
+                ViewBag.SchemaError = "Chưa thể đọc dữ liệu marketing. Hãy cập nhật schema Marketing Selling trong database. Chi tiết: " + ex.Message;
                 return View(new WebBanHang.Models.ViewModel.MarketingDashboardVM());
             }
         }
