@@ -1,13 +1,45 @@
 @model WebBanHang.Models.ViewModel.ComboOfferAdminVM
 @{
     ViewBag.Title = "Chi tiết combo mua chung";
+    ViewBag.RemoveSpacing = true;
     Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
     var isRunning = Model.IsActive && Model.EndDate > DateTime.Now && Model.UsageLimit > 0;
+    var protectionMode = Model.MinimumMarginPct >= 10m ? "An toàn" : Model.MinimumMarginPct <= 2m ? "Đẩy bán" : "Cân bằng";
 }
-<div class="container-fluid py-3">
-    @if (TempData["SuccessMessage"] != null) { <div class="alert alert-success">@TempData["SuccessMessage"]</div> }
-    <div class="d-flex justify-content-between align-items-center mb-3"><div><h3 class="mb-1"><i class="fa-solid fa-boxes-stacked text-success"></i> @Model.Code</h3><div class="text-muted">Khoản giảm được trừ một lần trên tổng đơn.</div></div><div class="d-flex gap-2"><a class="btn btn-primary" href="@Url.Action("EditCombo", new { id = Model.ComboOfferID })"><i class="fa-solid fa-pen"></i> Chỉnh sửa</a><a class="btn btn-outline-danger" href="@Url.Action("DeleteCombo", new { id = Model.ComboOfferID })"><i class="fa-solid fa-ban"></i> Ngừng áp dụng</a><a class="btn btn-secondary" href="@Url.Action("Index")">Quay lại</a></div></div>
-    <div class="card shadow-sm border-0 mb-3"><div class="card-body"><div class="row align-items-center g-3"><div class="col-md-5 d-flex align-items-center gap-3"><img src="@Model.ProductImageA" style="width:80px;height:80px;object-fit:contain" /><div><div class="text-muted small">Sản phẩm A</div><strong>@Model.ProductNameA</strong><div>@Model.ProductPriceA.ToString("N0") ₫</div></div></div><div class="col-md-2 text-center fs-3 text-success">+</div><div class="col-md-5 d-flex align-items-center gap-3"><img src="@Model.ProductImageB" style="width:80px;height:80px;object-fit:contain" /><div><div class="text-muted small">Sản phẩm B</div><strong>@Model.ProductNameB</strong><div>@Model.ProductPriceB.ToString("N0") ₫</div></div></div></div></div></div>
-    <div class="row g-3"><div class="col-lg-6"><div class="card shadow-sm border-0 h-100"><div class="card-header bg-white fw-bold">Giá và điều kiện Hybrid</div><div class="card-body"><dl class="row mb-0"><dt class="col-sm-6">Tổng giá cặp</dt><dd class="col-sm-6">@Model.OriginalAmount.ToString("N0") ₫</dd><dt class="col-sm-6">Giảm một lần/đơn</dt><dd class="col-sm-6 text-danger fw-bold">@Model.DiscountAmount.ToString("N0") ₫</dd><dt class="col-sm-6">Giá cặp dự kiến</dt><dd class="col-sm-6 fw-bold">@Model.DiscountedAmount.ToString("N0") ₫</dd><dt class="col-sm-6">Số đơn mua chung</dt><dd class="col-sm-6">@Model.Support</dd><dt class="col-sm-6">Tỷ lệ mua kèm</dt><dd class="col-sm-6">@((Model.Confidence * 100).ToString("0.##"))%</dd><dt class="col-sm-6">Lợi nhuận TB của cặp</dt><dd class="col-sm-6">@Model.ActualUtility.ToString("N0") ₫</dd><dt class="col-sm-6">Bảo vệ lợi nhuận</dt><dd class="col-sm-6">@(Model.MinimumMarginPct >= 10m ? "An toàn" : Model.MinimumMarginPct <= 2m ? "Đẩy bán" : "Cân bằng") <div class="text-muted small">Hệ thống tự tính theo FIFO</div></dd></dl></div></div></div>
-        <div class="col-lg-6"><div class="card shadow-sm border-0 h-100"><div class="card-header bg-white fw-bold">Trạng thái sử dụng</div><div class="card-body"><dl class="row mb-0"><dt class="col-sm-5">Trạng thái</dt><dd class="col-sm-7">@if (isRunning) { <span class="badge bg-success">Đang hoạt động</span> } else { <span class="badge bg-secondary">Đã ngừng</span> }</dd><dt class="col-sm-5">Bắt đầu</dt><dd class="col-sm-7">@Model.StartDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd><dt class="col-sm-5">Kết thúc</dt><dd class="col-sm-7">@Model.EndDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd><dt class="col-sm-5">Lượt còn lại</dt><dd class="col-sm-7">@Model.UsageLimit</dd><dt class="col-sm-5">Đơn đã áp dụng</dt><dd class="col-sm-7">@Model.UsedOrderCount</dd><dt class="col-sm-5">Tổng tiền đã giảm</dt><dd class="col-sm-7">@Model.UsedDiscountTotal.ToString("N0") ₫</dd><dt class="col-sm-5">Ngày tạo</dt><dd class="col-sm-7">@Model.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd></dl></div></div></div></div>
+<link href="~/Content/Admin/marketing_admin.css" rel="stylesheet" />
+<div class="mk-page mk-detail-shell">
+    @if (TempData["SuccessMessage"] != null) { <div class="mk-toast"><div class="d-flex gap-3 align-items-center"><i class="fa-solid fa-circle-check text-success"></i><div>@TempData["SuccessMessage"]</div></div></div> }
+    <div class="mk-page-heading">
+        <div><h3><i class="fa-solid fa-boxes-stacked text-success me-2"></i>Chi tiết combo mua chung</h3><p>Mã <span class="mk-code">@Model.Code</span> · giảm đúng một lần trên tổng đơn</p></div>
+        <div class="mk-toolbar"><a class="mk-btn mk-btn-warning" href="@Url.Action("EditCombo", new { id = Model.ComboOfferID })"><i class="fa-solid fa-pen"></i> Chỉnh sửa</a><a class="mk-btn mk-btn-danger" href="@Url.Action("DeleteCombo", new { id = Model.ComboOfferID })"><i class="fa-solid fa-ban"></i> Ngừng áp dụng</a><a class="mk-btn mk-btn-neutral" href="@Url.Action("Index")"><i class="fa-solid fa-arrow-left"></i> Quay lại</a></div>
+    </div>
+
+    <div class="mk-card"><div class="mk-card-body"><div class="mk-combo-products">
+        <div class="mk-combo-product"><img src="@Model.ProductImageA" alt="" /><div><div class="mk-summary-label">Sản phẩm A</div><div class="mk-product-name mt-1">@Model.ProductNameA</div><div class="mk-money mt-1">@Model.ProductPriceA.ToString("N0") ₫</div></div></div>
+        <div class="mk-combo-plus"><i class="fa-solid fa-plus"></i></div>
+        <div class="mk-combo-product"><img src="@Model.ProductImageB" alt="" /><div><div class="mk-summary-label">Sản phẩm B</div><div class="mk-product-name mt-1">@Model.ProductNameB</div><div class="mk-money mt-1">@Model.ProductPriceB.ToString("N0") ₫</div></div></div>
+    </div></div></div>
+
+    <div class="mk-summary-strip">
+        <div class="mk-summary-item"><div class="mk-summary-label">Tổng giá cặp</div><div class="mk-summary-value">@Model.OriginalAmount.ToString("N0") ₫</div></div>
+        <div class="mk-summary-item"><div class="mk-summary-label">Giảm một lần/đơn</div><div class="mk-summary-value text-danger">-@Model.DiscountAmount.ToString("N0") ₫</div></div>
+        <div class="mk-summary-item"><div class="mk-summary-label">Giá cặp dự kiến</div><div class="mk-summary-value text-success">@Model.DiscountedAmount.ToString("N0") ₫</div></div>
+    </div>
+
+    <div class="mk-info-grid">
+        <section class="mk-info-card"><div class="mk-info-card-title"><i class="fa-solid fa-chart-simple me-2 text-primary"></i>Dữ liệu Hybrid</div><div class="mk-info-list">
+            <div class="mk-info-row"><div class="mk-info-label">Số đơn mua chung</div><div class="mk-info-value">@Model.Support đơn</div></div>
+            <div class="mk-info-row"><div class="mk-info-label">Tỷ lệ mua kèm</div><div class="mk-info-value">@((Model.Confidence * 100).ToString("0.##"))%</div></div>
+            <div class="mk-info-row"><div class="mk-info-label">Lợi nhuận TB/cặp</div><div class="mk-info-value text-success">@Model.ActualUtility.ToString("N0") ₫</div></div>
+            <div class="mk-info-row"><div class="mk-info-label">Bảo vệ lợi nhuận</div><div class="mk-info-value">@protectionMode<div class="text-muted small">Hệ thống tự tính FIFO</div></div></div>
+        </div></section>
+        <section class="mk-info-card"><div class="mk-info-card-title"><i class="fa-solid fa-clock-rotate-left me-2 text-primary"></i>Trạng thái sử dụng</div><div class="mk-info-list">
+            <div class="mk-info-row"><div class="mk-info-label">Trạng thái</div><div class="mk-info-value">@if (isRunning) { <span class="mk-badge success">Đang hoạt động</span> } else { <span class="mk-badge muted">Đã ngừng</span> }</div></div>
+            <div class="mk-info-row"><div class="mk-info-label">Thời gian</div><div class="mk-info-value">@Model.StartDate.ToString("dd/MM/yyyy HH:mm")<div class="text-muted small">đến @Model.EndDate.ToString("dd/MM/yyyy HH:mm")</div></div></div>
+            <div class="mk-info-row"><div class="mk-info-label">Lượt còn lại</div><div class="mk-info-value">@Model.UsageLimit lượt</div></div>
+            <div class="mk-info-row"><div class="mk-info-label">Đơn đã áp dụng</div><div class="mk-info-value">@Model.UsedOrderCount đơn</div></div>
+            <div class="mk-info-row"><div class="mk-info-label">Tổng tiền đã giảm</div><div class="mk-info-value">@Model.UsedDiscountTotal.ToString("N0") ₫</div></div>
+        </div></section>
+    </div>
 </div>
+@section Scripts { <script>$(function(){if($('.mk-toast').length)setTimeout(function(){$('.mk-toast').fadeOut(350);},5000);});</script> }
