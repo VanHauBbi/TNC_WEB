@@ -1,0 +1,41 @@
+@model WebBanHang.Models.ViewModel.PersonalVoucherAdminVM
+@{
+    ViewBag.Title = "Chi tiết voucher cá nhân";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+    var isRunning = Model.CouponIsActive && Model.Status != "EXPIRED" && Model.Status != "USED" && Model.ExpiresAt > DateTime.Now;
+}
+
+<div class="container-fluid py-3">
+    @if (TempData["SuccessMessage"] != null) { <div class="alert alert-success">@TempData["SuccessMessage"]</div> }
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div><h3 class="mb-1"><i class="fa-solid fa-user-tag text-primary"></i> @Model.Code</h3><div class="text-muted">Voucher dành riêng cho một khách hàng và một sản phẩm.</div></div>
+        <div class="d-flex gap-2">
+            @if (Model.Status != "USED") { <a class="btn btn-primary" href="@Url.Action("EditPersonalVoucher", new { id = Model.CustomerCouponID })"><i class="fa-solid fa-pen"></i> Chỉnh sửa</a> }
+            <a class="btn btn-outline-danger" href="@Url.Action("DeletePersonalVoucher", new { id = Model.CustomerCouponID })"><i class="fa-solid fa-ban"></i> Ngừng áp dụng</a>
+            <a class="btn btn-secondary" href="@Url.Action("Index")">Quay lại</a>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-lg-6"><div class="card shadow-sm border-0 h-100"><div class="card-header bg-white fw-bold">Thông tin áp dụng</div><div class="card-body">
+            <dl class="row mb-0">
+                <dt class="col-sm-4">Khách hàng</dt><dd class="col-sm-8">@Model.CustomerName <div class="text-muted small">@Model.CustomerEmail</div></dd>
+                <dt class="col-sm-4">Sản phẩm</dt><dd class="col-sm-8">@Model.ProductName</dd>
+                <dt class="col-sm-4">Tiền giảm</dt><dd class="col-sm-8 text-danger fw-bold">@Model.DiscountAmount.ToString("N0") ₫</dd>
+                <dt class="col-sm-4">Điểm quan tâm</dt><dd class="col-sm-8">@Model.InterestScore.ToString("0.##")</dd>
+                <dt class="col-sm-4">Nguồn hành vi</dt><dd class="col-sm-8">@Model.TriggerType</dd>
+                <dt class="col-sm-4">Bảo vệ lợi nhuận</dt><dd class="col-sm-8">@(Model.MinimumMarginPct >= 10m ? "An toàn" : Model.MinimumMarginPct <= 2m ? "Đẩy bán" : "Cân bằng") <div class="text-muted small">Hệ thống tự tính theo FIFO</div></dd>
+            </dl>
+        </div></div></div>
+        <div class="col-lg-6"><div class="card shadow-sm border-0 h-100"><div class="card-header bg-white fw-bold">Trạng thái và lịch sử</div><div class="card-body">
+            <dl class="row mb-0">
+                <dt class="col-sm-4">Trạng thái</dt><dd class="col-sm-8">@if (isRunning) { <span class="badge bg-success">Đang hoạt động</span> } else { <span class="badge bg-secondary">@Model.Status</span> }</dd>
+                <dt class="col-sm-4">Ngày phát</dt><dd class="col-sm-8">@Model.AssignedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
+                <dt class="col-sm-4">Hết hạn</dt><dd class="col-sm-8">@Model.ExpiresAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
+                <dt class="col-sm-4">Đã xem</dt><dd class="col-sm-8">@(Model.ViewedAt.HasValue ? Model.ViewedAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm") : "Chưa")</dd>
+                <dt class="col-sm-4">Đã thêm giỏ</dt><dd class="col-sm-8">@(Model.AddedToCartAt.HasValue ? Model.AddedToCartAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm") : "Chưa")</dd>
+                <dt class="col-sm-4">Đơn sử dụng</dt><dd class="col-sm-8">@(Model.OrderID.HasValue ? "#" + Model.OrderID.Value : "Chưa sử dụng")</dd>
+            </dl>
+        </div></div></div>
+    </div>
+</div>
