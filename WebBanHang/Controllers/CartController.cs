@@ -60,16 +60,54 @@ namespace WebBanHang.Controllers
             {
                 var marketing = new MarketingSellingService(db);
                 ViewBag.ComboOffers = marketing.GetComboOffers(cart.Items.Select(x => x.ProductID));
-                if (Session["CustomerID"] != null)
-                    ViewBag.PersonalVouchers = marketing.GetCustomerVouchers((int)Session["CustomerID"]);
+                ViewBag.BestCombo = marketing.GetBestCombo(cart.Items);
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Trace.TraceWarning("Marketing schema chưa sẵn sàng: " + ex.Message);
                 ViewBag.ComboOffers = new List<ComboOfferVM>();
-                ViewBag.PersonalVouchers = new List<PersonalVoucherVM>();
+                ViewBag.BestCombo = null;
             }
             return View(cart);
+        }
+
+        [HttpPost]
+        public ActionResult AddComboToCart(int productAId, int productBId)
+        {
+            if (Session["UserName"] == null)
+                return Json(new { success = false, redirectUrl = Url.Action("Login", "Account") });
+            if (productAId == productBId)
+                return Json(new { success = false, message = "Combo không hợp lệ." });
+
+            var ids = new[] { productAId, productBId };
+            var products = db.Products.Include(p => p.Coupons).Where(p => ids.Contains(p.ProductID)).ToList();
+            if (products.Count != 2 || products.Any(p => p.GetStatusLabel() != "AVAILABLE" || p.StockQuantity <= 0))
+                return Json(new { success = false, message = "Một sản phẩm trong combo đã hết hàng hoặc ngừng bán." });
+
+            var cart = GetCartService().GetCart();
+            foreach (var product in products)
+            {
+                var currentQty = cart.Items.Where(x => x.ProductID == product.ProductID).Select(x => x.Quantity).FirstOrDefault();
+                if (currentQty + 1 > product.StockQuantity)
+                    return Json(new { success = false, message = "Sản phẩm '" + product.ProductName + "' không còn đủ tồn kho." });
+            }
+
+            foreach (var product in products)
+            {
+                decimal discountPercent;
+                var unitPrice = PriceHelper.GetDiscountedPrice(product, out discountPercent);
+                cart.AddItem(product.ProductID, product.ProductImage, product.ProductName,
+                    Math.Max(0m, unitPrice), product.ProductPrice, 1, product.Category?.CategoryName);
+                LogCartBehavior(product.ProductID, "ADD_CART", 5);
+            }
+            Session["Cart"] = cart;
+            SyncCartToDatabase();
+            return Json(new
+            {
+                success = true,
+                message = "Đã thêm đủ hai sản phẩm combo vào giỏ hàng.",
+                cartCount = cart.Items.Sum(x => x.Quantity)
+            });
         }
         // THÊM SẢN PHẨM VÀO GIỎ HÀNG
         [HttpPost]
@@ -308,7 +346,7 @@ namespace WebBanHang.Controllers
         }
 
         [HttpPost]
-        public JsonResult ApplyCoupon(string couponCode)
+        public JsonResult ApplyCoupon(string couponCode, bool isBuyNow = false)
         {
             if (string.IsNullOrEmpty(couponCode))
             {
@@ -317,7 +355,9 @@ namespace WebBanHang.Controllers
 
             try
             {
-                var cart = Session["Cart"] as WebBanHang.Models.ViewModel.Cart;
+                var cart = isBuyNow
+                    ? Session["BuyNowCart"] as WebBanHang.Models.ViewModel.Cart
+                    : Session["Cart"] as WebBanHang.Models.ViewModel.Cart;
                 if (cart == null || !cart.Items.Any())
                     return Json(new { success = false, message = "Giỏ hàng trống, không thể áp dụng mã." });
 
@@ -335,7 +375,8 @@ namespace WebBanHang.Controllers
                             success = true,
                             message = marketingResult.Message,
                             discountAmount = marketingResult.DiscountAmount,
-                            promotionType = marketingResult.PromotionType
+                            promotionType = marketingResult.PromotionType,
+                            appliedCode = marketingResult.Code
                         });
                     }
                     if (marketingService.IsManagedPromotionCode(couponCode))
