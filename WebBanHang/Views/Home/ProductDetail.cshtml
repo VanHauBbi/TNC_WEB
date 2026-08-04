@@ -159,16 +159,37 @@
             <div class="card-body">
                 @foreach (var voucher in productVouchers)
                 {
-                    <div class="alert alert-warning mb-2">
-                        Voucher riêng <code>@voucher.Code</code> — giảm <strong>@voucher.DiscountAmount.ToString("N0") ₫</strong>,
-                        hết hạn @voucher.ExpiresAt.ToLocalTime().ToString("dd/MM HH:mm").
+                    var voucherPrice = Math.Max(0m, discountedPrice - voucher.DiscountAmount);
+                    <div class="alert alert-warning mb-3">
+                        <div class="fw-bold"><i class="fa-solid fa-user-tag"></i> Voucher dành riêng cho bạn</div>
+                        <div class="mt-1">Mã <code>@voucher.Code</code> · giảm <strong>@voucher.DiscountAmount.ToString("N0") ₫</strong></div>
+                        <div>
+                            Giá hiện tại <span class="text-muted text-decoration-line-through">@discountedPrice.ToString("N0") ₫</span>
+                            <span class="text-danger fw-bold ms-1">→ dự kiến @voucherPrice.ToString("N0") ₫</span>
+                        </div>
+                        <small>Chọn voucher tại trang thanh toán · hết hạn @voucher.ExpiresAt.ToLocalTime().ToString("dd/MM HH:mm").</small>
                     </div>
                 }
                 @foreach (var combo in productCombos.Take(3))
                 {
-                    <div class="d-flex justify-content-between align-items-center border-bottom py-2">
-                        <span>Mua thêm <strong>@combo.ProductNameB</strong> và dùng mã <code>@combo.Code</code></span>
-                        <span class="text-success fw-bold">Giảm @combo.DiscountAmount.ToString("N0") ₫</span>
+                    bool currentIsA = combo.ProductID_A == Model.product.ProductID;
+                    string partnerName = currentIsA ? combo.ProductNameB : combo.ProductNameA;
+                    string partnerImage = currentIsA ? combo.ProductImageB : combo.ProductImageA;
+                    <div class="row align-items-center border rounded p-3 mb-3 g-3">
+                        <div class="col-auto"><img src="@partnerImage" alt="@partnerName" style="width:72px;height:72px;object-fit:contain;" /></div>
+                        <div class="col">
+                            <div>Mua cùng <strong>@partnerName</strong></div>
+                            <div class="mt-1">
+                                <span class="text-muted text-decoration-line-through me-2">@combo.OriginalAmount.ToString("N0") ₫</span>
+                                <span class="text-danger fw-bold">@combo.DiscountedAmount.ToString("N0") ₫</span>
+                            </div>
+                            <small class="text-success fw-bold">Tiết kiệm @combo.DiscountAmount.ToString("N0") ₫ · tự áp dụng khi đủ cặp</small>
+                        </div>
+                        <div class="col-md-auto">
+                            <button type="button" class="btn btn-success add-combo-btn" data-a="@combo.ProductID_A" data-b="@combo.ProductID_B">
+                                <i class="fa-solid fa-cart-plus"></i> Thêm cả hai
+                            </button>
+                        </div>
                     </div>
                 }
             </div>
@@ -380,6 +401,28 @@
             $('.track-product-click').on('click', function () {
                 var productId = $(this).data('id');
                 if (productId) navigator.sendBeacon('/Tracking/LogBehavior?productId=' + productId + '&actionType=CLICK');
+            });
+
+            $('.add-combo-btn').on('click', function () {
+                var button = $(this);
+                button.prop('disabled', true);
+                $.post('@Url.Action("AddComboToCart", "Cart")', {
+                    productAId: button.data('a'),
+                    productBId: button.data('b')
+                }).done(function (response) {
+                    if (response.success) {
+                        alert('✅ ' + response.message);
+                        if (typeof MiniCart === 'function') MiniCart();
+                    } else if (response.redirectUrl) {
+                        window.location.href = response.redirectUrl;
+                    } else {
+                        alert('❌ ' + (response.message || 'Không thể thêm combo.'));
+                    }
+                }).fail(function () {
+                    alert('Không thể kết nối tới giỏ hàng.');
+                }).always(function () {
+                    button.prop('disabled', false);
+                });
             });
 
             function updatePrice() {
