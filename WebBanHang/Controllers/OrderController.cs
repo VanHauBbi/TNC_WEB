@@ -27,6 +27,29 @@ namespace WebBanHang.Controllers
             catch { return db.Coupons.Where(c => !c.Products.Any()).OrderByDescending(c => c.CouponID).ToList(); }
         }
 
+        private void PopulateMarketingCheckout(CheckoutVM model, WebBanHang.Models.ViewModel.Cart cart)
+        {
+            model.AvailableCoupons = GetAvailablePublicCoupons();
+            model.AvailablePersonalVouchers = new List<PersonalVoucherVM>();
+            model.AutomaticCombo = null;
+            if (cart == null || !cart.Items.Any()) return;
+
+            try
+            {
+                var customerId = (int)Session["CustomerID"];
+                var marketing = new MarketingSellingService(db);
+                var productIds = cart.Items.Select(x => x.ProductID).ToList();
+                model.AvailablePersonalVouchers = marketing.GetCustomerVouchers(customerId, true)
+                    .Where(v => v.TargetProductID.HasValue && productIds.Contains(v.TargetProductID.Value)).ToList();
+                var combo = marketing.GetBestCombo(cart.Items);
+                model.AutomaticCombo = combo.IsValid ? combo : null;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceWarning("Không tải được ưu đãi checkout: " + ex.Message);
+            }
+        }
+
         // GET: Orders
         public ActionResult Index()
         {
@@ -164,9 +187,10 @@ namespace WebBanHang.Controllers
                 CartItems = cart.Items.ToList(),
                 TotalAmount = cart.TotalValue(),
                 OrderDate = DateTime.Now,
-                PaymentStatus = "Chưa thanh toán",
-                AvailableCoupons = GetAvailablePublicCoupons()
+                PaymentStatus = "Chưa thanh toán"
             };
+
+            PopulateMarketingCheckout(model, cart);
 
             return View(model);
         }
@@ -176,13 +200,14 @@ namespace WebBanHang.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Checkout(CheckoutVM model, bool isBuyNow = false)
         {
+            ViewBag.IsBuyNow = isBuyNow;
             var cart = isBuyNow ? Session["BuyNowCart"] as WebBanHang.Models.ViewModel.Cart
                         : Session["Cart"] as WebBanHang.Models.ViewModel.Cart;
 
             if (cart == null || !cart.Items.Any())
             {
                 ModelState.AddModelError("", "Giỏ hàng của bạn đang trống!");
-                model.AvailableCoupons = GetAvailablePublicCoupons();
+                PopulateMarketingCheckout(model, cart);
                 model.CartItems = new List<WebBanHang.Models.ViewModel.CartItem>();
                 model.TotalAmount = 0;
                 return View(model);
@@ -195,7 +220,7 @@ namespace WebBanHang.Controllers
                 if (checkStock == null || item.Quantity > checkStock.StockQuantity)
                 {
                     ModelState.AddModelError("", $"Sản phẩm '{item.ProductName}' chỉ còn {checkStock?.StockQuantity ?? 0} cái trong kho.");
-                    model.AvailableCoupons = GetAvailablePublicCoupons();
+                    PopulateMarketingCheckout(model, cart);
 
                     // --- BẮT BUỘC PHẢI THÊM 2 DÒNG NÀY CHỖ NÀY ---
                     model.CartItems = cart.Items.ToList();
@@ -207,7 +232,7 @@ namespace WebBanHang.Controllers
 
             if (!ModelState.IsValid)
             {
-                model.AvailableCoupons = GetAvailablePublicCoupons();
+                PopulateMarketingCheckout(model, cart);
 
                 model.CartItems = cart.Items.ToList();
                 model.TotalAmount = cart.TotalValue();
@@ -218,18 +243,26 @@ namespace WebBanHang.Controllers
             int customerId = (int)Session["CustomerID"];
 
             PromotionEvaluation marketingPromotion = null;
-            if (!string.IsNullOrWhiteSpace(model.AppliedVoucherCode))
+            try
             {
-                var marketingService = new MarketingSellingService(db);
-                marketingPromotion = marketingService.EvaluatePromotion(model.AppliedVoucherCode, customerId, cart.Items);
-                if (marketingService.IsManagedPromotionCode(model.AppliedVoucherCode) && !marketingPromotion.IsValid)
+                var evaluated = new MarketingSellingService(db)
+                    .EvaluateBestPromotion(model.AppliedVoucherCode, customerId, cart.Items);
+                if (evaluated.IsValid)
                 {
-                    ModelState.AddModelError("", marketingPromotion.Message);
-                    model.AvailableCoupons = GetAvailablePublicCoupons();
+                    marketingPromotion = evaluated;
+                }
+                else if (!string.IsNullOrWhiteSpace(model.AppliedVoucherCode))
+                {
+                    ModelState.AddModelError("", evaluated.Message);
                     model.CartItems = cart.Items.ToList();
                     model.TotalAmount = cart.TotalValue();
+                    PopulateMarketingCheckout(model, cart);
                     return View(model);
                 }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceWarning("Không đánh giá được Marketing Selling: " + ex.Message);
             }
 
             // MÔ PHỎNG GIÁ VỐN & CẢNH BÁO LỢI NHUẬN (Không hiển thị ra View)
@@ -366,40 +399,10 @@ namespace WebBanHang.Controllers
                     if (marketingPromotion != null && marketingPromotion.IsValid)
                     {
                         actualTotalOrderAmount = Math.Max(0m, actualTotalOrderAmount - marketingPromotion.DiscountAmount);
+                        order.DiscountAmount = marketingPromotion.DiscountAmount;
+                        if (marketingPromotion.CouponID.HasValue)
+                            order.CouponID = marketingPromotion.CouponID.Value;
                         new MarketingSellingService(db).RecordPromotion(order.OrderID, marketingPromotion);
-                    }
-                    else if (!string.IsNullOrEmpty(model.AppliedVoucherCode))
-                    {
-                        var normalizedCode = model.AppliedVoucherCode.Trim().ToUpperInvariant();
-                        var globalCoupon = db.Coupons.SingleOrDefault(c => c.Code == normalizedCode);
-                        if (globalCoupon != null && globalCoupon.UsageLimit > 0 && globalCoupon.ExpiryDate >= DateTime.Now && !globalCoupon.Products.Any())
-                        {
-                            decimal discount = 0m;
-                            if (globalCoupon.DiscountPercentage.HasValue && globalCoupon.DiscountPercentage.Value > 0)
-                                discount = actualTotalOrderAmount * globalCoupon.DiscountPercentage.Value / 100m;
-                            if (globalCoupon.MaxDiscountAmount.HasValue && globalCoupon.MaxDiscountAmount.Value > 0)
-                                discount = discount == 0m ? globalCoupon.MaxDiscountAmount.Value : Math.Min(discount, globalCoupon.MaxDiscountAmount.Value);
-
-                            globalCoupon.UsageLimit -= 1;
-                            order.CouponID = globalCoupon.CouponID;
-                            discount = Math.Min(discount, actualTotalOrderAmount);
-                            actualTotalOrderAmount -= discount;
-
-                            try
-                            {
-                                var recorded = new MarketingSellingService(db).RecordPromotion(order.OrderID, new PromotionEvaluation
-                                {
-                                    IsValid = true,
-                                    PromotionType = "GLOBAL",
-                                    Code = normalizedCode,
-                                    DiscountAmount = discount,
-                                    CouponID = globalCoupon.CouponID
-                                });
-                                // Nếu có schema marketing, RecordPromotion đã giảm UsageLimit bằng SQL.
-                                if (recorded) globalCoupon.UsageLimit += 1;
-                            }
-                            catch { /* Schema marketing chưa cài: đơn hàng vẫn dùng coupon cũ bình thường. */ }
-                        }
                     }
 
                     // ✅ FIX LỖI 2: Lấy phí ship từ Server-side (Session) thay vì từ Client gửi lên
@@ -520,7 +523,7 @@ namespace WebBanHang.Controllers
 
                     System.Diagnostics.Trace.TraceError("Lỗi checkout: " + ex);
                     ModelState.AddModelError("", "Không thể hoàn tất đơn hàng. Vui lòng thử lại hoặc liên hệ hỗ trợ.");
-                    model.AvailableCoupons = GetAvailablePublicCoupons();
+                    PopulateMarketingCheckout(model, cart);
 
                     if (cart != null)
                     {
