@@ -105,6 +105,13 @@
             </a>
         </li>*@
             <li style="border-top: 1px solid #333; margin-top: 10px; padding-top: 10px;">
+                <a href="@Url.Action("Index", "Marketing", new { area = "Admin" })"
+                   class="@GetActiveClass("Marketing")" data-tooltip="Marketing Selling">
+                    <i class="fa-solid fa-bullseye" style="color: #38bdf8;"></i>
+                    <span>Marketing Selling</span>
+                </a>
+            </li>
+            <li>
                 <a href="@Url.Action("Index", "SmartRecommendation", new { area = "Admin" })"
                    class="@GetActiveClass("SmartRecommendation")"
                    data-tooltip="Smart Recommendation">

@@ -1,0 +1,78 @@
+@model WebBanHang.Models.ViewModel.MarketingDashboardVM
+@{
+    ViewBag.Title = "Marketing Selling";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="container-fluid py-3">
+    @if (ViewBag.SchemaError != null)
+    {
+        <div class="alert alert-danger">@ViewBag.SchemaError</div>
+    }
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+    }
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3"><div class="card shadow-sm border-0 p-3"><small>Voucher đang hoạt động</small><h3>@Model.ActivePersonalVouchers</h3></div></div>
+        <div class="col-md-3"><div class="card shadow-sm border-0 p-3"><small>Combo đang hoạt động</small><h3>@Model.ActiveComboOffers</h3></div></div>
+        <div class="col-md-3"><div class="card shadow-sm border-0 p-3"><small>Voucher đã sử dụng</small><h3>@Model.RedeemedVouchers</h3></div></div>
+        <div class="col-md-3"><div class="card shadow-sm border-0 p-3"><small>Doanh thu có ưu đãi</small><h3>@Model.RevenueInfluenced.ToString("N0") ₫</h3></div></div>
+    </div>
+
+    <div class="d-flex gap-2 mb-4">
+        @using (Html.BeginForm("GeneratePersonalVouchers", "Marketing", FormMethod.Post, new { area = "Admin" }))
+        {
+            @Html.AntiForgeryToken()
+            <button class="btn btn-primary" type="submit"><i class="fa-solid fa-user-tag"></i> Tạo voucher cá nhân</button>
+        }
+        @using (Html.BeginForm("GenerateComboOffers", "Marketing", FormMethod.Post, new { area = "Admin" }))
+        {
+            @Html.AntiForgeryToken()
+            <button class="btn btn-success" type="submit"><i class="fa-solid fa-boxes-stacked"></i> Tạo combo Hybrid</button>
+        }
+    </div>
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white"><strong>Voucher cá nhân gần đây</strong></div>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead><tr><th>Mã</th><th>Sản phẩm</th><th>Điểm</th><th>Kích hoạt bởi</th><th>Giảm</th><th>Trạng thái</th><th>Hết hạn</th></tr></thead>
+                <tbody>
+                @foreach (var item in Model.RecentPersonalVouchers)
+                {
+                    <tr>
+                        <td><code>@item.Code</code></td><td>@item.ProductName</td><td>@item.InterestScore</td>
+                        <td>@item.TriggerType</td><td>@item.DiscountAmount.ToString("N0") ₫</td>
+                        <td>@item.Status</td><td>@item.ExpiresAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white"><strong>Combo đang hoạt động</strong></div>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead><tr><th>Mã</th><th>Sản phẩm A</th><th>Sản phẩm B</th><th>Support</th><th>Confidence</th><th>Utility</th><th>Giảm</th></tr></thead>
+                <tbody>
+                @foreach (var item in Model.ActiveCombos)
+                {
+                    <tr>
+                        <td><code>@item.Code</code></td><td>@item.ProductNameA</td><td>@item.ProductNameB</td>
+                        <td>@item.Support</td><td>@((item.Confidence * 100).ToString("N0"))%</td>
+                        <td>@item.ActualUtility.ToString("N0") ₫</td><td>@item.DiscountAmount.ToString("N0") ₫</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

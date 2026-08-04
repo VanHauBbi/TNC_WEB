@@ -10,18 +10,28 @@ using System.Threading.Tasks;
 using WebBanHang.Models;
 using WebBanHang.Models.ViewModel;
 using WebBanHang.Services;
+using System.Configuration;
+using WebBanHang.Security;
 
 namespace WebBanHang.Controllers
 {
+    [CustomerSessionAuthorize]
     public class OrdersController : Controller
     {
         private MyStoreEntities db = new MyStoreEntities();
         private readonly GHNService _ghnService = new GHNService();
 
+        private List<Coupon> GetAvailablePublicCoupons()
+        {
+            try { return new MarketingSellingService(db).GetPublicCoupons(); }
+            catch { return db.Coupons.Where(c => !c.Products.Any()).OrderByDescending(c => c.CouponID).ToList(); }
+        }
+
         // GET: Orders
         public ActionResult Index()
         {
-            var orders = db.Orders.Include(o => o.Customer);
+            var customerId = (int)Session["CustomerID"];
+            var orders = db.Orders.Include(o => o.Customer).Where(o => o.CustomerID == customerId);
             return View(orders.ToList());
         }
 
@@ -32,7 +42,8 @@ namespace WebBanHang.Controllers
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
-            Order order = db.Orders.Find(id);
+            var customerId = (int)Session["CustomerID"];
+            Order order = db.Orders.SingleOrDefault(o => o.OrderID == id && o.CustomerID == customerId);
             if (order == null)
             {
                 return HttpNotFound();
@@ -43,8 +54,7 @@ namespace WebBanHang.Controllers
         // GET: Orders/Create
         public ActionResult Create()
         {
-            ViewBag.CustomerID = new SelectList(db.Customers, "CustomerID", "CustomerName");
-            return View();
+            return new HttpStatusCodeResult(HttpStatusCode.Forbidden);
         }
 
         [HttpPost]
@@ -155,7 +165,7 @@ namespace WebBanHang.Controllers
                 TotalAmount = cart.TotalValue(),
                 OrderDate = DateTime.Now,
                 PaymentStatus = "Chưa thanh toán",
-                AvailableCoupons = db.Coupons.Where(c => !c.Products.Any()).OrderByDescending(c => c.CouponID).ToList()
+                AvailableCoupons = GetAvailablePublicCoupons()
             };
 
             return View(model);
@@ -172,7 +182,7 @@ namespace WebBanHang.Controllers
             if (cart == null || !cart.Items.Any())
             {
                 ModelState.AddModelError("", "Giỏ hàng của bạn đang trống!");
-                model.AvailableCoupons = db.Coupons.Where(c => !c.Products.Any()).ToList();
+                model.AvailableCoupons = GetAvailablePublicCoupons();
                 model.CartItems = new List<WebBanHang.Models.ViewModel.CartItem>();
                 model.TotalAmount = 0;
                 return View(model);
@@ -185,7 +195,7 @@ namespace WebBanHang.Controllers
                 if (checkStock == null || item.Quantity > checkStock.StockQuantity)
                 {
                     ModelState.AddModelError("", $"Sản phẩm '{item.ProductName}' chỉ còn {checkStock?.StockQuantity ?? 0} cái trong kho.");
-                    model.AvailableCoupons = db.Coupons.Where(c => !c.Products.Any()).ToList();
+                    model.AvailableCoupons = GetAvailablePublicCoupons();
 
                     // --- BẮT BUỘC PHẢI THÊM 2 DÒNG NÀY CHỖ NÀY ---
                     model.CartItems = cart.Items.ToList();
@@ -197,7 +207,7 @@ namespace WebBanHang.Controllers
 
             if (!ModelState.IsValid)
             {
-                model.AvailableCoupons = db.Coupons.Where(c => !c.Products.Any()).ToList();
+                model.AvailableCoupons = GetAvailablePublicCoupons();
 
                 model.CartItems = cart.Items.ToList();
                 model.TotalAmount = cart.TotalValue();
@@ -206,6 +216,21 @@ namespace WebBanHang.Controllers
             }
 
             int customerId = (int)Session["CustomerID"];
+
+            PromotionEvaluation marketingPromotion = null;
+            if (!string.IsNullOrWhiteSpace(model.AppliedVoucherCode))
+            {
+                var marketingService = new MarketingSellingService(db);
+                marketingPromotion = marketingService.EvaluatePromotion(model.AppliedVoucherCode, customerId, cart.Items);
+                if (marketingService.IsManagedPromotionCode(model.AppliedVoucherCode) && !marketingPromotion.IsValid)
+                {
+                    ModelState.AddModelError("", marketingPromotion.Message);
+                    model.AvailableCoupons = GetAvailablePublicCoupons();
+                    model.CartItems = cart.Items.ToList();
+                    model.TotalAmount = cart.TotalValue();
+                    return View(model);
+                }
+            }
 
             // MÔ PHỎNG GIÁ VỐN & CẢNH BÁO LỢI NHUẬN (Không hiển thị ra View)
             var simulationService = new WebBanHang.Services.OrderCostSimulationService();
@@ -338,14 +363,42 @@ namespace WebBanHang.Controllers
                         }
                     }
 
-                    // ✅ FIX LỖI 5: Validate Coupon Toàn đơn chặt chẽ (Check ExpiryDate)
-                    if (!string.IsNullOrEmpty(model.AppliedVoucherCode))
+                    if (marketingPromotion != null && marketingPromotion.IsValid)
                     {
-                        var globalCoupon = db.Coupons.SingleOrDefault(c => c.Code == model.AppliedVoucherCode);
-                        if (globalCoupon != null && globalCoupon.UsageLimit > 0 && globalCoupon.ExpiryDate >= DateTime.Now)
+                        actualTotalOrderAmount = Math.Max(0m, actualTotalOrderAmount - marketingPromotion.DiscountAmount);
+                        new MarketingSellingService(db).RecordPromotion(order.OrderID, marketingPromotion);
+                    }
+                    else if (!string.IsNullOrEmpty(model.AppliedVoucherCode))
+                    {
+                        var normalizedCode = model.AppliedVoucherCode.Trim().ToUpperInvariant();
+                        var globalCoupon = db.Coupons.SingleOrDefault(c => c.Code == normalizedCode);
+                        if (globalCoupon != null && globalCoupon.UsageLimit > 0 && globalCoupon.ExpiryDate >= DateTime.Now && !globalCoupon.Products.Any())
                         {
+                            decimal discount = 0m;
+                            if (globalCoupon.DiscountPercentage.HasValue && globalCoupon.DiscountPercentage.Value > 0)
+                                discount = actualTotalOrderAmount * globalCoupon.DiscountPercentage.Value / 100m;
+                            if (globalCoupon.MaxDiscountAmount.HasValue && globalCoupon.MaxDiscountAmount.Value > 0)
+                                discount = discount == 0m ? globalCoupon.MaxDiscountAmount.Value : Math.Min(discount, globalCoupon.MaxDiscountAmount.Value);
+
                             globalCoupon.UsageLimit -= 1;
-                            actualTotalOrderAmount -= Convert.ToDecimal(Session["VoucherDiscount"] ?? 0);
+                            order.CouponID = globalCoupon.CouponID;
+                            discount = Math.Min(discount, actualTotalOrderAmount);
+                            actualTotalOrderAmount -= discount;
+
+                            try
+                            {
+                                var recorded = new MarketingSellingService(db).RecordPromotion(order.OrderID, new PromotionEvaluation
+                                {
+                                    IsValid = true,
+                                    PromotionType = "GLOBAL",
+                                    Code = normalizedCode,
+                                    DiscountAmount = discount,
+                                    CouponID = globalCoupon.CouponID
+                                });
+                                // Nếu có schema marketing, RecordPromotion đã giảm UsageLimit bằng SQL.
+                                if (recorded) globalCoupon.UsageLimit += 1;
+                            }
+                            catch { /* Schema marketing chưa cài: đơn hàng vẫn dùng coupon cũ bình thường. */ }
                         }
                     }
 
@@ -365,32 +418,20 @@ namespace WebBanHang.Controllers
                     {
                         string currentSession = Session.SessionID;
 
-                        if (cart != null && cart.Items.Any())
+                        if (!string.Equals(model.PaymentMethod, "VNPAY", StringComparison.OrdinalIgnoreCase)
+                            && cart != null && cart.Items.Any())
                         {
                             foreach (var cartItem in cart.Items)
                             {
-                                var existingLog = db.UserBehaviorLogs.FirstOrDefault(l =>
-                                    l.ProductID == cartItem.ProductID &&
-                                    l.SessionID == currentSession &&
-                                    l.ActionType == "BUY");
-
-                                if (existingLog != null)
+                                db.UserBehaviorLogs.Add(new UserBehaviorLog
                                 {
-                                    existingLog.ActionWeight += 10;
-                                    existingLog.CreatedAt = DateTime.Now;
-                                }
-                                else
-                                {
-                                    db.UserBehaviorLogs.Add(new UserBehaviorLog
-                                    {
-                                        ProductID = cartItem.ProductID,
-                                        ActionType = "BUY",
-                                        ActionWeight = 10,
-                                        CustomerID = customerId,
-                                        SessionID = currentSession,
-                                        CreatedAt = DateTime.Now
-                                    });
-                                }
+                                    ProductID = cartItem.ProductID,
+                                    ActionType = "PURCHASE",
+                                    ActionWeight = 10,
+                                    CustomerID = customerId,
+                                    SessionID = currentSession,
+                                    CreatedAt = DateTime.Now
+                                });
                             }
                             db.SaveChanges();
                         }
@@ -417,10 +458,13 @@ namespace WebBanHang.Controllers
                     // Xử lý VNPAY
                     if (model.PaymentMethod == "VNPAY")
                     {
-                        string vnp_Url = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
-                        string vnp_TmnCode = "6NQ3MY7C";
-                        string vnp_HashSecret = "HASY7LN7TINZAOCJ1JJZHLBTEQK1JQ4H";
-                        string vnp_Returnurl = "https://localhost:44329/Orders/PaymentCallback";
+                        string vnp_Url = ConfigurationManager.AppSettings["VnPayUrl"];
+                        string vnp_TmnCode = ConfigurationManager.AppSettings["VnPayTmnCode"];
+                        string vnp_HashSecret = ConfigurationManager.AppSettings["VnPayHashSecret"];
+                        string vnp_Returnurl = ConfigurationManager.AppSettings["VnPayReturnUrl"];
+                        if (string.IsNullOrWhiteSpace(vnp_Url) || string.IsNullOrWhiteSpace(vnp_TmnCode)
+                            || string.IsNullOrWhiteSpace(vnp_HashSecret) || string.IsNullOrWhiteSpace(vnp_Returnurl))
+                            throw new ConfigurationErrorsException("Thiếu cấu hình VNPay trong Web.config.");
 
                         WebBanHang.Utilities.VnPayLibrary vnpay = new WebBanHang.Utilities.VnPayLibrary();
                         vnpay.AddRequestData("vnp_Version", "2.1.0");
@@ -465,6 +509,7 @@ namespace WebBanHang.Controllers
                     }
 
                     Session.Remove("VoucherDiscount");
+                    Session.Remove("MarketingPromotion");
                     Session.Remove("ShippingFee");
 
                     return RedirectToAction("OrderSuccess", new { id = order.OrderID });
@@ -473,8 +518,9 @@ namespace WebBanHang.Controllers
                 {
                     try { transaction.Rollback(); } catch { }
 
-                    ModelState.AddModelError("", "Lỗi hệ thống: " + ex.Message);
-                    model.AvailableCoupons = db.Coupons.Where(c => !c.Products.Any()).ToList();
+                    System.Diagnostics.Trace.TraceError("Lỗi checkout: " + ex);
+                    ModelState.AddModelError("", "Không thể hoàn tất đơn hàng. Vui lòng thử lại hoặc liên hệ hỗ trợ.");
+                    model.AvailableCoupons = GetAvailablePublicCoupons();
 
                     if (cart != null)
                     {
@@ -498,17 +544,19 @@ namespace WebBanHang.Controllers
         {
             if (id == null) return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
 
-            var order = db.Orders.Include("OrderDetails.Product").SingleOrDefault(o => o.OrderID == id);
+            var customerId = (int)Session["CustomerID"];
+            var order = db.Orders.Include("OrderDetails.Product").SingleOrDefault(o => o.OrderID == id && o.CustomerID == customerId);
             if (order == null) return HttpNotFound();
 
             return View(order);
         }
 
+        [AllowAnonymous]
         public ActionResult PaymentCallback()
         {
             if (Request.QueryString.AllKeys.Length > 0)
             {
-                string vnp_HashSecret = "HASY7LN7TINZAOCJ1JJZHLBTEQK1JQ4H";
+                string vnp_HashSecret = ConfigurationManager.AppSettings["VnPayHashSecret"];
                 var vnpayData = Request.QueryString;
                 WebBanHang.Utilities.VnPayLibrary vnpay = new WebBanHang.Utilities.VnPayLibrary();
 
@@ -520,19 +568,48 @@ namespace WebBanHang.Controllers
                     }
                 }
 
-                int orderId = Convert.ToInt32(vnpay.GetResponseData("vnp_TxnRef"));
                 string vnp_ResponseCode = vnpay.GetResponseData("vnp_ResponseCode");
                 string vnp_SecureHash = Request.QueryString["vnp_SecureHash"];
+
+                if (string.IsNullOrWhiteSpace(vnp_HashSecret))
+                    return new HttpStatusCodeResult(HttpStatusCode.ServiceUnavailable, "VNPay chưa được cấu hình.");
 
                 bool checkSignature = vnpay.ValidateSignature(vnp_SecureHash, vnp_HashSecret);
                 if (checkSignature)
                 {
+                    int orderId;
+                    if (!int.TryParse(vnpay.GetResponseData("vnp_TxnRef"), out orderId))
+                        return new HttpStatusCodeResult(HttpStatusCode.BadRequest, "Mã đơn hàng VNPay không hợp lệ.");
+
                     var order = db.Orders.Include(o => o.OrderDetails).SingleOrDefault(o => o.OrderID == orderId);
                     if (order != null)
                     {
+                        long paidAmount;
+                        var amountIsValid = long.TryParse(vnpay.GetResponseData("vnp_Amount"), out paidAmount)
+                                            && paidAmount == Convert.ToInt64(order.TotalAmount * 100m);
+                        if (!amountIsValid)
+                            return new HttpStatusCodeResult(HttpStatusCode.BadRequest, "Số tiền VNPay không khớp đơn hàng.");
+
                         if (vnp_ResponseCode == "00")
                         {
+                            if (order.PaymentStatus == "Đã thanh toán")
+                                return RedirectToAction("OrderSuccess", new { id = orderId });
+
                             order.PaymentStatus = "Đã thanh toán";
+                            db.SaveChanges();
+
+                            foreach (var detail in order.OrderDetails.GroupBy(x => x.ProductID))
+                            {
+                                db.UserBehaviorLogs.Add(new UserBehaviorLog
+                                {
+                                    ProductID = detail.Key,
+                                    ActionType = "PURCHASE",
+                                    ActionWeight = 10,
+                                    CustomerID = order.CustomerID,
+                                    SessionID = Session.SessionID,
+                                    CreatedAt = DateTime.Now
+                                });
+                            }
                             db.SaveChanges();
 
                             // ✅ Cập nhật AI khi đơn VNPay thanh toán thành công
@@ -562,6 +639,9 @@ namespace WebBanHang.Controllers
                         {
                             order.PaymentStatus = "Thất bại";
                             order.OrderStatus = "Đã hủy";
+
+                            try { new MarketingSellingService(db).RollbackPromotions(order.OrderID); }
+                            catch (Exception ex) { System.Diagnostics.Trace.TraceError("Không hoàn tác được ưu đãi: " + ex.Message); }
 
                             string currentSession = Session.SessionID;
 

@@ -154,6 +154,7 @@
     <Compile Include="App_Start\FilterConfig.cs" />
     <Compile Include="App_Start\RouteConfig.cs" />
     <Compile Include="Areas\Admin\Controllers\SmartRecommendationController.cs" />
+    <Compile Include="Areas\Admin\Controllers\MarketingController.cs" />
     <Compile Include="Controllers\AdminAreaRegistration.cs" />
     <Compile Include="Areas\Admin\Controllers\AdminSupportController.cs" />
     <Compile Include="Areas\Admin\Controllers\CategoriesController.cs" />
@@ -266,6 +267,7 @@
     <Compile Include="Models\ViewModel\ForgotPasswordVM.cs" />
     <Compile Include="Models\ViewModel\HomeProductVM.cs" />
     <Compile Include="Models\ViewModel\LoginVM.cs" />
+    <Compile Include="Models\ViewModel\MarketingSellingVM.cs" />
     <Compile Include="Models\ViewModel\PriceHistoryViewModel.cs" />
     <Compile Include="Models\ViewModel\ProductDetailsVM.cs" />
     <Compile Include="Models\ViewModel\ProductSearchVM.cs" />
@@ -274,11 +276,16 @@
     <Compile Include="Models\ViewModel\SupplierProductVM.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Services\GHNService.cs" />
+    <Compile Include="Services\EmailService.cs" />
+    <Compile Include="Services\MarketingSellingService.cs" />
     <Compile Include="Services\OrderCostSimulationService.cs" />
     <Compile Include="Services\SmartRecommendationService.cs" />
     <Compile Include="Startup.cs" />
     <Compile Include="Utilities\PriceHelper.cs" />
     <Compile Include="Utilities\VnPayLibrary.cs" />
+    <Compile Include="Security\AdminAreaAuthorizationFilter.cs" />
+    <Compile Include="Security\CustomerSessionAuthorizeAttribute.cs" />
+    <Compile Include="Security\PasswordHasher.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="BottomIcon\mastercard-3.svg" />
@@ -555,6 +562,7 @@
     <Content Include="Content\bootstrap-grid.css.map" />
     <Content Include="Areas\Admin\Views\SmartRecommendation\Index.cshtml" />
     <Content Include="Areas\Admin\Views\SmartRecommendation\ProductAIDetails.cshtml" />
+    <Content Include="Areas\Admin\Views\Marketing\Index.cshtml" />
     <EntityDeploy Include="Models\Model.edmx">
       <Generator>EntityModelCodeGenerator</Generator>
       <LastGenOutput>Model.Designer.cs</LastGenOutput>
@@ -629,6 +637,7 @@
     <Content Include="Views\Home\SearchResults.cshtml" />
     <Content Include="Views\Account\ForgotPassword.cshtml" />
     <Content Include="Views\Account\ResetPassword.cshtml" />
+    <Content Include="Views\Account\MyVouchers.cshtml" />
     <Content Include="Views\BuildPC\Index.cshtml" />
     <Content Include="Views\Orders\Tracking.cshtml" />
     <Content Include="Views\Chat\Index.cshtml" />

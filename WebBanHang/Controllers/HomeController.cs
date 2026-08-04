@@ -333,6 +333,20 @@ namespace WebBanHang.Controllers
             // Gửi ra View
             ViewBag.SmartRecommendations = finalRecommendations;
 
+            try
+            {
+                var marketing = new WebBanHang.Services.MarketingSellingService(db);
+                ViewBag.ComboOffers = marketing.GetComboOffers(new[] { product.ProductID });
+                if (currentCustomerId.HasValue)
+                    ViewBag.PersonalVouchers = marketing.GetCustomerVouchers(currentCustomerId.Value)
+                        .Where(v => v.TargetProductID == product.ProductID).ToList();
+            }
+            catch
+            {
+                ViewBag.ComboOffers = new List<WebBanHang.Models.ViewModel.ComboOfferVM>();
+                ViewBag.PersonalVouchers = new List<WebBanHang.Models.ViewModel.PersonalVoucherVM>();
+            }
+
             var viewModel = new ProductDetailsVM
             {
                 product = product,

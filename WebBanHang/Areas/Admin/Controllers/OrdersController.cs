@@ -5,6 +5,7 @@ using System.Net;
 using System.Web.Mvc;
 using WebBanHang.Models;
 using PagedList;
+using WebBanHang.Services;
 
 namespace WebBanHang.Areas.Admin.Controllers
 {
@@ -165,6 +166,7 @@ namespace WebBanHang.Areas.Admin.Controllers
                                     }
                                 }
                             }
+                            new MarketingSellingService(db).RollbackPromotions(order.OrderID);
                             TempData["SuccessMessage"] = $"Đơn hàng #{id} đã bị HỦY. Đã tự động hoàn trả tồn kho đầy đủ.";
                         }
                     }
@@ -194,6 +196,12 @@ namespace WebBanHang.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult UpdateOrderStatus(int orderId, string newStatus)
         {
+            if (newStatus == "Đã hủy" || newStatus == "Hủy đơn")
+            {
+                TempData["Error"] = "Hãy dùng thao tác Hủy tại trang xử lý đơn để tồn kho và voucher được hoàn trả an toàn.";
+                return RedirectToAction("Process", new { id = orderId });
+            }
+
             var order = db.Orders.Find(orderId);
             if (order != null)
             {

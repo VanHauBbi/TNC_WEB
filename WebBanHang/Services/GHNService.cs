@@ -5,20 +5,22 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Configuration;
 
 namespace WebBanHang.Services
 {
     public class GHNService
     {
-        // TO-DO: Điền lại API Token và Shop ID của bạn
-        private readonly string _apiToken = "621b5048-7064-11f1-a973-aee5264794df";
-        private readonly string _shopId = "200862";
+        private readonly string _apiToken = ConfigurationManager.AppSettings["GhnApiToken"];
+        private readonly string _shopId = ConfigurationManager.AppSettings["GhnShopId"];
 
         // ĐÃ SỬA: Bỏ chữ "v2/" ở Base URL
         private readonly string _baseUrl = "https://dev-online-gateway.ghn.vn/shiip/public-api/";
 
         private async Task<JObject> SendRequestAsync(string endpoint, HttpMethod method, object body = null)
         {
+            if (string.IsNullOrWhiteSpace(_apiToken))
+                throw new ConfigurationErrorsException("Thiếu cấu hình GhnApiToken.");
             using (var client = new HttpClient())
             {
                 client.BaseAddress = new Uri(_baseUrl);

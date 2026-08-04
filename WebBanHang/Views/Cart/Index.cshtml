@@ -9,6 +9,53 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <h2 class="cart-title">🛒 Giỏ hàng của bạn</h2>
 
+@{
+    var personalVouchers = ViewBag.PersonalVouchers as List<WebBanHang.Models.ViewModel.PersonalVoucherVM>
+                           ?? new List<WebBanHang.Models.ViewModel.PersonalVoucherVM>();
+    var comboOffers = ViewBag.ComboOffers as List<WebBanHang.Models.ViewModel.ComboOfferVM>
+                      ?? new List<WebBanHang.Models.ViewModel.ComboOfferVM>();
+}
+
+@if (personalVouchers.Any())
+{
+    <div class="container mb-3">
+        <div class="alert alert-warning shadow-sm mb-0">
+            <strong><i class="fa-solid fa-user-tag"></i> Ưu đãi riêng của bạn:</strong>
+            @foreach (var voucher in personalVouchers.Take(3))
+            {
+                <span class="badge bg-danger ms-2">@voucher.Code · giảm @voucher.DiscountAmount.ToString("N0") ₫</span>
+            }
+            <a class="ms-2" href="@Url.Action("MyVouchers", "Account")">Xem tất cả</a>
+        </div>
+    </div>
+}
+
+@if (comboOffers.Any())
+{
+    <div class="container mb-4">
+        <div class="card border-success shadow-sm">
+            <div class="card-header bg-success text-white"><strong><i class="fa-solid fa-boxes-stacked"></i> Mua cùng tiết kiệm hơn</strong></div>
+            <div class="card-body">
+                <div class="row g-3">
+                    @foreach (var combo in comboOffers.Take(4))
+                    {
+                        <div class="col-md-6">
+                            <div class="border rounded p-3 h-100">
+                                <div><strong>@combo.ProductNameA</strong> + <strong>@combo.ProductNameB</strong></div>
+                                <div class="text-success fw-bold">Giảm @combo.DiscountAmount.ToString("N0") ₫</div>
+                                <small>Mã combo: <code>@combo.Code</code></small>
+                                <div class="mt-2">
+                                    <a class="btn btn-sm btn-outline-success" href="@Url.Action("ProductDetail", "Home", new { id = combo.ProductID_B })">Thêm sản phẩm còn thiếu</a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 <div class="shopping-cart-page container">
     @if (!Model.Items.Any())
     {

@@ -56,6 +56,7 @@
                             else
                             {
                                 <span class="welcome-message">Xin chào, @Session["UserName"]</span>
+                                <a href="@Url.Action("MyVouchers", "Account")">Voucher của tôi</a>
                                 <a href="@Url.Action("PurchaseHistory", "Account")">Lịch sử mua hàng</a>
                                 <a href="@Url.Action("Logout", "Account")">Đăng xuất</a>
                             }
@@ -324,10 +325,6 @@
                         $('#cart-total').text(res.cartTotal);
                         MiniCart();
                         alert(res.message);
-                        $.post('/Tracking/LogBehavior', {
-                            productId: productId,
-                            actionType: 'ADD_CART'
-                        });
                     } else if (res.redirectUrl) {
                         window.location.href = res.redirectUrl;
                     } else {
