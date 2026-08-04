@@ -1,0 +1,10 @@
+@model WebBanHang.Models.ViewModel.ComboOfferAdminVM
+@{
+    ViewBag.Title = "Ngừng combo";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+<div class="container-fluid py-3"><div class="card shadow-sm border-danger mx-auto" style="max-width:760px"><div class="card-header bg-danger text-white"><h4 class="mb-0"><i class="fa-solid fa-ban"></i> Ngừng áp dụng combo</h4></div><div class="card-body p-4">
+    <div class="alert alert-warning">Thao tác này <strong>không xóa dữ liệu</strong>. Combo sẽ không xuất hiện cho khách, nhưng lịch sử các đơn đã áp dụng vẫn được giữ.</div>
+    <dl class="row"><dt class="col-sm-4">Mã</dt><dd class="col-sm-8"><code>@Model.Code</code></dd><dt class="col-sm-4">Sản phẩm A</dt><dd class="col-sm-8">@Model.ProductNameA</dd><dt class="col-sm-4">Sản phẩm B</dt><dd class="col-sm-8">@Model.ProductNameB</dd><dt class="col-sm-4">Giảm một lần/đơn</dt><dd class="col-sm-8 fw-bold text-danger">@Model.DiscountAmount.ToString("N0") ₫</dd></dl>
+    @using (Html.BeginForm()) { @Html.AntiForgeryToken()<input type="hidden" name="id" value="@Model.ComboOfferID" /><button class="btn btn-danger" type="submit"><i class="fa-solid fa-ban"></i> Xác nhận ngừng áp dụng</button><a class="btn btn-secondary ms-2" href="@Url.Action("ComboDetails", new { id = Model.ComboOfferID })">Hủy</a> }
+</div></div></div>
