@@ -5,39 +5,33 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System.Configuration;
-using System.Net.Http.Headers;
 
 namespace WebBanHang.Services
 {
     public class GHNService
     {
-        private readonly string _apiToken = ConfigurationManager.AppSettings["GhnApiToken"];
-        private readonly string _shopId = ConfigurationManager.AppSettings["GhnShopId"];
-        private readonly string _baseUrl = string.IsNullOrWhiteSpace(ConfigurationManager.AppSettings["GhnApiBaseUrl"])
-            ? "https://online-gateway.ghn.vn/shiip/public-api/"
-            : ConfigurationManager.AppSettings["GhnApiBaseUrl"].TrimEnd('/') + "/";
+        // Token và Shop ID môi trường TEST của GHN.
+        private readonly string _apiToken = "621b5048-7064-11f1-a973-aee5264794df";
+        private readonly string _shopId = "200862";
 
-        private static readonly HttpClient HttpClient = new HttpClient
-        {
-            Timeout = TimeSpan.FromSeconds(30)
-        };
+        // ĐÃ SỬA: Bỏ chữ "v2/" ở Base URL
+        private readonly string _baseUrl = "https://dev-online-gateway.ghn.vn/shiip/public-api/";
 
         private async Task<JObject> SendRequestAsync(string endpoint, HttpMethod method, object body = null)
         {
-            if (string.IsNullOrWhiteSpace(_apiToken))
-                throw new ConfigurationErrorsException("GHN chưa được cấu hình. Hãy thêm GhnApiToken vào AppSettings.Local.config.");
-
-            if (endpoint.Contains("shipping-order") && string.IsNullOrWhiteSpace(_shopId))
-                throw new ConfigurationErrorsException("GHN chưa được cấu hình. Hãy thêm GhnShopId vào AppSettings.Local.config.");
-
-            using (var request = new HttpRequestMessage(method, new Uri(new Uri(_baseUrl), endpoint)))
+            using (var client = new HttpClient())
             {
-                request.Headers.TryAddWithoutValidation("Token", _apiToken);
-                request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                client.BaseAddress = new Uri(_baseUrl);
 
+                client.DefaultRequestHeaders.Add("Token", _apiToken);
+
+                // Các API liên quan đến đơn hàng cần có ShopId
                 if (endpoint.Contains("shipping-order"))
-                    request.Headers.TryAddWithoutValidation("ShopId", _shopId);
+                {
+                    client.DefaultRequestHeaders.Add("ShopId", _shopId);
+                }
+
+                HttpRequestMessage request = new HttpRequestMessage(method, endpoint);
 
                 if (body != null)
                 {
@@ -45,29 +39,16 @@ namespace WebBanHang.Services
                     request.Content = new StringContent(json, Encoding.UTF8, "application/json");
                 }
 
-                using (HttpResponseMessage response = await HttpClient.SendAsync(request))
+                HttpResponseMessage response = await client.SendAsync(request);
+                string responseContent = await response.Content.ReadAsStringAsync();
+
+                if (response.IsSuccessStatusCode)
                 {
-                    string responseContent = await response.Content.ReadAsStringAsync();
-                    JObject result;
-
-                    try
-                    {
-                        result = JObject.Parse(responseContent);
-                    }
-                    catch (JsonException)
-                    {
-                        throw new Exception("GHN trả về dữ liệu không hợp lệ. Vui lòng thử lại sau.");
-                    }
-
-                    if (!response.IsSuccessStatusCode || result["code"]?.Value<int>() != 200)
-                    {
-                        string message = result["message"]?.ToString();
-                        throw new Exception(string.IsNullOrWhiteSpace(message)
-                            ? $"Không thể kết nối GHN ({(int)response.StatusCode})."
-                            : "GHN: " + message);
-                    }
-
-                    return result;
+                    return JObject.Parse(responseContent);
+                }
+                else
+                {
+                    throw new Exception($"Lỗi GHN API ({response.StatusCode}): {responseContent}");
                 }
             }
         }
@@ -84,19 +65,15 @@ namespace WebBanHang.Services
 
         public async Task<JArray> GetDistrictsAsync(int provinceId)
         {
-            var response = await SendRequestAsync("master-data/district", HttpMethod.Post, new
-            {
-                province_id = provinceId
-            });
+            // Trả lại nguyên bản: Gửi GET và đính kèm province_id lên thanh URL
+            var response = await SendRequestAsync($"master-data/district?province_id={provinceId}", HttpMethod.Get);
             return (JArray)response["data"];
         }
 
         public async Task<JArray> GetWardsAsync(int districtId)
         {
-            var response = await SendRequestAsync("master-data/ward", HttpMethod.Post, new
-            {
-                district_id = districtId
-            });
+            // Trả lại nguyên bản: Gửi GET và đính kèm district_id lên thanh URL
+            var response = await SendRequestAsync($"master-data/ward?district_id={districtId}", HttpMethod.Get);
             return (JArray)response["data"];
         }
 

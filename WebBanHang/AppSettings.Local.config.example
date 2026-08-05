@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<appSettings>
-  <!-- Sao chép file này thành AppSettings.Local.config rồi điền thông tin từ tài khoản GHN. -->
-  <add key="GhnApiToken" value="DIEN_TOKEN_GHN_CUA_BAN" />
-  <add key="GhnShopId" value="DIEN_SHOP_ID_GHN_CUA_BAN" />
-</appSettings>
