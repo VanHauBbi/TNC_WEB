@@ -21,6 +21,8 @@
                 <div class="checkout-section shipping-section">
                     <h3 class="section-title">1. Địa chỉ và Vận chuyển</h3>
 
+                    <div id="ghnAddressError" class="alert alert-danger mb-3" role="alert" style="display:none;"></div>
+
                     <div class="form-group-custom mb-3">
                         <label class="control-label fw-bold">Tỉnh / Thành phố <span class="text-danger">*</span></label>
                         <select id="ddlProvince" class="form-control custom-input" required>
@@ -341,18 +343,37 @@
             }
 
             // HÀM XỬ LÝ LỖI TRẢ VỀ TỪ CONTROLLER SIÊU AN TOÀN
-            function parseData(response) {
+            function showGhnError(message) {
+                $('#ghnAddressError')
+                    .text(message || 'Không thể tải dữ liệu địa chỉ từ GHN. Vui lòng thử lại.')
+                    .show();
+            }
+
+            function clearGhnError() {
+                $('#ghnAddressError').hide().text('');
+            }
+
+            function parseData(response, dataName) {
                 if (!response) return [];
                 if (response.error) {
                     console.error("Lỗi từ Server:", response.error);
+                    showGhnError('Không thể tải ' + dataName + ': ' + response.error);
                     return [];
                 }
                 try {
                     return typeof response === 'string' ? JSON.parse(response) : response;
                 } catch (e) {
                     console.error("Lỗi parse JSON:", e);
+                    showGhnError('Dữ liệu ' + dataName + ' từ GHN không hợp lệ.');
                     return [];
                 }
+            }
+
+            function ghnAjaxError(dataName, xhr) {
+                var message = xhr && xhr.responseJSON && xhr.responseJSON.error
+                    ? xhr.responseJSON.error
+                    : 'Máy chủ không phản hồi. Vui lòng thử lại.';
+                showGhnError('Không thể tải ' + dataName + ': ' + message);
             }
 
             // HÀM DỌN RÁC "TEST-ALERT" VÀ "02" TỪ GHN
@@ -371,15 +392,17 @@
                 url: '@Url.Action("GetProvinces", "Orders")',
                 type: 'GET',
                 success: function (response) {
-                    var data = parseData(response);
+                    var data = parseData(response, 'Tỉnh/Thành phố');
                     var ddlProvince = $('#ddlProvince');
+                    if (data.length > 0) clearGhnError();
                     $.each(data, function (index, item) {
                         ddlProvince.append($('<option>', {
                             value: item.ProvinceID,
                             text: cleanName(item.ProvinceName)
                         }));
                     });
-                }
+                },
+                error: function (xhr) { ghnAjaxError('Tỉnh/Thành phố', xhr); }
             });
 
             // 2. LOAD QUẬN/HUYỆN
@@ -400,8 +423,9 @@
                         type: 'GET',
                         data: { provinceId: provinceId },
                         success: function (response) {
-                            var data = parseData(response);
+                            var data = parseData(response, 'Quận/Huyện');
                             if (data.length > 0) {
+                                clearGhnError();
                                 $.each(data, function (index, item) {
                                     ddlDistrict.append($('<option>', {
                                         value: item.DistrictID,
@@ -412,7 +436,8 @@
                             } else {
                                 alert("Không thể tải Quận/Huyện. Vui lòng tải lại trang!");
                             }
-                        }
+                        },
+                        error: function (xhr) { ghnAjaxError('Quận/Huyện', xhr); }
                     });
                 }
             });
@@ -433,8 +458,9 @@
                         type: 'GET',
                         data: { districtId: districtId },
                         success: function (response) {
-                            var data = parseData(response);
+                            var data = parseData(response, 'Phường/Xã');
                             if (data.length > 0) {
+                                clearGhnError();
                                 $.each(data, function (index, item) {
                                     ddlWard.append($('<option>', {
                                         value: item.WardCode,
@@ -443,7 +469,8 @@
                                 });
                                 ddlWard.prop('disabled', false);
                             }
-                        }
+                        },
+                        error: function (xhr) { ghnAjaxError('Phường/Xã', xhr); }
                     });
                 }
             });
