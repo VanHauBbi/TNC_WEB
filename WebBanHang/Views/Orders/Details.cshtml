@@ -342,8 +342,15 @@
                     </tbody>
                     <tfoot class="table-footer">
                         @{
+                            // 1. Tính tổng tiền hàng
                             decimal subTotal = Model.OrderDetails?.Sum(d => d.TotalPrice) ?? 0;
-                            decimal shippingFee = Model.TotalAmount - subTotal;
+
+                            // 2. Lấy số tiền giảm giá từ DB (Không dùng ?? nữa vì kiểu decimal đã bắt buộc có giá trị)
+                            decimal discountAmount = Model.DiscountAmount;
+
+                            // 3. Tính lại phí vận chuyển gốc
+                            decimal shippingFee = Model.TotalAmount - subTotal + discountAmount;
+                            if (shippingFee < 0) { shippingFee = 0; }
                         }
 
                         <!-- Dòng: Tổng tiền hàng -->
@@ -354,14 +361,23 @@
 
                         <!-- Dòng: Phí vận chuyển -->
                         <tr>
-                            <td colspan="3" class="text-end fw-bold" style="color: #6c757d; font-size: 1rem; padding: 5px 15px 15px 15px;">Phí vận chuyển:</td>
-                            <td class="text-end fw-bold" style="color: #495057; padding: 5px 25px 15px 15px;">@String.Format("{0:N0} ₫", shippingFee)</td>
+                            <td colspan="3" class="text-end fw-bold" style="color: #6c757d; font-size: 1rem; padding: 5px 15px 5px 15px;">Phí vận chuyển:</td>
+                            <td class="text-end fw-bold" style="color: #495057; padding: 5px 25px 5px 15px;">@String.Format("{0:N0} ₫", shippingFee)</td>
                         </tr>
+
+                        <!-- Dòng: Giảm giá (Chỉ hiển thị nếu có áp dụng mã/combo) -->
+                        @if (discountAmount > 0)
+                        {
+                            <tr>
+                                <td colspan="3" class="text-end fw-bold" style="color: #28a745; font-size: 1rem; padding: 5px 15px 15px 15px;"><i class="fa-solid fa-tags me-1"></i> Giảm giá:</td>
+                                <td class="text-end fw-bold" style="color: #28a745; padding: 5px 25px 15px 15px;">- @String.Format("{0:N0} ₫", discountAmount)</td>
+                            </tr>
+                        }
 
                         <!-- Dòng: Tổng thanh toán cuối cùng -->
                         <tr style="border-top: 2px dashed #dee2e6;">
                             <td colspan="3" class="text-end fw-bold total-title" style="padding-top: 20px;">TỔNG THANH TOÁN CUỐI CÙNG:</td>
-                            <td class="text-end fw-bold total-amount" style="padding-right: 25px; padding-top: 20px;">@String.Format("{0:N0} ₫", Model.TotalAmount)</td>
+                            <td class="text-end fw-bold total-amount" style="padding-right: 25px; padding-top: 20px; color: #e44d26;">@String.Format("{0:N0} ₫", Model.TotalAmount)</td>
                         </tr>
                     </tfoot>
                 </table>
