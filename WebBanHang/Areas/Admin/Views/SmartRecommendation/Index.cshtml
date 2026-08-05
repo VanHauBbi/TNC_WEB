@@ -107,7 +107,7 @@
                                     <!-- SẢN PHẨM A -->
                                     <td class="ps-4 align-middle">
                                         <a href="@Url.Action("ProductAIDetails", "SmartRecommendation", new { area = "Admin", id = item.Product.ProductID })" class="text-decoration-none d-flex align-items-center" title="Xem chi tiết thuật toán">
-                                            <img src="@item.Product.ProductImage" alt="Ảnh A" style="width: 50px; height: 50px; object-fit: contain; border-radius: 6px;" class="me-3 border bg-white p-1 shadow-sm" />
+                                            <img src="@item.Product.ProductImage" alt="Ảnh A" style="width: 50px; height: 50px; object-fit: contain; border-radius: 6px;" class="me-3 border bg-white p-1 shadow-sm" loading="lazy" />
                                             <span class="fw-bold text-primary" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 0.95rem;">
                                                 @item.Product.ProductName
                                             </span>
@@ -117,7 +117,7 @@
                                     <!-- SẢN PHẨM B -->
                                     <td class="align-middle">
                                         <div class="d-flex align-items-center">
-                                            <img src="@item.Product1.ProductImage" alt="Ảnh B" style="width: 50px; height: 50px; object-fit: contain; border-radius: 6px;" class="me-3 border bg-white p-1 shadow-sm" />
+                                            <img src="@item.Product1.ProductImage" alt="Ảnh B" style="width: 50px; height: 50px; object-fit: contain; border-radius: 6px;" class="me-3 border bg-white p-1 shadow-sm" loading="lazy" />
                                             <span class="fw-bold text-dark" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 0.95rem;">
                                                 @item.Product1.ProductName
                                             </span>

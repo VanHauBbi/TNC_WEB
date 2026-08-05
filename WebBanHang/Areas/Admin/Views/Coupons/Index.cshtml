@@ -25,6 +25,13 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div id="errorAlertMessage" class="alert alert-danger alert-dismissible fade show" style="border-radius: 8px;">
+            <i class="fa-solid fa-circle-exclamation me-2"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
 
     <!-- Table -->
     <div class="table-responsive">
@@ -44,6 +51,11 @@
             <tbody>
                 @foreach (var item in Model)
                 {
+                    var personalVoucher = item.CustomerCoupons
+                        .OrderByDescending(v => v.AssignedAt)
+                        .FirstOrDefault();
+                    var isPersonalVoucher = personalVoucher != null || item.CouponType == "PERSONAL";
+                    var isPersonalVoucherUsed = personalVoucher != null && personalVoucher.Status == "USED";
                     <tr>
                         <td class="text-dark fw-bold" style="white-space: normal; word-break: break-word;">
                             @item.CouponName
@@ -73,7 +85,11 @@
                         </td>
 
                         <td class="text-center">
-                            @if (item.ExpiryDate <= DateTime.Now)
+                            @if (isPersonalVoucherUsed)
+                            {
+                                <span class="cp-badge cp-empty">Đã sử dụng</span>
+                            }
+                            else if (item.ExpiryDate <= DateTime.Now)
                             {
                                 <span class="cp-badge cp-expired">Đã hết hạn</span>
                             }
@@ -88,17 +104,22 @@
                         </td>
 
                         <td class="text-center">
-                            <!-- Dùng flex-column và gap-2 để xếp 3 nút nằm dọc, cách nhau một chút -->
                             <div class="d-flex flex-column align-items-center gap-2">
-                                <a href="@Url.Action("Details", new { id = item.CouponID })" class="cp-text-btn cp-btn-view">
-                                    Chi tiết
-                                </a>
-                                <a href="@Url.Action("Edit", new { id = item.CouponID })" class="cp-text-btn cp-btn-edit">
-                                    Sửa mã
-                                </a>
-                                <a href="@Url.Action("Delete", new { id = item.CouponID })" class="cp-text-btn cp-btn-delete">
-                                    Xóa
-                                </a>
+                                @if (isPersonalVoucher && personalVoucher != null)
+                                {
+                                    if (!isPersonalVoucherUsed)
+                                    {
+                                        <a href="@Url.Action("PersonalVoucherDetails", "Marketing", new { area = "Admin", id = personalVoucher.CustomerCouponID })" class="cp-text-btn cp-btn-view">Chi tiết</a>
+                                        <a href="@Url.Action("EditPersonalVoucher", "Marketing", new { area = "Admin", id = personalVoucher.CustomerCouponID })" class="cp-text-btn cp-btn-edit">Sửa voucher</a>
+                                        <a href="@Url.Action("DeletePersonalVoucher", "Marketing", new { area = "Admin", id = personalVoucher.CustomerCouponID })" class="cp-text-btn cp-btn-delete">Ngừng</a>
+                                    }
+                                }
+                                else
+                                {
+                                    <a href="@Url.Action("Details", new { id = item.CouponID })" class="cp-text-btn cp-btn-view">Chi tiết</a>
+                                    <a href="@Url.Action("Edit", new { id = item.CouponID })" class="cp-text-btn cp-btn-edit">Sửa mã</a>
+                                    <a href="@Url.Action("Delete", new { id = item.CouponID })" class="cp-text-btn cp-btn-delete">Xóa</a>
+                                }
                             </div>
                         </td>
                     </tr>
@@ -119,15 +140,16 @@
 @section Scripts {
     <script>
         window.addEventListener("DOMContentLoaded", function () {
-            const alertBox = document.getElementById("alertMessage");
-            if (alertBox) {
+            const alertBoxes = [document.getElementById("alertMessage"), document.getElementById("errorAlertMessage")];
+            alertBoxes.forEach(function (alertBox) {
+                if (!alertBox) return;
                 setTimeout(() => {
                     alertBox.classList.add("fade-out");
                     setTimeout(() => {
                         alertBox.remove();
                     }, 500);
                 }, 3000);
-            }
+            });
         });
     </script>
 }

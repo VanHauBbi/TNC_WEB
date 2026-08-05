@@ -18,16 +18,16 @@
             <div id="mainBannerCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="3000">
                 <div class="carousel-inner banner-carousel-inner rounded shadow-sm">
                     <div class="carousel-item active">
-                        <img src="~/image/banner-haloween-pc-1.jpg" class="d-block w-100 banner-img-fit" alt="Khuyến mãi Halloween PC 1">
+                        <img src="~/image/banner-haloween-pc-1.jpg" class="d-block w-100 banner-img-fit" alt="Khuyến mãi Halloween PC 1" fetchpriority="high">
                     </div>
                     <div class="carousel-item">
-                        <img src="~/image/banner-haloween-pc-2.jpg" class="d-block w-100 banner-img-fit" alt="Khuyến mãi Halloween PC 2">
+                        <img src="~/image/banner-haloween-pc-2.jpg" class="d-block w-100 banner-img-fit" alt="Khuyến mãi Halloween PC 2" loading="lazy">
                     </div>
                     <div class="carousel-item">
-                        <img src="~/image/banner-trang-chu-pc-hoan-tien-4-phan-tram-1.jpg" class="d-block w-100 banner-img-fit" alt="Bảo hành đổi mới 3 năm">
+                        <img src="~/image/banner-trang-chu-pc-hoan-tien-4-phan-tram-1.jpg" class="d-block w-100 banner-img-fit" alt="Bảo hành đổi mới 3 năm" loading="lazy">
                     </div>
                     <div class="carousel-item">
-                        <img src="~/image/banner-mua-man-hinh-tang-tien-mat.jpg" class="d-block w-100 banner-img-fit" alt="Mua màn hình tặng tiền mặt">
+                        <img src="~/image/banner-mua-man-hinh-tang-tien-mat.jpg" class="d-block w-100 banner-img-fit" alt="Mua màn hình tặng tiền mặt" loading="lazy">
                     </div>
                 </div>
                 <button class="carousel-control-prev" type="button" data-bs-target="#mainBannerCarousel" data-bs-slide="prev">
@@ -56,7 +56,7 @@
             <div class="col-3 col-md-3 col-lg-2 p-1">
                 <img src="~/image/@bannerName"
                      class="img-fluid banner-thumbnail-item rounded shadow-sm @(thumbnailIndex == 0 ? "active" : "")"
-                     data-bs-target="#mainBannerCarousel" data-bs-slide-to="@thumbnailIndex" alt="Thumbnail @(thumbnailIndex + 1)" />
+                     data-bs-target="#mainBannerCarousel" data-bs-slide-to="@thumbnailIndex" alt="Thumbnail @(thumbnailIndex + 1)" loading="lazy" />
             </div>
             thumbnailIndex++;
         }
@@ -95,7 +95,7 @@
                                 <span class="badge bg-danger position-absolute top-0 start-0 m-2 z-1 shadow-sm">-@discountPercent.ToString("0")%</span>
                             }
                             <a href="@Url.Action("ProductDetail", "Home", new { id = item.ProductID })">
-                                <img src="@item.ProductImage" class="card-img-top p-3" alt="@item.ProductName" />
+                                <img src="@item.ProductImage" class="card-img-top p-3" alt="@item.ProductName" loading="lazy" />
                             </a>
                         </div>
 
@@ -191,7 +191,7 @@
                             <span class="badge bg-danger position-absolute top-0 start-0 m-2 z-1 shadow-sm">-@discountPercent.ToString("0")%</span>
                         }
                         <a href="@Url.Action("ProductDetail", "Home", new { id = item.ProductID })">
-                            <img src="@item.ProductImage" class="card-img-top p-3" alt="@item.ProductName" />
+                            <img src="@item.ProductImage" class="card-img-top p-3" alt="@item.ProductName" loading="lazy" />
                         </a>
                     </div>
 
@@ -305,7 +305,7 @@
                         <div class="position-relative overflow-hidden product-img-wrapper">
                             <span class="badge bg-danger position-absolute top-0 start-0 m-2 z-1 shadow-sm fs-6">-@discountPercent.ToString("0")%</span>
                             <a href="@Url.Action("ProductDetail", "Home", new { id = item.ProductID })">
-                                <img src="@item.ProductImage" class="card-img-top p-3" alt="@item.ProductName" />
+                                <img src="@item.ProductImage" class="card-img-top p-3" alt="@item.ProductName" loading="lazy" />
                             </a>
                         </div>
 
@@ -408,7 +408,7 @@
                             <span class="badge bg-danger position-absolute top-0 start-0 m-2 z-1 shadow-sm">-@discountPercent.ToString("0")%</span>
                         }
                         <a href="@Url.Action("ProductDetail", "Home", new { id = item.ProductID })">
-                            <img src="@item.ProductImage" class="card-img-top p-3" alt="@item.ProductName" />
+                            <img src="@item.ProductImage" class="card-img-top p-3" alt="@item.ProductName" loading="lazy" />
                         </a>
                     </div>
 

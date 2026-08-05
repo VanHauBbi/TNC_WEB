@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+﻿@using System.Linq
+<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="utf-8">
@@ -14,14 +15,16 @@
 
     <link rel="stylesheet" href="~/Content/myStyle/header.css" />
     <link rel="stylesheet" href="~/Content/myStyle/footer.css" />
-    <link rel="stylesheet" href="~/Content/myStyle/home.css" />
-
     <script>
         var isLoggedIn = @(Session["UserName"] != null ? "true" : "false");
     </script>
     <title>@ViewBag.Title</title>
 </head>
 <body>
+    @{
+        var headerCart = Session["Cart"] as WebBanHang.Models.ViewModel.Cart;
+        var headerCartCount = headerCart == null ? 0 : headerCart.Items.Sum(item => item.Quantity);
+    }
     <header class="site-header new-design">
         <div class="header-top-bar">
             <div class="container header-main">
@@ -65,7 +68,7 @@
                     <div class="cart" id="cartIcon">
                         <i class="fa-solid fa-cart-shopping"></i>
                         <span class="cart-count" id="cart-count">
-                            @(((Session["Cart"] as List<WebBanHang.Models.ViewModel.CartItem>)?.Count) ?? 0)
+                            @headerCartCount
                         </span>
                         <span class="cart-label">Giỏ hàng</span>
 
@@ -324,10 +327,6 @@
                         $('#cart-total').text(res.cartTotal);
                         MiniCart();
                         alert(res.message);
-                        $.post('/Tracking/LogBehavior', {
-                            productId: productId,
-                            actionType: 'ADD_CART'
-                        });
                     } else if (res.redirectUrl) {
                         window.location.href = res.redirectUrl;
                     } else {
@@ -358,15 +357,6 @@
         }
 
         $(document).ready(function () {
-            $.ajax({
-                url: '@Url.Action("GetCartCount", "Cart")',
-                type: 'GET',
-                success: function (data) {
-                    $('#cart-count').text(data.count);
-                }
-            });
-            MiniCart();
-
             const messageBox = $('#tempMessage');
             if (messageBox.length) {
                 messageBox.fadeIn(400);
@@ -413,23 +403,23 @@
         </div>
     </div>
 
-    <script src="~/Scripts/jquery.signalR-2.4.3.min.js"></script>
-    <script src="~/signalr/hubs"></script>
-
     <script>
     var isLiveChatMode = false;
     var currentSessionId = 0;
     var chatHub = null;
     var chatTimeout = null;
+    var chatInitialized = false;
 
     // ==========================================
-    // 1. KHỞI TẠO & LOAD DỮ LIỆU KHI VÀO TRANG
+    // 1. Chỉ tải dữ liệu chat khi người dùng thực sự mở khung chat.
     // ==========================================
     $(document).ready(function() {
-        // Ẩn hiện khung chat
         document.getElementById('chatbot-toggle-btn').addEventListener('click', toggleChat);
+    });
 
-        // Lấy dữ liệu phiên hiện tại (AI hoặc Admin)
+    function initializeChat() {
+        if (chatInitialized) return;
+        chatInitialized = true;
         fetch('@Url.Action("GetActiveChatData", "Chat")')
         .then(res => res.json())
         .then(data => {
@@ -447,7 +437,7 @@
                 isLiveChatMode = true;
                 currentSessionId = data.sessionId;
                 switchToAdminUI();
-                startSignalR(currentSessionId);
+                ensureSignalRScripts().then(function () { startSignalR(currentSessionId); });
 
                 if (data.pendingConfirm || sessionStorage.getItem('TNC_Confirm_' + currentSessionId) === 'true') {
                     renderConfirmBox();
@@ -455,15 +445,36 @@
             } else {
                 resetChatTimeout(); // Bắt đầu đếm ngược 3 phút cho AI
             }
+        }).catch(function () {
+            chatInitialized = false;
+            showWelcomeMessage();
         });
-    });
+    }
+
+    function loadScript(url) {
+        return new Promise(function(resolve, reject) {
+            var script = document.createElement('script');
+            script.src = url;
+            script.onload = resolve;
+            script.onerror = reject;
+            document.body.appendChild(script);
+        });
+    }
+
+    function ensureSignalRScripts() {
+        if ($.connection && $.connection.chatHub) return Promise.resolve();
+        return loadScript('@Url.Content("~/Scripts/jquery.signalR-2.4.3.min.js")')
+            .then(function () { return loadScript('@Url.Content("~/signalr/hubs")'); });
+    }
 
     // ==========================================
     // 2. GIAO DIỆN & UI CƠ BẢN
     // ==========================================
     function toggleChat() {
         var box = document.getElementById('chatbot-box');
-        box.style.display = box.style.display === 'none' || box.style.display === '' ? 'flex' : 'none';
+        var isOpening = box.style.display === 'none' || box.style.display === '';
+        box.style.display = isOpening ? 'flex' : 'none';
+        if (isOpening) initializeChat();
     }
 
     function showWelcomeMessage() {
@@ -540,7 +551,7 @@
                     currentSessionId = data.sessionId;
                     switchToAdminUI();
                     appendMessage('Hệ thống', data.reply, false, 'text-success fw-bold');
-                    startSignalR(currentSessionId);
+                    ensureSignalRScripts().then(function () { startSignalR(currentSessionId); });
                 } else {
                     appendMessage('AI', data.reply, false);
                 }

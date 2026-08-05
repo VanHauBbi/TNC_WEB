@@ -90,7 +90,7 @@
                                         }
 
                                         <a href="@Url.Action("ProductDetail", "Home", new { id = p.ProductID })" class="product-link">
-                                            <img src="@p.ProductImage" class="card-img-top product-image-search" alt="@p.ProductName" style="object-fit: contain; height: 180px; width: 100%;" />
+                                            <img src="@p.ProductImage" class="card-img-top product-image-search" alt="@p.ProductName" style="object-fit: contain; height: 180px; width: 100%;" loading="lazy" />
                                         </a>
                                     </div>
 
@@ -187,7 +187,7 @@
                                                 }
 
                                                 <a href="@Url.Action("ProductDetail", "Home", new { id = p.ProductID })" class="product-link">
-                                                    <img src="@p.ProductImage" class="card-img-top product-image-search p-2" alt="@p.ProductName" style="object-fit: contain; height: 180px; width: 100%;" />
+                                                    <img src="@p.ProductImage" class="card-img-top product-image-search p-2" alt="@p.ProductName" style="object-fit: contain; height: 180px; width: 100%;" loading="lazy" />
                                                 </a>
                                             </div>
                                             <div class="card-body d-flex flex-column" style="padding: 15px 20px 20px 20px;">

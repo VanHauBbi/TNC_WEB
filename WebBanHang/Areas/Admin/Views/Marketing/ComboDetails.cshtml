@@ -1,0 +1,45 @@
+@model WebBanHang.Models.ViewModel.ComboOfferAdminVM
+@{
+    ViewBag.Title = "Chi tiết combo mua chung";
+    ViewBag.RemoveSpacing = true;
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+    var isRunning = Model.IsActive && Model.EndDate > DateTime.Now && Model.UsageLimit > 0;
+    var protectionMode = Model.MinimumMarginPct >= 10m ? "An toàn" : Model.MinimumMarginPct <= 2m ? "Đẩy bán" : "Cân bằng";
+}
+<link href="~/Content/Admin/marketing_admin.css" rel="stylesheet" />
+<div class="mk-page mk-detail-shell">
+    @if (TempData["SuccessMessage"] != null) { <div class="mk-toast"><div class="d-flex gap-3 align-items-center"><i class="fa-solid fa-circle-check text-success"></i><div>@TempData["SuccessMessage"]</div></div></div> }
+    <div class="mk-page-heading">
+        <div><h3><i class="fa-solid fa-boxes-stacked text-success me-2"></i>Chi tiết combo mua chung</h3><p>Mã <span class="mk-code">@Model.Code</span> · giảm đúng một lần trên tổng đơn</p></div>
+        <div class="mk-toolbar"><a class="mk-btn mk-btn-warning" href="@Url.Action("EditCombo", new { id = Model.ComboOfferID })"><i class="fa-solid fa-pen"></i> Chỉnh sửa</a><a class="mk-btn mk-btn-danger" href="@Url.Action("DeleteCombo", new { id = Model.ComboOfferID })"><i class="fa-solid fa-ban"></i> Ngừng áp dụng</a><a class="mk-btn mk-btn-neutral" href="@Url.Action("Index")"><i class="fa-solid fa-arrow-left"></i> Quay lại</a></div>
+    </div>
+
+    <div class="mk-card"><div class="mk-card-body"><div class="mk-combo-products">
+        <div class="mk-combo-product"><img src="@Model.ProductImageA" alt="" /><div><div class="mk-summary-label">Sản phẩm A</div><div class="mk-product-name mt-1">@Model.ProductNameA</div><div class="mk-money mt-1">@Model.ProductPriceA.ToString("N0") ₫</div></div></div>
+        <div class="mk-combo-plus"><i class="fa-solid fa-plus"></i></div>
+        <div class="mk-combo-product"><img src="@Model.ProductImageB" alt="" /><div><div class="mk-summary-label">Sản phẩm B</div><div class="mk-product-name mt-1">@Model.ProductNameB</div><div class="mk-money mt-1">@Model.ProductPriceB.ToString("N0") ₫</div></div></div>
+    </div></div></div>
+
+    <div class="mk-summary-strip">
+        <div class="mk-summary-item"><div class="mk-summary-label">Tổng giá cặp</div><div class="mk-summary-value">@Model.OriginalAmount.ToString("N0") ₫</div></div>
+        <div class="mk-summary-item"><div class="mk-summary-label">Giảm một lần/đơn</div><div class="mk-summary-value text-danger">-@Model.DiscountAmount.ToString("N0") ₫</div></div>
+        <div class="mk-summary-item"><div class="mk-summary-label">Giá cặp dự kiến</div><div class="mk-summary-value text-success">@Model.DiscountedAmount.ToString("N0") ₫</div></div>
+    </div>
+
+    <div class="mk-info-grid">
+        <section class="mk-info-card"><div class="mk-info-card-title"><i class="fa-solid fa-chart-simple me-2 text-primary"></i>Dữ liệu Hybrid</div><div class="mk-info-list">
+            <div class="mk-info-row"><div class="mk-info-label">Số đơn mua chung</div><div class="mk-info-value">@Model.Support đơn</div></div>
+            <div class="mk-info-row"><div class="mk-info-label">Tỷ lệ mua kèm</div><div class="mk-info-value">@((Model.Confidence * 100).ToString("0.##"))%</div></div>
+            <div class="mk-info-row"><div class="mk-info-label">Lợi nhuận TB/cặp</div><div class="mk-info-value text-success">@Model.ActualUtility.ToString("N0") ₫</div></div>
+            <div class="mk-info-row"><div class="mk-info-label">Bảo vệ lợi nhuận</div><div class="mk-info-value">@protectionMode<div class="text-muted small">Hệ thống tự tính FIFO</div></div></div>
+        </div></section>
+        <section class="mk-info-card"><div class="mk-info-card-title"><i class="fa-solid fa-clock-rotate-left me-2 text-primary"></i>Trạng thái sử dụng</div><div class="mk-info-list">
+            <div class="mk-info-row"><div class="mk-info-label">Trạng thái</div><div class="mk-info-value">@if (isRunning) { <span class="mk-badge success">Đang hoạt động</span> } else { <span class="mk-badge muted">Đã ngừng</span> }</div></div>
+            <div class="mk-info-row"><div class="mk-info-label">Thời gian</div><div class="mk-info-value">@Model.StartDate.ToString("dd/MM/yyyy HH:mm")<div class="text-muted small">đến @Model.EndDate.ToString("dd/MM/yyyy HH:mm")</div></div></div>
+            <div class="mk-info-row"><div class="mk-info-label">Lượt còn lại</div><div class="mk-info-value">@Model.UsageLimit lượt</div></div>
+            <div class="mk-info-row"><div class="mk-info-label">Đơn đã áp dụng</div><div class="mk-info-value">@Model.UsedOrderCount đơn</div></div>
+            <div class="mk-info-row"><div class="mk-info-label">Tổng tiền đã giảm</div><div class="mk-info-value">@Model.UsedDiscountTotal.ToString("N0") ₫</div></div>
+        </div></section>
+    </div>
+</div>
+@section Scripts { <script>$(function(){if($('.mk-toast').length)setTimeout(function(){$('.mk-toast').fadeOut(350);},5000);});</script> }

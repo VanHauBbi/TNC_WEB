@@ -21,6 +21,7 @@ namespace WebBanHang.Models
             this.Orders = new HashSet<Order>();
             this.ProductReviews = new HashSet<ProductReview>();
             this.SupportSessions = new HashSet<SupportSession>();
+            this.CustomerCoupons = new HashSet<CustomerCoupon>();
         }
     
         public int CustomerID { get; set; }
@@ -40,5 +41,7 @@ namespace WebBanHang.Models
         public virtual ICollection<ProductReview> ProductReviews { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<SupportSession> SupportSessions { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        public virtual ICollection<CustomerCoupon> CustomerCoupons { get; set; }
     }
 }

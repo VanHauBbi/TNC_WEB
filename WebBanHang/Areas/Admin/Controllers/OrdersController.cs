@@ -5,6 +5,7 @@ using System.Net;
 using System.Web.Mvc;
 using WebBanHang.Models;
 using PagedList;
+using WebBanHang.Services;
 
 namespace WebBanHang.Areas.Admin.Controllers
 {
@@ -13,17 +14,52 @@ namespace WebBanHang.Areas.Admin.Controllers
         private MyStoreEntities db = new MyStoreEntities();
 
         // GET: Admin/Orders
-        public ActionResult Index(int? page)
+        public ActionResult Index(int? page, string orderStatus, string paymentStatus)
         {
             Session["LastOrderListUrl"] = Request.Url.PathAndQuery;
-            var orders = db.Orders
-                           .Include("Customer")
-                           .OrderByDescending(o => o.OrderDate)
-                           .ToList();
 
-            int pageSize = 10; // Hiển thị 10 đơn/trang theo chuẩn UI mới
+            var query = db.Orders.AsNoTracking().Include("Customer").AsQueryable();
+
+            // 1. LỌC THEO TRẠNG THÁI DUYỆT (OrderStatus)
+            if (!string.IsNullOrEmpty(orderStatus) && orderStatus != "All")
+            {
+                if (orderStatus == "Chưa xử lý")
+                {
+                    query = query.Where(o => o.OrderStatus == "Chưa xử lý" || string.IsNullOrEmpty(o.OrderStatus));
+                }
+                else
+                {
+                    query = query.Where(o => o.OrderStatus == orderStatus);
+                }
+            }
+
+            // 2. LỌC THEO TRẠNG THÁI THANH TOÁN (PaymentStatus)
+            if (!string.IsNullOrEmpty(paymentStatus) && paymentStatus != "All")
+            {
+                if (paymentStatus == "Chưa thanh toán")
+                {
+                    query = query.Where(o => o.PaymentStatus == "Chưa thanh toán" || string.IsNullOrEmpty(o.PaymentStatus));
+                }
+                else
+                {
+                    query = query.Where(o => o.PaymentStatus == paymentStatus);
+                }
+            }
+
+            // Sắp xếp theo OrderID giảm dần để không bị nhảy số
+            query = query.OrderByDescending(o => o.OrderID);
+
+            // Lưu lại giá trị bộ lọc để trả về View (giữ trạng thái thẻ Select)
+            ViewBag.CurrentOrderStatus = string.IsNullOrEmpty(orderStatus) ? "All" : orderStatus;
+            ViewBag.CurrentPaymentStatus = string.IsNullOrEmpty(paymentStatus) ? "All" : paymentStatus;
+
+            // Đếm tổng số đơn hàng sau khi lọc
+            ViewBag.TotalCount = query.Count();
+
+            int pageSize = 10;
             int pageNumber = (page ?? 1);
-            return View(orders.ToPagedList(pageNumber, pageSize));
+
+            return View(query.ToPagedList(pageNumber, pageSize));
         }
 
         // GET: Admin/Orders/Details/5
@@ -165,6 +201,7 @@ namespace WebBanHang.Areas.Admin.Controllers
                                     }
                                 }
                             }
+                            new MarketingSellingService(db).RollbackPromotions(order.OrderID);
                             TempData["SuccessMessage"] = $"Đơn hàng #{id} đã bị HỦY. Đã tự động hoàn trả tồn kho đầy đủ.";
                         }
                     }
@@ -194,6 +231,12 @@ namespace WebBanHang.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult UpdateOrderStatus(int orderId, string newStatus)
         {
+            if (newStatus == "Đã hủy" || newStatus == "Hủy đơn")
+            {
+                TempData["Error"] = "Hãy dùng thao tác Hủy tại trang xử lý đơn để tồn kho và voucher được hoàn trả an toàn.";
+                return RedirectToAction("Process", new { id = orderId });
+            }
+
             var order = db.Orders.Find(orderId);
             if (order != null)
             {

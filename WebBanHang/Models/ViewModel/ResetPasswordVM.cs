@@ -4,11 +4,11 @@ namespace WebBanHang.Models.ViewModel
 {
     public class ResetPasswordVM
     {
-        // THAY ĐỔI: Thêm Username (sẽ dùng làm trường ẩn)
         [Required]
         public string Username { get; set; }
 
-        // Bỏ Token
+        [Required]
+        public string Token { get; set; }
 
         // Test Case ForgotPW02
         [Required(ErrorMessage = "Vui lòng nhập mật khẩu mới.")]

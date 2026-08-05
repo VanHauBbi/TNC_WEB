@@ -184,40 +184,33 @@ namespace WebBanHang.Areas.Admin.Controllers
 
         private AdminDashboardVM GetDashboardStatistics(DateTime? fromDate, DateTime? toDate)
         {
-            var query = db.Orders.AsQueryable();
-            if (fromDate.HasValue && toDate.HasValue)
-                query = query.Where(o => o.OrderDate >= fromDate && o.OrderDate <= toDate);
+            var query = db.Orders.AsNoTracking().AsQueryable();
+            if (fromDate.HasValue) query = query.Where(o => o.OrderDate >= fromDate.Value);
+            if (toDate.HasValue) query = query.Where(o => o.OrderDate <= toDate.Value);
 
-            var orders = query.Include("OrderDetails.Product").ToList();
+            var successOrders = query.Where(o =>
+                (o.PaymentMethod == "VNPay" && o.PaymentStatus == "Đã thanh toán" &&
+                    (o.OrderStatus == "Đã giao" || o.OrderStatus == "Hoàn thành")) ||
+                (o.PaymentMethod != "VNPay" &&
+                    (o.OrderStatus == "Đã giao" || o.OrderStatus == "Hoàn thành")));
 
-            var vm = new AdminDashboardVM();
-            vm.TotalOrders = orders.Count;
-
-            // ========================================================
-            // 1. SỬA LỖI PIE CHART: Tính số lượng Đơn Thành Công / Đã Hủy
-            // ========================================================
-            var successOrders = orders.Where(o =>
-                // Nếu là VNPay: Phải Thanh toán xong + Giao thành công
-                (o.PaymentMethod == "VNPay" && o.PaymentStatus == "Đã thanh toán" && (o.OrderStatus == "Đã giao" || o.OrderStatus == "Hoàn thành")) ||
-                // Nếu không phải VNPay (COD/Tiền mặt): Chỉ cần Giao thành công
-                (o.PaymentMethod != "VNPay" && (o.OrderStatus == "Đã giao" || o.OrderStatus == "Hoàn thành"))
-            ).ToList();
-
-            // Gán dữ liệu cho View Model để vẽ Biểu đồ tròn
-            vm.SuccessOrders = successOrders.Count;
-            vm.CancelledOrders = orders.Count(o => o.OrderStatus == "Đã hủy" || o.OrderStatus == "Hủy đơn");
-
-            vm.TotalRevenue = successOrders.Sum(o => o.OrderDetails.Sum(d => d.UnitPrice * d.Quantity));
-
-            decimal totalCOGS = successOrders.SelectMany(o => o.OrderDetails).Sum(d => d.Quantity * d.ImportPrice);
-            decimal totalShippingFee = 0;
-
-            foreach (var o in successOrders)
+            // SQL chỉ trả về các số tổng hợp, không nạp toàn bộ đơn và chi tiết đơn vào RAM.
+            var vm = new AdminDashboardVM
             {
-                if (o.ShippingMethod == "Giao hàng nhanh") totalShippingFee += 30000;
-                else if (o.ShippingMethod == "Giao hàng tiết kiệm") totalShippingFee += 15000;
-            }
+                TotalOrders = query.Count(),
+                SuccessOrders = successOrders.Count(),
+                CancelledOrders = query.Count(o => o.OrderStatus == "Đã hủy" || o.OrderStatus == "Hủy đơn"),
+                TotalRevenue = successOrders.SelectMany(o => o.OrderDetails)
+                    .Sum(d => (decimal?)(d.UnitPrice * d.Quantity)) ?? 0m
+            };
 
+            var totalCOGS = successOrders.SelectMany(o => o.OrderDetails)
+                .Sum(d => (decimal?)(d.Quantity * d.ImportPrice)) ?? 0m;
+            var totalShippingFee = successOrders.Sum(o => (decimal?)(
+                o.ShippingMethod == "Giao hàng nhanh" ? 30000m :
+                o.ShippingMethod == "Giao hàng tiết kiệm" ? 15000m : 0m)) ?? 0m;
+
+            vm.TotalShippingFee = totalShippingFee;
             vm.TotalProfit = vm.TotalRevenue - totalCOGS - totalShippingFee;
             return vm;
         }
@@ -226,17 +219,26 @@ namespace WebBanHang.Areas.Admin.Controllers
         {
             var dashboardVM = GetDashboardStatistics(null, null);
 
-            dashboardVM.LowStockProducts = db.Products.Where(p => p.StockQuantity < 10).OrderBy(p => p.StockQuantity).Take(5).ToList();
-            dashboardVM.LowStockProductCount = db.Products.Count(p => p.StockQuantity < 10);
+            dashboardVM.LowStockProducts = db.Products.AsNoTracking().Where(p => p.StockQuantity < 10).OrderBy(p => p.StockQuantity).Take(5).ToList();
+            dashboardVM.LowStockProductCount = db.Products.AsNoTracking().Count(p => p.StockQuantity < 10);
 
-            dashboardVM.TopSellingProducts = db.Products
+            dashboardVM.TopSellingProducts = db.Products.AsNoTracking()
+                .Include(p => p.OrderDetails)
                 .OrderByDescending(p => p.OrderDetails.Sum(od => (int?)od.Quantity) ?? 0)
                 .Take(5).ToList();
 
             DateTime sixMonthsAgo = DateTime.Now.AddMonths(-5);
-            var validOrders = db.Orders.Where(o => o.PaymentStatus == "Đã thanh toán" || o.OrderStatus == "Đã giao" || o.OrderStatus == "Hoàn thành" || o.OrderStatus == "Đã duyệt").ToList();
+            var monthlyRevenue = db.Orders.AsNoTracking()
+                .Where(o => o.PaymentStatus == "Đã thanh toán" || o.OrderStatus == "Đã giao" ||
+                            o.OrderStatus == "Hoàn thành" || o.OrderStatus == "Đã duyệt")
+                .GroupBy(o => new { o.OrderDate.Year, o.OrderDate.Month })
+                .Select(g => new { g.Key.Year, g.Key.Month, Revenue = g.Sum(o => o.TotalAmount) })
+                .OrderBy(x => x.Year).ThenBy(x => x.Month)
+                .ToList();
 
-            DateTime earliestDate = validOrders.Any() ? validOrders.Min(o => o.OrderDate) : sixMonthsAgo;
+            DateTime earliestDate = monthlyRevenue.Any()
+                ? new DateTime(monthlyRevenue[0].Year, monthlyRevenue[0].Month, 1)
+                : sixMonthsAgo;
             DateTime startDate = earliestDate < sixMonthsAgo ? earliestDate : sixMonthsAgo;
 
             DateTime tempDate = new DateTime(startDate.Year, startDate.Month, 1);
@@ -248,9 +250,10 @@ namespace WebBanHang.Areas.Admin.Controllers
             while (tempDate <= endDate)
             {
                 chartLabels.Add(tempDate.ToString("MM/yyyy"));
-                var monthTotal = validOrders
-                    .Where(o => o.OrderDate.Year == tempDate.Year && o.OrderDate.Month == tempDate.Month)
-                    .Sum(o => o.TotalAmount);
+                var monthTotal = monthlyRevenue
+                    .Where(x => x.Year == tempDate.Year && x.Month == tempDate.Month)
+                    .Select(x => x.Revenue)
+                    .FirstOrDefault();
 
                 chartDataList.Add(monthTotal);
                 tempDate = tempDate.AddMonths(1);
@@ -261,7 +264,7 @@ namespace WebBanHang.Areas.Admin.Controllers
 
             dashboardVM.RecentActivities = new List<TimelineItemVM>();
 
-            var recentChats = db.SupportSessions.OrderByDescending(s => s.StartTime).Take(5).ToList();
+            var recentChats = db.SupportSessions.AsNoTracking().OrderByDescending(s => s.StartTime).Take(5).ToList();
             foreach (var chat in recentChats)
             {
                 dashboardVM.RecentActivities.Add(new TimelineItemVM
@@ -275,7 +278,7 @@ namespace WebBanHang.Areas.Admin.Controllers
                 });
             }
 
-            var recentOrders = db.Orders.OrderByDescending(o => o.OrderDate).Take(5).ToList();
+            var recentOrders = db.Orders.AsNoTracking().OrderByDescending(o => o.OrderDate).Take(5).ToList();
             foreach (var order in recentOrders)
             {
                 dashboardVM.RecentActivities.Add(new TimelineItemVM
@@ -299,56 +302,43 @@ namespace WebBanHang.Areas.Admin.Controllers
         [HttpPost]
         public JsonResult GetDashboardData(string fromDate, string toDate, string filterType)
         {
-            // BƯỚC 1: LẤY TOÀN BỘ ĐƠN HÀNG (Cần Include OrderDetails để tính lợi nhuận y hệt hàm Index)
-            var query = db.Orders.Include("OrderDetails.Product").AsQueryable();
-
             DateTime dtFrom = DateTime.Now;
             DateTime dtTo = DateTime.Now;
             bool isAllTime = (filterType == "all" || string.IsNullOrEmpty(fromDate) || fromDate == "2000-01-01");
 
             if (!isAllTime)
             {
-                DateTime.TryParse(fromDate, out dtFrom);
-                DateTime.TryParse(toDate, out dtTo);
+                if (!DateTime.TryParse(fromDate, out dtFrom) || !DateTime.TryParse(toDate, out dtTo))
+                    return Json(new { success = false, message = "Khoảng ngày không hợp lệ." });
+
+                // Set giờ kết thúc là cuối ngày (23:59:59)
                 dtTo = dtTo.Date.AddDays(1).AddSeconds(-1);
-                query = query.Where(o => o.OrderDate >= dtFrom && o.OrderDate <= dtTo);
             }
 
-            var allOrders = query.ToList();
+            var statistics = GetDashboardStatistics(isAllTime ? (DateTime?)null : dtFrom,
+                                                     isAllTime ? (DateTime?)null : dtTo);
 
-            // BƯỚC 2: ĐỒNG BỘ LOGIC TÍNH TIỀN (Khớp 100% với hàm GetDashboardStatistics lúc mới vào trang)
-            var successOrders = allOrders.Where(o =>
-                (o.PaymentMethod == "VNPay" && o.PaymentStatus == "Đã thanh toán" && (o.OrderStatus == "Đã giao" || o.OrderStatus == "Hoàn thành")) ||
-                (o.PaymentMethod != "VNPay" && (o.OrderStatus == "Đã giao" || o.OrderStatus == "Hoàn thành"))
-            ).ToList();
+            var chartQuery = db.Orders.AsNoTracking()
+                .Where(o => o.PaymentStatus == "Đã thanh toán" || o.OrderStatus == "Đã giao" ||
+                            o.OrderStatus == "Hoàn thành" || o.OrderStatus == "Đã duyệt");
 
-            // Tính tổng doanh thu dựa trên giá chi tiết từng sản phẩm
-            decimal totalRevenue = successOrders.Sum(o => o.OrderDetails != null ? o.OrderDetails.Sum(d => d.UnitPrice * d.Quantity) : 0);
+            if (!isAllTime)
+                chartQuery = chartQuery.Where(o => o.OrderDate >= dtFrom && o.OrderDate <= dtTo);
 
-            decimal totalCost = 0;
-            decimal totalShipping = 0;
-
-            foreach (var o in successOrders)
-            {
-                if (o.OrderDetails != null)
-                {
-                    totalCost += o.OrderDetails.Sum(d => d.Quantity * d.ImportPrice);
-                }
-                if (o.ShippingMethod == "Giao hàng nhanh") totalShipping += 30000;
-                else if (o.ShippingMethod == "Giao hàng tiết kiệm") totalShipping += 15000;
-            }
-
-            decimal grossProfit = totalRevenue - totalCost - totalShipping;
-
-            // BƯỚC 3: VẼ BIỂU ĐỒ (Giữ nguyên logic của hàm Index)
-            var validOrdersForChart = allOrders.Where(o => o.PaymentStatus == "Đã thanh toán" || o.OrderStatus == "Đã giao" || o.OrderStatus == "Hoàn thành" || o.OrderStatus == "Đã duyệt").ToList();
             var chartLabels = new List<string>();
-            var chartDataList = new List<double>();
+            var chartDataList = new List<decimal>();
 
             if (isAllTime)
             {
+                // 1. NẾU LỌC TOÀN BỘ (HOẶC MẶC ĐỊNH): Gom nhóm theo Tháng
                 DateTime sixMonthsAgo = DateTime.Now.AddMonths(-5);
-                DateTime earliestDate = validOrdersForChart.Any() ? validOrdersForChart.Min(o => o.OrderDate) : sixMonthsAgo;
+                var monthlyData = chartQuery
+                    .GroupBy(o => new { o.OrderDate.Year, o.OrderDate.Month })
+                    .Select(g => new { g.Key.Year, g.Key.Month, Revenue = g.Sum(o => o.TotalAmount) })
+                    .OrderBy(x => x.Year).ThenBy(x => x.Month)
+                    .ToList();
+
+                DateTime earliestDate = monthlyData.Any() ? new DateTime(monthlyData[0].Year, monthlyData[0].Month, 1) : sixMonthsAgo;
                 DateTime startDate = earliestDate < sixMonthsAgo ? earliestDate : sixMonthsAgo;
 
                 DateTime tempDate = new DateTime(startDate.Year, startDate.Month, 1);
@@ -357,29 +347,67 @@ namespace WebBanHang.Areas.Admin.Controllers
                 while (tempDate <= endDate)
                 {
                     chartLabels.Add(tempDate.ToString("MM/yyyy"));
-                    var monthTotal = validOrdersForChart.Where(o => o.OrderDate.Year == tempDate.Year && o.OrderDate.Month == tempDate.Month).Sum(o => (double)o.TotalAmount);
+                    var monthTotal = monthlyData.Where(x => x.Year == tempDate.Year && x.Month == tempDate.Month).Select(x => x.Revenue).FirstOrDefault();
                     chartDataList.Add(monthTotal);
                     tempDate = tempDate.AddMonths(1);
                 }
             }
+            else if (dtFrom.Date == dtTo.Date)
+            {
+                // ====================================================================
+                // 2. NẾU CHỈ LỌC TRONG 1 NGÀY (VD: "Hôm nay"): Chia làm 6 mốc x 4 tiếng
+                // ====================================================================
+                chartLabels = new List<string> { "0h-4h", "4h-8h", "8h-12h", "12h-16h", "16h-20h", "20h-24h" };
+
+                // Khởi tạo 6 cột với giá trị 0
+                for (int i = 0; i < 6; i++) chartDataList.Add(0m);
+
+                // Lấy đơn hàng của ngày đó đưa vào RAM (an toàn vì 1 ngày ít dữ liệu)
+                var dayOrders = chartQuery.Select(o => new { o.OrderDate, o.TotalAmount }).ToList();
+
+                // Phân bổ doanh thu vào đúng khung giờ
+                foreach (var order in dayOrders)
+                {
+                    int hour = order.OrderDate.Hour;
+                    int slot = hour / 4; // Ví dụ: 15h / 4 = 3 (Tương ứng mốc 12h-16h)
+
+                    if (slot >= 0 && slot < 6)
+                    {
+                        chartDataList[slot] += order.TotalAmount;
+                    }
+                }
+            }
             else
             {
+                // 3. NẾU LỌC NHIỀU NGÀY (VD: "Tuần", "Tháng"): Gom nhóm theo từng Ngày
+                var dailyData = chartQuery
+                    .GroupBy(o => DbFunctions.TruncateTime(o.OrderDate))
+                    .Select(g => new { Date = g.Key, Revenue = g.Sum(o => o.TotalAmount) })
+                    .ToList();
+
                 for (DateTime date = dtFrom.Date; date <= dtTo.Date; date = date.AddDays(1))
                 {
                     chartLabels.Add(date.ToString("dd/MM"));
-                    var dayTotal = validOrdersForChart.Where(o => o.OrderDate.Date == date).Sum(o => (double)o.TotalAmount);
+                    var dayTotal = dailyData.Where(x => x.Date == date).Select(x => x.Revenue).FirstOrDefault();
                     chartDataList.Add(dayTotal);
                 }
             }
 
             return Json(new
             {
-                totalRevenue = totalRevenue.ToString("N0"),
-                totalProfit = grossProfit.ToString("N0"),
-                orderCount = allOrders.Count,
+                success = true,
+                totalRevenue = statistics.TotalRevenue.ToString("N0"),
+                totalProfit = statistics.TotalProfit.ToString("N0"),
+                orderCount = statistics.TotalOrders,
                 chartLabels = chartLabels,
                 chartData = chartDataList
             });
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing) db.Dispose();
+            base.Dispose(disposing);
         }
     }
 }

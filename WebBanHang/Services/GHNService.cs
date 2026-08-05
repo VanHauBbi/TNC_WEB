@@ -10,7 +10,7 @@ namespace WebBanHang.Services
 {
     public class GHNService
     {
-        // TO-DO: Điền lại API Token và Shop ID của bạn
+        // Token và Shop ID môi trường TEST của GHN.
         private readonly string _apiToken = "621b5048-7064-11f1-a973-aee5264794df";
         private readonly string _shopId = "200862";
 

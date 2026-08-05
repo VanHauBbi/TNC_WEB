@@ -6,41 +6,16 @@ using System.Web.Security;
 using WebBanHang.Models.ViewModel;
 using WebBanHang.Models;
 using System.Data.Entity;
-// THÊM MỚI: Cần thiết cho việc Hashing mật khẩu
 using System.Security.Cryptography;
 using System.Text;
+using WebBanHang.Security;
+using WebBanHang.Services;
 
 namespace WebBanHang.Controllers
 {
     public class AccountController : Controller
     {
         private MyStoreEntities db = new MyStoreEntities();
-
-        // ==========================================================
-        // HASHING HELPER
-        // ==========================================================
-
-        /// <summary>
-        /// Băm mật khẩu sử dụng SHA256
-        /// </summary>
-        private string HashPassword(string password)
-        {
-            using (SHA256 sha256 = SHA256.Create())
-            {
-                // Chuyển mật khẩu thành mảng byte
-                byte[] bytes = Encoding.UTF8.GetBytes(password);
-                // Băm mảng byte
-                byte[] hash = sha256.ComputeHash(bytes);
-                // Chuyển mảng byte đã băm thành chuỗi hex
-                StringBuilder result = new StringBuilder();
-                for (int i = 0; i < hash.Length; i++)
-                {
-                    result.Append(hash[i].ToString("x2"));
-                }
-                return result.ToString();
-            }
-        }
-
 
         // ==========================================================
         // REGISTER
@@ -65,20 +40,20 @@ namespace WebBanHang.Controllers
                 var phone = model.CustomerPhone.Trim();
 
                 // 2. KIỂM TRA TRÙNG LẶP
-                var existingUser = db.Users.SingleOrDefault(u => u.Username.Equals(username, StringComparison.OrdinalIgnoreCase));
+                // SQL Server của dự án dùng collation không phân biệt hoa/thường; tránh overload
+                // StringComparison vì EF6 không dịch được overload đó sang SQL.
+                var existingUser = db.Users.SingleOrDefault(u => u.Username == username);
                 if (existingUser != null)
                 {
                     TempData["ErrorMessage"] = "Tên đăng nhập này đã tồn tại.";
                     return View(model);
                 }
 
-                var existingCustomer = db.Customers.SingleOrDefault(c =>
-                    c.CustomerEmail.Equals(email, StringComparison.OrdinalIgnoreCase) ||
-                    c.CustomerPhone == phone);
+                var existingCustomer = db.Customers.SingleOrDefault(c => c.CustomerEmail == email || c.CustomerPhone == phone);
 
                 if (existingCustomer != null)
                 {
-                    if (existingCustomer.CustomerEmail.Equals(email, StringComparison.OrdinalIgnoreCase))
+                    if (string.Equals(existingCustomer.CustomerEmail, email, StringComparison.OrdinalIgnoreCase))
                     {
                         TempData["ErrorMessage"] = "Địa chỉ Email này đã được sử dụng.";
                     }
@@ -93,7 +68,7 @@ namespace WebBanHang.Controllers
                 var user = new User
                 {
                     Username = username,
-                    Password = HashPassword(model.Password),
+                    Password = PasswordHasher.Hash(model.Password),
                     UserRole = "C"
                 };
                 db.Users.Add(user);
@@ -132,8 +107,8 @@ namespace WebBanHang.Controllers
                     // Khi bị lỗi, rê chuột vào biến "errorDetails" để xem lỗi là gì.
                     string errorDetails = errors.ToString();
 
-                    // Gửi lỗi chi tiết ra màn hình để xem
-                    TempData["ErrorMessage"] = "Lỗi validation: " + errorDetails;
+                    System.Diagnostics.Trace.TraceError("Lỗi validation đăng ký: " + errorDetails);
+                    TempData["ErrorMessage"] = "Không thể tạo tài khoản. Vui lòng kiểm tra lại thông tin.";
                     return View(model);
                 }
                 // --- KẾT THÚC try...catch ---
@@ -167,21 +142,16 @@ namespace WebBanHang.Controllers
                 // Test Case Login009_Trim: Tự động loại bỏ khoảng trắng
                 string input = model.UserName.Trim();
 
-                // Hash mật khẩu nhập vào để so sánh
-                string hashedPassword = HashPassword(model.Password);
-
                 // BƯỚC 1: Tìm Username chuẩn
                 // Test Case Login010: Không phân biệt hoa thường
                 var customerByInput = db.Customers.SingleOrDefault(c =>
-                    c.CustomerEmail.Equals(input, StringComparison.OrdinalIgnoreCase) ||
-                    c.CustomerPhone == input ||
-                    c.Username.Equals(input, StringComparison.OrdinalIgnoreCase));
+                    c.CustomerEmail == input || c.CustomerPhone == input || c.Username == input);
 
                 string usernameToFind = customerByInput != null ? customerByInput.Username : input;
 
                 // BƯỚC 2: Tìm tài khoản User
                 // Test Case Login010: Không phân biệt hoa thường
-                var user = db.Users.SingleOrDefault(u => u.Username.Equals(usernameToFind, StringComparison.OrdinalIgnoreCase));
+                var user = db.Users.SingleOrDefault(u => u.Username == usernameToFind);
 
                 // BƯỚC 3: XỬ LÝ ĐĂNG NHẬP
 
@@ -192,65 +162,36 @@ namespace WebBanHang.Controllers
                     return View(model);
                 }
 
-                // *** ĐÃ LOẠI BỎ LOGIC Login002_Lock TẠI ĐÂY ***
-
-                // BƯỚC 4: Tải dữ liệu Customer và kiểm tra khóa (Admin)
-                Customer customerData = null;
-                if (user.UserRole == "C")
+                if (PasswordHasher.Verify(model.Password, user.Password, out var needsUpgrade))
                 {
-                    customerData = db.Customers.SingleOrDefault(c => c.Username == user.Username);
-
-                    // Test Case Login015: Tài khoản bị Admin khóa
-                    if (customerData != null)
+                    Customer customerData = null;
+                    if (user.UserRole == "C")
                     {
-                        Session["CustomerID"] = customerData.CustomerID;
-
-                        // =========================================================================
-                        // NÂNG CẤP: KHÔI PHỤC GIỎ HÀNG TỪ DATABASE KHI ĐĂNG NHẬP
-                        // =========================================================================
-                        var dbCart = db.Carts.Include(c => c.CartItems).SingleOrDefault(c => c.CustomerID == customerData.CustomerID);
-                        var sessionCart = new WebBanHang.Models.ViewModel.Cart();
-
-                        if (dbCart != null && dbCart.CartItems.Any())
+                        customerData = db.Customers.SingleOrDefault(c => c.Username == user.Username);
+                        if (customerData == null || !customerData.IsActive)
                         {
-                            foreach (var dbItem in dbCart.CartItems)
-                            {
-                                // Lấy thông tin sản phẩm từ DB để map ngược lại vào cấu trúc giỏ hàng Session
-                                var product = db.Products.Include(p => p.Category).Include(p => p.Coupons)
-                                                .SingleOrDefault(p => p.ProductID == dbItem.ProductID);
-                                if (product != null)
-                                {
-                                    decimal discountPercent;
-                                    decimal finalUnitPrice = WebBanHang.Utilities.PriceHelper.GetDiscountedPrice(product, out discountPercent);
-                                    if (finalUnitPrice < 0) finalUnitPrice = 0;
-
-                                    sessionCart.AddItem(product.ProductID, product.ProductImage, product.ProductName,
-                                                        finalUnitPrice, product.ProductPrice, dbItem.Quantity, product.Category?.CategoryName);
-                                }
-                            }
+                            TempData["ErrorMessage"] = "Tài khoản đã bị khóa hoặc không còn hoạt động.";
+                            return View(model);
                         }
-                        Session["Cart"] = sessionCart; // Đưa giỏ hàng cũ vào Session hoạt động hiện tại
                     }
-                }
 
-                // BƯỚC 5: KIỂM TRA MẬT KHẨU
+                    if (needsUpgrade)
+                    {
+                        user.Password = PasswordHasher.Hash(model.Password);
+                        db.SaveChanges();
+                    }
 
-                // Test Case Login002: Sai mật khẩu
-                if (user.Password == hashedPassword)
-                {
                     // ĐĂNG NHẬP THÀNH CÔNG
                     Session["UserName"] = user.Username;
                     Session["UserRole"] = user.UserRole;
                     if (customerData != null)
                     {
                         Session["CustomerID"] = customerData.CustomerID;
+                        MergeAnonymousBehavior(customerData.CustomerID);
+                        RestoreCart(customerData.CustomerID);
                     }
 
-                    // Test Case Login018: Cookie Remember Me
-                    if (model.RememberMe)
-                    {
-                        FormsAuthentication.SetAuthCookie(user.Username, true);
-                    }
+                    FormsAuthentication.SetAuthCookie(user.Username, model.RememberMe);
 
                     // Test Case Login017: Vai trò Admin
                     if (user.UserRole == "A")
@@ -280,7 +221,6 @@ namespace WebBanHang.Controllers
             return View(model);
         }
 
-        // (Hãy đảm bảo bạn vẫn giữ 2 action GET /ForgotPassword và hàm HashPassword)
         // GET: /Account/ForgotPassword
         public ActionResult ForgotPassword()
         {
@@ -298,28 +238,36 @@ namespace WebBanHang.Controllers
                 return View(model);
             }
 
-            // 1. Tìm User (logic giữ nguyên)
             string input = model.UserIdentifier.Trim();
             var customer = db.Customers.SingleOrDefault(c =>
-                c.CustomerEmail.Equals(input, StringComparison.OrdinalIgnoreCase) ||
-                c.CustomerPhone == input ||
-                c.Username.Equals(input, StringComparison.OrdinalIgnoreCase));
+                c.CustomerEmail == input || c.CustomerPhone == input || c.Username == input);
 
             string usernameToFind = customer != null ? customer.Username : input;
-            var user = db.Users.SingleOrDefault(u => u.Username.Equals(usernameToFind, StringComparison.OrdinalIgnoreCase));
+            var user = db.Users.SingleOrDefault(u => u.Username == usernameToFind);
 
-            // 2. Nếu không tìm thấy, báo lỗi (giữ nguyên)
-            if (user == null)
+            // Luôn trả cùng một thông báo để không làm lộ tài khoản có tồn tại hay không.
+            if (user != null && customer != null && !string.IsNullOrWhiteSpace(customer.CustomerEmail))
             {
-                TempData["ErrorMessage"] = "Thông tin không hợp lệ hoặc tài khoản không tồn tại.";
-                return View(model);
+                var rawToken = GenerateResetToken();
+                user.ResetPasswordToken = HashResetToken(rawToken);
+                user.ResetTokenExpiry = DateTime.UtcNow.AddMinutes(30);
+                db.SaveChanges();
+
+                var resetUrl = Url.Action("ResetPassword", "Account",
+                    new { username = user.Username, token = rawToken }, Request.Url.Scheme);
+
+                try
+                {
+                    new EmailService().SendPasswordReset(customer.CustomerEmail, resetUrl);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Trace.TraceError("Không gửi được email reset: " + ex.Message);
+                }
             }
 
-            // 3. THAY ĐỔI: 
-            // Thay vì tạo Token, chúng ta lưu Username vào TempData
-            // và chuyển hướng TRỰC TIẾP.
-            TempData["ResetUser"] = user.Username; // Lưu Username an toàn trên server
-            return RedirectToAction("ResetPassword");
+            TempData["SuccessMessage"] = "Nếu thông tin hợp lệ, liên kết đặt lại mật khẩu sẽ được gửi đến email của bạn.";
+            return RedirectToAction("ForgotPassword");
         }
 
 
@@ -327,30 +275,22 @@ namespace WebBanHang.Controllers
         // FORGOT PASSWORD - STEP 2: ĐẶT LẠI MẬT KHẨU (Đã cập nhật)
         // ==========================================================
 
-        // GET: /Account/ResetPassword (Không cần Token nữa)
-        public ActionResult ResetPassword()
+        public ActionResult ResetPassword(string username, string token)
         {
-            // 1. KIỂM TRA: Người dùng có đi từ Bước 1 không?
-            if (TempData["ResetUser"] == null)
+            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(token))
             {
-                // Nếu gõ URL trực tiếp, đá về trang Login
-                TempData["ErrorMessage"] = "Phiên làm việc không hợp lệ.";
+                TempData["ErrorMessage"] = "Liên kết đặt lại mật khẩu không hợp lệ.";
                 return RedirectToAction("Login");
             }
 
-            // 2. Lấy Username từ TempData
-            string username = TempData["ResetUser"].ToString();
-
-            // 3. Gửi Username qua ViewModel
-            var model = new ResetPasswordVM
+            var user = db.Users.SingleOrDefault(u => u.Username == username);
+            if (!IsValidResetToken(user, token))
             {
-                Username = username
-            };
+                TempData["ErrorMessage"] = "Liên kết đặt lại mật khẩu đã hết hạn hoặc không hợp lệ.";
+                return RedirectToAction("Login");
+            }
 
-            // 4. Giữ lại TempData để dùng cho action POST (bảo mật)
-            TempData.Keep("ResetUser");
-
-            return View(model);
+            return View(new ResetPasswordVM { Username = username, Token = token });
         }
 
         [HttpPost]
@@ -362,46 +302,79 @@ namespace WebBanHang.Controllers
                 return View(model); // Test Case ForgotPW04, 05, 06
             }
 
-            // 1. KIỂM TRA BẢO MẬT:
-            // Đảm bảo người dùng này vẫn trong phiên reset hợp lệ
-            // và không cố tình thay đổi Username trong form
-            if (TempData["ResetUser"] == null || TempData["ResetUser"].ToString() != model.Username)
-            {
-                TempData["ErrorMessage"] = "Phiên làm việc đã hết hạn hoặc không hợp lệ. Vui lòng thử lại.";
-                return RedirectToAction("Login");
-            }
-
-            // 2. Tìm User
             var user = db.Users.SingleOrDefault(u => u.Username == model.Username);
-            if (user == null)
+            if (!IsValidResetToken(user, model.Token))
             {
-                TempData["ErrorMessage"] = "Tài khoản không tồn tại.";
+                TempData["ErrorMessage"] = "Liên kết đặt lại mật khẩu đã hết hạn hoặc không hợp lệ.";
                 return RedirectToAction("Login");
             }
 
-            // 3. Kiểm tra mật khẩu cũ (Test Case ForgotPW09)
-            string newHashedPassword = HashPassword(model.NewPassword);
-            if (user.Password == newHashedPassword)
+            if (PasswordHasher.Verify(model.NewPassword, user.Password, out _))
             {
                 ModelState.AddModelError("", "Mật khẩu mới không được trùng với mật khẩu cũ.");
                 return View(model);
             }
 
-            // 4. Cập nhật mật khẩu mới (Test Case ForgotPW07)
-            user.Password = newHashedPassword;
-
-            // 5. Xóa Token (nếu bạn vẫn dùng cột đó, không thì bỏ qua)
+            user.Password = PasswordHasher.Hash(model.NewPassword);
             user.ResetPasswordToken = null;
             user.ResetTokenExpiry = null;
-
             db.SaveChanges();
-
-            // 6. Xóa TempData sau khi hoàn tất
-            TempData.Remove("ResetUser");
 
             // Test Case ForgotPW01 & ForgotPW08
             TempData["SuccessMessage"] = "Đổi mật khẩu thành công! Bạn có thể đăng nhập ngay bây giờ.";
             return RedirectToAction("Login");
+        }
+
+        private void RestoreCart(int customerId)
+        {
+            var dbCart = db.Carts.Include(c => c.CartItems).SingleOrDefault(c => c.CustomerID == customerId);
+            var sessionCart = new WebBanHang.Models.ViewModel.Cart();
+            if (dbCart != null)
+            {
+                foreach (var dbItem in dbCart.CartItems)
+                {
+                    var product = db.Products.Include(p => p.Category).Include(p => p.Coupons)
+                        .SingleOrDefault(p => p.ProductID == dbItem.ProductID);
+                    if (product == null) continue;
+
+                    decimal discountPercent;
+                    var price = WebBanHang.Utilities.PriceHelper.GetDiscountedPrice(product, out discountPercent);
+                    sessionCart.AddItem(product.ProductID, product.ProductImage, product.ProductName,
+                        Math.Max(0, price), product.ProductPrice, dbItem.Quantity, product.Category?.CategoryName);
+                }
+            }
+            Session["Cart"] = sessionCart;
+        }
+
+        private void MergeAnonymousBehavior(int customerId)
+        {
+            var sessionId = Session.SessionID;
+            var anonymousLogs = db.UserBehaviorLogs
+                .Where(x => x.CustomerID == null && x.SessionID == sessionId)
+                .ToList();
+            foreach (var log in anonymousLogs) log.CustomerID = customerId;
+            if (anonymousLogs.Any()) db.SaveChanges();
+        }
+
+        private static string GenerateResetToken()
+        {
+            var bytes = new byte[32];
+            using (var rng = RandomNumberGenerator.Create()) rng.GetBytes(bytes);
+            return HttpServerUtility.UrlTokenEncode(bytes);
+        }
+
+        private static string HashResetToken(string token)
+        {
+            using (var sha = SHA256.Create())
+                return Convert.ToBase64String(sha.ComputeHash(Encoding.UTF8.GetBytes(token ?? string.Empty)));
+        }
+
+        private static bool IsValidResetToken(User user, string token)
+        {
+            return user != null
+                   && user.ResetTokenExpiry.HasValue
+                   && user.ResetTokenExpiry.Value >= DateTime.UtcNow
+                   && string.Equals(user.ResetPasswordToken, HashResetToken(token), StringComparison.Ordinal);
         }
 
         // ==========================================================
@@ -445,6 +418,32 @@ namespace WebBanHang.Controllers
 
                 return View(orders);
             }
+        }
+
+        public ActionResult MyVouchers()
+        {
+            if (Session["CustomerID"] == null)
+                return RedirectToAction("Login", new { returnUrl = Url.Action("MyVouchers", "Account") });
+
+            try
+            {
+                var vouchers = new MarketingSellingService(db).GetCustomerVouchers((int)Session["CustomerID"], true);
+                return View(vouchers);
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Chức năng voucher chưa sẵn sàng: " + ex.Message;
+                return View(new System.Collections.Generic.List<PersonalVoucherVM>());
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult UseVoucher(int id, int productId)
+        {
+            if (Session["CustomerID"] == null) return RedirectToAction("Login");
+            new MarketingSellingService(db).TrackVoucherClick((int)Session["CustomerID"], id);
+            return RedirectToAction("ProductDetail", "Home", new { id = productId });
         }
 
         protected override void Dispose(bool disposing)

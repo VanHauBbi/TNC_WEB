@@ -1,0 +1,19 @@
+@model WebBanHang.Models.ViewModel.PersonalVoucherAdminVM
+@{
+    ViewBag.Title = "Ngừng voucher cá nhân";
+    ViewBag.RemoveSpacing = true;
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+<link href="~/Content/Admin/marketing_admin.css" rel="stylesheet" />
+<div class="mk-page mk-delete-shell">
+    <div class="mk-form-card mt-2">
+        <div class="mk-delete-warning"><div class="mk-delete-icon"><i class="fa-solid fa-ban"></i></div><h4>Ngừng áp dụng voucher này?</h4><p>Voucher sẽ không thể sử dụng tiếp. Dữ liệu khách hàng và lịch sử đơn hàng vẫn được giữ nguyên.</p></div>
+        <div class="mk-delete-facts">
+            <div class="mk-info-row"><div class="mk-info-label">Mã voucher</div><div class="mk-info-value"><span class="mk-code">@Model.Code</span></div></div>
+            <div class="mk-info-row"><div class="mk-info-label">Khách hàng</div><div class="mk-info-value">@Model.CustomerName</div></div>
+            <div class="mk-info-row"><div class="mk-info-label">Sản phẩm</div><div class="mk-info-value">@Model.ProductName</div></div>
+            <div class="mk-info-row"><div class="mk-info-label">Tiền giảm</div><div class="mk-info-value text-danger fw-bold">@Model.DiscountAmount.ToString("N0") ₫</div></div>
+        </div>
+        @using (Html.BeginForm()) { @Html.AntiForgeryToken()<input type="hidden" name="id" value="@Model.CustomerCouponID" /><div class="mk-delete-footer"><a class="mk-btn mk-btn-neutral" href="javascript:void(0);" onclick="window.history.back();">Hủy bỏ</a><button class="mk-btn mk-btn-solid-danger" type="submit"><i class="fa-solid fa-ban"></i> Xác nhận ngừng</button></div> }
+    </div>
+</div>

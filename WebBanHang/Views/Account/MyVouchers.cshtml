@@ -1,0 +1,40 @@
+@model IEnumerable<WebBanHang.Models.ViewModel.PersonalVoucherVM>
+@{
+    ViewBag.Title = "Voucher của tôi";
+    Layout = "~/Views/Shared/_LayoutDivMain.cshtml";
+}
+
+<div class="container py-4">
+    <h2 class="mb-4">Ưu đãi dành riêng cho bạn</h2>
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">Bạn chưa có voucher cá nhân. Hãy khám phá và thêm sản phẩm yêu thích vào giỏ nhé.</div>
+    }
+    <div class="row g-3">
+        @foreach (var item in Model)
+        {
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 shadow-sm border-0">
+                    @if (!string.IsNullOrEmpty(item.ProductImage))
+                    { <img src="@item.ProductImage" class="card-img-top" alt="@item.ProductName" style="height:180px;object-fit:contain" /> }
+                    <div class="card-body">
+                        <span class="badge bg-danger mb-2">Dành riêng cho bạn</span>
+                        <h5>@item.ProductName</h5>
+                        <div class="fs-4 fw-bold text-danger">Giảm @item.DiscountAmount.ToString("N0") ₫</div>
+                        <p class="text-muted mb-2">Mã: <code>@item.Code</code></p>
+                        <small>Còn hạn đến @item.ExpiresAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</small>
+                    </div>
+                    <div class="card-footer bg-white border-0 pb-3">
+                        @using (Html.BeginForm("UseVoucher", "Account", FormMethod.Post))
+                        {
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@item.CustomerCouponID" />
+                            <input type="hidden" name="productId" value="@item.TargetProductID" />
+                            <button class="btn btn-danger w-100" type="submit">Xem sản phẩm</button>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>

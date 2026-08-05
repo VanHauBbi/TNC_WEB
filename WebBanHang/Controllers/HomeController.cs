@@ -15,6 +15,18 @@ namespace WebBanHang.Controllers
     {
         private MyStoreEntities db = new MyStoreEntities();
 
+        private List<string> GetRecentKeywords(IQueryable<UserBehaviorLog> source)
+        {
+            return source
+                .Where(l => l.ActionType == "SEARCH_KEYWORD" && !string.IsNullOrEmpty(l.SearchKeyword))
+                .GroupBy(l => l.SearchKeyword)
+                .Select(g => new { Keyword = g.Key, LastUsedAt = g.Max(x => x.CreatedAt) })
+                .OrderByDescending(x => x.LastUsedAt)
+                .Take(5)
+                .Select(x => x.Keyword)
+                .ToList();
+        }
+
         // ==========================================================
         // 1. TRANG CHỦ (INDEX)
         // ==========================================================
@@ -22,7 +34,11 @@ namespace WebBanHang.Controllers
         {
             var model = new HomeProductVM();
 
-            var baseQuery = db.Products.Include(p => p.Category).Include(p => p.OrderDetails).Include(p => p.Coupons).Where(p => p.Status != 2).AsQueryable();
+            // Chỉ nạp Coupons vì View cần tính giá giảm. Category/OrderDetails chỉ dùng
+            // trong biểu thức SQL, không cần tải toàn bộ collection về bộ nhớ.
+            var baseQuery = db.Products.AsNoTracking()
+                .Include(p => p.Coupons)
+                .Where(p => p.Status != 2);
 
             if (!string.IsNullOrEmpty(searchTerm))
             {
@@ -44,18 +60,16 @@ namespace WebBanHang.Controllers
             var excludeIds = new List<int>();
 
             // Lấy dữ liệu cảm biến (Đã fix lỗi Session cho khách vãng lai)
-            var recentKeywords = db.UserBehaviorLogs
-                .Where(l => l.SessionID == mySessionId && l.ActionType == "SEARCH_KEYWORD" && !string.IsNullOrEmpty(l.SearchKeyword))
-                .OrderByDescending(l => l.CreatedAt).Select(l => l.SearchKeyword).ToList().Distinct().Take(5).ToList();
+            var recentKeywords = GetRecentKeywords(db.UserBehaviorLogs.AsNoTracking()
+                .Where(l => l.SessionID == mySessionId));
 
             if (!recentKeywords.Any() && currentCustomerId != null)
             {
-                recentKeywords = db.UserBehaviorLogs
-                    .Where(l => l.CustomerID == currentCustomerId && l.ActionType == "SEARCH_KEYWORD" && !string.IsNullOrEmpty(l.SearchKeyword))
-                    .OrderByDescending(l => l.CreatedAt).Select(l => l.SearchKeyword).ToList().Distinct().Take(5).ToList();
+                recentKeywords = GetRecentKeywords(db.UserBehaviorLogs.AsNoTracking()
+                    .Where(l => l.CustomerID == currentCustomerId));
             }
 
-            var recentInteractedIds = db.UserBehaviorLogs
+            var recentInteractedIds = db.UserBehaviorLogs.AsNoTracking()
                 .Where(l => (currentCustomerId != null ? l.CustomerID == currentCustomerId : l.SessionID == mySessionId) && l.ProductID != null)
                 .OrderByDescending(l => l.CreatedAt).Select(l => l.ProductID.Value).Distinct().Take(3).ToList();
 
@@ -63,7 +77,7 @@ namespace WebBanHang.Controllers
             bool hasLog = recentKeywords.Any() || recentInteractedIds.Any();
 
             IQueryable<SmartRecommendation> queryRecommendations = null;
-            if (recentInteractedIds.Any()) queryRecommendations = db.SmartRecommendations.Where(r => recentInteractedIds.Contains(r.ProductID_A));
+            if (recentInteractedIds.Any()) queryRecommendations = db.SmartRecommendations.AsNoTracking().Where(r => recentInteractedIds.Contains(r.ProductID_A));
 
             // =====================================================
             // BOX 1: TWO-PHASE (LỢI NHUẬN) - Xử lý trường hợp nội bộ
@@ -89,7 +103,7 @@ namespace WebBanHang.Controllers
             }
             if (twoPhaseProducts.Count < targetTwoPhase) // Vét cạn Box 1
             {
-                var fill = db.Products.Where(p => !excludeIds.Contains(p.ProductID) && p.Status != 2)
+                var fill = db.Products.AsNoTracking().Where(p => !excludeIds.Contains(p.ProductID) && p.Status != 2)
                                       .OrderByDescending(p => p.ProductPrice).Take(targetTwoPhase - twoPhaseProducts.Count).ToList();
                 twoPhaseProducts.AddRange(fill);
                 excludeIds.AddRange(fill.Select(p => p.ProductID));
@@ -125,7 +139,7 @@ namespace WebBanHang.Controllers
             }
             if (aprioriProducts.Count < targetApriori) // Vét cạn Box 2
             {
-                var fill = db.Products.Where(p => !excludeIds.Contains(p.ProductID) && p.Status != 2)
+                var fill = db.Products.AsNoTracking().Where(p => !excludeIds.Contains(p.ProductID) && p.Status != 2)
                                       .OrderByDescending(p => p.OrderDetails.Count).Take(targetApriori - aprioriProducts.Count).ToList();
                 aprioriProducts.AddRange(fill);
                 excludeIds.AddRange(fill.Select(p => p.ProductID));
@@ -148,8 +162,8 @@ namespace WebBanHang.Controllers
                 {
                     if (behaviorProducts.Count >= targetBehavior) break;
 
-                    var rawKeywordRecs = db.Products.Where(p => !excludeIds.Contains(p.ProductID) && p.Status != 2)
-                        .Where(p => p.ProductName.ToLower().Contains(kw.ToLower()) || p.Category.CategoryName.ToLower().Contains(kw.ToLower()))
+                    var rawKeywordRecs = db.Products.AsNoTracking().Where(p => !excludeIds.Contains(p.ProductID) && p.Status != 2)
+                        .Where(p => p.ProductName.Contains(kw) || p.Category.CategoryName.Contains(kw))
                         .OrderByDescending(p => db.UserBehaviorLogs.Where(l => l.ProductID == p.ProductID).Sum(l => (int?)l.ActionWeight) ?? 0)
                         .Take(10).ToList();
 
@@ -170,7 +184,7 @@ namespace WebBanHang.Controllers
                 // Vét cạn Box 3
                 if (behaviorProducts.Count < targetBehavior)
                 {
-                    var fill = db.Products.Where(p => !excludeIds.Contains(p.ProductID) && p.Status != 2)
+                    var fill = db.Products.AsNoTracking().Where(p => !excludeIds.Contains(p.ProductID) && p.Status != 2)
                                           .OrderByDescending(p => p.ProductID).Take(targetBehavior - behaviorProducts.Count).ToList();
                     behaviorProducts.AddRange(fill);
                     excludeIds.AddRange(fill.Select(p => p.ProductID));
@@ -191,7 +205,7 @@ namespace WebBanHang.Controllers
         {
             if (id == null) return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
 
-            Product product = db.Products.Include(p => p.Category).Include(p => p.OrderDetails).Include(p => p.Coupons).SingleOrDefault(p => p.ProductID == id);
+            Product product = db.Products.AsNoTracking().Include(p => p.Category).Include(p => p.Coupons).SingleOrDefault(p => p.ProductID == id);
             if (product == null) return HttpNotFound();
 
             // MẢNG LỚN CHỨA SẴN 12 Ô SẢN PHẨM & QUẢN LÝ ID CHỐNG TRÙNG
@@ -201,20 +215,18 @@ namespace WebBanHang.Controllers
             var mySessionId = Session.SessionID;
             int? currentCustomerId = Session["CustomerID"] as int?;
 
-            var recentKeywords = db.UserBehaviorLogs
-                .Where(l => l.SessionID == mySessionId && l.ActionType == "SEARCH_KEYWORD" && !string.IsNullOrEmpty(l.SearchKeyword))
-                .OrderByDescending(l => l.CreatedAt).Select(l => l.SearchKeyword).ToList().Distinct().Take(5).ToList();
+            var recentKeywords = GetRecentKeywords(db.UserBehaviorLogs.AsNoTracking()
+                .Where(l => l.SessionID == mySessionId));
 
             if (!recentKeywords.Any() && currentCustomerId != null)
             {
-                recentKeywords = db.UserBehaviorLogs
-                    .Where(l => l.CustomerID == currentCustomerId && l.ActionType == "SEARCH_KEYWORD" && !string.IsNullOrEmpty(l.SearchKeyword))
-                    .OrderByDescending(l => l.CreatedAt).Select(l => l.SearchKeyword).ToList().Distinct().Take(5).ToList();
+                recentKeywords = GetRecentKeywords(db.UserBehaviorLogs.AsNoTracking()
+                    .Where(l => l.CustomerID == currentCustomerId));
             }
 
             bool isGuest = currentCustomerId == null;
             bool hasKeywordLog = recentKeywords.Any();
-            var queryRecommendations = db.SmartRecommendations.Where(r => r.ProductID_A == id);
+            var queryRecommendations = db.SmartRecommendations.AsNoTracking().Where(r => r.ProductID_A == id);
 
             // =====================================================
             // BOX 1: TWO-PHASE (LỢI NHUẬN)
@@ -238,7 +250,7 @@ namespace WebBanHang.Controllers
             }
             if (twoPhaseProducts.Count < targetTwoPhase)
             {
-                var fill = db.Products.Where(p => !excludeIds.Contains(p.ProductID) && p.Status != 2)
+                var fill = db.Products.AsNoTracking().Where(p => !excludeIds.Contains(p.ProductID) && p.Status != 2)
                                       .OrderByDescending(p => p.ProductPrice).Take(targetTwoPhase - twoPhaseProducts.Count).ToList();
                 twoPhaseProducts.AddRange(fill);
                 excludeIds.AddRange(fill.Select(p => p.ProductID));
@@ -273,7 +285,7 @@ namespace WebBanHang.Controllers
             // Vét cạn Lớp 1 (Cùng Danh mục)
             if (aprioriProducts.Count < targetApriori)
             {
-                var fillSameCat = db.Products.Where(p => !excludeIds.Contains(p.ProductID) && p.Status != 2 && p.CategoryID == product.CategoryID)
+                var fillSameCat = db.Products.AsNoTracking().Where(p => !excludeIds.Contains(p.ProductID) && p.Status != 2 && p.CategoryID == product.CategoryID)
                                              .OrderByDescending(p => p.OrderDetails.Count).Take(targetApriori - aprioriProducts.Count).ToList();
                 aprioriProducts.AddRange(fillSameCat);
                 excludeIds.AddRange(fillSameCat.Select(p => p.ProductID));
@@ -281,7 +293,7 @@ namespace WebBanHang.Controllers
             // Vét cạn Lớp 2 (Toàn Shop)
             if (aprioriProducts.Count < targetApriori)
             {
-                var fillAllShop = db.Products.Where(p => !excludeIds.Contains(p.ProductID) && p.Status != 2)
+                var fillAllShop = db.Products.AsNoTracking().Where(p => !excludeIds.Contains(p.ProductID) && p.Status != 2)
                                              .OrderByDescending(p => p.OrderDetails.Count).Take(targetApriori - aprioriProducts.Count).ToList();
                 aprioriProducts.AddRange(fillAllShop);
                 excludeIds.AddRange(fillAllShop.Select(p => p.ProductID));
@@ -302,9 +314,9 @@ namespace WebBanHang.Controllers
                 string kw1 = recentKeywords.Count > 0 ? recentKeywords[0] : null;
                 string kw2 = recentKeywords.Count > 1 ? recentKeywords[1] : null;
 
-                var rawKeywordRecs = db.Products.Where(p => !excludeIds.Contains(p.ProductID) && p.Status != 2)
-                    .Where(p => (kw1 != null && (p.ProductName.ToLower().Contains(kw1.ToLower()) || p.Category.CategoryName.ToLower().Contains(kw1.ToLower()))) ||
-                                (kw2 != null && (p.ProductName.ToLower().Contains(kw2.ToLower()) || p.Category.CategoryName.ToLower().Contains(kw2.ToLower()))))
+                var rawKeywordRecs = db.Products.AsNoTracking().Where(p => !excludeIds.Contains(p.ProductID) && p.Status != 2)
+                    .Where(p => (kw1 != null && (p.ProductName.Contains(kw1) || p.Category.CategoryName.Contains(kw1))) ||
+                                (kw2 != null && (p.ProductName.Contains(kw2) || p.Category.CategoryName.Contains(kw2))))
                     .OrderByDescending(p => db.UserBehaviorLogs.Where(l => l.ProductID == p.ProductID).Sum(l => (int?)l.ActionWeight) ?? 0)
                     .Take(20).ToList();
 
@@ -322,7 +334,7 @@ namespace WebBanHang.Controllers
 
                 if (behaviorProducts.Count < targetBehavior)
                 {
-                    var fill = db.Products.Where(p => !excludeIds.Contains(p.ProductID) && p.Status != 2)
+                    var fill = db.Products.AsNoTracking().Where(p => !excludeIds.Contains(p.ProductID) && p.Status != 2)
                                           .OrderByDescending(p => p.ProductID).Take(targetBehavior - behaviorProducts.Count).ToList();
                     behaviorProducts.AddRange(fill);
                     excludeIds.AddRange(fill.Select(p => p.ProductID));
@@ -333,11 +345,25 @@ namespace WebBanHang.Controllers
             // Gửi ra View
             ViewBag.SmartRecommendations = finalRecommendations;
 
+            try
+            {
+                var marketing = new WebBanHang.Services.MarketingSellingService(db);
+                ViewBag.ComboOffers = marketing.GetComboOffers(new[] { product.ProductID });
+                if (currentCustomerId.HasValue)
+                    ViewBag.PersonalVouchers = marketing.GetCustomerVouchers(currentCustomerId.Value)
+                        .Where(v => v.TargetProductID == product.ProductID).ToList();
+            }
+            catch
+            {
+                ViewBag.ComboOffers = new List<WebBanHang.Models.ViewModel.ComboOfferVM>();
+                ViewBag.PersonalVouchers = new List<WebBanHang.Models.ViewModel.PersonalVoucherVM>();
+            }
+
             var viewModel = new ProductDetailsVM
             {
                 product = product,
                 quantity = 1,
-                RelatedProducts = db.Products.Where(p => p.CategoryID == product.CategoryID && p.ProductID != id).OrderByDescending(p => p.ProductID).ToPagedList(1, 4)
+                RelatedProducts = db.Products.AsNoTracking().Where(p => p.CategoryID == product.CategoryID && p.ProductID != id).OrderByDescending(p => p.ProductID).ToPagedList(1, 4)
             };
 
             return View(viewModel);
@@ -399,7 +425,7 @@ namespace WebBanHang.Controllers
             ViewBag.CurrentSortBy = sortBy;
 
             // 3. TÌM KIẾM TỪ KHÓA
-            var productsQuery = db.Products
+            var productsQuery = db.Products.AsNoTracking()
                 .Include(p => p.Category)
                 .Include(p => p.Coupons)
                 .Where(p => p.Status != 2 &&
@@ -447,7 +473,7 @@ namespace WebBanHang.Controllers
                 var existingIds = searchResults.Select(p => p.ProductID).ToList();
                 int needMore = 12 - searchResults.Count;
 
-                var highProfitProducts = db.Products
+                var highProfitProducts = db.Products.AsNoTracking()
                     .Include(p => p.Category)
                     .Include(p => p.Coupons)
                     .Where(p => !existingIds.Contains(p.ProductID) && p.Status != 2)
@@ -467,7 +493,7 @@ namespace WebBanHang.Controllers
         {
             int pageSize = 6;
             int pageNumber = (page ?? 1);
-            var products = db.Products.AsQueryable();
+            var products = db.Products.AsNoTracking().AsQueryable();
 
             if (!string.IsNullOrEmpty(searchTerm))
             {
@@ -485,7 +511,7 @@ namespace WebBanHang.Controllers
 
         public ActionResult _HeaderCategory()
         {
-            var categories = db.Categories.ToList();
+            var categories = db.Categories.AsNoTracking().ToList();
             return PartialView("_HeaderCategory", categories);
         }
 
@@ -498,7 +524,7 @@ namespace WebBanHang.Controllers
 
             try
             {
-                var products = db.Products
+                var products = db.Products.AsNoTracking()
                     .Include(p => p.Coupons)
                     .Include(p => p.OrderDetails)
                     .Where(p => p.CategoryID == id.Value && p.Status != 2)
@@ -546,10 +572,8 @@ namespace WebBanHang.Controllers
             string currentSession = Session.SessionID;
             int? currentCustomerId = Session["CustomerID"] as int?;
 
-            var recentKeywords = db.UserBehaviorLogs
-                .Where(l => (currentCustomerId != null ? l.CustomerID == currentCustomerId : l.SessionID == currentSession)
-                            && l.ActionType == "SEARCH_KEYWORD" && !string.IsNullOrEmpty(l.SearchKeyword))
-                .OrderByDescending(l => l.CreatedAt).Select(l => l.SearchKeyword).Distinct().Take(5).ToList();
+            var recentKeywords = GetRecentKeywords(db.UserBehaviorLogs.AsNoTracking()
+                .Where(l => currentCustomerId != null ? l.CustomerID == currentCustomerId : l.SessionID == currentSession));
 
             bool isGuest = currentCustomerId == null;
             bool hasLog = recentKeywords.Any();
@@ -559,7 +583,7 @@ namespace WebBanHang.Controllers
             else if (!hasLog) { targetTwoPhase = 4; targetApriori = 8; targetBehavior = 0; }
             else { targetTwoPhase = 4; targetApriori = 4; targetBehavior = 4; }
 
-            var query = db.SmartRecommendations.Where(r => r.ProductID_A == productId);
+            var query = db.SmartRecommendations.AsNoTracking().Where(r => r.ProductID_A == productId);
 
             // TWO-PHASE (Lấy trước)
             var rawTwoPhase = query.OrderByDescending(r => r.ActualUtility).Take(30).Select(r => r.Product1).ToList();
@@ -574,7 +598,7 @@ namespace WebBanHang.Controllers
             }
             if (twoPhaseProducts.Count < targetTwoPhase)
             {
-                var fill = db.Products.Where(p => !excludeIds.Contains(p.ProductID)).OrderByDescending(p => p.ProductPrice).Take(targetTwoPhase - twoPhaseProducts.Count).ToList();
+                var fill = db.Products.AsNoTracking().Where(p => !excludeIds.Contains(p.ProductID)).OrderByDescending(p => p.ProductPrice).Take(targetTwoPhase - twoPhaseProducts.Count).ToList();
                 twoPhaseProducts.AddRange(fill);
                 excludeIds.AddRange(fill.Select(p => p.ProductID));
             }
@@ -593,7 +617,7 @@ namespace WebBanHang.Controllers
             }
             if (aprioriProducts.Count < targetApriori)
             {
-                var fill = db.Products.Where(p => !excludeIds.Contains(p.ProductID)).OrderByDescending(p => p.OrderDetails.Count).Take(targetApriori - aprioriProducts.Count).ToList();
+                var fill = db.Products.AsNoTracking().Where(p => !excludeIds.Contains(p.ProductID)).OrderByDescending(p => p.OrderDetails.Count).Take(targetApriori - aprioriProducts.Count).ToList();
                 aprioriProducts.AddRange(fill);
                 excludeIds.AddRange(fill.Select(p => p.ProductID));
             }
@@ -603,7 +627,7 @@ namespace WebBanHang.Controllers
             if (targetBehavior > 0)
             {
                 string kw1 = recentKeywords.Count > 0 ? recentKeywords[0] : null;
-                var rawKw = db.Products.Where(p => !excludeIds.Contains(p.ProductID) && (kw1 != null && p.ProductName.Contains(kw1)))
+                var rawKw = db.Products.AsNoTracking().Where(p => !excludeIds.Contains(p.ProductID) && (kw1 != null && p.ProductName.Contains(kw1)))
                                        .OrderByDescending(p => p.ProductPrice).Take(10).ToList();
                 foreach (var item in rawKw)
                 {
@@ -613,12 +637,18 @@ namespace WebBanHang.Controllers
                 }
                 if (behaviorProducts.Count < targetBehavior)
                 {
-                    behaviorProducts.AddRange(db.Products.Where(p => !excludeIds.Contains(p.ProductID)).OrderByDescending(p => p.ProductID).Take(targetBehavior - behaviorProducts.Count).ToList());
+                    behaviorProducts.AddRange(db.Products.AsNoTracking().Where(p => !excludeIds.Contains(p.ProductID)).OrderByDescending(p => p.ProductID).Take(targetBehavior - behaviorProducts.Count).ToList());
                 }
             }
 
             var model = new Tuple<List<Product>, List<Product>, List<Product>>(twoPhaseProducts, aprioriProducts, behaviorProducts);
             return PartialView("_Recommendations", model);
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing) db.Dispose();
+            base.Dispose(disposing);
         }
     }
 }

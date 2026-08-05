@@ -1,4 +1,7 @@
-﻿body {
+﻿/* =========================================
+   1. CẤU HÌNH CHUNG & TIÊU ĐỀ
+========================================= */
+body {
     background-color: #f7f9fc;
 }
 
@@ -30,14 +33,18 @@
         color: #fff;
     }
 
-/* --- Layout tổng --- */
+/* =========================================
+   2. BỐ CỤC CHÍNH (LAYOUT TỔNG)
+========================================= */
 .cart-content-wrapper {
     display: flex;
     gap: 25px;
     flex-wrap: wrap;
 }
 
-/* --- Card sản phẩm --- */
+/* =========================================
+   3. CỘT TRÁI - DANH SÁCH SẢN PHẨM
+========================================= */
 .cart-items-list {
     flex: 1;
     min-width: 600px;
@@ -60,6 +67,14 @@
         box-shadow: 0 4px 14px rgba(0,0,0,0.1);
     }
 
+.item-select-checkbox {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    margin-right: 15px;
+    accent-color: #e74c3c;
+}
+
 .cart-item-left {
     display: flex;
     align-items: center;
@@ -73,16 +88,17 @@
     border: 1px solid #eee;
     border-radius: 8px;
 }
+
 .cart-item-name {
     display: block;
-    width: 550px; /* Điều chỉnh chiều rộng theo ý muốn */
-    white-space: nowrap; /* Ngăn chặn xuống dòng */
-    overflow: hidden; /* Ẩn phần thừa */
-    text-overflow: ellipsis; /* Thêm dấu ba chấm khi tên dài */
+    width: 550px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     font-size: 16px;
     color: #333;
     line-height: 1.4;
-    margin-bottom: 5px; /* Thêm khoảng cách dưới tên sản phẩm */
+    margin-bottom: 5px;
 }
 
 .cart-item-info h5 {
@@ -128,7 +144,6 @@
         margin: 0;
     }
 
-/* --- Phần bên phải --- */
 .cart-item-right {
     text-align: right;
 }
@@ -151,14 +166,28 @@
         color: #e74c3c;
     }
 
-/* --- Box tóm tắt đơn hàng --- */
+/* =========================================
+   4. CỘT PHẢI - WRAPPER TRƯỢT THEO (STICKY)
+========================================= */
+.cart-right-sidebar {
+    flex: 0 0 300px;
+    position: sticky !important;
+    top: 20px;
+    align-self: flex-start; /* Quan trọng: Ngăn khối bên phải tự kéo giãn chiều cao */
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Khoảng cách giữa bảng tóm tắt và bảng combo */
+    height: fit-content;
+}
+
+/* --- Box Tóm tắt đơn hàng --- */
 .cart-summary-box {
+    position: static !important; /* Xóa bỏ sticky cũ để không bị lỗi */
     background: #fff;
     padding: 25px;
     border-radius: 10px;
-    flex: 0 0 300px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    height: fit-content;
+    border: 1px solid #3498db;
 }
 
 .summary-title {
@@ -202,8 +231,123 @@
         background-color: #c0392b;
     }
 
-/* --- Thiết kế khối Giỏ hàng trống (Empty Cart) --- */
+/* --- Khối Combo Tốt Nhất (UI MỚI) --- */
+.best-combo-box {
+    background: #fff;
+    border-radius: 10px;
+    border: 1px solid #2ecc71;
+    box-shadow: 0 4px 15px rgba(46, 204, 113, 0.12);
+    overflow: hidden;
+    transition: transform 0.3s ease;
+}
 
+    .best-combo-box:hover {
+        transform: translateY(-3px);
+    }
+
+.combo-header {
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    color: white;
+    font-weight: 700;
+    padding: 12px 15px;
+    text-align: center;
+    font-size: 15px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.combo-body {
+    padding: 15px;
+}
+
+.combo-product-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 15px 0;
+    font-size: 13px;
+    color: #34495e;
+}
+
+    .combo-product-list li {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        margin-bottom: 10px;
+        line-height: 1.4;
+    }
+
+        .combo-product-list li i {
+            margin-top: 2px;
+            font-size: 14px;
+        }
+
+        .combo-product-list li:last-child {
+            margin-bottom: 0;
+        }
+
+.combo-price-wrapper {
+    text-align: center;
+    margin-bottom: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed #eee;
+}
+
+.price-original-strike {
+    text-decoration: line-through;
+    color: #95a5a6;
+    font-size: 14px;
+}
+
+.price-final-highlight {
+    color: #e74c3c;
+    font-size: 22px;
+    font-weight: 800;
+}
+
+.combo-savings {
+    text-align: center;
+    margin-bottom: 12px;
+}
+
+.savings-badge {
+    display: inline-block;
+    background: #fdf2e9;
+    color: #d35400;
+    border: 1px dashed #d35400;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 700;
+    animation: pulseBadge 2s infinite; /* Hiệu ứng nhấp nháy thu hút */
+}
+
+@keyframes pulseBadge {
+    0% {
+        box-shadow: 0 0 0 0 rgba(211, 84, 0, 0.4);
+    }
+
+    70% {
+        box-shadow: 0 0 0 6px rgba(211, 84, 0, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(211, 84, 0, 0);
+    }
+}
+
+.combo-note {
+    font-size: 11.5px;
+    color: #7f8c8d;
+    text-align: center;
+    background: #f8f9fa;
+    padding: 10px;
+    border-radius: 6px;
+    line-height: 1.5;
+}
+
+/* =========================================
+   5. TRẠNG THÁI GIỎ HÀNG TRỐNG
+========================================= */
 .empty-cart-container {
     text-align: center;
     padding: 60px 20px;
@@ -215,13 +359,13 @@
     background: #ffffff;
     padding: 40px;
     border-radius: 12px;
-    border: 2px dashed #ccc; /* Viền nét đứt tạo điểm nhấn */
+    border: 2px dashed #ccc;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
 }
 
 .empty-icon {
     font-size: 6rem;
-    color: #ff6600; /* Màu cam nổi bật (TNC) */
+    color: #ff6600;
     margin-bottom: 20px;
     display: block;
     animation: bounceIn 0.8s;
@@ -241,7 +385,7 @@
 }
 
 .btn-continue-shopping.large-btn {
-    background-color: #ff6600; /* Màu cam chủ đạo */
+    background-color: #ff6600;
     color: #fff;
     padding: 15px 35px;
     font-size: 18px;
@@ -259,7 +403,6 @@
         box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
     }
 
-/* Keyframe cho icon nổi bật */
 @keyframes bounceIn {
     0% {
         transform: scale(0.3);
@@ -274,21 +417,4 @@
     100% {
         transform: scale(1);
     }
-}
-/* --- BỔ SUNG CSS MỚI --- */
-
-/* Style cho Checkbox chọn sản phẩm */
-.item-select-checkbox {
-    width: 20px;
-    height: 20px;
-    cursor: pointer;
-    margin-right: 15px;
-    accent-color: #e74c3c; /* Chuyển màu checkbox sang đỏ cho hợp tone */
-}
-
-/* Định dạng cho hộp Tóm tắt trượt theo màn hình */
-.cart-summary-box {
-    position: sticky;
-    top: 20px;
-    border: 1px solid #3498db; /* Thêm viền xanh tạo điểm nhấn */
 }

@@ -11,27 +11,74 @@
 <div class="carcc-card">
 
     <!-- HEADER -->
-    <div class="d-flex justify-content-between align-items-center mb-2">
+    <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            @*<h3 class="mb-1 fw-bold" style="color: #111827;">Đơn hàng</h3>*@
-            <i class="text-muted mb-0" style="font-size: 1.20rem;">Quản lý danh sách đơn hàng của hệ thống</i>
+            <i class="text-muted mb-0" style="font-size: 1.1rem;">Quản lý danh sách đơn hàng của hệ thống</i>
+            <p class="mt-1 mb-0 text-primary"><strong>Tìm thấy: @ViewBag.TotalCount đơn hàng</strong></p>
         </div>
         <div class="d-flex gap-2">
+            <!-- Nút bật Modal Lọc -->
+            <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#filterModal">
+                <i class="fa-solid fa-filter me-1"></i> Bộ lọc
+            </button>
             <button class="carcc-btn-outline"><i class="fa-solid fa-download me-1"></i> Xuất Excel</button>
             <a href="#" class="ir-btn-add"><i class="fa-solid fa-plus me-1"></i> Tạo Đơn Mới</a>
         </div>
-    </div>
-
-    <!-- TABS -->
-    <div class="carcc-tabs mb-4">
-        <a href="javascript:void(0)" class="active" style="cursor: default; color: #1f2937; border-bottom-color: #1f2937;">
-            Tất cả <span class="badge-count">@Model.TotalItemCount</span>
-        </a>
     </div>
 
     <!-- GỌI PARTIAL VIEW (Bảng & Phân trang) -->
     <div id="list-order-container">
         @Html.Partial("PVListOrder", Model)
     </div>
+</div>
 
+<!-- ============================================== -->
+<!-- MODAL BỘ LỌC ĐƠN HÀNG -->
+<!-- ============================================== -->
+<div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <!-- Form gửi GET request lên Action Index -->
+            <form method="get" action="@Url.Action("Index")">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold" id="filterModalLabel">
+                        <i class="fa-solid fa-filter me-2 text-warning"></i> Lọc Đơn Hàng
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+
+                    <!-- Lọc theo Trạng thái duyệt -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Trạng thái vận hành</label>
+                        <select class="form-select" name="orderStatus">
+                            <option value="All" @(ViewBag.CurrentOrderStatus == "All" ? "selected" : "")>-- Tất cả --</option>
+                            <option value="Chưa xử lý" @(ViewBag.CurrentOrderStatus == "Chưa xử lý" ? "selected" : "")>Chưa xử lý</option>
+                            <option value="Đã duyệt" @(ViewBag.CurrentOrderStatus == "Đã duyệt" ? "selected" : "")>Đã duyệt / Đang lấy hàng</option>
+                            <option value="Đang giao" @(ViewBag.CurrentOrderStatus == "Đang giao" ? "selected" : "")>Đang giao</option>
+                            <option value="Đã giao" @(ViewBag.CurrentOrderStatus == "Đã giao" ? "selected" : "")>Đã giao (Thành công)</option>
+                            <option value="Đã hủy" @(ViewBag.CurrentOrderStatus == "Đã hủy" ? "selected" : "")>Đã hủy</option>
+                        </select>
+                    </div>
+
+                    <!-- Lọc theo Trạng thái thanh toán -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Trạng thái thanh toán</label>
+                        <select class="form-select" name="paymentStatus">
+                            <option value="All" @(ViewBag.CurrentPaymentStatus == "All" ? "selected" : "")>-- Tất cả --</option>
+                            <option value="Chưa thanh toán" @(ViewBag.CurrentPaymentStatus == "Chưa thanh toán" ? "selected" : "")>Chưa thanh toán</option>
+                            <option value="Đã thanh toán" @(ViewBag.CurrentPaymentStatus == "Đã thanh toán" ? "selected" : "")>Đã thanh toán</option>
+                            <option value="Thất bại" @(ViewBag.CurrentPaymentStatus == "Thất bại" ? "selected" : "")>Thất bại / Hủy</option>
+                        </select>
+                    </div>
+
+                </div>
+                <div class="modal-footer bg-light">
+                    <!-- Nút Xóa Lọc (Trở về danh sách ban đầu) -->
+                    <a href="@Url.Action("Index")" class="btn btn-outline-secondary">Xóa bộ lọc</a>
+                    <button type="submit" class="btn btn-primary">Áp dụng lọc</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>

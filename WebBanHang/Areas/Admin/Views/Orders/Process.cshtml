@@ -4,11 +4,15 @@
     ViewBag.Title = "Xử lý Đơn hàng #" + Model.OrderID;
     Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
 
-    // Tính toán tiền
+    // 1. Tính toán tiền
     decimal subTotal = Model.OrderDetails?.Sum(d => d.UnitPrice * d.Quantity) ?? 0;
-    decimal shippingFee = Model.TotalAmount - subTotal;
+
+    // 2. Lấy số tiền giảm giá từ DB
+    decimal discountAmount = Model.DiscountAmount;
+
+    // 3. Tính phí ship gốc
+    decimal shippingFee = Model.TotalAmount - subTotal + discountAmount;
     if (shippingFee < 0) { shippingFee = 0; }
-    decimal discountAmount = 0;
 
     string paymentStatus = Model.PaymentStatus ?? "Chưa thanh toán";
     string paymentBadge = "sb-warning";
@@ -24,7 +28,6 @@
     else if (orderStatus == "Đã hủy") { orderBadge = "sb-danger"; }
 }
 
-<!-- Đã bỏ cái đuôi ?v=... đi, trả về đúng đường dẫn chuẩn của hệ thống -->
 <link href="~/Content/Admin/order_admin.css" rel="stylesheet" />
 
 <div class="row mt-0 pt-0">
@@ -67,23 +70,26 @@
 
                 <div class="col-md-6">
                     <div class="bd-summary-row">
-                        <span>Tạm tính</span>
+                        <span class="text-muted">Tạm tính</span>
                         <span>@subTotal.ToString("N0") ₫</span>
                     </div>
-                    <div class="bd-summary-row">
-                        <span>Phí vận chuyển</span>
-                        <span>(+) @shippingFee.ToString("N0") ₫</span>
+                    <div class="bd-summary-row mt-2">
+                        <span class="text-muted">Phí vận chuyển</span>
+                        <span>+ @shippingFee.ToString("N0") ₫</span>
                     </div>
+
+                    <!-- HIỂN THỊ DÒNG GIẢM GIÁ Ở TRANG XỬ LÝ -->
                     @if (discountAmount > 0)
                     {
-                        <div class="bd-summary-row text-success">
-                            <span>Giảm giá</span>
-                            <span>(-) @discountAmount.ToString("N0") ₫</span>
+                        <div class="bd-summary-row text-success mt-2">
+                            <span class="fw-bold"><i class="fa-solid fa-tags"></i> Giảm giá</span>
+                            <span class="fw-bold">- @discountAmount.ToString("N0") ₫</span>
                         </div>
                     }
-                    <div class="bd-summary-row total">
-                        <span>Tổng cộng</span>
-                        <span>@Model.TotalAmount.ToString("N0") ₫</span>
+
+                    <div class="bd-summary-row total mt-3 pt-3 border-top">
+                        <span class="fs-5 fw-bold">Tổng cộng</span>
+                        <span class="fs-5 text-danger fw-bold">@Model.TotalAmount.ToString("N0") ₫</span>
                     </div>
                 </div>
             </div>
@@ -122,9 +128,7 @@
             </div>
         </div>
 
-        <!-- Nút Quay lại đã được dời xuống dưới cùng -->
         @{
-            // Lấy lại URL chứa số trang (page=2), nếu Session null thì trả về Index mặc định
             string backUrl = Session["LastOrderListUrl"] as string ?? Url.Action("Index", "Orders");
         }
 

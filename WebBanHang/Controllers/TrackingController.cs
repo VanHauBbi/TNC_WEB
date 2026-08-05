@@ -12,44 +12,34 @@ namespace WebBanHang.Controllers
         [HttpPost]
         public JsonResult LogBehavior(int productId, string actionType)
         {
-            if (Session["CustomerID"] == null)
-                return Json(new { success = true });
-
             try
             {
-                int customerId = (int)Session["CustomerID"];
-                string actType = actionType.ToUpper();
+                if (!db.Products.Any(p => p.ProductID == productId))
+                    return Json(new { success = false, message = "Sản phẩm không tồn tại." });
+
+                var actType = (actionType ?? string.Empty).Trim().ToUpperInvariant();
 
                 int weight = 1;
                 switch (actType)
                 {
                     case "VIEW": weight = 1; break;
+                    case "CLICK": weight = 2; break;
+                    case "DWELL_TIME": weight = 2; break;
                     case "ADD_CART": weight = 5; break;
-                    case "BUY": weight = 10; break;
+                    case "REMOVE_CART": weight = 3; break;
+                    case "PURCHASE": weight = 10; break;
+                    default: return Json(new { success = false, message = "Hành vi không hợp lệ." });
                 }
 
-                var existingLog = db.UserBehaviorLogs
-                    .FirstOrDefault(l => l.ProductID == productId
-                                      && l.CustomerID == customerId
-                                      && l.ActionType == actType);
-
-                if (existingLog != null)
+                db.UserBehaviorLogs.Add(new UserBehaviorLog
                 {
-                    existingLog.ActionWeight += weight;
-                    existingLog.CreatedAt = DateTime.Now;
-                }
-                else
-                {
-                    db.UserBehaviorLogs.Add(new UserBehaviorLog
-                    {
-                        ProductID = productId,
-                        ActionType = actType,
-                        ActionWeight = weight,
-                        CustomerID = customerId, // Lưu theo ID khách hàng
-                        SessionID = Session.SessionID,
-                        CreatedAt = DateTime.Now
-                    });
-                }
+                    ProductID = productId,
+                    ActionType = actType,
+                    ActionWeight = weight,
+                    CustomerID = Session["CustomerID"] == null ? (int?)null : (int)Session["CustomerID"],
+                    SessionID = Session.SessionID,
+                    CreatedAt = DateTime.Now
+                });
 
                 db.SaveChanges();
                 return Json(new { success = true });
@@ -64,33 +54,30 @@ namespace WebBanHang.Controllers
         [HttpPost]
         public JsonResult LogTimeOnPage(int productId, string sessionId)
         {
-            if (Session["CustomerID"] == null)
-                return Json(new { success = true });
-
             try
             {
-                int customerId = (int)Session["CustomerID"];
-                var timeLog = db.UserBehaviorLogs
-                            .FirstOrDefault(l => l.ProductID == productId
-                                              && l.CustomerID == customerId
-                                              && l.ActionType == "DWELL_TIME");
+                if (!db.Products.Any(p => p.ProductID == productId))
+                    return Json(new { success = false });
 
-                if (timeLog != null)
-                {
-                    timeLog.ActionWeight += 2;
-                    timeLog.CreatedAt = DateTime.Now;
-                }
-                else
+                var cutoff = DateTime.Now.AddMinutes(-1);
+                var recent = db.UserBehaviorLogs.FirstOrDefault(x => x.SessionID == Session.SessionID
+                    && x.ProductID == productId && x.ActionType == "DWELL_TIME" && x.CreatedAt >= cutoff);
+                if (recent == null)
                 {
                     db.UserBehaviorLogs.Add(new UserBehaviorLog
                     {
                         SessionID = Session.SessionID,
-                        CustomerID = customerId,
+                        CustomerID = Session["CustomerID"] == null ? (int?)null : (int)Session["CustomerID"],
                         ProductID = productId,
                         ActionType = "DWELL_TIME",
                         ActionWeight = 2,
                         CreatedAt = DateTime.Now
                     });
+                }
+                else
+                {
+                    recent.ActionWeight = Math.Min(6, recent.ActionWeight + 1);
+                    recent.CreatedAt = DateTime.Now;
                 }
 
                 db.SaveChanges();

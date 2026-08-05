@@ -7,6 +7,7 @@ using WebBanHang.Models.ViewModel;
 using WebBanHang.Models;
 using System.Data.Entity;
 using WebBanHang.Utilities;
+using WebBanHang.Services;
 
 namespace WebBanHang.Controllers
 {
@@ -54,7 +55,59 @@ namespace WebBanHang.Controllers
                     }
                 }
             }
+
+            try
+            {
+                var marketing = new MarketingSellingService(db);
+                ViewBag.ComboOffers = marketing.GetComboOffers(cart.Items.Select(x => x.ProductID));
+                ViewBag.BestCombo = marketing.GetBestCombo(cart.Items);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceWarning("Marketing schema chưa sẵn sàng: " + ex.Message);
+                ViewBag.ComboOffers = new List<ComboOfferVM>();
+                ViewBag.BestCombo = null;
+            }
             return View(cart);
+        }
+
+        [HttpPost]
+        public ActionResult AddComboToCart(int productAId, int productBId)
+        {
+            if (Session["UserName"] == null)
+                return Json(new { success = false, redirectUrl = Url.Action("Login", "Account") });
+            if (productAId == productBId)
+                return Json(new { success = false, message = "Combo không hợp lệ." });
+
+            var ids = new[] { productAId, productBId };
+            var products = db.Products.Include(p => p.Coupons).Where(p => ids.Contains(p.ProductID)).ToList();
+            if (products.Count != 2 || products.Any(p => p.GetStatusLabel() != "AVAILABLE" || p.StockQuantity <= 0))
+                return Json(new { success = false, message = "Một sản phẩm trong combo đã hết hàng hoặc ngừng bán." });
+
+            var cart = GetCartService().GetCart();
+            foreach (var product in products)
+            {
+                var currentQty = cart.Items.Where(x => x.ProductID == product.ProductID).Select(x => x.Quantity).FirstOrDefault();
+                if (currentQty + 1 > product.StockQuantity)
+                    return Json(new { success = false, message = "Sản phẩm '" + product.ProductName + "' không còn đủ tồn kho." });
+            }
+
+            foreach (var product in products)
+            {
+                decimal discountPercent;
+                var unitPrice = PriceHelper.GetDiscountedPrice(product, out discountPercent);
+                cart.AddItem(product.ProductID, product.ProductImage, product.ProductName,
+                    Math.Max(0m, unitPrice), product.ProductPrice, 1, product.Category?.CategoryName);
+                LogCartBehavior(product.ProductID, "ADD_CART", 5);
+            }
+            Session["Cart"] = cart;
+            SyncCartToDatabase();
+            return Json(new
+            {
+                success = true,
+                message = "Đã thêm đủ hai sản phẩm combo vào giỏ hàng.",
+                cartCount = cart.Items.Sum(x => x.Quantity)
+            });
         }
         // THÊM SẢN PHẨM VÀO GIỎ HÀNG
         [HttpPost]
@@ -107,6 +160,7 @@ namespace WebBanHang.Controllers
                 Session["Cart"] = cart;
 
                 SyncCartToDatabase();
+                LogCartBehavior(id, "ADD_CART", 5);
 
                 var total = cart.Items.Sum(x => x.TotalPrice);
                 var count = cart.Items.Sum(x => x.Quantity);
@@ -186,6 +240,7 @@ namespace WebBanHang.Controllers
 
             // NÂNG CẤP: Đồng bộ thao tác xóa món hàng vào DB
             SyncCartToDatabase();
+            LogCartBehavior(id, "REMOVE_CART", 3);
             return RedirectToAction("Index");
         }
         [HttpPost]
@@ -291,7 +346,7 @@ namespace WebBanHang.Controllers
         }
 
         [HttpPost]
-        public JsonResult ApplyCoupon(string couponCode)
+        public JsonResult ApplyCoupon(string couponCode, bool isBuyNow = false)
         {
             if (string.IsNullOrEmpty(couponCode))
             {
@@ -300,11 +355,49 @@ namespace WebBanHang.Controllers
 
             try
             {
+                var cart = isBuyNow
+                    ? Session["BuyNowCart"] as WebBanHang.Models.ViewModel.Cart
+                    : Session["Cart"] as WebBanHang.Models.ViewModel.Cart;
+                if (cart == null || !cart.Items.Any())
+                    return Json(new { success = false, message = "Giỏ hàng trống, không thể áp dụng mã." });
+
+                var marketingService = new MarketingSellingService(db);
+                if (Session["CustomerID"] != null)
+                {
+                    var marketingResult = marketingService.EvaluatePromotion(
+                        couponCode, (int)Session["CustomerID"], cart.Items);
+                    if (marketingResult.IsValid)
+                    {
+                        Session["VoucherDiscount"] = marketingResult.DiscountAmount;
+                        Session["MarketingPromotion"] = marketingResult;
+                        return Json(new
+                        {
+                            success = true,
+                            message = marketingResult.Message,
+                            discountAmount = marketingResult.DiscountAmount,
+                            promotionType = marketingResult.PromotionType,
+                            appliedCode = marketingResult.Code
+                        });
+                    }
+                    if (marketingService.IsManagedPromotionCode(couponCode))
+                        return Json(new { success = false, message = marketingResult.Message });
+                }
+                else if (marketingService.IsManagedPromotionCode(couponCode))
+                {
+                    return Json(new { success = false, message = "Vui lòng đăng nhập đúng tài khoản nhận voucher." });
+                }
+
                 var coupon = db.Coupons.Include(c => c.Products)
                                        .FirstOrDefault(c => c.Code == couponCode.Trim().ToUpper());
 
                 if (coupon == null)
                     return Json(new { success = false, message = "Mã giảm giá không tồn tại." });
+
+                if (coupon.CouponType != "GLOBAL" || !coupon.IsActive)
+                    return Json(new { success = false, message = "Mã giảm giá toàn đơn này đang bị ngừng áp dụng." });
+
+                if (coupon.StartDate.HasValue && coupon.StartDate.Value > DateTime.Now)
+                    return Json(new { success = false, message = "Mã giảm giá này chưa đến thời gian sử dụng." });
 
                 if (coupon.ExpiryDate <= DateTime.Now)
                     return Json(new { success = false, message = "Mã giảm giá này đã hết hạn sử dụng." });
@@ -321,10 +414,6 @@ namespace WebBanHang.Controllers
                         message = "Mã này là ưu đãi riêng cho sản phẩm và đã được trừ thẳng vào giá bán. Vui lòng chọn mã giảm giá toàn đơn!"
                     });
                 }
-
-                var cart = Session["Cart"] as WebBanHang.Models.ViewModel.Cart;
-                if (cart == null || !cart.Items.Any())
-                    return Json(new { success = false, message = "Giỏ hàng trống, không thể áp dụng mã." });
 
                 decimal totalDiscount = 0;
                 decimal cartTotal = cart.TotalValue();
@@ -344,6 +433,10 @@ namespace WebBanHang.Controllers
                     }
                 }
 
+                // Không tin hidden input phía client; checkout chỉ đọc số giảm đã tính server-side.
+                Session["VoucherDiscount"] = totalDiscount;
+                Session.Remove("MarketingPromotion");
+
                 return Json(new
                 {
                     success = true,
@@ -353,7 +446,8 @@ namespace WebBanHang.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "Lỗi xử lý: " + ex.Message });
+                System.Diagnostics.Trace.TraceError("Lỗi áp dụng voucher: " + ex.Message);
+                return Json(new { success = false, message = "Không thể áp dụng mã lúc này. Vui lòng thử lại." });
             }
         }
 
@@ -431,6 +525,29 @@ namespace WebBanHang.Controllers
                 });
             }
             db.SaveChanges(); // Hoàn tất đồng bộ xuống SQL Server
+        }
+
+        private void LogCartBehavior(int productId, string actionType, int weight)
+        {
+            try
+            {
+                db.UserBehaviorLogs.Add(new UserBehaviorLog
+                {
+                    ProductID = productId,
+                    CustomerID = Session["CustomerID"] == null ? (int?)null : (int)Session["CustomerID"],
+                    SessionID = Session.SessionID,
+                    ActionType = actionType,
+                    ActionWeight = weight,
+                    CreatedAt = DateTime.Now
+                });
+                db.SaveChanges();
+                if (actionType == "ADD_CART" && Session["CustomerID"] != null)
+                    new MarketingSellingService(db).TrackCartedByProduct((int)Session["CustomerID"], productId);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceWarning("Không ghi được hành vi giỏ hàng: " + ex.Message);
+            }
         }
     }
 }
