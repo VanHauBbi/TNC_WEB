@@ -12,7 +12,6 @@
     @Html.AntiForgeryToken()
 
     <div class="form-horizontal card p-4 shadow-sm">
-        @Html.ValidationSummary(false, "", new { @class = "alert alert-danger" })
 
         <div class="row">
             <div class="col-md-6 mb-3">
@@ -102,6 +101,20 @@
 
 @section Scripts {
     @Scripts.Render("~/bundles/jqueryval")
+
+    <!-- POPUP BÁO LỖI -->
+    @if (!ViewData.ModelState.IsValid)
+    {
+        var errorMessages = string.Join("\\n", ViewData.ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+        if (!string.IsNullOrEmpty(errorMessages))
+        {
+            <script>
+                $(document).ready(function () {
+                    alert("CẢNH BÁO LỖI:\n\n@Html.Raw(errorMessages)");
+                });
+            </script>
+        }
+    }
     <script>
         // Khởi tạo mảng lưu trữ trạng thái cục bộ (trống vì là trang Thêm mới)
         var selectedProducts = [];

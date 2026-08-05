@@ -19,7 +19,7 @@
                 <a class="mk-btn mk-btn-warning" href="@Url.Action("EditPersonalVoucher", new { id = Model.CustomerCouponID })"><i class="fa-solid fa-pen"></i> Chỉnh sửa</a>
                 <a class="mk-btn mk-btn-danger" href="@Url.Action("DeletePersonalVoucher", new { id = Model.CustomerCouponID })"><i class="fa-solid fa-ban"></i> Ngừng áp dụng</a>
             }
-            <a class="mk-btn mk-btn-neutral" href="@Url.Action("Index")"><i class="fa-solid fa-arrow-left"></i> Quay lại</a>
+            <a class="mk-btn mk-btn-neutral" href="javascript:void(0);" onclick="window.history.back();"><i class="fa-solid fa-arrow-left"></i> Quay lại</a>
         </div>
     </div>
 
