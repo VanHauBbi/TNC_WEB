@@ -166,7 +166,7 @@
           <Property Name="OrderID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
           <Property Name="CustomerID" Type="int" Nullable="false" />
           <Property Name="CouponID" Type="int" />
-          <Property Name="OrderDate" Type="date" Nullable="false" />
+          <Property Name="OrderDate" Type="datetime" Nullable="false" />
           <Property Name="TotalAmount" Type="decimal" Precision="18" Scale="3" Nullable="false" />
           <Property Name="DiscountAmount" Type="decimal" Precision="18" Scale="3" Nullable="false" />
           <Property Name="PaymentStatus" Type="nvarchar" MaxLength="50" />
@@ -1162,7 +1162,7 @@
           <Property Name="OrderID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
           <Property Name="CustomerID" Type="Int32" Nullable="false" />
           <Property Name="CouponID" Type="Int32" />
-          <Property Name="OrderDate" Type="DateTime" Nullable="false" Precision="0" />
+          <Property Name="OrderDate" Type="DateTime" Nullable="false" Precision="3" />
           <Property Name="TotalAmount" Type="Decimal" Precision="18" Scale="3" Nullable="false" />
           <Property Name="DiscountAmount" Type="Decimal" Precision="18" Scale="3" Nullable="false" />
           <Property Name="PaymentStatus" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
