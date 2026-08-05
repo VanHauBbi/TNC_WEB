@@ -10,11 +10,15 @@
 
 <div class="mk-page mk-detail-shell">
     @if (TempData["SuccessMessage"] != null) { <div class="mk-toast"><div class="d-flex gap-3 align-items-center"><i class="fa-solid fa-circle-check text-success"></i><div>@TempData["SuccessMessage"]</div></div></div> }
+    @if (TempData["ErrorMessage"] != null) { <div class="mk-toast"><div class="d-flex gap-3 align-items-center"><i class="fa-solid fa-circle-exclamation text-danger"></i><div>@TempData["ErrorMessage"]</div></div></div> }
     <div class="mk-page-heading">
         <div><h3><i class="fa-solid fa-user-tag text-primary me-2"></i>Chi tiết voucher cá nhân</h3><p>Mã <span class="mk-code">@Model.Code</span></p></div>
         <div class="mk-toolbar">
-            @if (Model.Status != "USED") { <a class="mk-btn mk-btn-warning" href="@Url.Action("EditPersonalVoucher", new { id = Model.CustomerCouponID })"><i class="fa-solid fa-pen"></i> Chỉnh sửa</a> }
-            <a class="mk-btn mk-btn-danger" href="@Url.Action("DeletePersonalVoucher", new { id = Model.CustomerCouponID })"><i class="fa-solid fa-ban"></i> Ngừng áp dụng</a>
+            @if (Model.Status != "USED")
+            {
+                <a class="mk-btn mk-btn-warning" href="@Url.Action("EditPersonalVoucher", new { id = Model.CustomerCouponID })"><i class="fa-solid fa-pen"></i> Chỉnh sửa</a>
+                <a class="mk-btn mk-btn-danger" href="@Url.Action("DeletePersonalVoucher", new { id = Model.CustomerCouponID })"><i class="fa-solid fa-ban"></i> Ngừng áp dụng</a>
+            }
             <a class="mk-btn mk-btn-neutral" href="@Url.Action("Index")"><i class="fa-solid fa-arrow-left"></i> Quay lại</a>
         </div>
     </div>

@@ -158,7 +158,16 @@ namespace WebBanHang.Areas.Admin.Controllers
         public ActionResult EditPersonalVoucher(int? id)
         {
             if (!id.HasValue) return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
-            var model = new MarketingSellingService(db).GetPersonalVoucherEdit(id.Value);
+            var service = new MarketingSellingService(db);
+            var voucher = service.GetPersonalVoucherAdmin(id.Value);
+            if (voucher == null) return HttpNotFound();
+            if (voucher.Status == "USED")
+            {
+                TempData["ErrorMessage"] = "Voucher đã sử dụng chỉ được xem lịch sử, không thể chỉnh sửa.";
+                return RedirectToAction("PersonalVoucherDetails", new { id = id.Value });
+            }
+
+            var model = service.GetPersonalVoucherEdit(id.Value);
             if (model == null) return HttpNotFound();
             return View(model);
         }
@@ -188,6 +197,11 @@ namespace WebBanHang.Areas.Admin.Controllers
             if (!id.HasValue) return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             var model = new MarketingSellingService(db).GetPersonalVoucherAdmin(id.Value);
             if (model == null) return HttpNotFound();
+            if (model.Status == "USED")
+            {
+                TempData["ErrorMessage"] = "Voucher đã sử dụng được giữ làm lịch sử và không thể ngừng hoặc xóa.";
+                return RedirectToAction("PersonalVoucherDetails", new { id = id.Value });
+            }
             return View(model);
         }
 
@@ -197,7 +211,16 @@ namespace WebBanHang.Areas.Admin.Controllers
         {
             try
             {
-                new MarketingSellingService(db).DeactivatePersonalVoucher(id);
+                var service = new MarketingSellingService(db);
+                var voucher = service.GetPersonalVoucherAdmin(id);
+                if (voucher == null) return HttpNotFound();
+                if (voucher.Status == "USED")
+                {
+                    TempData["ErrorMessage"] = "Voucher đã sử dụng được giữ làm lịch sử và không thể ngừng hoặc xóa.";
+                    return RedirectToAction("PersonalVoucherDetails", new { id = id });
+                }
+
+                service.DeactivatePersonalVoucher(id);
                 TempData["SuccessMessage"] = "Voucher đã được ngừng áp dụng; lịch sử vẫn được giữ nguyên.";
             }
             catch (Exception ex)

@@ -12,7 +12,7 @@
     @Html.AntiForgeryToken()
 
     <div class="form-horizontal card p-4 shadow-sm">
-        @Html.ValidationSummary(true, "", new { @class = "alert alert-danger" })
+        @Html.ValidationSummary(false, "", new { @class = "alert alert-danger" })
 
         <div class="row">
             <div class="col-md-6 mb-3">
