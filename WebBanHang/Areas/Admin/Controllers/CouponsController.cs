@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Entity;
+using System.Data.Entity.Validation;
 using System.Linq;
 using System.Net;
 using System.Web;
@@ -14,10 +15,52 @@ namespace WebBanHang.Areas.Admin.Controllers
     {
         private MyStoreEntities db = new MyStoreEntities();
 
+        private void PopulateCouponForm(int[] selectedProducts = null)
+        {
+            ViewBag.Categories = new SelectList(db.Categories.OrderBy(c => c.CategoryName), "CategoryID", "CategoryName");
+            ViewBag.ProductID = new MultiSelectList(db.Products.OrderBy(p => p.ProductName),
+                "ProductID", "ProductName", selectedProducts);
+        }
+
+        private static void ApplyManualCouponDefaults(Coupon coupon)
+        {
+            bool usesPercentage = coupon.DiscountPercentage.HasValue && coupon.DiscountPercentage.Value > 0m;
+            coupon.CouponType = "GLOBAL";
+            coupon.DiscountType = usesPercentage ? "PERCENT" : "FIXED";
+            coupon.FixedDiscountAmount = usesPercentage ? null : coupon.MaxDiscountAmount;
+            coupon.MinimumOrderValue = 0m;
+            coupon.StartDate = DateTime.Now;
+            coupon.IsActive = true;
+            coupon.IsStackable = false;
+            coupon.CampaignID = null;
+            coupon.SourceType = "MANUAL";
+        }
+
+        private CustomerCoupon FindPersonalVoucher(int couponId)
+        {
+            return db.CustomerCoupons
+                .Where(v => v.CouponID == couponId)
+                .OrderByDescending(v => v.AssignedAt)
+                .FirstOrDefault();
+        }
+
+        private ActionResult RedirectToPersonalVoucher(CustomerCoupon voucher, string actionName)
+        {
+            return RedirectToAction(actionName, "Marketing", new
+            {
+                area = "Admin",
+                id = voucher.CustomerCouponID
+            });
+        }
+
         // GET: Admin/Coupons
         public ActionResult Index()
         {
-            return View(db.Coupons.ToList());
+            var coupons = db.Coupons
+                .Include(c => c.CustomerCoupons)
+                .OrderByDescending(c => c.CouponID)
+                .ToList();
+            return View(coupons);
         }
 
         // GET: Admin/Coupons/Details/5
@@ -27,6 +70,10 @@ namespace WebBanHang.Areas.Admin.Controllers
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
+            var personalVoucher = FindPersonalVoucher(id.Value);
+            if (personalVoucher != null)
+                return RedirectToPersonalVoucher(personalVoucher, "PersonalVoucherDetails");
+
             // BỔ SUNG: Include(c => c.Products) để lấy thông tin sản phẩm áp dụng
             Coupon coupon = db.Coupons.Include(c => c.Products).FirstOrDefault(c => c.CouponID == id);
 
@@ -44,11 +91,7 @@ namespace WebBanHang.Areas.Admin.Controllers
             newCoupon.UsageLimit = 1;
             newCoupon.ExpiryDate = DateTime.Now.AddDays(7);
 
-            // BỔ SUNG: Truyền danh sách Danh mục (Category) sang View
-            ViewBag.Categories = new SelectList(db.Categories, "CategoryID", "CategoryName");
-
-            // Giữ lại ViewBag.ProductID để tránh lỗi tương thích nếu validation thất bại
-            ViewBag.ProductID = new MultiSelectList(db.Products, "ProductID", "ProductName");
+            PopulateCouponForm();
 
             return View(newCoupon);
         }
@@ -59,6 +102,8 @@ namespace WebBanHang.Areas.Admin.Controllers
         // BỔ SUNG: Thêm tham số mảng int[] selectedProducts để hứng dữ liệu từ giao diện
         public ActionResult Create([Bind(Include = "CouponID,CouponName,Code,DiscountPercentage,MaxDiscountAmount,ExpiryDate,UsageLimit")] Coupon coupon, int[] selectedProducts)
         {
+            ApplyManualCouponDefaults(coupon);
+
             if (ModelState.IsValid)
             {
                 if (!string.IsNullOrEmpty(coupon.Code))
@@ -70,21 +115,29 @@ namespace WebBanHang.Areas.Admin.Controllers
                 if (isCodeExist)
                 {
                     ModelState.AddModelError("Code", "Mã giảm giá này đã tồn tại trong hệ thống!");
-                    ViewBag.ProductID = new MultiSelectList(db.Products, "ProductID", "ProductName", selectedProducts);
+                    PopulateCouponForm(selectedProducts);
                     return View(coupon);
                 }
 
                 if (coupon.ExpiryDate <= DateTime.Now)
                 {
                     ModelState.AddModelError("ExpiryDate", "Ngày hết hạn phải lớn hơn ngày, giờ hiện tại.");
-                    ViewBag.ProductID = new MultiSelectList(db.Products, "ProductID", "ProductName", selectedProducts);
+                    PopulateCouponForm(selectedProducts);
                     return View(coupon);
                 }
 
                 if (coupon.UsageLimit < 1)
                 {
                     ModelState.AddModelError("UsageLimit", "Giới hạn sử dụng phải lớn hơn hoặc bằng 1.");
-                    ViewBag.ProductID = new MultiSelectList(db.Products, "ProductID", "ProductName", selectedProducts);
+                    PopulateCouponForm(selectedProducts);
+                    return View(coupon);
+                }
+
+                if ((!coupon.DiscountPercentage.HasValue || coupon.DiscountPercentage.Value <= 0m)
+                    && (!coupon.MaxDiscountAmount.HasValue || coupon.MaxDiscountAmount.Value <= 0m))
+                {
+                    ModelState.AddModelError("", "Vui lòng nhập phần trăm giảm hoặc số tiền giảm.");
+                    PopulateCouponForm(selectedProducts);
                     return View(coupon);
                 }
 
@@ -104,15 +157,28 @@ namespace WebBanHang.Areas.Admin.Controllers
                     }
                 }
 
-                db.Coupons.Add(coupon);
-                db.SaveChanges();
+                try
+                {
+                    db.Coupons.Add(coupon);
+                    db.SaveChanges();
+                }
+                catch (DbEntityValidationException ex)
+                {
+                    foreach (var entityErrors in ex.EntityValidationErrors)
+                    {
+                        foreach (var validationError in entityErrors.ValidationErrors)
+                            ModelState.AddModelError(validationError.PropertyName ?? "", validationError.ErrorMessage);
+                    }
+                    PopulateCouponForm(selectedProducts);
+                    return View(coupon);
+                }
 
                 TempData["SuccessMessage"] = "Thêm mã giảm giá mới thành công!";
                 return RedirectToAction("Index");
             }
 
             // Nạp lại danh sách nếu Form không hợp lệ
-            ViewBag.ProductID = new MultiSelectList(db.Products, "ProductID", "ProductName", selectedProducts);
+            PopulateCouponForm(selectedProducts);
             return View(coupon);
         }
 
@@ -140,6 +206,17 @@ namespace WebBanHang.Areas.Admin.Controllers
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
 
+            var personalVoucher = FindPersonalVoucher(id.Value);
+            if (personalVoucher != null)
+            {
+                if (personalVoucher.Status == "USED")
+                {
+                    TempData["ErrorMessage"] = "Voucher đã sử dụng chỉ được lưu lịch sử, không thể chỉnh sửa.";
+                    return RedirectToAction("Index");
+                }
+                return RedirectToPersonalVoucher(personalVoucher, "EditPersonalVoucher");
+            }
+
             // BỔ SUNG: Include(c => c.Products) để nạp danh sách sản phẩm đã được liên kết
             Coupon coupon = db.Coupons.Include(c => c.Products).FirstOrDefault(c => c.CouponID == id);
 
@@ -164,6 +241,15 @@ namespace WebBanHang.Areas.Admin.Controllers
         // BỔ SUNG: Thêm tham số mảng int[] selectedProducts
         public ActionResult Edit([Bind(Include = "CouponID,CouponName,Code,DiscountPercentage,MaxDiscountAmount,ExpiryDate,UsageLimit")] Coupon coupon, int[] selectedProducts)
         {
+            var personalVoucher = FindPersonalVoucher(coupon.CouponID);
+            if (personalVoucher != null)
+            {
+                TempData["ErrorMessage"] = personalVoucher.Status == "USED"
+                    ? "Voucher đã sử dụng chỉ được lưu lịch sử, không thể chỉnh sửa."
+                    : "Voucher cá nhân phải được chỉnh sửa tại trang Marketing Selling.";
+                return RedirectToAction("Index");
+            }
+
             if (ModelState.IsValid)
             {
                 if (!string.IsNullOrEmpty(coupon.Code)) coupon.Code = coupon.Code.Trim().ToUpper();
@@ -196,11 +282,19 @@ namespace WebBanHang.Areas.Admin.Controllers
                 if (couponToUpdate != null)
                 {
                     // Cập nhật các trường thông tin cơ bản
+                    bool usesPercentage = coupon.DiscountPercentage.HasValue && coupon.DiscountPercentage.Value > 0m;
+                    couponToUpdate.CouponName = coupon.CouponName;
                     couponToUpdate.Code = coupon.Code;
                     couponToUpdate.DiscountPercentage = coupon.DiscountPercentage;
                     couponToUpdate.MaxDiscountAmount = coupon.MaxDiscountAmount;
+                    couponToUpdate.DiscountType = usesPercentage ? "PERCENT" : "FIXED";
+                    couponToUpdate.FixedDiscountAmount = usesPercentage ? null : coupon.MaxDiscountAmount;
                     couponToUpdate.ExpiryDate = coupon.ExpiryDate;
                     couponToUpdate.UsageLimit = coupon.UsageLimit;
+                    couponToUpdate.CouponType = string.IsNullOrWhiteSpace(couponToUpdate.CouponType) ? "GLOBAL" : couponToUpdate.CouponType;
+                    couponToUpdate.SourceType = string.IsNullOrWhiteSpace(couponToUpdate.SourceType) ? "MANUAL" : couponToUpdate.SourceType;
+                    couponToUpdate.StartDate = couponToUpdate.StartDate ?? DateTime.Now;
+                    couponToUpdate.IsActive = true;
 
                     // Cập nhật danh sách sản phẩm liên kết
                     couponToUpdate.Products.Clear(); // Xóa sạch liên kết cũ
@@ -235,6 +329,16 @@ namespace WebBanHang.Areas.Admin.Controllers
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
+            var personalVoucher = FindPersonalVoucher(id.Value);
+            if (personalVoucher != null)
+            {
+                if (personalVoucher.Status == "USED")
+                {
+                    TempData["ErrorMessage"] = "Voucher đã sử dụng được giữ làm lịch sử và không thể xóa.";
+                    return RedirectToAction("Index");
+                }
+                return RedirectToPersonalVoucher(personalVoucher, "DeletePersonalVoucher");
+            }
             // BỔ SUNG: Include(c => c.Products) để hiển thị chi tiết trước khi quyết định xóa
             Coupon coupon = db.Coupons.Include(c => c.Products).FirstOrDefault(c => c.CouponID == id);
 
@@ -250,6 +354,15 @@ namespace WebBanHang.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult DeleteConfirmed(int id)
         {
+            var personalVoucher = FindPersonalVoucher(id);
+            if (personalVoucher != null)
+            {
+                TempData["ErrorMessage"] = personalVoucher.Status == "USED"
+                    ? "Voucher đã sử dụng được giữ làm lịch sử và không thể xóa."
+                    : "Hãy ngừng voucher cá nhân tại trang Marketing Selling.";
+                return RedirectToAction("Index");
+            }
+
             Coupon coupon = db.Coupons.Find(id);
             db.Coupons.Remove(coupon);
             db.SaveChanges();
