@@ -14,24 +14,6 @@
     var bestCombo = ViewBag.BestCombo as WebBanHang.Models.ViewModel.PromotionEvaluation;
 }
 
-@if (bestCombo != null && bestCombo.IsValid)
-{
-    <div class="container mb-4">
-        <div class="card border-success shadow-sm">
-            <div class="card-header bg-success text-white"><strong><i class="fa-solid fa-wand-magic-sparkles"></i> Combo tốt nhất đã được nhận diện</strong></div>
-            <div class="card-body">
-                <div><strong>@bestCombo.ProductNameA</strong> + <strong>@bestCombo.ProductNameB</strong></div>
-                <div class="mt-2">
-                    <span class="text-muted text-decoration-line-through me-2">@bestCombo.OriginalAmount.ToString("N0") ₫</span>
-                    <span class="text-danger fw-bold fs-5">@bestCombo.FinalAmount.ToString("N0") ₫</span>
-                    <span class="badge bg-success ms-2">Tiết kiệm @bestCombo.DiscountAmount.ToString("N0") ₫</span>
-                </div>
-                <small class="text-muted">Khoản giảm @bestCombo.DiscountAmount.ToString("N0") ₫ được trừ đúng một lần trên tổng đơn, không giảm riêng từng sản phẩm. Hệ thống sẽ kiểm tra lại tại thanh toán.</small>
-            </div>
-        </div>
-    </div>
-}
-
 <div class="shopping-cart-page container">
     @if (!Model.Items.Any())
     {
@@ -51,6 +33,7 @@
         </div>
 
         <div class="cart-content-wrapper">
+            <!-- Cột trái: Danh sách sản phẩm -->
             <div class="cart-items-list">
                 @foreach (var item in Model.Items)
                 {
@@ -112,42 +95,81 @@
                     </div>
                 }
             </div>
+            <!-- Cột phải: Wrapper chứa Tóm tắt đơn hàng & Combo -->
+            <div class="cart-right-sidebar">
 
-            <div class="cart-summary-box">
-                <h4 class="summary-title">Tóm tắt đơn hàng</h4>
-                <div class="summary-details">
-                    <p><span>Sản phẩm chọn:</span> <span id="summary-total-items" style="font-weight: 700;">0</span></p>
-                    <p><span>Tạm tính:</span> <span id="summary-subtotal-value">0 VNĐ</span></p>
+                <!-- Khối tóm tắt đơn hàng -->
+                <div class="cart-summary-box">
+                    <h4 class="summary-title">Tóm tắt đơn hàng</h4>
+                    <div class="summary-details">
+                        <p><span>Sản phẩm chọn:</span> <span id="summary-total-items" style="font-weight: 700;">0</span></p>
+                        <p><span>Tạm tính:</span> <span id="summary-subtotal-value">0 VNĐ</span></p>
 
-                    <p id="summary-discount-row" class="text-success" style="display: none; justify-content: space-between;">
-                        <span>Giảm giá sản phẩm:</span>
-                        <span id="summary-discount-value" class="fw-bold">-0 VNĐ</span>
-                    </p>
+                        <p id="summary-discount-row" class="text-success" style="display: none; justify-content: space-between;">
+                            <span>Giảm giá sản phẩm:</span>
+                            <span id="summary-discount-value" class="fw-bold">-0 VNĐ</span>
+                        </p>
 
-                    <p id="summary-combo-row" class="text-success" style="display: none; justify-content: space-between;">
-                        <span>Giảm combo trên tổng đơn (1 lần):</span>
-                        <span id="summary-combo-value" class="fw-bold">-0 VNĐ</span>
-                    </p>
+                        <p id="summary-combo-row" class="text-success" style="display: none; justify-content: space-between;">
+                            <span>Giảm combo (1 lần):</span>
+                            <span id="summary-combo-value" class="fw-bold">-0 VNĐ</span>
+                        </p>
 
-                    <div class="summary-divider"></div>
-                    <p class="summary-total"><strong>Tổng thanh toán:</strong> <strong id="summary-total-value">0 VNĐ</strong></p>
+                        <div class="summary-divider"></div>
+                        <p class="summary-total"><strong>Tổng thanh toán:</strong> <strong id="summary-total-value">0 VNĐ</strong></p>
+                    </div>
+
+                    @{
+                        bool hasInvalidQuantity = Model.Items.Any(i => i.Quantity > i.StockQuantity);
+                    }
+
+                    @if (hasInvalidQuantity)
+                    {
+                        <button class="btn-checkout-final w-100 mt-3" disabled style="background-color: #6c757d; cursor: not-allowed; border: none;">
+                            GIẢM SỐ LƯỢNG ĐỂ THANH TOÁN
+                        </button>
+                    }
+                    else
+                    {
+                        <button type="button" class="btn-checkout-final w-100 mt-3" style="border: none; cursor: pointer;" onclick="proceedToCheckout()">
+                            TIẾN HÀNH THANH TOÁN
+                        </button>
+                    }
                 </div>
 
-                @{
-                    bool hasInvalidQuantity = Model.Items.Any(i => i.Quantity > i.StockQuantity);
-                }
+                <!-- Khối Combo tốt nhất (Giao diện mới hoàn toàn) -->
+                @if (bestCombo != null && bestCombo.IsValid)
+                {
+                    <div class="best-combo-box">
+                        <div class="combo-header">
+                            <i class="fa-solid fa-gift"></i> Combo Tiết Kiệm Nhất
+                        </div>
+                        <div class="combo-body">
+                            <ul class="combo-product-list">
+                                <li>
+                                    <i class="fa-solid fa-circle-check text-success"></i>
+                                    <span>@bestCombo.ProductNameA</span>
+                                </li>
+                                <li>
+                                    <i class="fa-solid fa-circle-check text-success"></i>
+                                    <span>@bestCombo.ProductNameB</span>
+                                </li>
+                            </ul>
 
-                @if (hasInvalidQuantity)
-                {
-                    <button class="btn-checkout-final w-100 mt-3" disabled style="background-color: #6c757d; cursor: not-allowed; border: none;">
-                        GIẢM SỐ LƯỢNG ĐỂ THANH TOÁN
-                    </button>
-                }
-                else
-                {
-                    <button type="button" class="btn-checkout-final w-100 mt-3" style="border: none; cursor: pointer;" onclick="proceedToCheckout()">
-                        TIẾN HÀNH THANH TOÁN
-                    </button>
+                            <div class="combo-price-wrapper">
+                                <div class="price-original-strike">@bestCombo.OriginalAmount.ToString("N0") ₫</div>
+                                <div class="price-final-highlight">@bestCombo.FinalAmount.ToString("N0") ₫</div>
+                            </div>
+
+                            <div class="combo-savings">
+                                <span class="savings-badge">🔥 Tiết kiệm @bestCombo.DiscountAmount.ToString("N0") ₫</span>
+                            </div>
+
+                            <div class="combo-note">
+                                <i class="fa-solid fa-circle-info"></i> Giảm trực tiếp @bestCombo.DiscountAmount.ToString("N0") ₫ vào tổng đơn khi thanh toán.
+                            </div>
+                        </div>
+                    </div>
                 }
             </div>
         </div>

@@ -13,7 +13,9 @@
 
         public int ActiveCouponID { get; set; }
         public int ActiveCouponLimit { get; set; }
-
+        public bool IsPersonalVoucher { get; set; }
+        public string PersonalVoucherCode { get; set; }
+        public decimal PersonalDiscountAmount { get; set; }
         public int DiscountableQuantity { get; set; }
 
         public decimal TotalPrice

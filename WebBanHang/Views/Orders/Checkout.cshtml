@@ -13,8 +13,6 @@
     {
         @Html.AntiForgeryToken()
 
-        @Html.ValidationSummary(false, "", new { @class = "alert alert-danger mb-4" })
-
         <input type="hidden" name="isBuyNow" value="@(ViewBag.IsBuyNow != null && (bool)ViewBag.IsBuyNow ? "true" : "false")" />
 
         <div class="row">
@@ -272,6 +270,27 @@
 </div>
 
 @section Scripts {
+    @if (!ViewData.ModelState.IsValid)
+    {
+        var errorList = ViewData.ModelState.Values
+            .SelectMany(v => v.Errors)
+            .Select(e => e.ErrorMessage)
+            .Where(m => !string.IsNullOrEmpty(m))
+            .ToList();
+
+        if (errorList.Any())
+        {
+            // Nối các lỗi bằng ký tự xuống dòng \n cho hộp thoại alert
+            var errorMessage = HttpUtility.JavaScriptStringEncode(string.Join("\n", errorList));
+
+            <script>
+                $(document).ready(function () {
+                    alert("Vui lòng kiểm tra lại:\n\n" + "@Html.Raw(errorMessage)");
+                });
+            </script>
+        }
+    }
+
     <script>
         $(document).ready(function () {
             // Lấy dữ liệu cơ sở từ Model
