@@ -50,6 +50,84 @@ namespace WebBanHang.Controllers
             }
         }
 
+        private const string CheckoutModeFullCart = "FULL";
+        private const string CheckoutModeSelectedItems = "SELECTED";
+        private const string CheckoutModeBuyNow = "BUY_NOW";
+
+        private string GetCheckoutMode(bool isBuyNow)
+        {
+            if (isBuyNow) return CheckoutModeBuyNow;
+            return Session["BuyNowTempCart"] is WebBanHang.Models.ViewModel.Cart
+                ? CheckoutModeSelectedItems
+                : CheckoutModeFullCart;
+        }
+
+        private static string GetCheckoutModeFromVnPay(string orderInfo)
+        {
+            if (!string.IsNullOrWhiteSpace(orderInfo))
+            {
+                if (orderInfo.EndsWith("_" + CheckoutModeBuyNow, StringComparison.OrdinalIgnoreCase))
+                    return CheckoutModeBuyNow;
+                if (orderInfo.EndsWith("_" + CheckoutModeSelectedItems, StringComparison.OrdinalIgnoreCase))
+                    return CheckoutModeSelectedItems;
+            }
+            return CheckoutModeFullCart;
+        }
+
+        private static void UpdateDatabaseCartAfterPurchase(
+            MyStoreEntities context,
+            int customerId,
+            string checkoutMode,
+            IEnumerable<int> purchasedProductIds)
+        {
+            if (checkoutMode == CheckoutModeBuyNow) return;
+
+            var dbCart = context.Carts.FirstOrDefault(c => c.CustomerID == customerId);
+            if (dbCart == null) return;
+
+            var cartItems = context.CartItems.Where(ci => ci.CartID == dbCart.CartID);
+            if (checkoutMode == CheckoutModeSelectedItems)
+            {
+                var purchasedIds = purchasedProductIds.Distinct().ToList();
+                cartItems = cartItems.Where(ci => purchasedIds.Contains(ci.ProductID));
+            }
+
+            var itemsToRemove = cartItems.ToList();
+            if (itemsToRemove.Any()) context.CartItems.RemoveRange(itemsToRemove);
+        }
+
+        private void UpdateSessionCartAfterPurchase(string checkoutMode, IEnumerable<int> purchasedProductIds)
+        {
+            if (checkoutMode == CheckoutModeBuyNow)
+            {
+                Session.Remove("BuyNowCart");
+                return;
+            }
+
+            if (checkoutMode == CheckoutModeSelectedItems)
+            {
+                var originalCart = Session["BuyNowTempCart"] as WebBanHang.Models.ViewModel.Cart;
+                if (originalCart != null)
+                {
+                    foreach (var productId in purchasedProductIds.Distinct())
+                        originalCart.RemoveItem(productId);
+
+                    if (originalCart.Items.Any()) Session["Cart"] = originalCart;
+                    else Session.Remove("Cart");
+                }
+                else
+                {
+                    Session.Remove("Cart");
+                }
+
+                Session.Remove("BuyNowTempCart");
+                return;
+            }
+
+            Session.Remove("Cart");
+            Session.Remove("BuyNowTempCart");
+        }
+
         // GET: Orders
         public ActionResult Index()
         {
@@ -241,6 +319,31 @@ namespace WebBanHang.Controllers
             }
 
             int customerId = (int)Session["CustomerID"];
+            bool isVnPay = string.Equals(model.PaymentMethod, "VNPAY", StringComparison.OrdinalIgnoreCase);
+            string checkoutMode = GetCheckoutMode(isBuyNow);
+            var purchasedProductIds = cart.Items.Select(x => x.ProductID).Distinct().ToList();
+
+            string vnpUrl = null;
+            string vnpTmnCode = null;
+            string vnpHashSecret = null;
+            string vnpReturnUrl = null;
+            if (isVnPay)
+            {
+                vnpUrl = ConfigurationManager.AppSettings["VnPayUrl"];
+                vnpTmnCode = ConfigurationManager.AppSettings["VnPayTmnCode"];
+                vnpHashSecret = ConfigurationManager.AppSettings["VnPayHashSecret"];
+                vnpReturnUrl = ConfigurationManager.AppSettings["VnPayReturnUrl"];
+
+                if (string.IsNullOrWhiteSpace(vnpUrl) || string.IsNullOrWhiteSpace(vnpTmnCode)
+                    || string.IsNullOrWhiteSpace(vnpHashSecret) || string.IsNullOrWhiteSpace(vnpReturnUrl))
+                {
+                    ModelState.AddModelError("", "VNPay chưa được cấu hình đầy đủ trong Web.config.");
+                    model.CartItems = cart.Items.ToList();
+                    model.TotalAmount = cart.TotalValue();
+                    PopulateMarketingCheckout(model, cart);
+                    return View(model);
+                }
+            }
 
             PromotionEvaluation marketingPromotion = null;
             try
@@ -268,6 +371,7 @@ namespace WebBanHang.Controllers
             // MÔ PHỎNG GIÁ VỐN & CẢNH BÁO LỢI NHUẬN (Không hiển thị ra View)
             var simulationService = new WebBanHang.Services.OrderCostSimulationService();
             var simResult = simulationService.SimulateCartCost(cart, db);
+            string paymentUrl = null;
 
             using (var transaction = db.Database.BeginTransaction())
             {
@@ -414,15 +518,39 @@ namespace WebBanHang.Controllers
                     actualTotalOrderAmount += shippingFee;
 
                     order.TotalAmount = actualTotalOrderAmount;
+
+                    // COD chỉ xóa các sản phẩm đã mua. Với VNPay, chờ callback thành công mới xóa giỏ.
+                    if (!isVnPay)
+                        UpdateDatabaseCartAfterPurchase(db, customerId, checkoutMode, purchasedProductIds);
+
                     db.SaveChanges();
+
+                    // Tạo URL trước khi commit để lỗi cấu hình/chữ ký không tạo ra đơn hàng nửa chừng.
+                    if (isVnPay)
+                    {
+                        var vnpay = new WebBanHang.Utilities.VnPayLibrary();
+                        vnpay.AddRequestData("vnp_Version", "2.1.0");
+                        vnpay.AddRequestData("vnp_Command", "pay");
+                        vnpay.AddRequestData("vnp_TmnCode", vnpTmnCode);
+                        vnpay.AddRequestData("vnp_Amount", Convert.ToInt64(actualTotalOrderAmount * 100m).ToString());
+                        vnpay.AddRequestData("vnp_CreateDate", DateTime.Now.ToString("yyyyMMddHHmmss"));
+                        vnpay.AddRequestData("vnp_CurrCode", "VND");
+                        vnpay.AddRequestData("vnp_IpAddr", Request.UserHostAddress ?? "127.0.0.1");
+                        vnpay.AddRequestData("vnp_Locale", "vn");
+                        vnpay.AddRequestData("vnp_OrderInfo", "ThanhToanDonHang_" + order.OrderID + "_" + checkoutMode);
+                        vnpay.AddRequestData("vnp_OrderType", "other");
+                        vnpay.AddRequestData("vnp_ReturnUrl", vnpReturnUrl);
+                        vnpay.AddRequestData("vnp_TxnRef", order.OrderID.ToString());
+                        paymentUrl = vnpay.CreateRequestUrl(vnpUrl, vnpHashSecret);
+                    }
+
                     transaction.Commit();
 
                     try
                     {
                         string currentSession = Session.SessionID;
 
-                        if (!string.Equals(model.PaymentMethod, "VNPAY", StringComparison.OrdinalIgnoreCase)
-                            && cart != null && cart.Items.Any())
+                        if (!isVnPay && cart != null && cart.Items.Any())
                         {
                             foreach (var cartItem in cart.Items)
                             {
@@ -458,58 +586,10 @@ namespace WebBanHang.Controllers
                         System.Diagnostics.Debug.WriteLine("Lỗi AI: " + ex.Message);
                     }
 
-                    // Xử lý VNPAY
-                    if (model.PaymentMethod == "VNPAY")
-                    {
-                        string vnp_Url = ConfigurationManager.AppSettings["VnPayUrl"];
-                        string vnp_TmnCode = ConfigurationManager.AppSettings["VnPayTmnCode"];
-                        string vnp_HashSecret = ConfigurationManager.AppSettings["VnPayHashSecret"];
-                        string vnp_Returnurl = ConfigurationManager.AppSettings["VnPayReturnUrl"];
-                        if (string.IsNullOrWhiteSpace(vnp_Url) || string.IsNullOrWhiteSpace(vnp_TmnCode)
-                            || string.IsNullOrWhiteSpace(vnp_HashSecret) || string.IsNullOrWhiteSpace(vnp_Returnurl))
-                            throw new ConfigurationErrorsException("Thiếu cấu hình VNPay trong Web.config.");
+                    // VNPay giữ nguyên giỏ cho đến khi cổng thanh toán callback thành công.
+                    if (isVnPay) return Redirect(paymentUrl);
 
-                        WebBanHang.Utilities.VnPayLibrary vnpay = new WebBanHang.Utilities.VnPayLibrary();
-                        vnpay.AddRequestData("vnp_Version", "2.1.0");
-                        vnpay.AddRequestData("vnp_Command", "pay");
-                        vnpay.AddRequestData("vnp_TmnCode", vnp_TmnCode);
-
-                        long tAmount = Convert.ToInt64(actualTotalOrderAmount * 100);
-                        vnpay.AddRequestData("vnp_Amount", tAmount.ToString());
-
-                        vnpay.AddRequestData("vnp_CreateDate", DateTime.Now.ToString("yyyyMMddHHmmss"));
-                        vnpay.AddRequestData("vnp_CurrCode", "VND");
-                        vnpay.AddRequestData("vnp_IpAddr", Request.UserHostAddress ?? "127.0.0.1");
-
-                        vnpay.AddRequestData("vnp_Locale", "vn");
-                        vnpay.AddRequestData("vnp_OrderInfo", "ThanhToanDonHang_" + order.OrderID.ToString());
-                        vnpay.AddRequestData("vnp_OrderType", "other");
-                        vnpay.AddRequestData("vnp_ReturnUrl", vnp_Returnurl);
-                        vnpay.AddRequestData("vnp_TxnRef", order.OrderID.ToString());
-
-                        string paymentUrl = vnpay.CreateRequestUrl(vnp_Url, vnp_HashSecret);
-                        return Redirect(paymentUrl);
-                    }
-
-                    if (isBuyNow)
-                    {
-                        Session.Remove("BuyNowCart"); // Chỉ xóa giỏ phụ
-                    }
-                    else
-                    {
-                        Session.Remove("Cart"); // Khách mua giỏ chính -> Xóa Session
-
-                        var dbCart = db.Carts.FirstOrDefault(c => c.CustomerID == customerId);
-                        if (dbCart != null)
-                        {
-                            var oldItems = db.CartItems.Where(ci => ci.CartID == dbCart.CartID).ToList();
-                            if (oldItems.Any())
-                            {
-                                db.CartItems.RemoveRange(oldItems);
-                                db.SaveChanges();
-                            }
-                        }
-                    }
+                    UpdateSessionCartAfterPurchase(checkoutMode, purchasedProductIds);
 
                     Session.Remove("VoucherDiscount");
                     Session.Remove("MarketingPromotion");
@@ -595,45 +675,59 @@ namespace WebBanHang.Controllers
 
                         if (vnp_ResponseCode == "00")
                         {
-                            if (order.PaymentStatus == "Đã thanh toán")
-                                return RedirectToAction("OrderSuccess", new { id = orderId });
+                            bool wasAlreadyPaid = order.PaymentStatus == "Đã thanh toán";
+                            string checkoutMode = GetCheckoutModeFromVnPay(vnpay.GetResponseData("vnp_OrderInfo"));
+                            var purchasedProductIds = order.OrderDetails.Select(x => x.ProductID).Distinct().ToList();
 
-                            order.PaymentStatus = "Đã thanh toán";
-                            db.SaveChanges();
-
-                            foreach (var detail in order.OrderDetails.GroupBy(x => x.ProductID))
+                            if (!wasAlreadyPaid)
                             {
-                                db.UserBehaviorLogs.Add(new UserBehaviorLog
+                                order.PaymentStatus = "Đã thanh toán";
+                                db.SaveChanges();
+
+                                // Log hành vi là tác vụ phụ, không được chặn trang thành công của VNPay.
+                                try
                                 {
-                                    ProductID = detail.Key,
-                                    ActionType = "PURCHASE",
-                                    ActionWeight = 10,
-                                    CustomerID = order.CustomerID,
-                                    SessionID = Session.SessionID,
-                                    CreatedAt = DateTime.Now
-                                });
+                                    foreach (var productId in purchasedProductIds)
+                                    {
+                                        db.UserBehaviorLogs.Add(new UserBehaviorLog
+                                        {
+                                            ProductID = productId,
+                                            ActionType = "PURCHASE",
+                                            ActionWeight = 10,
+                                            CustomerID = order.CustomerID,
+                                            SessionID = Session.SessionID,
+                                            CreatedAt = DateTime.Now
+                                        });
+                                    }
+                                    db.SaveChanges();
+                                }
+                                catch (Exception ex)
+                                {
+                                    System.Diagnostics.Trace.TraceWarning("Không ghi được PURCHASE sau VNPay: " + ex.Message);
+                                }
                             }
-                            db.SaveChanges();
 
                             // ✅ Cập nhật AI khi đơn VNPay thanh toán thành công
                             try { new WebBanHang.Services.SmartRecommendationService().RunHybridAlgorithm(0.2, 1, 100000m); } catch { }
 
-                            // Dọn dẹp Session
-                            Session.Remove("Cart");
-                            Session.Remove("VoucherDiscount");
-                            Session.Remove("BuyNowTempCart");
-                            Session.Remove("ShippingFee");
-
-                            var dbCart = db.Carts.FirstOrDefault(c => c.CustomerID == order.CustomerID);
-                            if (dbCart != null)
+                            // Dọn giỏ DB là tác vụ hậu xử lý; nếu lỗi vẫn phải trả khách về trang thành công.
+                            try
                             {
-                                var oldItems = db.CartItems.Where(ci => ci.CartID == dbCart.CartID).ToList();
-                                if (oldItems.Any())
+                                using (var cleanupDb = new MyStoreEntities())
                                 {
-                                    db.CartItems.RemoveRange(oldItems);
-                                    db.SaveChanges();
+                                    UpdateDatabaseCartAfterPurchase(cleanupDb, order.CustomerID, checkoutMode, purchasedProductIds);
+                                    cleanupDb.SaveChanges();
                                 }
                             }
+                            catch (Exception ex)
+                            {
+                                System.Diagnostics.Trace.TraceWarning("Không dọn được giỏ DB sau VNPay: " + ex.Message);
+                            }
+
+                            UpdateSessionCartAfterPurchase(checkoutMode, purchasedProductIds);
+                            Session.Remove("VoucherDiscount");
+                            Session.Remove("MarketingPromotion");
+                            Session.Remove("ShippingFee");
 
                             TempData["Message"] = "Thanh toán đơn hàng qua cổng VNPay thành công!";
                             return RedirectToAction("OrderSuccess", new { id = orderId });
