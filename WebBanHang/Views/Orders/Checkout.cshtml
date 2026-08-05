@@ -218,16 +218,17 @@
                             </div>
                         </div>
                     }
-                    <h6 class="fw-bold text-primary mt-4 mb-2"><i class="fa-solid fa-tags"></i> Voucher toàn đơn</h6>
                 }
                 @if (Model.AvailableCoupons != null && Model.AvailableCoupons.Any())
                 {
+                    var publicVoucherTitleClass = Model.AvailablePersonalVouchers != null && Model.AvailablePersonalVouchers.Any() ? "mt-4" : "";
+                    <h6 class="fw-bold text-primary @publicVoucherTitleClass mb-2"><i class="fa-solid fa-tags"></i> Voucher toàn đơn</h6>
                     foreach (var coupon in Model.AvailableCoupons)
                     {
                         bool isValid = coupon.ExpiryDate > DateTime.Now && coupon.UsageLimit > 0;
                         string cardClass = isValid ? "border-primary bg-white shadow-sm" : "border-secondary bg-light opacity-75";
                         string btnClass = isValid ? "btn-primary" : "btn-secondary disabled";
-                        string discountText = coupon.DiscountPercentage.HasValue ? $"Giảm {coupon.DiscountPercentage.Value.ToString("0")} %" : $"Giảm {coupon.MaxDiscountAmount?.ToString("N0")} ₫";
+                        string discountText = coupon.DiscountPercentage.GetValueOrDefault() > 0m ? $"Giảm {coupon.DiscountPercentage.Value.ToString("0")} %" : $"Giảm {coupon.MaxDiscountAmount?.ToString("N0")} ₫";
 
                         <div class="card mb-3 @cardClass">
                             <div class="row g-0">

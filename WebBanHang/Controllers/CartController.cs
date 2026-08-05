@@ -393,6 +393,12 @@ namespace WebBanHang.Controllers
                 if (coupon == null)
                     return Json(new { success = false, message = "Mã giảm giá không tồn tại." });
 
+                if (coupon.CouponType != "GLOBAL" || !coupon.IsActive)
+                    return Json(new { success = false, message = "Mã giảm giá toàn đơn này đang bị ngừng áp dụng." });
+
+                if (coupon.StartDate.HasValue && coupon.StartDate.Value > DateTime.Now)
+                    return Json(new { success = false, message = "Mã giảm giá này chưa đến thời gian sử dụng." });
+
                 if (coupon.ExpiryDate <= DateTime.Now)
                     return Json(new { success = false, message = "Mã giảm giá này đã hết hạn sử dụng." });
 
