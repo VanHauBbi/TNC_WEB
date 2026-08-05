@@ -622,7 +622,8 @@
     <Content Include="TopIcon\logo-tnc.png" />
     <Content Include="TopIcon\phone-volume-solid.svg" />
     <Content Include="TopIcon\user-regular.svg" />
-    <Content Include="Web.config" />
+  <Content Include="Web.config" />
+  <Content Include="AppSettings.Local.config.example" />
     <Content Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </Content>
