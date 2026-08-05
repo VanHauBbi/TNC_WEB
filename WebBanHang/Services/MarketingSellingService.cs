@@ -396,8 +396,13 @@ namespace WebBanHang.Services
                 }
                 else
                 {
-                    var global = db.Coupons.FirstOrDefault(c => c.Code == code);
-                    if (global == null || global.ExpiryDate <= DateTime.Now || global.UsageLimit <= 0 || global.Products.Any())
+                    var now = DateTime.Now;
+                    var global = db.Coupons.FirstOrDefault(c => c.Code == code
+                                                             && c.CouponType == "GLOBAL"
+                                                             && c.IsActive);
+                    if (global == null || global.ExpiryDate <= now || global.UsageLimit <= 0
+                        || (global.StartDate.HasValue && global.StartDate.Value > now)
+                        || global.Products.Any())
                     {
                         voucherError = "Mã voucher không tồn tại, đã hết hạn hoặc không áp dụng cho toàn đơn.";
                     }
@@ -457,15 +462,19 @@ namespace WebBanHang.Services
 
         public List<Coupon> GetPublicCoupons()
         {
+            var now = DateTime.Now;
             if (!SchemaExists())
-                return db.Coupons.Where(c => !c.Products.Any()).OrderByDescending(c => c.CouponID).ToList();
+                return db.Coupons.Where(c => c.ExpiryDate > now && c.UsageLimit > 0 && !c.Products.Any())
+                    .OrderByDescending(c => c.CouponID).ToList();
 
-            var ids = db.Database.SqlQuery<int>(@"
-                SELECT CouponID FROM dbo.Coupon
-                WHERE CouponType = 'GLOBAL' AND IsActive = 1
-                  AND (StartDate IS NULL OR StartDate <= SYSUTCDATETIME())
-                  AND ExpiryDate > GETDATE() AND UsageLimit > 0;").ToList();
-            return db.Coupons.Where(c => ids.Contains(c.CouponID) && !c.Products.Any())
+            // Coupon.StartDate/ExpiryDate được trang Admin lưu theo giờ local.
+            // Dùng cùng một mốc giờ để mã vừa tạo không bị ẩn 7 giờ do so với UTC.
+            return db.Coupons.Where(c => c.CouponType == "GLOBAL"
+                                         && c.IsActive
+                                         && (!c.StartDate.HasValue || c.StartDate.Value <= now)
+                                         && c.ExpiryDate > now
+                                         && c.UsageLimit > 0
+                                         && !c.Products.Any())
                 .OrderByDescending(c => c.CouponID).ToList();
         }
 
