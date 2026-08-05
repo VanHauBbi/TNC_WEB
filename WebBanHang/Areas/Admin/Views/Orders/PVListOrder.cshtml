@@ -77,5 +77,10 @@
 
 <!-- PHÂN TRANG -->
 <div class="carcc-pagination-container">
-    @Html.PagedListPager(Model, page => Url.Action("Index", new { page = page }))
+    @Html.PagedListPager(Model, page => Url.Action("Index", new
+    {
+        page = page,
+    orderStatus = ViewBag.CurrentOrderStatus,
+    paymentStatus = ViewBag.CurrentPaymentStatus
+}))
 </div>

@@ -583,6 +583,7 @@
     <Content Include="Areas\Admin\Views\Marketing\ComboDetails.cshtml" />
     <Content Include="Areas\Admin\Views\Marketing\EditCombo.cshtml" />
     <Content Include="Areas\Admin\Views\Marketing\DeleteCombo.cshtml" />
+    <Content Include="Areas\Admin\Views\Orders\PVListOrder.cshtml" />
     <EntityDeploy Include="Models\Model.edmx">
       <Generator>EntityModelCodeGenerator</Generator>
       <LastGenOutput>Model.Designer.cs</LastGenOutput>
@@ -590,7 +591,6 @@
     <Content Include="Models\Model.edmx.diagram">
       <DependentUpon>Model.edmx</DependentUpon>
     </Content>
-    <Content Include="Areas\Admin\Views\Orders\PVListOrder.cshtml" />
     <None Include="Scripts\jquery-3.7.0.intellisense.js" />
     <Content Include="Scripts\jquery-3.7.0.js" />
     <Content Include="Scripts\jquery-3.7.0.min.js" />

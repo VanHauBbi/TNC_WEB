@@ -310,14 +310,18 @@ namespace WebBanHang.Areas.Admin.Controllers
             {
                 if (!DateTime.TryParse(fromDate, out dtFrom) || !DateTime.TryParse(toDate, out dtTo))
                     return Json(new { success = false, message = "Khoảng ngày không hợp lệ." });
+
+                // Set giờ kết thúc là cuối ngày (23:59:59)
                 dtTo = dtTo.Date.AddDays(1).AddSeconds(-1);
             }
 
             var statistics = GetDashboardStatistics(isAllTime ? (DateTime?)null : dtFrom,
                                                      isAllTime ? (DateTime?)null : dtTo);
+
             var chartQuery = db.Orders.AsNoTracking()
                 .Where(o => o.PaymentStatus == "Đã thanh toán" || o.OrderStatus == "Đã giao" ||
                             o.OrderStatus == "Hoàn thành" || o.OrderStatus == "Đã duyệt");
+
             if (!isAllTime)
                 chartQuery = chartQuery.Where(o => o.OrderDate >= dtFrom && o.OrderDate <= dtTo);
 
@@ -326,15 +330,15 @@ namespace WebBanHang.Areas.Admin.Controllers
 
             if (isAllTime)
             {
+                // 1. NẾU LỌC TOÀN BỘ (HOẶC MẶC ĐỊNH): Gom nhóm theo Tháng
                 DateTime sixMonthsAgo = DateTime.Now.AddMonths(-5);
                 var monthlyData = chartQuery
                     .GroupBy(o => new { o.OrderDate.Year, o.OrderDate.Month })
                     .Select(g => new { g.Key.Year, g.Key.Month, Revenue = g.Sum(o => o.TotalAmount) })
                     .OrderBy(x => x.Year).ThenBy(x => x.Month)
                     .ToList();
-                DateTime earliestDate = monthlyData.Any()
-                    ? new DateTime(monthlyData[0].Year, monthlyData[0].Month, 1)
-                    : sixMonthsAgo;
+
+                DateTime earliestDate = monthlyData.Any() ? new DateTime(monthlyData[0].Year, monthlyData[0].Month, 1) : sixMonthsAgo;
                 DateTime startDate = earliestDate < sixMonthsAgo ? earliestDate : sixMonthsAgo;
 
                 DateTime tempDate = new DateTime(startDate.Year, startDate.Month, 1);
@@ -343,18 +347,44 @@ namespace WebBanHang.Areas.Admin.Controllers
                 while (tempDate <= endDate)
                 {
                     chartLabels.Add(tempDate.ToString("MM/yyyy"));
-                    var monthTotal = monthlyData.Where(x => x.Year == tempDate.Year && x.Month == tempDate.Month)
-                        .Select(x => x.Revenue).FirstOrDefault();
+                    var monthTotal = monthlyData.Where(x => x.Year == tempDate.Year && x.Month == tempDate.Month).Select(x => x.Revenue).FirstOrDefault();
                     chartDataList.Add(monthTotal);
                     tempDate = tempDate.AddMonths(1);
                 }
             }
+            else if (dtFrom.Date == dtTo.Date)
+            {
+                // ====================================================================
+                // 2. NẾU CHỈ LỌC TRONG 1 NGÀY (VD: "Hôm nay"): Chia làm 6 mốc x 4 tiếng
+                // ====================================================================
+                chartLabels = new List<string> { "0h-4h", "4h-8h", "8h-12h", "12h-16h", "16h-20h", "20h-24h" };
+
+                // Khởi tạo 6 cột với giá trị 0
+                for (int i = 0; i < 6; i++) chartDataList.Add(0m);
+
+                // Lấy đơn hàng của ngày đó đưa vào RAM (an toàn vì 1 ngày ít dữ liệu)
+                var dayOrders = chartQuery.Select(o => new { o.OrderDate, o.TotalAmount }).ToList();
+
+                // Phân bổ doanh thu vào đúng khung giờ
+                foreach (var order in dayOrders)
+                {
+                    int hour = order.OrderDate.Hour;
+                    int slot = hour / 4; // Ví dụ: 15h / 4 = 3 (Tương ứng mốc 12h-16h)
+
+                    if (slot >= 0 && slot < 6)
+                    {
+                        chartDataList[slot] += order.TotalAmount;
+                    }
+                }
+            }
             else
             {
+                // 3. NẾU LỌC NHIỀU NGÀY (VD: "Tuần", "Tháng"): Gom nhóm theo từng Ngày
                 var dailyData = chartQuery
                     .GroupBy(o => DbFunctions.TruncateTime(o.OrderDate))
                     .Select(g => new { Date = g.Key, Revenue = g.Sum(o => o.TotalAmount) })
                     .ToList();
+
                 for (DateTime date = dtFrom.Date; date <= dtTo.Date; date = date.AddDays(1))
                 {
                     chartLabels.Add(date.ToString("dd/MM"));
