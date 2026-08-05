@@ -28,7 +28,10 @@
         <div class="product-meta">
             <span class="category-name">Danh mục: <a href="#"><strong>@Model.product.Category.CategoryName</strong></a></span>
             <span class="separator-dot"></span>
-            <span class="sold-count"><i class="fa-solid fa-fire"></i> Đã bán: **@Model.product.OrderDetails.Count** sản phẩm</span>
+            <span class="sold-count">
+                <i class="fa-solid fa-fire"></i> Đã bán:
+                *<strong>@(Model.product.OrderDetails != null && Model.product.OrderDetails.Any() ? Model.product.OrderDetails.Sum(od => od.Quantity) : 0)</strong>* sản phẩm
+            </span>
         </div>
 
         @* Price Section *@
