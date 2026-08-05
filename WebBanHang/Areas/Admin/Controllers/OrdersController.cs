@@ -18,12 +18,13 @@ namespace WebBanHang.Areas.Admin.Controllers
         {
             Session["LastOrderListUrl"] = Request.Url.PathAndQuery;
             var orders = db.Orders
+                           .AsNoTracking()
                            .Include("Customer")
-                           .OrderByDescending(o => o.OrderDate)
-                           .ToList();
+                           .OrderByDescending(o => o.OrderDate);
 
             int pageSize = 10; // Hiển thị 10 đơn/trang theo chuẩn UI mới
             int pageNumber = (page ?? 1);
+            // ToPagedList chạy Skip/Take ngay trên SQL, không tải toàn bộ đơn về RAM.
             return View(orders.ToPagedList(pageNumber, pageSize));
         }
 

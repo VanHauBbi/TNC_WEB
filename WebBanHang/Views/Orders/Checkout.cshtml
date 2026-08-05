@@ -6,7 +6,6 @@
 
 <link rel="stylesheet" href="~/Content/myStyle/checkout.css" />
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <div class="checkout-page-container container">
     <h2 class="page-title text-center">💳 ĐẶT HÀNG</h2>
 
@@ -101,7 +100,7 @@
                                             <!-- Dòng ẩn chứa ID sản phẩm để cảm biến quét -->
                                             <input type="hidden" class="cart-item-id" value="@item.ProductID" />
 
-                                            <img src="@item.ProductImage" alt="@item.ProductName" class="item-thumb" />
+                                            <img src="@item.ProductImage" alt="@item.ProductName" class="item-thumb" loading="lazy" />
                                             <span class="item-name-summary">@item.ProductName</span>
                                         </td>
                                         <td class="item-qty-summary">@item.Quantity</td>

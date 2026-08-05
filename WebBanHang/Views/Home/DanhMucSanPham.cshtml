@@ -84,7 +84,7 @@
                                 }
 
                                 <a href="@Url.Action("ProductDetail", "Home", new { id = p.ProductID })" class="product-link">
-                                    <img src="@Url.Content(p.ProductImage)" class="card-img-top product-image-list" alt="@p.ProductName" style="object-fit: contain; height: 180px; width: 100%;" />
+                                    <img src="@Url.Content(p.ProductImage)" class="card-img-top product-image-list" alt="@p.ProductName" style="object-fit: contain; height: 180px; width: 100%;" loading="lazy" />
                                 </a>
                             </div>
 
@@ -200,4 +200,4 @@
             $('.pagination .page-item span').addClass('page-link');
         });
     </script>
-}               
+}

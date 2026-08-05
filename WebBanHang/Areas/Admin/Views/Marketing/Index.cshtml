@@ -111,7 +111,7 @@
                         var triggerLabel = item.TriggerType == "ADD_CART" ? "Đã thêm giỏ" : item.TriggerType == "CART_ABANDONED" ? "Bỏ quên giỏ" : item.TriggerType == "CLICK" ? "Đã click" : "Đã xem";
                         <tr>
                             <td><span class="mk-code" title="@item.Code">@item.Code</span></td>
-                            <td><div class="mk-product"><img class="mk-product-img" src="@item.ProductImage" alt="" /><div class="mk-product-name" title="@item.ProductName">@item.ProductName</div></div></td>
+                            <td><div class="mk-product"><img class="mk-product-img" src="@item.ProductImage" alt="" loading="lazy" /><div class="mk-product-name" title="@item.ProductName">@item.ProductName</div></div></td>
                             <td><div class="mk-metric">@item.InterestScore.ToString("0.##") điểm</div><div class="mk-metric-sub">@triggerLabel</div></td>
                             <td><span class="mk-money">@item.DiscountAmount.ToString("N0") ₫</span></td>
                             <td>@if (item.Status == "USED") { <span class="mk-badge info"><i class="fa-solid fa-check"></i> Đã dùng</span> } else if (isVoucherActive) { <span class="mk-badge success"><i class="fa-solid fa-circle"></i> Hoạt động</span> } else { <span class="mk-badge muted">Đã ngừng</span> }<div class="mk-metric-sub mt-1">HSD @item.ExpiresAt.ToLocalTime().ToString("dd/MM HH:mm")</div></td>
@@ -139,7 +139,7 @@
                         var isComboActive = item.IsActive && item.EndDate > DateTime.Now && item.UsageLimit > 0;
                         <tr>
                             <td><span class="mk-code" title="@item.Code">@item.Code</span></td>
-                            <td><div class="mk-pair"><div class="mk-product"><img class="mk-product-img" src="@item.ProductImageA" alt="" /><div class="mk-product-name" title="@item.ProductNameA">@item.ProductNameA</div></div><div class="mk-product"><img class="mk-product-img" src="@item.ProductImageB" alt="" /><div class="mk-product-name" title="@item.ProductNameB">@item.ProductNameB</div></div></div></td>
+                            <td><div class="mk-pair"><div class="mk-product"><img class="mk-product-img" src="@item.ProductImageA" alt="" loading="lazy" /><div class="mk-product-name" title="@item.ProductNameA">@item.ProductNameA</div></div><div class="mk-product"><img class="mk-product-img" src="@item.ProductImageB" alt="" loading="lazy" /><div class="mk-product-name" title="@item.ProductNameB">@item.ProductNameB</div></div></div></td>
                             <td><div class="mk-metric">@item.Support đơn</div><div class="mk-metric-sub">Mua kèm @((item.Confidence * 100).ToString("0.##"))%</div></td>
                             <td><div class="mk-metric text-success">@item.ActualUtility.ToString("N0") ₫</div><div class="mk-metric-sub">trung bình/cặp</div></td>
                             <td><div class="mk-money">-@item.DiscountAmount.ToString("N0") ₫</div><div class="mt-1">@if (isComboActive) { <span class="mk-badge success">Đang hoạt động</span> } else { <span class="mk-badge muted">Đã ngừng</span> }</div></td>

@@ -6,7 +6,6 @@
 }
 
 <link rel="stylesheet" href="~/Content/myStyle/cart.css" />
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <h2 class="cart-title">🛒 Giỏ hàng của bạn</h2>
 
 @{
@@ -59,7 +58,7 @@
                         <input type="checkbox" class="item-select-checkbox" value="@item.ProductID" data-original-price="@item.OriginalPrice" data-unit-price="@item.UnitPrice" data-coupon-id="@item.ActiveCouponID" data-coupon-limit="@item.ActiveCouponLimit" checked onchange="calculateCartTotal()" />
 
                         <div class="cart-item-left">
-                            <img src="@item.ProductImage" alt="@item.ProductName" class="cart-product-img" />
+                            <img src="@item.ProductImage" alt="@item.ProductName" class="cart-product-img" loading="lazy" />
                             <div class="cart-item-info">
                                 <h5 class="cart-item-name">@item.ProductName</h5>
                                 <span id="combo-badge-@item.ProductID" class="badge bg-success mb-2 combo-applied-badge" style="display:none;">
